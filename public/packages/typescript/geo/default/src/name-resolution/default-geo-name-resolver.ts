@@ -8,12 +8,15 @@ import type {
   CountryCode,
   IGeoNameResolver,
   Subdivision,
-} from "@d2/geo-abstractions";
-import { compare as levenshteinCompare, normalize } from "@d2/geo-abstractions";
-import { TK } from "@d2/i18n-keys";
-import type { D2Result } from "@d2/result";
-import { notFound, ok, validationFailed } from "@d2/result";
-import { falsey, truthyOrUndefined } from "@d2/utilities";
+} from "@dcsv-io/d2-geo-abstractions";
+import {
+  compare as levenshteinCompare,
+  normalize,
+} from "@dcsv-io/d2-geo-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
+import type { D2Result } from "@dcsv-io/d2-result";
+import { notFound, ok, validationFailed } from "@dcsv-io/d2-result";
+import { falsey, truthyOrUndefined } from "@dcsv-io/d2-utilities";
 
 import { CountryLookup } from "../countries.js";
 import { SubdivisionLookup } from "../subdivisions.js";
@@ -77,7 +80,7 @@ const MIN_LENGTH_PASS_4 = 5;
 const PASS_4_MAX_DISTANCE = 2;
 const PASS_4_DISTANCE_SCALE = 5;
 
-// TK constants — sourced from the generated `@d2/i18n-keys` catalog,
+// TK constants — sourced from the generated `@dcsv-io/d2-i18n-keys` catalog,
 // matching the .NET TK SrcGen output from the same spec. Using the
 // typed constant (not a raw string) prevents §G render-bug class:
 // catalog keys are snake_case, not dot-path.

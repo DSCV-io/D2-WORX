@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location;
+namespace DcsvIo.D2.Location;
 
 using System.Security.Cryptography;
-using D2.Shared.Location.ValueObjects;
+using DcsvIo.D2.Location.ValueObjects;
 
 /// <summary>
 /// Free composition function that joins up to three location value

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Geo.Default.NameResolver;
+namespace DcsvIo.D2.Tests.Unit.Geo.Default.NameResolver;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Geo.Default;
-using D2.Shared.Geo.Default.NameResolution;
-using D2.Shared.I18n;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Geo.Default;
+using DcsvIo.D2.Geo.Default.NameResolution;
+using DcsvIo.D2.I18n;
 using Xunit;
 
 /// <summary>

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Location;
+namespace DcsvIo.D2.Tests.Unit.Location;
 
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Location;
-using D2.Shared.Location.ValueObjects;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Location;
+using DcsvIo.D2.Location.ValueObjects;
 using Xunit;
 
 /// <summary>

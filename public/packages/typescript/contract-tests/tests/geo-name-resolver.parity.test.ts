@@ -7,12 +7,12 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { CountryCode } from "@d2/geo-abstractions";
+import type { CountryCode } from "@dcsv-io/d2-geo-abstractions";
 import {
   CountryLookup,
   tryResolveCountryByName,
   tryResolveSubdivisionByName,
-} from "@d2/geo-default";
+} from "@dcsv-io/d2-geo-default";
 import { describe, expect, it } from "vitest";
 
 /**

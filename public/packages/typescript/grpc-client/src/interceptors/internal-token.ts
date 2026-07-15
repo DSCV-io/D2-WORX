@@ -10,8 +10,8 @@ import {
   type Metadata,
   status as GrpcStatus,
 } from "@grpc/grpc-js";
-import { HttpHeaders } from "@d2/headers-http";
-import type { ILogger } from "@d2/logging";
+import { HttpHeaders } from "@dcsv-io/d2-headers-http";
+import type { ILogger } from "@dcsv-io/d2-logging";
 import type { InternalTokenCache } from "../internal-token-cache.js";
 import type { InternalTokenClient } from "../internal-token-client.js";
 
@@ -20,7 +20,7 @@ import type { InternalTokenClient } from "../internal-token-client.js";
  * token to every outbound call as `Authorization: Bearer <jwt>`. On a
  * `UNAUTHENTICATED` response it clears the cache so the NEXT call re-acquires
  * fresh — the @grpc/grpc-js interceptor SPI does not support truly re-issuing
- * the same call, so the retry layer (e.g. `@d2/resilience`'s `RetryHelper`) is
+ * the same call, so the retry layer (e.g. `@dcsv-io/d2-resilience`'s `RetryHelper`) is
  * responsible for the second attempt. The cache-clear ensures that retry uses a
  * fresh token. When the cached token is in the refresh-ahead window,
  * {@link TryGetResult.shouldRefreshAhead} returns `true` and a

@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Result.Envelope.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Result.Envelope.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -29,7 +29,7 @@ using Xunit;
 /// </summary>
 public sealed class D2ResultEnvelopeOutputParityTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.Result";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.Result";
 
     private static readonly string sr_generatedBase =
         Path.Combine(
@@ -40,8 +40,8 @@ public sealed class D2ResultEnvelopeOutputParityTests
             "result",
             "core",
             "Generated",
-            "D2.Shared.Result.Envelope.SourceGen",
-            "D2.Shared.Result.Envelope.SourceGen.D2ResultEnvelopeGenerator");
+            "DcsvIo.D2.Result.Envelope.SourceGen",
+            "DcsvIo.D2.Result.Envelope.SourceGen.D2ResultEnvelopeGenerator");
 
     [Fact]
     public void D2ResultEnvelopeFieldNames_RegeneratedOutput_MatchesCommittedFile()

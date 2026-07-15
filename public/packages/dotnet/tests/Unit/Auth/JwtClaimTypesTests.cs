@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth;
+namespace DcsvIo.D2.Tests.Unit.Auth;
 
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 using Xunit;
 
 public sealed class JwtClaimTypesTests

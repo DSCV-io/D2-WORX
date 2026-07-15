@@ -16,11 +16,11 @@ import {
   PayloadSealer,
   RecipientPrivateKeyring,
   RecipientPublicKeyring,
-} from "@d2/encryption";
-import type { ILogger } from "@d2/logging";
-import type { MqMessageDescriptor } from "@d2/messaging-abstractions";
-import { ok } from "@d2/result";
-import { uuidv7 } from "@d2/utilities";
+} from "@dcsv-io/d2-encryption";
+import type { ILogger } from "@dcsv-io/d2-logging";
+import type { MqMessageDescriptor } from "@dcsv-io/d2-messaging-abstractions";
+import { ok } from "@dcsv-io/d2-result";
+import { uuidv7 } from "@dcsv-io/d2-utilities";
 import { Connection } from "rabbitmq-client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -116,7 +116,7 @@ async function makeSealerOpener(
   return { sealer: new PayloadSealer(pub), opener: new PayloadOpener(priv) };
 }
 
-describe("@d2/messaging-rabbitmq consumer — real-broker encrypted decrypt", () => {
+describe("@dcsv-io/d2-messaging-rabbitmq consumer — real-broker encrypted decrypt", () => {
   let container: StartedRabbitMQContainer;
   let connection: Connection;
 

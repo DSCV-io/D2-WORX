@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Scopes.SourceGen;
+namespace DcsvIo.D2.Auth.Scopes.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by <see cref="ScopesGenerator"/>.

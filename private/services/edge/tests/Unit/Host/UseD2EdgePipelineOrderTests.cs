@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
-using D2.Edge.Api.Pipeline;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.Private.Edge.Api.Pipeline;
+using DcsvIo.D2.ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -78,7 +78,7 @@ public sealed class UseD2EdgePipelineOrderTests
     public void UseD2RequestOriginEdge_ExtensionIsPublic()
     {
         // Pipeline registers UseD2RequestOriginEdge after UseD2Auth — extension is public.
-        typeof(D2.Shared.Auth.Http.RequestOriginEdgeAppBuilderExtensions)
+        typeof(DcsvIo.D2.Auth.Http.RequestOriginEdgeAppBuilderExtensions)
             .Should().NotBeNull();
     }
 }

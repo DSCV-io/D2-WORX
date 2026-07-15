@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen;
+namespace DcsvIo.D2.Geo.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using D2.Shared.SourceGen;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.SourceGen;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Enforces the subdivision vocabulary discipline — the ISO 3166-2 concept

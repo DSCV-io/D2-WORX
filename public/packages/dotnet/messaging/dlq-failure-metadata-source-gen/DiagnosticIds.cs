@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.DlqMetadata.SourceGen;
+namespace DcsvIo.D2.Messaging.DlqMetadata.SourceGen;
 
 /// <summary>Diagnostic IDs for dlq-failure-metadata source-gen.</summary>
 internal static class DiagnosticIds

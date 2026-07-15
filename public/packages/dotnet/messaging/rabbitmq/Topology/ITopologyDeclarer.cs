@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Topology;
+namespace DcsvIo.D2.Messaging.RabbitMq.Topology;
 
 /// <summary>
 /// Idempotently declares every exchange / queue / DLX binding required by

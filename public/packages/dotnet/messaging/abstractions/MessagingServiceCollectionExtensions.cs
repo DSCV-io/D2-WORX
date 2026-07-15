@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging;
+namespace DcsvIo.D2.Messaging;
 
 using System.Reflection;
-using D2.Shared.Handler;
-using D2.Shared.Result;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 /// <summary>
-/// Transport-agnostic DI helpers for D2.Shared.Messaging. The
+/// Transport-agnostic DI helpers for DcsvIo.D2.Messaging. The
 /// transport-specific composition root (e.g.
 /// <c>services.AddD2MessagingRabbitMq(...)</c>) lives in the impl lib and
 /// builds on these primitives.

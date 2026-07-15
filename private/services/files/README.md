@@ -44,16 +44,16 @@ Transitions managed by `transitionFileStatus()` (transactional, audit-logged). F
 
 ## Dependencies (.NET shared libs)
 
-- `D2.Shared.Messaging` (consumer + publisher)
-- `D2.Shared.Encryption` (NOT used for `d2.files.events` — `metadata` is not classified PII; `[Encrypted(Domain.X)]` is the opt-in attribute when payload encryption is required)
-- `D2.Shared.Auth` (JWT validation on REST endpoints, scope checks)
-- `D2.Shared.Contacts` (file ownership references via `files_contacts_db`)
-- `D2.Shared.Geo` (locale-aware filename normalization, optional)
+- `DcsvIo.D2.Messaging` (consumer + publisher)
+- `DcsvIo.D2.Encryption` (NOT used for `d2.files.events` — `metadata` is not classified PII; `[Encrypted(Domain.X)]` is the opt-in attribute when payload encryption is required)
+- `DcsvIo.D2.Auth` (JWT validation on REST endpoints, scope checks)
+- `DcsvIo.D2.Contacts` (file ownership references via `files_contacts_db`)
+- `DcsvIo.D2.Geo` (locale-aware filename normalization, optional)
 
 ## Database
 
 - `files_db` — owned by D2.Files. Schema: `file` (id, context_key, owner_user_id, owner_org_id, status, content_type, size_bytes, storage_key, metadata JSONB, created_at, processed_at), `file_variant` (file_id, variant_name, storage_key, dimensions, size_bytes), `file_processing_log` (audit trail of state transitions).
-- `files_contacts_db` — via `D2.Shared.Contacts` library.
+- `files_contacts_db` — via `DcsvIo.D2.Contacts` library.
 
 ## Storage
 

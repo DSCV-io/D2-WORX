@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.SourceGen;
 
 using System.Collections.Immutable;
-using D2.Edge.KeyCustodian.ErrorCodes.SourceGen;
-using D2.Shared.ErrorCodes.SourceGen;
+using DcsvIo.D2.ErrorCodes.SourceGen;
+using DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -23,7 +23,7 @@ using Microsoft.CodeAnalysis.Text;
 /// </summary>
 public sealed class KeyCustodianErrorCodesGeneratorTests
 {
-    private const string _ASSEMBLY = "D2.Edge.KeyCustodian.Domain";
+    private const string _ASSEMBLY = "DcsvIo.D2.Private.Edge.KeyCustodian.Domain";
     private const string _SPEC_NAME = "keycustodian-error-codes.spec.json";
 
     private const string _SAMPLE_SPEC = """

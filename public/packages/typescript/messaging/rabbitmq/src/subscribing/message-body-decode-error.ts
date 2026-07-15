@@ -6,7 +6,7 @@
 import {
   type DlqFailureCause,
   DlqFailureCauses,
-} from "@d2/messaging-abstractions";
+} from "@dcsv-io/d2-messaging-abstractions";
 
 /**
  * Raised by a {@link BodyOpener} when it cannot faithfully decode a delivery

@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import type { TKMessage } from "@d2/i18n-abstractions";
+import type { TKMessage } from "@dcsv-io/d2-i18n-abstractions";
 import type { ITranslator } from "../src/i-translator.js";
 
 describe("ITranslator", () => {

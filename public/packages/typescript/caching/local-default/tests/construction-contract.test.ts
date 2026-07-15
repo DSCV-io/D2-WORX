@@ -7,7 +7,7 @@ import {
   LOCAL_CACHE_DEFAULTS,
   type ILocalCache,
   type LocalCacheOptions,
-} from "@d2/caching-abstractions";
+} from "@dcsv-io/d2-caching-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { DefaultLocalCache, LOCAL_CACHE_METER_NAME } from "../src/index.js";

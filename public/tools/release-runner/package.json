@@ -12,7 +12,7 @@
     "check-baselines": "tsx src/fingerprint-currency-cli.ts"
   },
   "dependencies": {
-    "@d2/utilities": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*",
     "contract-gate": "workspace:*"
   },
   "devDependencies": {

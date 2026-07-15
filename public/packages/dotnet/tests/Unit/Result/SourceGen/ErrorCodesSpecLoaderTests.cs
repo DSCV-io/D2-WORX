@@ -6,13 +6,13 @@
 
 extern alias ResultErrorCodesSourceGen;
 
-namespace D2.Shared.Tests.Unit.Result.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Result.SourceGen;
 
 using AwesomeAssertions;
 using Xunit;
-using DiagnosticIds = ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.DiagnosticIds;
+using DiagnosticIds = ResultErrorCodesSourceGen::DcsvIo.D2.ResultErrorCodes.SourceGen.DiagnosticIds;
 using ErrorCodeSpecLoader =
-    ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.ErrorCodeSpecLoader;
+    ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.ErrorCodeSpecLoader;
 
 /// <summary>
 /// Pure-logic tests for the shared error-codes spec loader's JSON-shape

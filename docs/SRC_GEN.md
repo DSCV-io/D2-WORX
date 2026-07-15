@@ -65,8 +65,8 @@ The two halves of the system mirror each other:
 - **.NET side**: Roslyn `IIncrementalGenerator` per topic, csproj-named
   `*-source-gen/`, lives under `public/packages/dotnet/`. Emits per-target-assembly
   via assembly-name dispatch: public hosts emit public-only types; dual-target
-  catalogs also emit product-union types into private **`D2.Shared.*.Extensions`**
-  hosts (see §1.5).
+  catalogs also emit product-union types into private
+  **`DcsvIo.D2.Private.*.Extensions`** hosts (see §1.5).
 - **TypeScript side**: per-topic `tsx` scripts under `public/tools/ts-codegen/src/`,
   invoked via `pnpm codegen`. Emits one `.g.ts` per consuming package.
 
@@ -88,13 +88,13 @@ mechanism:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>D2.Shared.I18n.Abstractions</RootNamespace>
+    <RootNamespace>DcsvIo.D2.I18n.Abstractions</RootNamespace>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\source-gen\D2.Shared.I18n.SourceGen.csproj"
+    <ProjectReference Include="..\source-gen\DcsvIo.D2.I18n.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="..\..\..\..\contracts\messages\*.json" />
@@ -145,7 +145,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | In-process keys         | `D2IPK`  | [`encryption/in-process-keys-source-gen`](../public/packages/dotnet/encryption/in-process-keys-source-gen/README.md)                                                       |
 | Geo catalogs            | `D2GEO`  | [`geo/source-gen`](../public/packages/dotnet/geo/source-gen/README.md)                                                                                                     |
 | Field constraints       | `D2FC`   | [`validation/source-gen`](../public/packages/dotnet/validation/source-gen/README.md)                                                                                       |
-| Advisory locks          | `D2LCK`  | [`entity-framework-core/locks-source-gen`](../public/packages/dotnet/entity-framework-core/locks-source-gen/README.md) — emits `AdvisoryLocks` into owning-module assembly (currently `D2.Edge.KeyCustodian.Infra`); shared Postgres = mechanism only |
+| Advisory locks          | `D2LCK`  | [`entity-framework-core/locks-source-gen`](../public/packages/dotnet/entity-framework-core/locks-source-gen/README.md) — emits `AdvisoryLocks` into owning-module assembly (currently `DcsvIo.D2.Private.Edge.KeyCustodian.Infra`); shared Postgres = mechanism only |
 | KC error codes          | `D2KEC`  | [`key-custodian/error-codes-source-gen`](../private/services/edge/key-custodian/error-codes-source-gen/README.md) (shell)                                                 |
 | TypeSpec emitters       | `D2TSP`  | [`public/packages/typescript/typespec-emitters`](../public/packages/typescript/typespec-emitters/README.md) — see [§2.7](#27-typespec-emitter-fleet--decorator-vocabulary--wire-channel-identity) for diagnostics |
 
@@ -189,7 +189,7 @@ public sealed class TKGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(combined, (spc, tuple) =>
         {
             var (files, assemblyName) = tuple;
-            if (assemblyName != "D2.Shared.I18n.Abstractions") return;
+            if (assemblyName != "DcsvIo.D2.I18n.Abstractions") return;
 
             // 4. Load + emit
             var emitResult = TKEmitter.Emit(files);
@@ -229,7 +229,7 @@ Message, Location?)` carries everything the host needs but doesn't take a
 
 `i18n/source-gen` is the canonical pattern this codebase reaches for. It emits
 the `TK` static class — a hierarchical catalog of `TKMessage` constants — into
-`D2.Shared.I18n.Abstractions` by reading `public/contracts/messages/*.json`
+`DcsvIo.D2.I18n.Abstractions` by reading `public/contracts/messages/*.json`
 translation catalogs.
 
 **1. Author the spec.**
@@ -311,21 +311,22 @@ surface. The generator engine still lives under `public/packages/dotnet/**`
 
 | Host assembly (PackageId) | AdditionalFiles | Emitted type FQN | Values |
 | --- | --- | --- | --- |
-| `D2.Shared.Auth.Abstractions` | public scopes + audiences only | `D2.Shared.Auth.Abstractions.Scopes` / `Audiences` | public |
-| `D2.Shared.Auth.Abstractions.Extensions` | public∪private scopes + audiences | `D2.Private.Auth.ProductScopes` / `ProductAudiences` | public∪private |
-| `D2.Shared.Encryption` | public encryption-domains only | `D2.Shared.Encryption.EncryptionDomains*` | public |
-| `D2.Shared.Encryption.Extensions` | public∪private encryption-domains | `D2.Private.Encryption.ProductEncryptionDomains*` | public∪private |
-| `D2.Shared.I18n.Keys` | public messages only | `D2.Shared.I18n.TK` | public |
-| `D2.Shared.I18n.Keys.Extensions` | public∪private messages | `D2.Private.I18n.ProductTK` | public∪private |
+| `DcsvIo.D2.Auth.Abstractions` | public scopes + audiences only | `DcsvIo.D2.Auth.Abstractions.Scopes` / `Audiences` | public |
+| `DcsvIo.D2.Private.Auth.Abstractions.Extensions` | public∪private scopes + audiences | `DcsvIo.D2.Private.Auth.ProductScopes` / `ProductAudiences` | public∪private |
+| `DcsvIo.D2.Encryption` | public encryption-domains only | `DcsvIo.D2.Encryption.EncryptionDomains*` | public |
+| `DcsvIo.D2.Private.Encryption.Extensions` | public∪private encryption-domains | `DcsvIo.D2.Private.Encryption.ProductEncryptionDomains*` | public∪private |
+| `DcsvIo.D2.I18n.Keys` | public messages only | `DcsvIo.D2.I18n.TK` | public |
+| `DcsvIo.D2.Private.I18n.Keys.Extensions` | public∪private messages | `DcsvIo.D2.Private.I18n.ProductTK` | public∪private |
 
 **Law (hard):**
 
-1. **1:1 PackageId** — every private dual-target host is `D2.Shared.<PublicTail>.Extensions`
-   under `private/packages/dotnet/**`. Never a multi-concern bag; never a
-   non-Extensions twin brand.
+1. **1:1 PackageId** — every private dual-target host is
+   `DcsvIo.D2.Private.<PublicTail>.Extensions` under `private/packages/dotnet/**`.
+   Never open `DcsvIo.D2.*.Extensions` without `.Private.`; never a multi-concern
+   bag; never a non-Extensions twin brand.
 2. **Public twin ProjectReference** — each Extensions csproj ProjectReferences
    its public twin (property-based `$(D2PublicPackagesDotnetRoot)…`).
-3. **Distinct dual-type FQNs** — private hosts emit `Product*` under `D2.Private.*`
+3. **Distinct dual-type FQNs** — private hosts emit `Product*` under `DcsvIo.D2.Private.*`
    namespaces. Re-emitting public class names (`Scopes` / `TK` / …) into the
    Extensions assembly causes CS0433 when a consumer multi-refs public twin +
    Extensions.
@@ -362,12 +363,12 @@ public/tools/ts-codegen/
 │   ├── auth-scopes-emit.ts
 │   ├── d2result-envelope-emit.ts
 │   ├── dlq-failure-metadata-emit.ts
-│   ├── encryption-domains-emit.ts   ← emits @d2/encryption-abstractions (EncryptionDomains + EncryptionDomainModes/EncryptionDomainMode/ConsumerServiceByDomain mode twins)
+│   ├── encryption-domains-emit.ts   ← emits @dcsv-io/d2-encryption-abstractions (EncryptionDomains + EncryptionDomainModes/EncryptionDomainMode/ConsumerServiceByDomain mode twins)
 │   ├── encryption-frame-emit.ts
 │   ├── encryption-frame-sealed-emit.ts
-│   ├── error-category-emit.ts       ← emits @d2/error-category (ErrorCategory union + ErrorCategoryWire + ALL_ERROR_CATEGORIES)
+│   ├── error-category-emit.ts       ← emits @dcsv-io/d2-error-category (ErrorCategory union + ErrorCategoryWire + ALL_ERROR_CATEGORIES)
 │   ├── error-codes-emit.ts          ← unified error-code engine (generic + auth catalogs + AuthFailures + base factories)
-│   ├── error-codes-registry-emit.ts ← emits @d2/error-codes-registry (merged code → ErrorCodeInfo registry)
+│   ├── error-codes-registry-emit.ts ← emits @dcsv-io/d2-error-codes-registry (merged code → ErrorCodeInfo registry)
 │   ├── grpc-trailers-emit.ts
 │   ├── headers-emit.ts
 │   ├── jwt-claims-emit.ts
@@ -403,7 +404,7 @@ import { contractsPath, tsPackagePath } from "./lib/paths.js";
 
 export function runErrorCodesEmit(force = false): Diagnostic[] {
   const specPath = contractsPath("error-codes/error-codes.spec.json");
-  const target = tsPackagePath("@d2/result", "src/generated/ErrorCodes.g.ts");
+  const target = tsPackagePath("@dcsv-io/d2-result", "src/generated/ErrorCodes.g.ts");
 
   if (!force && isOutputUpToDate(target, [specPath])) return [];
 
@@ -458,7 +459,7 @@ Five required properties:
 Each emitter writes one `.g.ts` file per consuming package:
 
 ```typescript
-// private/services/web/node_modules/@d2/result/src/generated/ErrorCodes.g.ts
+// private/services/web/node_modules/@dcsv-io/d2-result/src/generated/ErrorCodes.g.ts
 // (during local dev these resolve to backends/node/shared/result/src/generated/ErrorCodes.g.ts)
 
 // <auto-generated />
@@ -530,10 +531,10 @@ The TypeScript side mirrors this: the unified `error-codes-emit.ts` engine
 (one shared `emitErrorCodesCatalog` / `emitFailuresCatalog` /
 `emitBaseFactoriesCatalog` helper + per-catalog `CatalogConfig`) exports four
 runners — `runErrorCodesEmit` (generic `error-codes.g.ts` constants →
-`@d2/result`), `runErrorCodesFactoriesEmit` (generic base/constructing
-factories `factories.g.ts` → `@d2/result`), `runAuthErrorCodesEmit`
-(`auth-error-codes.g.ts` constants → `@d2/auth-abstractions`), and
-`runAuthFailuresEmit` (`auth-failures.g.ts` factories → `@d2/auth-abstractions`,
+`@dcsv-io/d2-result`), `runErrorCodesFactoriesEmit` (generic base/constructing
+factories `factories.g.ts` → `@dcsv-io/d2-result`), `runAuthErrorCodesEmit`
+(`auth-error-codes.g.ts` constants → `@dcsv-io/d2-auth-abstractions`), and
+`runAuthFailuresEmit` (`auth-failures.g.ts` factories → `@dcsv-io/d2-auth-abstractions`,
 base factory selected by `httpStatus`, branch by `factoryShape`). The TS base
 factories are standalone module FUNCTIONS (not class members — `D2Result<T = void>`
 is one class), each generic with a `void` default (`notFound<T = void>()`), so
@@ -543,7 +544,7 @@ delegating factories carry the same `<T = void>` shape, so `AuthFailures.x()`
 yields `D2Result<void>` and `AuthFailures.x<User>()` yields `D2Result<User>` —
 the single-method equivalent of the .NET `AuthFailures` + `AuthFailures<T>`
 two-class split. The failure + base factories reference each `userMessageKey`
-as a `TK.*` constant from `@d2/i18n-keys` — each `TK.*` constant IS a `TKMessage`
+as a `TK.*` constant from `@dcsv-io/d2-i18n-keys` — each `TK.*` constant IS a `TKMessage`
 instance, so it is used directly with no `tk()` wrapper at the call site —
 never a key/path string literal, which would silently bypass the TK catalog and
 ride the wire un-renderable. Both runtimes' engines emit the same wire key (the
@@ -553,7 +554,7 @@ TK-validity render test.
 **3. Consumer references the constants identically across languages.**
 
 ```csharp
-// .NET — domain-failures class (D2.Shared.Auth.Errors namespace)
+// .NET — domain-failures class (DcsvIo.D2.Auth.Errors namespace)
 return AuthFailures.JwtSignatureInvalid();
 ```
 
@@ -596,15 +597,15 @@ Seven spec files under `public/contracts/geo/`:
 Each spec carries `{ catalogVersion, generatedAt, entries: [...] }`. The pipeline-derived specs are
 produced by the `public/contracts/geo/` build pipeline from canonical ISO source data + overlays.
 
-### .NET emitters (`D2.Shared.Geo.SourceGen`)
+### .NET emitters (`DcsvIo.D2.Geo.SourceGen`)
 
-`D2.Shared.Geo.SourceGen` (`public/packages/dotnet/geo/source-gen/`) inspects
+`DcsvIo.D2.Geo.SourceGen` (`public/packages/dotnet/geo/source-gen/`) inspects
 `compilation.AssemblyName` and dispatches per target:
 
 | Target assembly              | What is emitted                                                                                                                                                                                                                        |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Geo.Abstractions` | **TYPES** — record shapes (`Country.g.cs` / `Subdivision.g.cs` / etc.) + `*Code` enums + wrapper structs + `JsonConverter`s + `GeoCatalog.g.cs` constants                                                                              |
-| `D2.Shared.Geo.Default`      | **DATA** — per-catalog `*Lookup` static instances + `FrozenDictionary` lookup tables + nested static-class hierarchies (`Subdivisions.US.NY` / `Locales.en.US` / `Timezones.America.New_York`) + `GeoDataInitializer.g.cs` coordinator |
+| `DcsvIo.D2.Geo.Abstractions` | **TYPES** — record shapes (`Country.g.cs` / `Subdivision.g.cs` / etc.) + `*Code` enums + wrapper structs + `JsonConverter`s + `GeoCatalog.g.cs` constants                                                                              |
+| `DcsvIo.D2.Geo.Default`      | **DATA** — per-catalog `*Lookup` static instances + `FrozenDictionary` lookup tables + nested static-class hierarchies (`Subdivisions.US.NY` / `Locales.en.US` / `Timezones.America.New_York`) + `GeoDataInitializer.g.cs` coordinator |
 
 Internal emitters (one per concern):
 
@@ -639,12 +640,12 @@ The TS side mirrors the .NET emitter structure under `public/tools/ts-codegen/sr
 
 | Emitter                                                                                                                                                                                                | Output package         | Output artifact                                                                                 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- | ----------------------------------------------------------------------------------------------- |
-| `record-shape-emit.ts`                                                                                                                                                                                 | `@d2/geo-abstractions` | Seven record interface `.g.ts` files in `src/generated/`                                        |
-| `enum-emit.ts`                                                                                                                                                                                         | `@d2/geo-abstractions` | `*Code` `as const` objects + branded types + Zod schemas                                        |
-| `wrapper-code-emit.ts`                                                                                                                                                                                 | `@d2/geo-abstractions` | `SubdivisionCode` / `LocaleCode` / `TimezoneCode` branded types + Zod refinements + set helpers |
-| `geo-catalog-emit.ts`                                                                                                                                                                                  | `@d2/geo-abstractions` | `GeoCatalog` `as const` — `catalogVersion` + `catalogPublishedAt`                               |
-| `default/country-data-emit.ts` / `currency-data-emit.ts` / `language-data-emit.ts` / `subdivision-data-emit.ts` / `locale-data-emit.ts` / `timezone-data-emit.ts` / `geopolitical-entity-data-emit.ts` | `@d2/geo-default`      | Per-entity catalog data files                                                                   |
-| `default/geo-data-initializer-emit.ts`                                                                                                                                                                 | `@d2/geo-default`      | `geoDataInitializer.g.ts` — FK-nav wiring coordinator (module-init on first import)             |
+| `record-shape-emit.ts`                                                                                                                                                                                 | `@dcsv-io/d2-geo-abstractions` | Seven record interface `.g.ts` files in `src/generated/`                                        |
+| `enum-emit.ts`                                                                                                                                                                                         | `@dcsv-io/d2-geo-abstractions` | `*Code` `as const` objects + branded types + Zod schemas                                        |
+| `wrapper-code-emit.ts`                                                                                                                                                                                 | `@dcsv-io/d2-geo-abstractions` | `SubdivisionCode` / `LocaleCode` / `TimezoneCode` branded types + Zod refinements + set helpers |
+| `geo-catalog-emit.ts`                                                                                                                                                                                  | `@dcsv-io/d2-geo-abstractions` | `GeoCatalog` `as const` — `catalogVersion` + `catalogPublishedAt`                               |
+| `default/country-data-emit.ts` / `currency-data-emit.ts` / `language-data-emit.ts` / `subdivision-data-emit.ts` / `locale-data-emit.ts` / `timezone-data-emit.ts` / `geopolitical-entity-data-emit.ts` | `@dcsv-io/d2-geo-default`      | Per-entity catalog data files                                                                   |
+| `default/geo-data-initializer-emit.ts`                                                                                                                                                                 | `@dcsv-io/d2-geo-default`      | `geoDataInitializer.g.ts` — FK-nav wiring coordinator (module-init on first import)             |
 
 ### Cross-language parity
 
@@ -671,9 +672,9 @@ The field-constraints catalog is the shared source of truth for all field-length
 | `constraints` | `{ name, value, doc }` entries for char-length caps (`FIRST_NAME_MAX`, `EMAIL_MAX`, `PHONE_E164_MAX`, `POSTAL_CODE_MAX`, …) and digit-count bounds (`PHONE_MIN_DIGITS`, `PHONE_MAX_DIGITS`) |
 | `enums`       | `{ name, backing, doc, members[] }` entries for the three closed-list taxonomy enums (`NamePrefix`, `NameSuffix`, `BiologicalSex`); each member is `{ name, doc }`                          |
 
-### .NET emitter (`D2.Shared.Validation.SourceGen`)
+### .NET emitter (`DcsvIo.D2.Validation.SourceGen`)
 
-`public/packages/dotnet/validation/source-gen/` — Roslyn `IIncrementalGenerator`, `netstandard2.0`, `D2FC` diagnostic prefix, single-target dispatch (`AssemblyName == "D2.Shared.Validation.Abstractions"`).
+`public/packages/dotnet/validation/source-gen/` — Roslyn `IIncrementalGenerator`, `netstandard2.0`, `D2FC` diagnostic prefix, single-target dispatch (`AssemblyName == "DcsvIo.D2.Validation.Abstractions"`).
 
 Emits two files into `validation/abstractions/Generated/`:
 
@@ -707,7 +708,7 @@ Emits two files into `validation/abstractions/Generated/`:
 
 ### Consumers
 
-`D2.Shared.Contacts` VO `Create` factories + `D2.Shared.Location` VO `Create` factories consume `FieldConstraints.*` for length-cap enforcement. `@d2/validation-abstractions` Zod schemas + frontend form validators consume the TS equivalents. Taxonomy enums are used by `D2.Shared.Contacts.ValueObjects.NameAffixes` and `Demographics`.
+`DcsvIo.D2.Contacts` VO `Create` factories + `DcsvIo.D2.Location` VO `Create` factories consume `FieldConstraints.*` for length-cap enforcement. `@dcsv-io/d2-validation-abstractions` Zod schemas + frontend form validators consume the TS equivalents. Taxonomy enums are used by `DcsvIo.D2.Contacts.ValueObjects.NameAffixes` and `Demographics`.
 
 ---
 
@@ -765,7 +766,7 @@ IDs are allocated in `public/packages/typescript/typespec-emitters/src/lib.ts`. 
 
 ### Concern-based client namespace routing (`@d2Concern`)
 
-`@d2Concern("<Segment>")` on a client-exposed op names its **co-location concern** — the folder + namespace segment that op's transport DTOs live in. It is a general, spec/config-driven mechanism exactly parallel to the app-handler arm (`csharp-app-namespace-base` + the `.<Category>.<PascalOp>` derivation): the C# DTO emitter routes an exposed op's DTOs to `<csharp-clients-namespace>.<Concern>` (folder = namespace), and the regen `COPY_MANIFEST` places them in `client/<Concern>/` alongside the hand-written runtime that serves them. The module façade splits into a `Facade/` folder — the interface lands in `<clients-ns>.Facade`, the impl + generated DI registration in `<app-ns>.Facade` — and the registration's file + method names derive from the clients-namespace **leaf** segment (leaf `Client` → `KeyCustodianClientGenerated.g.cs` / `AddD2KeyCustodianClient()`), never a hard-coded literal. There are ZERO hard-coded file/name special cases in emitter code: the maintenance surface is the `.tsp` (`@d2Concern` decorators) + `tspconfig.yaml` only. A client-exposed op that omits `@d2Concern` is a loud build failure (`D2TSP013`); `@d2/typespec-decorators` additionally fires `invalid-concern` when the segment is not a legal C# identifier. The routing is C#-only — the TypeScript DTO mirror has no namespace, so it is unaffected.
+`@d2Concern("<Segment>")` on a client-exposed op names its **co-location concern** — the folder + namespace segment that op's transport DTOs live in. It is a general, spec/config-driven mechanism exactly parallel to the app-handler arm (`csharp-app-namespace-base` + the `.<Category>.<PascalOp>` derivation): the C# DTO emitter routes an exposed op's DTOs to `<csharp-clients-namespace>.<Concern>` (folder = namespace), and the regen `COPY_MANIFEST` places them in `client/<Concern>/` alongside the hand-written runtime that serves them. The module façade splits into a `Facade/` folder — the interface lands in `<clients-ns>.Facade`, the impl + generated DI registration in `<app-ns>.Facade` — and the registration's file + method names derive from the clients-namespace **leaf** segment (leaf `Client` → `KeyCustodianClientGenerated.g.cs` / `AddD2KeyCustodianClient()`), never a hard-coded literal. There are ZERO hard-coded file/name special cases in emitter code: the maintenance surface is the `.tsp` (`@d2Concern` decorators) + `tspconfig.yaml` only. A client-exposed op that omits `@d2Concern` is a loud build failure (`D2TSP013`); `@dcsv-io/d2-typespec-decorators` additionally fires `invalid-concern` when the segment is not a legal C# identifier. The routing is C#-only — the TypeScript DTO mirror has no namespace, so it is unaffected.
 
 ### Wire-channel single source
 
@@ -788,7 +789,7 @@ When a spec contains at least one `@d2GrpcMethod` op and the channel is validate
 | `WireVersion.g.cs`                | `<proto-csharp-namespace-path>/Generated/WireVersion.g.cs`   | Byte-gate test (`proto-grpc-byte-parity.test.ts`) |
 | `wire-identity.manifest.g.json`   | `<proto-csharp-namespace-path>/Generated/wire-identity.manifest.g.json` | Byte-gate test                   |
 
-`WireVersion.g.cs` emits a `public static class WireVersion` with three `public const` fields (`CHANNEL`, `GENERATION`, `STABILITY`). The manifest records the identity facts (`protoPackage`, `protoCsharpNamespace`, `generation`, `stability`, `channel`) plus `x-d2-generated-by: "@d2/typespec-emitters"`. Neither artifact carries package names (those are deployment details, not wire-identity facts).
+`WireVersion.g.cs` emits a `public static class WireVersion` with three `public const` fields (`CHANNEL`, `GENERATION`, `STABILITY`). The manifest records the identity facts (`protoPackage`, `protoCsharpNamespace`, `generation`, `stability`, `channel`) plus `x-d2-generated-by: "@dcsv-io/d2-typespec-emitters"`. Neither artifact carries package names (those are deployment details, not wire-identity facts).
 
 Both artifacts are excluded from the `COPY_MANIFEST` allowlist in `private/tools/scripts/regen-typespec-emitters.mjs` because they are namespace-sensitive; they are governed by the byte-gate tests instead.
 

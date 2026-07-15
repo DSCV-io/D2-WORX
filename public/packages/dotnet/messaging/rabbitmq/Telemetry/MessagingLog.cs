@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Telemetry;
+namespace DcsvIo.D2.Messaging.RabbitMq.Telemetry;
 
 using Microsoft.Extensions.Logging;
 

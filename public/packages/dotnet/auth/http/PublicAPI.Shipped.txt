@@ -1,49 +1,49 @@
 #nullable enable
-D2.Shared.Auth.Http.Ambient.HttpContextAmbientRequestScopeAccessor
-D2.Shared.Auth.Http.Ambient.HttpContextAmbientRequestScopeAccessor.Current.get -> System.IServiceProvider?
-D2.Shared.Auth.Http.Ambient.HttpContextAmbientRequestScopeAccessor.HttpContextAmbientRequestScopeAccessor(Microsoft.AspNetCore.Http.IHttpContextAccessor! httpContextAccessor) -> void
-D2.Shared.Auth.Http.AuthAppBuilderExtensions
-D2.Shared.Auth.Http.AuthAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
-D2.Shared.Auth.Http.AuthAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2Auth() -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
-D2.Shared.Auth.Http.AuthHttpServiceCollectionExtensions
-D2.Shared.Auth.Http.AuthHttpServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
-D2.Shared.Auth.Http.AuthHttpServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2AuthHttp() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata
-D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.<Clone>$() -> D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata!
-D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.Equals(D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata? other) -> bool
-D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.IsHarmlessEndpoint.get -> bool
-D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.Match.get -> D2.Shared.Auth.Abstractions.ScopeMatch
-D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.Scopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
-D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions
-D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions.extension<TBuilder>(TBuilder)
-D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions.extension<TBuilder>(TBuilder).MarkAsD2HarmlessEndpoint() -> TBuilder
-D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions.extension<TBuilder>(TBuilder).RequireAllScopes(string! scope, params string![]! additionalScopes) -> TBuilder
-D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions.extension<TBuilder>(TBuilder).RequireAnyScope(string! scope, params string![]! additionalScopes) -> TBuilder
-D2.Shared.Auth.Http.Middleware.HttpContextRequestContextExtensions
-D2.Shared.Auth.Http.Middleware.HttpContextRequestContextExtensions.extension(Microsoft.AspNetCore.Http.HttpContext!)
-D2.Shared.Auth.Http.Middleware.HttpContextRequestContextExtensions.extension(Microsoft.AspNetCore.Http.HttpContext!).GetD2RequestContext() -> D2.Shared.Context.Abstractions.IRequestContext?
-D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions
-D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.extension(D2.Shared.Result.D2Result?)
-D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.extension(D2.Shared.Result.D2Result?).ToProblemDetails(Microsoft.AspNetCore.Http.HttpContext! context) -> Microsoft.AspNetCore.Mvc.ProblemDetails!
-D2.Shared.Auth.Http.RequestOriginEdgeAppBuilderExtensions
-D2.Shared.Auth.Http.RequestOriginEdgeAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
-D2.Shared.Auth.Http.RequestOriginEdgeAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2RequestOriginEdge() -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
-D2.Shared.Auth.Http.RequestOriginEdgeServiceCollectionExtensions
-D2.Shared.Auth.Http.RequestOriginEdgeServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
-D2.Shared.Auth.Http.RequestOriginEdgeServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2RequestOriginEdge(System.Action<D2.Shared.Auth.Abstractions.D2WorkloadIdentityOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-override D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.Equals(object? obj) -> bool
-override D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.GetHashCode() -> int
-override D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.ToString() -> string!
-static D2.Shared.Auth.Http.AuthAppBuilderExtensions.UseD2Auth(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
-static D2.Shared.Auth.Http.AuthHttpServiceCollectionExtensions.AddD2AuthHttp(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.ForScopes(System.Collections.Generic.IEnumerable<string!>! scopes, D2.Shared.Auth.Abstractions.ScopeMatch match) -> D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata!
-static D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.operator !=(D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata? left, D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata? right) -> bool
-static D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.operator ==(D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata? left, D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata? right) -> bool
-static D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions.MarkAsD2HarmlessEndpoint<TBuilder>(this TBuilder builder) -> TBuilder
-static D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions.RequireAllScopes<TBuilder>(this TBuilder builder, string! scope, params string![]! additionalScopes) -> TBuilder
-static D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions.RequireAnyScope<TBuilder>(this TBuilder builder, string! scope, params string![]! additionalScopes) -> TBuilder
-static D2.Shared.Auth.Http.Middleware.HttpContextRequestContextExtensions.GetD2RequestContext(this Microsoft.AspNetCore.Http.HttpContext! context) -> D2.Shared.Context.Abstractions.IRequestContext?
-static D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.ToProblemDetails(this D2.Shared.Result.D2Result? result, Microsoft.AspNetCore.Http.HttpContext! context) -> Microsoft.AspNetCore.Mvc.ProblemDetails!
-static D2.Shared.Auth.Http.RequestOriginEdgeAppBuilderExtensions.UseD2RequestOriginEdge(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
-static D2.Shared.Auth.Http.RequestOriginEdgeServiceCollectionExtensions.AddD2RequestOriginEdge(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<D2.Shared.Auth.Abstractions.D2WorkloadIdentityOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static readonly D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata.HarmlessEndpoint -> D2.Shared.Auth.Http.Endpoints.EndpointScopeMetadata!
+DcsvIo.D2.Auth.Http.Ambient.HttpContextAmbientRequestScopeAccessor
+DcsvIo.D2.Auth.Http.Ambient.HttpContextAmbientRequestScopeAccessor.Current.get -> System.IServiceProvider?
+DcsvIo.D2.Auth.Http.Ambient.HttpContextAmbientRequestScopeAccessor.HttpContextAmbientRequestScopeAccessor(Microsoft.AspNetCore.Http.IHttpContextAccessor! httpContextAccessor) -> void
+DcsvIo.D2.Auth.Http.AuthAppBuilderExtensions
+DcsvIo.D2.Auth.Http.AuthAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
+DcsvIo.D2.Auth.Http.AuthAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2Auth() -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+DcsvIo.D2.Auth.Http.AuthHttpServiceCollectionExtensions
+DcsvIo.D2.Auth.Http.AuthHttpServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Auth.Http.AuthHttpServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2AuthHttp() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata
+DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.<Clone>$() -> DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata!
+DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.Equals(DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata? other) -> bool
+DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.IsHarmlessEndpoint.get -> bool
+DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.Match.get -> DcsvIo.D2.Auth.Abstractions.ScopeMatch
+DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.Scopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+DcsvIo.D2.Auth.Http.Endpoints.RequireD2ScopeExtensions
+DcsvIo.D2.Auth.Http.Endpoints.RequireD2ScopeExtensions.extension<TBuilder>(TBuilder)
+DcsvIo.D2.Auth.Http.Endpoints.RequireD2ScopeExtensions.extension<TBuilder>(TBuilder).MarkAsD2HarmlessEndpoint() -> TBuilder
+DcsvIo.D2.Auth.Http.Endpoints.RequireD2ScopeExtensions.extension<TBuilder>(TBuilder).RequireAllScopes(string! scope, params string![]! additionalScopes) -> TBuilder
+DcsvIo.D2.Auth.Http.Endpoints.RequireD2ScopeExtensions.extension<TBuilder>(TBuilder).RequireAnyScope(string! scope, params string![]! additionalScopes) -> TBuilder
+DcsvIo.D2.Auth.Http.Middleware.HttpContextRequestContextExtensions
+DcsvIo.D2.Auth.Http.Middleware.HttpContextRequestContextExtensions.extension(Microsoft.AspNetCore.Http.HttpContext!)
+DcsvIo.D2.Auth.Http.Middleware.HttpContextRequestContextExtensions.extension(Microsoft.AspNetCore.Http.HttpContext!).GetD2RequestContext() -> DcsvIo.D2.Context.Abstractions.IRequestContext?
+DcsvIo.D2.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions
+DcsvIo.D2.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.extension(DcsvIo.D2.Result.D2Result?)
+DcsvIo.D2.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.extension(DcsvIo.D2.Result.D2Result?).ToProblemDetails(Microsoft.AspNetCore.Http.HttpContext! context) -> Microsoft.AspNetCore.Mvc.ProblemDetails!
+DcsvIo.D2.Auth.Http.RequestOriginEdgeAppBuilderExtensions
+DcsvIo.D2.Auth.Http.RequestOriginEdgeAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
+DcsvIo.D2.Auth.Http.RequestOriginEdgeAppBuilderExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2RequestOriginEdge() -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+DcsvIo.D2.Auth.Http.RequestOriginEdgeServiceCollectionExtensions
+DcsvIo.D2.Auth.Http.RequestOriginEdgeServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Auth.Http.RequestOriginEdgeServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2RequestOriginEdge(System.Action<DcsvIo.D2.Auth.Abstractions.D2WorkloadIdentityOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+override DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.Equals(object? obj) -> bool
+override DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.GetHashCode() -> int
+override DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.ToString() -> string!
+static DcsvIo.D2.Auth.Http.AuthAppBuilderExtensions.UseD2Auth(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+static DcsvIo.D2.Auth.Http.AuthHttpServiceCollectionExtensions.AddD2AuthHttp(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.ForScopes(System.Collections.Generic.IEnumerable<string!>! scopes, DcsvIo.D2.Auth.Abstractions.ScopeMatch match) -> DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata!
+static DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.operator !=(DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata? left, DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata? right) -> bool
+static DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.operator ==(DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata? left, DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata? right) -> bool
+static DcsvIo.D2.Auth.Http.Endpoints.RequireD2ScopeExtensions.MarkAsD2HarmlessEndpoint<TBuilder>(this TBuilder builder) -> TBuilder
+static DcsvIo.D2.Auth.Http.Endpoints.RequireD2ScopeExtensions.RequireAllScopes<TBuilder>(this TBuilder builder, string! scope, params string![]! additionalScopes) -> TBuilder
+static DcsvIo.D2.Auth.Http.Endpoints.RequireD2ScopeExtensions.RequireAnyScope<TBuilder>(this TBuilder builder, string! scope, params string![]! additionalScopes) -> TBuilder
+static DcsvIo.D2.Auth.Http.Middleware.HttpContextRequestContextExtensions.GetD2RequestContext(this Microsoft.AspNetCore.Http.HttpContext! context) -> DcsvIo.D2.Context.Abstractions.IRequestContext?
+static DcsvIo.D2.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.ToProblemDetails(this DcsvIo.D2.Result.D2Result? result, Microsoft.AspNetCore.Http.HttpContext! context) -> Microsoft.AspNetCore.Mvc.ProblemDetails!
+static DcsvIo.D2.Auth.Http.RequestOriginEdgeAppBuilderExtensions.UseD2RequestOriginEdge(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+static DcsvIo.D2.Auth.Http.RequestOriginEdgeServiceCollectionExtensions.AddD2RequestOriginEdge(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<DcsvIo.D2.Auth.Abstractions.D2WorkloadIdentityOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static readonly DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata.HarmlessEndpoint -> DcsvIo.D2.Auth.Http.Endpoints.EndpointScopeMetadata!

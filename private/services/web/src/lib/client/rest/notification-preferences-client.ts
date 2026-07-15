@@ -10,7 +10,7 @@
  * resolves the user's auth_user contact internally (memory-cached, refreshed
  * via cross-process eviction events).
  */
-import { type D2Result } from "@d2/result";
+import { type D2Result } from "@dcsv-io/d2-result";
 import { apiCall } from "./gateway-client.js";
 
 const PATH = "/api/v1/notification-preferences";

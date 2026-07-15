@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcEnum;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcEnum;
 
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using D2.Edge.Tests.TypeSpecGrpcEnum.Generated;
-using D2.Services.Protos.EnumFixtures.V1;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Serialization;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Generated;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Serialization;
+using global::D2.Services.Protos.EnumFixtures.V1;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,11 +26,11 @@ using Microsoft.Extensions.Hosting;
 // from the gRPC-enum namespace (where ToWire / ParseFixtureKeyKindWire live) — no alias so
 // the fixture-only name is visible at every call site (§7.23).
 // SignWithKindFixtureOutput exists as both the DTO record (TypeSpecGrpcEnum.Generated) and
-// the Grpc.Tools proto message (D2.Services.Protos.EnumFixtures.V1); pin the DTO.
-using AccountKind = D2.Edge.Tests.TypeSpecDto.Generated.FixtureAccountKind;
-using Level = D2.Edge.Tests.TypeSpecDto.Generated.FixtureLevel;
-using SignWithKindFixtureOutput = D2.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureOutput;
-using Status = D2.Edge.Tests.TypeSpecDto.Generated.FixtureStatus;
+// the Grpc.Tools proto message (global::D2.Services.Protos.EnumFixtures.V1); pin the DTO.
+using AccountKind = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.FixtureAccountKind;
+using Level = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.FixtureLevel;
+using SignWithKindFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureOutput;
+using Status = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.FixtureStatus;
 
 /// <summary>
 /// Cross-language enum-wire round-trip suite for the TypeSpec-emitted wire enums.
@@ -432,7 +432,7 @@ public sealed class EnumWireRoundTripTests
     // CS0121 ambiguity with the server mapper's identically-named helpers).
     private static D2Result<SignWithKindFixtureOutput> MapClientOutput(
         global::D2.Services.Protos.EnumFixtures.V1.SignWithKindFixtureOutput protoData) =>
-        global::D2.Edge.Tests.TypeSpecGrpcEnum.Clients.SignWithKindFixtureClientMappers
+        global::DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Clients.SignWithKindFixtureClientMappers
             .ToSignWithKindFixtureOutput(protoData);
 
     private static FixtureKeyKind ParseFixtureKeyKind(string member) => member switch

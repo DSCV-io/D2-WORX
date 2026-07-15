@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.TokenExchange;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.TokenExchange;
 
 using System.Net;
 using System.Text;
 using AwesomeAssertions;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Auth.Outbound.TokenExchange;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Result;
-using D2.Shared.Tests.Unit.AuthOutbound.Fixtures;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Auth.Outbound.TokenExchange;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Tests.Unit.AuthOutbound.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
@@ -680,7 +680,7 @@ public sealed class HttpTokenExchangeClientTests
                 ClientSecret = "test-secret",
             });
             r_localCache = new DefaultLocalCache(
-                Options.Create(new D2.Shared.Caching.LocalCacheOptions()));
+                Options.Create(new DcsvIo.D2.Caching.LocalCacheOptions()));
             r_cache = new TokenExchangeCache(
                 r_localCache,
                 options,

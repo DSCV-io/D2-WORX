@@ -36,7 +36,7 @@ Auth vocabulary is defined in JSON contracts and emitted by dedicated Roslyn sou
 
 ### 3. `d2_`-prefixed snake_case custom JWT claims
 
-D²-specific claims use a `d2_` prefix in lowercase snake_case (e.g. `d2_session_id`, `d2_username`, `d2_fp`, `d2_org_id`, `d2_org_name`, `d2_org_type`, `d2_org_role`, `d2_step_up_at`); standard claims keep canonical names (`sub`, `aud`, `scope`, `act`, `amr`). The `d2_` namespace avoids collision with standard or future IANA-registered JWT claims. D²'s scope format is dot-separated (e.g. `self.read`) rather than the OAuth `:`-separated convention because `:` collides with JSON-path and URI-encoding conventions in logging/tracing; snake_case claim names are consistent with that segment style and avoid camelCase-to-JSON-key mapping confusion. `JwtClaimTypes` is emitted from the same `public/contracts/jwt-claims/` spec that drives the TS-side `@d2/auth-abstractions` catalog — cross-language drift is structurally impossible.
+D²-specific claims use a `d2_` prefix in lowercase snake_case (e.g. `d2_session_id`, `d2_username`, `d2_fp`, `d2_org_id`, `d2_org_name`, `d2_org_type`, `d2_org_role`, `d2_step_up_at`); standard claims keep canonical names (`sub`, `aud`, `scope`, `act`, `amr`). The `d2_` namespace avoids collision with standard or future IANA-registered JWT claims. D²'s scope format is dot-separated (e.g. `self.read`) rather than the OAuth `:`-separated convention because `:` collides with JSON-path and URI-encoding conventions in logging/tracing; snake_case claim names are consistent with that segment style and avoid camelCase-to-JSON-key mapping confusion. `JwtClaimTypes` is emitted from the same `public/contracts/jwt-claims/` spec that drives the TS-side `@dcsv-io/d2-auth-abstractions` catalog — cross-language drift is structurally impossible.
 
 ### 4. Abstractions/runtime split with per-transport bindings
 
@@ -57,7 +57,7 @@ Five independently referenceable assemblies: `Auth.Abstractions` (vocabulary + c
 - **gRPC fluent**: `.RequireAnyScope("…")` / `.RequireAllScopes("…")` on the gRPC service builder. Produces `MethodScopeMetadata` directly (fluent takes precedence over attribute path).
 - **Harmless bypass**: `.MarkAsD2HarmlessEndpoint()` / `[D2HarmlessEndpoint]` opts out of the full pipeline (k8s probes, OIDC discovery endpoints). `[AllowAnonymous]` is deliberately NOT recognized — its semantic ties to the BCL `AuthorizationMiddleware` chain that this stack bypasses.
 
-`ScopeMatch.Any` and `ScopeMatch.All` live in `D2.Shared.Auth.Abstractions`; `MethodScopeMetadata` mirrors `EndpointScopeMetadata` by type (namespace-distinct so per-transport options can grow independently).
+`ScopeMatch.Any` and `ScopeMatch.All` live in `DcsvIo.D2.Auth.Abstractions`; `MethodScopeMetadata` mirrors `EndpointScopeMetadata` by type (namespace-distinct so per-transport options can grow independently).
 
 The gRPC interceptor covers all four server handler kinds via a single `RunAuthAsync` entry point (streaming methods cannot bypass auth by omission) and dual-writes `IRequestContext` to both `ServerCallContext.UserState` and `HttpContext.Items`. All failures surface a uniform 401 / `StatusCode.Unauthenticated`; granularity is communicated only via a `d2_error_code` trailer/ProblemDetails field, never via distinct HTTP/gRPC status codes (no structural information leaked to an unauthenticated caller).
 
@@ -65,7 +65,7 @@ The gRPC interceptor covers all four server handler kinds via a single `RunAuthA
 
 `BaseHandler.RunCorePipelineAsync` can perform a redundant scope check before `ExecuteAsync` runs, declared via `HandlerOptions.ScopeRequirement`. The type is `ScopeRequirement(HandlerScopeMatch Match, IReadOnlySet<string> Scopes)`:
 
-- `HandlerScopeMatch.Any` / `HandlerScopeMatch.All` mirror the transport enum but live in `D2.Shared.Handler.Abstractions` so handler assemblies carry no compile-time dependency on the auth layer (layer-hygiene invariant).
+- `HandlerScopeMatch.Any` / `HandlerScopeMatch.All` mirror the transport enum but live in `DcsvIo.D2.Handler.Abstractions` so handler assemblies carry no compile-time dependency on the auth layer (layer-hygiene invariant).
 - A `null` `ScopeRequirement` (the default) disables the per-handler check entirely — any authenticated caller that passed the transport layer invokes the handler.
 - An empty `Scopes` set is rejected at construction time — the `ScopeRequirement` constructor throws `ArgumentException` if `Scopes` is empty. Pass a `null` `ScopeRequirement` to disable the per-handler check. The `is { Scopes.Count: > 0 }` pipeline guard remains as defense-in-depth for a now-unreachable branch.
 
@@ -73,7 +73,7 @@ The per-handler check returns `D2Result.Forbidden` on mismatch. Its role is defe
 
 #### Deny-by-default boot guard
 
-A misconfigured endpoint — one whose declaration was omitted — silently admits any authenticated caller at runtime. To surface this class of error before any traffic is served, `D2.Shared.Auth.Startup` ships `AuthEndpointGuardStartupFilter`, an `IStartupFilter` that walks the fully-populated `EndpointDataSource` **at host startup** (inside `GenericWebHostService.StartAsync`, after middleware pipeline construction and before Kestrel accepts connections) and fails the host with `InvalidOperationException` when any `RouteEndpoint` lacks a declared auth intent.
+A misconfigured endpoint — one whose declaration was omitted — silently admits any authenticated caller at runtime. To surface this class of error before any traffic is served, `DcsvIo.D2.Auth.Startup` ships `AuthEndpointGuardStartupFilter`, an `IStartupFilter` that walks the fully-populated `EndpointDataSource` **at host startup** (inside `GenericWebHostService.StartAsync`, after middleware pipeline construction and before Kestrel accepts connections) and fails the host with `InvalidOperationException` when any `RouteEndpoint` lacks a declared auth intent.
 
 "Declared auth intent" is any of: `EndpointScopeMetadata` (HTTP fluent path), `MethodScopeMetadata` (gRPC fluent path), `[D2RequireAnyScopeAttribute]`, `[D2RequireAllScopesAttribute]`, or `[D2HarmlessEndpointAttribute]` on the endpoint's metadata collection.
 

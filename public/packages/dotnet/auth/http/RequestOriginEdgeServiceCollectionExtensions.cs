@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http;
+namespace DcsvIo.D2.Auth.Http;
 
 using System;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Time;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Time;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

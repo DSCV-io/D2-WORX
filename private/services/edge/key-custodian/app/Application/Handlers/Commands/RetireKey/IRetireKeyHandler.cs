@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 
 /// <summary>
 /// Retires a retiring key once its grace window has elapsed, moving it to the

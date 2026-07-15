@@ -124,7 +124,7 @@ export function emitErrorCategory(spec: ErrorCategorySpec): EmitResult {
     " * is the snake_case wire string carried on the result envelope. Mirrors",
   );
   sb.appendLine(
-    " * the .NET D2.Shared.ErrorCodes.Category.ErrorCategory enum (same wire",
+    " * the .NET DcsvIo.D2.ErrorCodes.Category.ErrorCategory enum (same wire",
   );
   sb.appendLine(" * values).");
   sb.appendLine(" */");

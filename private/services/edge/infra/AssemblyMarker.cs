@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Infra;
+namespace DcsvIo.D2.Private.Edge.Infra;
 
 /// <summary>
 /// Assembly marker for the thin Edge host Infra shell. Empty shell for

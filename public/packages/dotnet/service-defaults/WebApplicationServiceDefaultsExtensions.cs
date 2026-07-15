@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ServiceDefaults;
+namespace DcsvIo.D2.ServiceDefaults;
 
-using D2.Shared.AspNetCore;
-using D2.Shared.Auth.Http;
-using D2.Shared.Logging;
-using D2.Shared.Telemetry;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Logging;
+using DcsvIo.D2.Telemetry;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -161,7 +161,7 @@ public static class WebApplicationServiceDefaultsExtensions
         /// Re-exports
         /// <see cref="RunD2ServiceWebApplicationExtensions.RunD2ServiceAsync"/>
         /// at the aggregator namespace so a single
-        /// <c>using D2.Shared.ServiceDefaults;</c> directive at a
+        /// <c>using DcsvIo.D2.ServiceDefaults;</c> directive at a
         /// composition root makes every default surface available without
         /// importing each underlying lib's namespace separately.
         /// </summary>

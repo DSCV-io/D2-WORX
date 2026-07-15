@@ -197,7 +197,7 @@ export function emitHeadersCatalog(
   );
   sb.appendLine(
     ` * Generated from headers.spec.json. Mirrors .NET ` +
-      `D2.Shared.Headers.${capitalize(catalog)}.${className}.`,
+      `DcsvIo.D2.Headers.${capitalize(catalog)}.${className}.`,
   );
   sb.appendLine(" */");
   sb.appendLine(`export const ${className} = {`);

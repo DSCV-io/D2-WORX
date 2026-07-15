@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://d2-worx.dev/contracts/geo/fixtures/confusables.schema.json",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/fixtures/confusables.schema.json",
   "title": "Geo name-resolver confusables parity fixture",
-  "description": "Cross-language adversarial fixture for DefaultGeoNameResolver. Each entry pins a free-form name input + expected outcome (matched alpha-2 / iso-3166-2 code, or null for ambiguous / not-found). Both runtimes (.NET DefaultGeoNameResolver + TS @d2/geo-default tryResolveCountryByName / tryResolveSubdivisionByName) consume this file via the parity test suite. Same input MUST produce the same outcome on both sides.",
+  "description": "Cross-language adversarial fixture for DefaultGeoNameResolver. Each entry pins a free-form name input + expected outcome (matched alpha-2 / iso-3166-2 code, or null for ambiguous / not-found). Both runtimes (.NET DefaultGeoNameResolver + TS @dcsv-io/d2-geo-default tryResolveCountryByName / tryResolveSubdivisionByName) consume this file via the parity test suite. Same input MUST produce the same outcome on both sides.",
   "type": "object",
   "additionalProperties": false,
   "required": ["$comment", "version", "countryCases", "subdivisionCases"],

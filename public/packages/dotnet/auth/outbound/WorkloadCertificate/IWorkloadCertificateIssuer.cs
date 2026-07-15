@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
+namespace DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// The host-supplied port that issues (or re-issues) this workload's leaf

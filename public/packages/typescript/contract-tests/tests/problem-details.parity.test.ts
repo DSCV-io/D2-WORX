@@ -10,7 +10,7 @@ import {
   PROBLEM_TYPE_URI_PREFIX,
   ProblemDetailsExtensionKeys,
   ProblemDetailsTitles,
-} from "@d2/headers";
+} from "@dcsv-io/d2-headers";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

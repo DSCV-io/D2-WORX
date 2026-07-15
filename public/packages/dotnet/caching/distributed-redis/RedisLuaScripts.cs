@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching.Distributed.Redis;
+namespace DcsvIo.D2.Caching.Distributed.Redis;
 
 /// <summary>
 /// Lua scripts used internally by the Redis cache impl for atomic

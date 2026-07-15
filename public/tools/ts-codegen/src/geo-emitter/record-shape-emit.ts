@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { truthy } from "@d2/utilities";
+import { truthy } from "@dcsv-io/d2-utilities";
 
 import { buildHeader } from "../lib/file-emit.js";
 import { tsPackagePath } from "../lib/paths.js";
@@ -13,8 +13,8 @@ import { appendEslintDisable, appendJsDoc } from "./emit-helpers.js";
 
 /**
  * Emits the TS record-shape interfaces (one shape per catalog) into
- * `@d2/geo-abstractions/src/generated/<entity>.g.ts`. Shapes mirror the
- * .NET sealed records defined in `D2.Shared.Geo.Abstractions/Generated/`
+ * `@dcsv-io/d2-geo-abstractions/src/generated/<entity>.g.ts`. Shapes mirror the
+ * .NET sealed records defined in `DcsvIo.D2.Geo.Abstractions/Generated/`
  * field-for-field, modulo TS casing.
  *
  * Naming convention:
@@ -101,7 +101,7 @@ export function emitCountryRecords(): RecordShapeFile {
       "FKs) AND nav record list. Nav refs (`primaryLanguage`,",
       "`subdivisions`, `territories`, ...) populated in the wire-nav step",
       "via one-time cast. Mirrors .NET",
-      "`D2.Shared.Geo.Abstractions.Country` field-for-field (modulo TS",
+      "`DcsvIo.D2.Geo.Abstractions.Country` field-for-field (modulo TS",
       "casing).",
     ].join("\n"),
   );
@@ -182,7 +182,7 @@ export function emitSubdivisionRecords(): RecordShapeFile {
       "`state` / `province` / `region`); display labels live on the",
       "`type` field. Nav refs `country` + `parentSubdivision` populated",
       "in the wire-nav step. Mirrors .NET",
-      "`D2.Shared.Geo.Abstractions.Subdivision` field-for-field.",
+      "`DcsvIo.D2.Geo.Abstractions.Subdivision` field-for-field.",
     ].join("\n"),
   );
   sb.appendLine("export interface Subdivision {");
@@ -224,7 +224,7 @@ export function emitCurrencyRecords(): RecordShapeFile {
     [
       "`Currency` record. Reverse-nav `acceptedInCountries` populated",
       "in the wire-nav step from every country's `currencies` list.",
-      "Mirrors .NET `D2.Shared.Geo.Abstractions.Currency` field-for-field.",
+      "Mirrors .NET `DcsvIo.D2.Geo.Abstractions.Currency` field-for-field.",
     ].join("\n"),
   );
   sb.appendLine("export interface Currency {");
@@ -267,7 +267,7 @@ export function emitLanguageRecords(): RecordShapeFile {
     [
       "`Language` record. Reverse-navs `spokenInCountries` + `locales`",
       "populated in the wire-nav step. Mirrors .NET",
-      "`D2.Shared.Geo.Abstractions.Language` field-for-field.",
+      "`DcsvIo.D2.Geo.Abstractions.Language` field-for-field.",
     ].join("\n"),
   );
   sb.appendLine("export interface Language {");
@@ -314,7 +314,7 @@ export function emitLocaleRecords(): RecordShapeFile {
       'enum scope"). `country` / `countryIso31661Alpha2Code` are `undefined`',
       "for language-only tags (no region subtag). Both nav refs populated",
       "in the wire-nav step. Mirrors .NET",
-      "`D2.Shared.Geo.Abstractions.Locale` field-for-field.",
+      "`DcsvIo.D2.Geo.Abstractions.Locale` field-for-field.",
     ].join("\n"),
   );
   sb.appendLine("export interface Locale {");
@@ -359,7 +359,7 @@ export function emitTimezoneRecords(): RecordShapeFile {
       "pseudo-zones. `coApplicableCountries` carries other countries",
       "sharing the same IANA zone (beyond the primary). Both nav refs",
       "populated in the wire-nav step. Mirrors .NET",
-      "`D2.Shared.Geo.Abstractions.Timezone` field-for-field.",
+      "`DcsvIo.D2.Geo.Abstractions.Timezone` field-for-field.",
     ].join("\n"),
   );
   sb.appendLine("export interface Timezone {");
@@ -412,7 +412,7 @@ export function emitGeopoliticalEntityRecords(): RecordShapeFile {
       "`memberCountryIso31661Alpha2Codes` for O(1) `.has()` checks,",
       "`memberCountries` for ordered iteration. Nav populated in the",
       "wire-nav step. Mirrors .NET",
-      "`D2.Shared.Geo.Abstractions.GeopoliticalEntity` field-for-field.",
+      "`DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity` field-for-field.",
     ].join("\n"),
   );
   sb.appendLine("export interface GeopoliticalEntity {");

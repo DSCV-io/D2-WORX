@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry.Internal;
+namespace DcsvIo.D2.Telemetry.Internal;
 
 /// <summary>
 /// Internal helper that reads the <c>OTEL_SDK_DISABLED</c> env var and

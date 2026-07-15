@@ -22,7 +22,7 @@ Three-tier output layout at `public/contracts/geo/`:
 
 - **Tier 1 — `src-data/*.spec.json`** — pipeline-raw output (faithful capture of each upstream source with diagnostics + per-entry `_provenance`)
 - **Tier 2 — `*.spec.json` (root)** — codegen-ready entity-shaped specs (6 pipeline-derived + 1 hand-rolled peer: `geopolitical-entities.spec.json`)
-- **Tier 3** — generated C# + TS code in the downstream geo libs (`D2.Shared.Geo.Default` / `@d2/geo-default`); produced from Tier 2; lives OUTSIDE this directory. Canonical: geo libs as shipped — see [`docs/dev/deliverables/0009-geo-libs.md`](../../docs/dev/deliverables/0009-geo-libs.md) and [`public/contracts/geo/README.md`](../../contracts/geo/README.md).
+- **Tier 3** — generated C# + TS code in the downstream geo libs (`DcsvIo.D2.Geo.Default` / `@dcsv-io/d2-geo-default`); produced from Tier 2; lives OUTSIDE this directory. Canonical: geo libs as shipped — see [`docs/dev/deliverables/0009-geo-libs.md`](../../docs/dev/deliverables/0009-geo-libs.md) and [`public/contracts/geo/README.md`](../../contracts/geo/README.md).
 
 See [`../../contracts/geo/README.md`](../../contracts/geo/README.md) for the tier details.
 
@@ -126,7 +126,7 @@ CLDR doesn't ship `currencies.json` / `numbers.json` / `ca-gregorian.json` for e
 | `vitest`                          | MIT        | Parity + unit tests                               |
 | `@types/node`, `@types/papaparse` | MIT        | TS type declarations                              |
 
-Standalone tool — no `@d2/*` workspace dependencies. Build and tests run in isolation.
+Standalone tool — no `@dcsv-io/d2-*` workspace dependencies. Build and tests run in isolation.
 
 ## Validation ledger
 

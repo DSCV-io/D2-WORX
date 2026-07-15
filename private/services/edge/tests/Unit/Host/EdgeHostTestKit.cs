@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.Api.Mtls;
-using D2.Edge.Tests.Unit.KeyCustodian.Infra;
+using DcsvIo.D2.Private.Edge.Api.Mtls;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>
@@ -95,7 +95,7 @@ internal sealed class EdgeHostTestKit : IDisposable
 
             if (Directory.Exists(fromEdge)
                 && File.Exists(
-                    Path.Combine(dir.FullName, "tests", "D2.Edge.Tests.csproj")))
+                    Path.Combine(dir.FullName, "tests", "DcsvIo.D2.Private.Edge.Tests.csproj")))
             {
                 return fromEdge;
             }
@@ -105,7 +105,7 @@ internal sealed class EdgeHostTestKit : IDisposable
 
         throw new InvalidOperationException(
             "Edge.Api source root not found (sentinels: D2.slnx or "
-            + "edge/tests/D2.Edge.Tests.csproj).");
+            + "edge/tests/DcsvIo.D2.Private.Edge.Tests.csproj).");
     }
 
     /// <summary>

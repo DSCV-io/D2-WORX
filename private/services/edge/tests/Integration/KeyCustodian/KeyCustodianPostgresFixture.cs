@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian;
 
 using System;
 using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
-using D2.Shared.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;

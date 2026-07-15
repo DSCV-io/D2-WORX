@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Sessions;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Sessions;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Sessions;
+using DcsvIo.D2.Auth.Sessions;
 using Xunit;
 
 public sealed class SessionLivenessOptionsTests

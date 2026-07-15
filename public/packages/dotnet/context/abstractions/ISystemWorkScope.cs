@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.Abstractions;
+namespace DcsvIo.D2.Context.Abstractions;
 
 /// <summary>
 /// A disposable DI scope opened by <see cref="ISystemWorkScopeFactory"/> for
 /// hosted / background authority-bearing work.
-/// <see cref="D2.Shared.Auth.Abstractions.RequestOrigin.System"/> is already
+/// <see cref="DcsvIo.D2.Auth.Abstractions.RequestOrigin.System"/> is already
 /// established on the scope's request context when the factory returns.
 /// </summary>
 public interface ISystemWorkScope : IAsyncDisposable

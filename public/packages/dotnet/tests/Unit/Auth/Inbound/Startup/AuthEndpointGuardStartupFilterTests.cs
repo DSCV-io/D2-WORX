@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Startup;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Startup;
 
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Http.Endpoints;
-using D2.Shared.Auth.Startup;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Http.Endpoints;
+using DcsvIo.D2.Auth.Startup;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -100,7 +100,7 @@ public sealed class AuthEndpointGuardStartupFilterTests
     {
         var endpoint = BuildRoute(
             "/api/files/{id}",
-            [EndpointScopeMetadata.ForScopes(["files.read"], D2.Shared.Auth.Abstractions.ScopeMatch.Any)]);
+            [EndpointScopeMetadata.ForScopes(["files.read"], DcsvIo.D2.Auth.Abstractions.ScopeMatch.Any)]);
 
         var nextCalled = false;
         var appBuilder = BuildApplicationBuilder([endpoint]);
@@ -134,7 +134,7 @@ public sealed class AuthEndpointGuardStartupFilterTests
     {
         var endpoint = BuildRoute(
             "d2.files.FilesService/GetFile",
-            [MethodScopeMetadata.ForScopes(["files.read"], D2.Shared.Auth.Abstractions.ScopeMatch.Any)]);
+            [MethodScopeMetadata.ForScopes(["files.read"], DcsvIo.D2.Auth.Abstractions.ScopeMatch.Any)]);
 
         var nextCalled = false;
         var appBuilder = BuildApplicationBuilder([endpoint]);

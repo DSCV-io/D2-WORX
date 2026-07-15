@@ -11,10 +11,10 @@
 /**
  * Spec-derived binary-layout constants for the D2 on-wire SEALED encryption
  * frame (version 2 — the asymmetric ECDH-ES hybrid). Mirrors .NET
- * D2.Shared.Encryption.SealedFrameLayout (same offsets and lengths
+ * DcsvIo.D2.Encryption.SealedFrameLayout (same offsets and lengths
  * byte-for-byte).
  *
- * Consumed by @d2/encryption-abstractions for on-wire sealed-frame reading.
+ * Consumed by @dcsv-io/d2-encryption-abstractions for on-wire sealed-frame reading.
  */
 export const SealedFrame = {
   CURRENT_VERSION: 2,

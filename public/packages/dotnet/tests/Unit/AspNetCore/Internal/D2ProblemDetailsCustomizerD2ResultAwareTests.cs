@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AspNetCore.Internal;
+namespace DcsvIo.D2.Tests.Unit.AspNetCore.Internal;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
-using D2.Shared.AspNetCore.Internal;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
-using D2.Shared.ProblemDetails;
-using D2.Shared.Result;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.AspNetCore.Internal;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.ProblemDetails;
+using DcsvIo.D2.Result;
 using Microsoft.AspNetCore.Http;
 using Xunit;
 using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;

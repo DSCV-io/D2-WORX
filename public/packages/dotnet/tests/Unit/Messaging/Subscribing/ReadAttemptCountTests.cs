@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging.Subscribing;
+namespace DcsvIo.D2.Tests.Unit.Messaging.Subscribing;
 
 using AwesomeAssertions;
-using D2.Shared.Messaging.RabbitMq.Subscribing;
+using DcsvIo.D2.Messaging.RabbitMq.Subscribing;
 using global::RabbitMQ.Client.Events;
 using Xunit;
 

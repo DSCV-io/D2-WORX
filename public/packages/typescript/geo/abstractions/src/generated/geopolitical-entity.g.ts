@@ -19,7 +19,7 @@ import type { DeprecationInfo } from "../deprecation-info.js";
  * `memberCountryIso31661Alpha2Codes` for O(1) `.has()` checks,
  * `memberCountries` for ordered iteration. Nav populated in the
  * wire-nav step. Mirrors .NET
- * `D2.Shared.Geo.Abstractions.GeopoliticalEntity` field-for-field.
+ * `DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity` field-for-field.
  */
 export interface GeopoliticalEntity {
   readonly shortCode: GeopoliticalEntityCode;

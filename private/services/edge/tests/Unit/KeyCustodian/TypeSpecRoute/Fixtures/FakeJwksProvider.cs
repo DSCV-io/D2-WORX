@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 /// <summary>
 /// In-memory <see cref="IJwksProvider"/> stand-in that returns a snapshot
 /// built from canned <see cref="SecurityKey"/>s.
-/// Local copy — originals in <c>D2.Shared.Tests</c> are <c>internal sealed</c>
+/// Local copy — originals in <c>DcsvIo.D2.Tests</c> are <c>internal sealed</c>
 /// and cannot be referenced from a different assembly.
 /// </summary>
 internal sealed class FakeJwksProvider : IJwksProvider

@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { truthy } from "@d2/utilities";
+import { truthy } from "@dcsv-io/d2-utilities";
 
 import { buildHeader, writeGeneratedFile } from "../lib/file-emit.js";
 import { tsPackagePath } from "../lib/paths.js";
@@ -24,7 +24,7 @@ import type {
 
 /**
  * Emits the four "real enum" code catalogs to
- * `@d2/geo-abstractions/src/generated/typed-codes/<name>.g.ts` (Country,
+ * `@dcsv-io/d2-geo-abstractions/src/generated/typed-codes/<name>.g.ts` (Country,
  * Currency, Language, GeopoliticalEntity) plus the related fixed-value enums
  * derived from the spec data (GeopoliticalEntityType, WritingDirection,
  * DateFormatPattern, CurrencyAcceptanceLevel).
@@ -43,7 +43,7 @@ import type {
  * ```
  *
  * Branding + Zod schemas are the established pattern for spec-derived
- * closed-set catalogs in `@d2/geo-abstractions` (the package already lists
+ * closed-set catalogs in `@dcsv-io/d2-geo-abstractions` (the package already lists
  * `zod` as a peer dependency).
  */
 
@@ -75,7 +75,7 @@ export function emitCountryEnum(entries: readonly CountrySpec[]): {
     "CountryCode",
     "ISO 3166-1 alpha-2 country code catalog. Branded string type — narrows to " +
       "exactly the 250-ish codes shipped in the spec. Mirrors .NET " +
-      "`D2.Shared.Geo.Abstractions.CountryCode` (real enum) byte-for-byte over " +
+      "`DcsvIo.D2.Geo.Abstractions.CountryCode` (real enum) byte-for-byte over " +
       "the wire (string-encoded alpha-2 in both runtimes). The bare `Country` " +
       "name is reserved for the spec-derived data record (interface).",
     sorted.map((c) => ({
@@ -108,7 +108,7 @@ export function emitCurrencyEnum(entries: readonly CurrencySpec[]): {
     sb,
     "CurrencyCode",
     "ISO 4217 alpha currency code catalog (active + historical). Branded " +
-      "string type. Mirrors .NET `D2.Shared.Geo.Abstractions.CurrencyCode` " +
+      "string type. Mirrors .NET `DcsvIo.D2.Geo.Abstractions.CurrencyCode` " +
       "(real enum) byte-for-byte over the wire.",
     sorted.map((c) => ({
       key: c.iso4217AlphaCode,
@@ -140,7 +140,7 @@ export function emitLanguageEnum(entries: readonly LanguageSpec[]): {
     sb,
     "LanguageCode",
     "ISO 639-1 alpha-2 language code catalog. Branded string type. Mirrors " +
-      ".NET `D2.Shared.Geo.Abstractions.LanguageCode` (real enum) " +
+      ".NET `DcsvIo.D2.Geo.Abstractions.LanguageCode` (real enum) " +
       "byte-for-byte over the wire.",
     sorted.map((l) => ({
       key: l.iso6391Code,
@@ -172,7 +172,7 @@ export function emitGeopoliticalEntityEnum(
     "GeopoliticalEntityCode",
     "Catalog of supranational geopolitical short-codes (EU, NATO, USMCA, " +
       "continents, trade blocs, military alliances, etc.). Branded string " +
-      "type. Mirrors .NET `D2.Shared.Geo.Abstractions.GeopoliticalEntityCode` " +
+      "type. Mirrors .NET `DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode` " +
       "byte-for-byte over the wire.",
     sorted.map((g) => ({
       key: g.shortCode,
@@ -216,7 +216,7 @@ export function emitFixedEnums(): {
       "the exact integer assignments. Categories: General Geopolitical (0-2),",
       "Economic (10-17), Political (20-25), Military (30-35).",
       "",
-      "Mirrors .NET `D2.Shared.Geo.Abstractions.GeopoliticalEntityType`",
+      "Mirrors .NET `DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType`",
       "byte-for-byte (same integer values, same names).",
     ].join("\n"),
   );
@@ -270,7 +270,7 @@ export function emitFixedEnums(): {
     [
       "Writing direction enum (left-to-right vs right-to-left). Surfaces on the",
       "`Language` record. Mirrors .NET",
-      "`D2.Shared.Geo.Abstractions.WritingDirection`.",
+      "`DcsvIo.D2.Geo.Abstractions.WritingDirection`.",
     ].join("\n"),
   );
 
@@ -280,7 +280,7 @@ export function emitFixedEnums(): {
     ["DMY", "MDY", "YMD"],
     [
       "Date format pattern enum. Surfaces on `Locale.dateFormatPattern`.",
-      "Mirrors .NET `D2.Shared.Geo.Abstractions.DateFormatPattern`.",
+      "Mirrors .NET `DcsvIo.D2.Geo.Abstractions.DateFormatPattern`.",
     ].join("\n"),
   );
 
@@ -291,7 +291,7 @@ export function emitFixedEnums(): {
     [
       "Acceptance classification for a currency within a country (legal tender",
       "vs widely accepted vs tourist). Surfaces on `Country.currencies[]`.",
-      "Mirrors .NET `D2.Shared.Geo.Abstractions.CurrencyAcceptanceLevel`.",
+      "Mirrors .NET `DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel`.",
     ].join("\n"),
   );
 
@@ -301,7 +301,7 @@ export function emitFixedEnums(): {
     ["Metric", "Imperial", "Mixed"],
     [
       "Measurement system enum. Surfaces on `Country.measurementSystem`.",
-      "Mirrors .NET `D2.Shared.Geo.Abstractions.MeasurementSystem`.",
+      "Mirrors .NET `DcsvIo.D2.Geo.Abstractions.MeasurementSystem`.",
     ].join("\n"),
   );
 
@@ -330,9 +330,9 @@ export function emitFixedEnums(): {
 /**
  * Emit a `Locale.resolveSelectable()` shape — kept here with the enums so the
  * branded `LocaleCode` type referenced in its signature is in scope (the
- * concrete impl lives in `@d2/geo-default`; this just emits the API shape).
+ * concrete impl lives in `@dcsv-io/d2-geo-default`; this just emits the API shape).
  * Currently a stub — the impl + selectable-locale data lands in
- * `@d2/geo-default` once selectable-locale cascade data is emitted.
+ * `@dcsv-io/d2-geo-default` once selectable-locale cascade data is emitted.
  */
 export function emitLocaleHelpersStub(): {
   readonly path: string;
@@ -346,15 +346,15 @@ export function emitLocaleHelpersStub(): {
     sb,
     [
       "Locale helper-API shape stubs — actual implementation lands in",
-      "`@d2/geo-default` once the selectable-locale list + cascade data is",
+      "`@dcsv-io/d2-geo-default` once the selectable-locale list + cascade data is",
       "emitted. Re-exported here purely to pin the public-facing function",
-      "signatures so consumers can import them via `@d2/geo-abstractions`",
+      "signatures so consumers can import them via `@dcsv-io/d2-geo-abstractions`",
       "regardless of which package supplies the impl.",
     ].join("\n"),
   );
   sb.appendLine();
   sb.appendLine(
-    "// (no exports yet — populated when `@d2/geo-default` ships.)",
+    "// (no exports yet — populated when `@dcsv-io/d2-geo-default` ships.)",
   );
   sb.appendLine("export {};");
   return { path: GEN_DIR("locale-helpers.g.ts"), source: sb.toString() };

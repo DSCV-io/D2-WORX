@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Forwarding;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Forwarding;
 
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound;
 using Xunit;
 
 /// <summary>
@@ -65,9 +65,9 @@ public sealed class ForwardedJwtLogDelegateContractTests
         // Anchor each auth assembly by a public type so it is force-loaded
         // before enumeration (assembly loading is lazy; relying on
         // AppDomain.GetAssemblies() alone is load-timing-fragile). AuthLog lives
-        // in D2.Shared.Auth (anchored by AuthOptions); OutboundLog lives in
-        // D2.Shared.Auth.Outbound (anchored by AuthOutboundOptions); the wrapper
-        // itself lives in D2.Shared.Auth.Abstractions.
+        // in DcsvIo.D2.Auth (anchored by AuthOptions); OutboundLog lives in
+        // DcsvIo.D2.Auth.Outbound (anchored by AuthOutboundOptions); the wrapper
+        // itself lives in DcsvIo.D2.Auth.Abstractions.
         var anchored = new[]
         {
             typeof(ForwardedJwt).Assembly,
@@ -77,7 +77,7 @@ public sealed class ForwardedJwtLogDelegateContractTests
 
         return AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => a.GetName().Name is { } name
-                && name.StartsWith("D2.Shared.Auth", StringComparison.Ordinal))
+                && name.StartsWith("DcsvIo.D2.Auth", StringComparison.Ordinal))
             .Concat(anchored)
             .Distinct();
     }

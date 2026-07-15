@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
 /// <summary>
 /// A per-domain rotation-notification fan-out. A keyring holder subscribes to be

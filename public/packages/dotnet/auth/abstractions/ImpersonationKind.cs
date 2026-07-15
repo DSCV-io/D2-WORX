@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions;
+namespace DcsvIo.D2.Auth.Abstractions;
 
 /// <summary>
 /// Sub-discriminator for <see cref="ActorKind.Impersonation"/> entries — which of the

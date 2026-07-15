@@ -10,11 +10,11 @@
 
 /**
  * Spec-derived OTel messaging activity-tag attribute-name constants.
- * Mirrors .NET D2.Shared.Messaging.RabbitMq.MessagingActivityTags
+ * Mirrors .NET DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags
  * (same wire values).
  *
  * Cross-language parity: the SAME spec drives the .NET-side catalog
- * via D2.Shared.OtelMessagingTags.SourceGen. Both sides emit identical
+ * via DcsvIo.D2.OtelMessagingTags.SourceGen. Both sides emit identical
  * attribute names byte-for-byte; cross-language wire drift is impossible.
  */
 export const MessagingActivityTags = {

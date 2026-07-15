@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Parity;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Parity;
 
 using System;
 using System.IO;

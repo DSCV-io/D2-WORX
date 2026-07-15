@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption;
+namespace DcsvIo.D2.Tests.Unit.Encryption;
 
 using System.Text.RegularExpressions;
 

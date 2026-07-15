@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using D2.Tools.LoggerMessageSplitter;
+using global::D2.Tools.LoggerMessageSplitter;
 
 // CLI shape:
 //   dotnet run --project tools/loggermessage-splitter -- \
@@ -64,7 +64,7 @@ catch (Exception ex)
 
 static void PrintUsage()
 {
-    Console.WriteLine("D2.Tools.LoggerMessageSplitter");
+    Console.WriteLine("global::D2.Tools.LoggerMessageSplitter");
     Console.WriteLine();
     Console.WriteLine("Splits Microsoft.Extensions.Logging.Generators's combined LoggerMessage.g.cs");
     Console.WriteLine("into one deterministic file per partial class.");

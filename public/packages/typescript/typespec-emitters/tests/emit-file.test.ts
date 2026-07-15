@@ -50,7 +50,7 @@ describe("emitGeneratedFile", () => {
 
     const mockProgram = {} as Program;
     const path = "/out/contracts/operations-manifest.json";
-    const content = '{"emitter":"@d2/typespec-emitters"}';
+    const content = '{"emitter":"@dcsv-io/d2-typespec-emitters"}';
 
     await emitGeneratedFile(mockProgram, path, content);
 
@@ -68,7 +68,7 @@ describe("emitGeneratedFile", () => {
 describe("resolveOutputPath", () => {
   it("resolves a single segment relative to emitterOutputDir", () => {
     const mockContext = {
-      emitterOutputDir: "/workspace/generated/@d2/typespec-emitters",
+      emitterOutputDir: "/workspace/generated/@dcsv-io/d2-typespec-emitters",
     } as unknown as EmitContext;
 
     const result = resolveOutputPath(mockContext, "operations-manifest.json");

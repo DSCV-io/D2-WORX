@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
 
 /// <summary>
 /// Opaque evidence value object that a smoke test passed for a specific

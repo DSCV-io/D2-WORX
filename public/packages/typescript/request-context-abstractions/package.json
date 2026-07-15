@@ -1,5 +1,5 @@
 {
-  "name": "@d2/request-context-abstractions",
+  "name": "@dcsv-io/d2-request-context-abstractions",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -21,7 +21,7 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/auth-context-abstractions": "workspace:*"
+    "@dcsv-io/d2-auth-context-abstractions": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.9.3",

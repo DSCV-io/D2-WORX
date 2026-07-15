@@ -3,13 +3,13 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { type ErrorCategory } from "@d2/error-category";
-import type { TKMessage } from "@d2/i18n-abstractions";
+import { type ErrorCategory } from "@dcsv-io/d2-error-category";
+import type { TKMessage } from "@dcsv-io/d2-i18n-abstractions";
 
 // Re-export the relocated ErrorCategory so existing consumers that imported it
-// from this package (`import { type ErrorCategory } from "@d2/error-codes-registry"`)
+// from this package (`import { type ErrorCategory } from "@dcsv-io/d2-error-codes-registry"`)
 // keep working unchanged.
-export { type ErrorCategory } from "@d2/error-category";
+export { type ErrorCategory } from "@dcsv-io/d2-error-category";
 
 // ---------------------------------------------------------------------------
 // ErrorCodeInfo — the 8-field per-code metadata record. Generated entries
@@ -19,15 +19,15 @@ export { type ErrorCategory } from "@d2/error-category";
 // cross-runtime parity test to pass):
 //   code            → string (SCREAMING_SNAKE wire-format code)
 //   httpStatus      → number (HTTP status integer)
-//   category        → ErrorCategory (9-value string-union from @d2/error-category)
-//   userMessageKey  → TKMessage (typed TK constant from @d2/i18n-keys)
+//   category        → ErrorCategory (9-value string-union from @dcsv-io/d2-error-category)
+//   userMessageKey  → TKMessage (typed TK constant from @dcsv-io/d2-i18n-keys)
 //   factoryName     → string (PascalCase factory symbol)
 //   factoryShape    → ErrorCodeFactoryShape (2-value string-union: standard / none)
 //   doc             → string (developer / JSDoc documentation text)
 //   domain          → string (derived from spec filename; "common" for generic)
 // ---------------------------------------------------------------------------
 
-// ErrorCategory is the relocated foundational @d2/error-category leaf — the
+// ErrorCategory is the relocated foundational @dcsv-io/d2-error-category leaf — the
 // nine-value closed union, generated from contracts/error-category/
 // error-category.spec.json (the cross-runtime source). Re-exported from this
 // package's barrel for backward compatibility.
@@ -56,7 +56,7 @@ export interface ErrorCodeInfo {
   readonly category: ErrorCategory;
   /**
    * Translation-key reference as a typed `TKMessage` constant from
-   * `@d2/i18n-keys`. Read `.key` for the raw snake_case wire key.
+   * `@dcsv-io/d2-i18n-keys`. Read `.key` for the raw snake_case wire key.
    */
   readonly userMessageKey: TKMessage;
   /** PascalCase factory symbol (e.g. `BearerMissing`, `NotFound`). */
@@ -114,7 +114,7 @@ export interface ErrorCodeRegistry {
  * Called once at module load time in `error-code-registry.g.ts`.
  *
  * @internal — exported for the generated file only; consumers use
- *   `errorCodeRegistry` from `@d2/error-codes-registry`.
+ *   `errorCodeRegistry` from `@dcsv-io/d2-error-codes-registry`.
  */
 export function buildRegistry(
   entries: readonly ErrorCodeInfo[],

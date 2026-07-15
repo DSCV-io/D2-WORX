@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.SpecsConsistency;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.SpecsConsistency;
 
 using System.Collections.Immutable;
-using D2.Edge.KeyCustodian.ErrorCodes.SourceGen;
+using DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -28,7 +28,7 @@ using Microsoft.CodeAnalysis.Text;
 /// </remarks>
 public sealed class KeyCustodianErrorCodesOutputParityTests
 {
-    private const string _ASSEMBLY = "D2.Edge.KeyCustodian.Domain";
+    private const string _ASSEMBLY = "DcsvIo.D2.Private.Edge.KeyCustodian.Domain";
     private const string _SPEC_NAME = "keycustodian-error-codes.spec.json";
     private const string _CATEGORY_SPEC_NAME = "error-category.spec.json";
 

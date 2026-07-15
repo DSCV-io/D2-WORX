@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Result.Grpc;
+namespace DcsvIo.D2.Tests.Unit.Result.Grpc;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.Result.Grpc;
 using global::Grpc.Core;
 using Microsoft.Extensions.Logging;
 using Xunit;

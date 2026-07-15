@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Messaging.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.OtelMessagingTags.SourceGen;
+using DcsvIo.D2.OtelMessagingTags.SourceGen;
 using Xunit;
 
 /// <summary>

@@ -2,11 +2,11 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Handler.Repo.Abstractions
+# DcsvIo.D2.Handler.Repo.Abstractions
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
-Vocabulary for repo-flavored handlers — what app-layer code touches when it needs to discriminate database failures (unique violation, FK violation, deadlock, concurrency conflict, connection failure, etc.). Pure abstractions: zero infrastructure dependencies. EF Core, Npgsql, and any provider knowledge live in sibling packages (`D2.Shared.Handler.Repo`, `D2.Shared.Handler.Repo.Postgres`).
+Vocabulary for repo-flavored handlers — what app-layer code touches when it needs to discriminate database failures (unique violation, FK violation, deadlock, concurrency conflict, connection failure, etc.). Pure abstractions: zero infrastructure dependencies. EF Core, Npgsql, and any provider knowledge live in sibling packages (`DcsvIo.D2.Handler.Repo`, `DcsvIo.D2.Handler.Repo.Postgres`).
 
 ---
 
@@ -14,7 +14,7 @@ Vocabulary for repo-flavored handlers — what app-layer code touches when it ne
 
 | Path                                         | Contents                                                                                                                                          |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Handler.Repo.Abstractions.csproj` | csproj — depends only on `D2.Shared.Result` + `D2.Shared.I18n`                                                                                    |
+| `DcsvIo.D2.Handler.Repo.Abstractions.csproj` | csproj — depends only on `DcsvIo.D2.Result` + `DcsvIo.D2.I18n`                                                                                    |
 | `DbFailureKind.cs`                           | Enum — `ConcurrencyConflict / UniqueViolation / ForeignKeyViolation / NotNullViolation / CheckViolation / Timeout / Deadlock / ConnectionFailure` |
 | `IDbExceptionClassifier.cs`                  | The provider seam — `DbFailureKind? Classify(Exception)`                                                                                          |
 | `DbErrorCodes.cs`                            | String constants (`UNIQUE_VIOLATION`, `FOREIGN_KEY_VIOLATION`, etc.) used as `D2Result.ErrorCode` values                                          |
@@ -85,8 +85,8 @@ These defaults are deliberately generic ("This value is already in use"). Handle
 
 Project references:
 
-- `D2.Shared.Result` — base `D2Result` type that the factories extend
-- `D2.Shared.I18n` — `TKMessage` + `TK` codegen entry point
+- `DcsvIo.D2.Result` — base `D2Result` type that the factories extend
+- `DcsvIo.D2.I18n` — `TKMessage` + `TK` codegen entry point
 
 Zero external NuGet packages. No EF Core, no Npgsql.
 
@@ -94,5 +94,5 @@ Zero external NuGet packages. No EF Core, no Npgsql.
 
 ## Reference
 
-- [`D2.Shared.Handler.Repo`](../repo/README.md) — `BaseRepoHandler` consumes the classifier interface
-- [`D2.Shared.Handler.Repo.Postgres`](../repo-postgres/README.md) — PostgreSQL classifier implementation
+- [`DcsvIo.D2.Handler.Repo`](../repo/README.md) — `BaseRepoHandler` consumes the classifier interface
+- [`DcsvIo.D2.Handler.Repo.Postgres`](../repo-postgres/README.md) — PostgreSQL classifier implementation

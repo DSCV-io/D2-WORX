@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.DataGovernance;
+namespace DcsvIo.D2.Tests.Unit.DataGovernance;
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.DataGovernance.Abstractions;
-using D2.Shared.DataGovernance.EntityFrameworkCore;
+using DcsvIo.D2.DataGovernance.Abstractions;
+using DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

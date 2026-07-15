@@ -1,5 +1,5 @@
 {
-  "name": "@d2/auth-context-abstractions",
+  "name": "@dcsv-io/d2-auth-context-abstractions",
   "version": "0.1.0",
   "private": true,
   "type": "module",

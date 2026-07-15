@@ -20,7 +20,7 @@ import type { WebCryptoKey } from "./subtle.js";
  * Default {@link IPayloadOpener} implementation: opens version-2 sealed frames
  * with this service's {@link RecipientPrivateKeyring} under the same frozen
  * derivation conventions the sealer uses. The twin of .NET
- * `D2.Shared.Encryption.PayloadOpener`.
+ * `DcsvIo.D2.Encryption.PayloadOpener`.
  *
  * Per open: parse the sealed frame → resolve the recipient kid against the
  * private keyring → import the frame's ephemeral public key (rejecting non-P-256

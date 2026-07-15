@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 
 /// <summary>
 /// Result of compromising a key: the kid marked compromised and the optional

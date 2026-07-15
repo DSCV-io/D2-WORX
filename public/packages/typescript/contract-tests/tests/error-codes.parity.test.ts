@@ -9,14 +9,14 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { AuthFailures } from "@d2/auth-abstractions";
+import { AuthFailures } from "@dcsv-io/d2-auth-abstractions";
 import {
   ALL_ERROR_CODES,
   ErrorCodes,
   getErrorHttpStatus,
   type D2Result,
-} from "@d2/result";
-import * as resultFactories from "@d2/result";
+} from "@dcsv-io/d2-result";
+import * as resultFactories from "@dcsv-io/d2-result";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

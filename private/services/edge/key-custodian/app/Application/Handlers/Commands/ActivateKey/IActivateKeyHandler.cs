@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 
 /// <summary>
 /// Smoke-tests and activates a pending key once its soak window has elapsed.

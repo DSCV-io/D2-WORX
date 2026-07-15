@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.WireShapes.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.WireShapes.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.WireShapes.SourceGen;
+using DcsvIo.D2.WireShapes.SourceGen;
 using Xunit;
 
 /// <summary>

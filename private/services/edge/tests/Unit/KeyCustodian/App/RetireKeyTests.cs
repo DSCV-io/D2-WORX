@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 
 /// <summary>
 /// Tests for <see cref="RetireKeyHandler"/> — happy path, not-found / wrong-state

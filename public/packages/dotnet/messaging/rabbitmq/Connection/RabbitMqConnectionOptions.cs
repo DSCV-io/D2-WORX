@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Connection;
+namespace DcsvIo.D2.Messaging.RabbitMq.Connection;
 
 /// <summary>
 /// Connection-level configuration for the RabbitMQ-backed messaging stack.
@@ -22,10 +22,10 @@ public sealed class RabbitMqConnectionOptions
 
     /// <summary>
     /// Gets or sets the descriptive client-provided name reported to the
-    /// broker. Defaults to <c>D2.Shared.Messaging</c>; overriding helps
+    /// broker. Defaults to <c>DcsvIo.D2.Messaging</c>; overriding helps
     /// distinguish replicas in management UI.
     /// </summary>
-    public string ClientProvidedName { get; set; } = "D2.Shared.Messaging";
+    public string ClientProvidedName { get; set; } = "DcsvIo.D2.Messaging";
 
     /// <summary>
     /// Gets or sets the dispatch concurrency for async consumers (number of

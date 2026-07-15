@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/geo-default
+# @dcsv-io/d2-geo-default
 
 > Parent: [`public/packages/typescript/`](../../README.md)
 >
 > **Audience**: backend Node/TypeScript engineers + BFF composition-root code that needs to bind the actual geo catalog data (per-entity records + lookup maps + nested objects) at process start.
 
-Codegen-emitted in-memory catalog data for the seven geo reference catalogs. Mirrors [`D2.Shared.Geo.Default`](../../../dotnet/geo/default/README.md) (.NET). The interfaces, branded code types, and record shapes this package consumes live in [`@d2/geo-abstractions`](../abstractions/README.md); this package contributes only the per-entity data + the wire-nav coordinator.
+Codegen-emitted in-memory catalog data for the seven geo reference catalogs. Mirrors [`DcsvIo.D2.Geo.Default`](../../../dotnet/geo/default/README.md) (.NET). The interfaces, branded code types, and record shapes this package consumes live in [`@dcsv-io/d2-geo-abstractions`](../abstractions/README.md); this package contributes only the per-entity data + the wire-nav coordinator.
 
 ## Per-catalog imports (bundle-friendly)
 
@@ -17,8 +17,8 @@ The `exports` map exposes each catalog as a separate sub-path so bundlers can tr
 ```ts
 // Import the Country catalog + the coordinator (importing the coordinator
 // guarantees the catalogs are fully wired before consumer code reads them).
-import { Countries, CountryLookup } from "@d2/geo-default/countries";
-import "@d2/geo-default/init";
+import { Countries, CountryLookup } from "@dcsv-io/d2-geo-default/countries";
+import "@dcsv-io/d2-geo-default/init";
 
 const usa = Countries.US;
 console.log(usa.displayName);
@@ -39,16 +39,16 @@ if (usa.geopoliticalEntityShortCodes.has(GeopoliticalEntityCode.NATO)) {
 
 | Sub-path                                | Shape                                                                                            | Use                                                                                          |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| `@d2/geo-default/countries`             | `Countries.US` getter + `CountryLookup.byCode` + `byIso31661Alpha2` + `byIso31661Alpha3` + `all` | Typed access + iteration via `CountryLookup.all`                                             |
-| `@d2/geo-default/subdivisions`          | Nested `{ US: { NY: SubdivisionCode } }` + `SubdivisionLookup.byCode` + `byCountry` + `all`      | Strongly-typed reference (`Subdivisions.US.NY`); flat `SubdivisionLookup` for iteration      |
-| `@d2/geo-default/currencies`            | `Currencies.USD` getter + `CurrencyLookup.byCode` + `all`                                        | Typed access + iteration                                                                     |
-| `@d2/geo-default/languages`             | `Languages.en` getter + `LanguageLookup.byCode` + `all`                                          | Typed access + iteration                                                                     |
-| `@d2/geo-default/locales`               | Nested `{ en: { US: LocaleCode } }` + `LocaleLookup.byCode` + `byTag` + `all`                    | Strongly-typed reference (`Locales.en.US`); flat `LocaleLookup` for iteration                |
-| `@d2/geo-default/timezones`             | Nested `{ America: { New_York: TimezoneCode } }` + `TimezoneLookup.byCode` + `all`               | Strongly-typed reference (`Timezones.America.New_York`); flat `TimezoneLookup` for iteration |
-| `@d2/geo-default/geopolitical-entities` | `GeopoliticalEntities.EU` getter + `GeopoliticalEntityLookup.byCode` + `all`                     | Typed access + iteration                                                                     |
-| `@d2/geo-default/init`                  | Top-level `initializeGeoData()` call                                                             | Importing this sub-path is the idempotent wire-nav trigger.                                  |
+| `@dcsv-io/d2-geo-default/countries`             | `Countries.US` getter + `CountryLookup.byCode` + `byIso31661Alpha2` + `byIso31661Alpha3` + `all` | Typed access + iteration via `CountryLookup.all`                                             |
+| `@dcsv-io/d2-geo-default/subdivisions`          | Nested `{ US: { NY: SubdivisionCode } }` + `SubdivisionLookup.byCode` + `byCountry` + `all`      | Strongly-typed reference (`Subdivisions.US.NY`); flat `SubdivisionLookup` for iteration      |
+| `@dcsv-io/d2-geo-default/currencies`            | `Currencies.USD` getter + `CurrencyLookup.byCode` + `all`                                        | Typed access + iteration                                                                     |
+| `@dcsv-io/d2-geo-default/languages`             | `Languages.en` getter + `LanguageLookup.byCode` + `all`                                          | Typed access + iteration                                                                     |
+| `@dcsv-io/d2-geo-default/locales`               | Nested `{ en: { US: LocaleCode } }` + `LocaleLookup.byCode` + `byTag` + `all`                    | Strongly-typed reference (`Locales.en.US`); flat `LocaleLookup` for iteration                |
+| `@dcsv-io/d2-geo-default/timezones`             | Nested `{ America: { New_York: TimezoneCode } }` + `TimezoneLookup.byCode` + `all`               | Strongly-typed reference (`Timezones.America.New_York`); flat `TimezoneLookup` for iteration |
+| `@dcsv-io/d2-geo-default/geopolitical-entities` | `GeopoliticalEntities.EU` getter + `GeopoliticalEntityLookup.byCode` + `all`                     | Typed access + iteration                                                                     |
+| `@dcsv-io/d2-geo-default/init`                  | Top-level `initializeGeoData()` call                                                             | Importing this sub-path is the idempotent wire-nav trigger.                                  |
 
-The record shape mirrors the [`@d2/geo-abstractions` record shapes](../abstractions/README.md): one interface per catalog with universal dual-rep for every relationship (typed code field for O(1) membership + nav record field for ordered iteration). Nullable single-primary navs use `?:` per the workspace `undefined`-over-`null` convention.
+The record shape mirrors the [`@dcsv-io/d2-geo-abstractions` record shapes](../abstractions/README.md): one interface per catalog with universal dual-rep for every relationship (typed code field for O(1) membership + nav record field for ordered iteration). Nullable single-primary navs use `?:` per the workspace `undefined`-over-`null` convention.
 
 ### Two-pass populate
 
@@ -85,7 +85,7 @@ mut.subdivisions = SubdivisionLookup.byCountry["US"];
 // ... all nav refs ...
 ```
 
-The cast is confined to this package's codegen-emitted module-init code. Consumer code MUST treat record fields as `readonly` (compile-time enforced). See [the `@d2/geo-abstractions` record-shape architecture section](../abstractions/README.md#record-shape-architecture) for the full cycle-resolution design.
+The cast is confined to this package's codegen-emitted module-init code. Consumer code MUST treat record fields as `readonly` (compile-time enforced). See [the `@dcsv-io/d2-geo-abstractions` record-shape architecture section](../abstractions/README.md#record-shape-architecture) for the full cycle-resolution design.
 
 ### Wire-nav coordinator
 
@@ -94,7 +94,7 @@ The cast is confined to this package's codegen-emitted module-init code. Consume
 - An idempotent `initializeGeoData()` function guarded by an `_initialized` flag (short-circuits on subsequent calls).
 - A top-level call that runs `initializeGeoData()` exactly once when this module is imported. ESM module caching makes repeat imports a no-op.
 
-Importing `@d2/geo-default/init` (or any sub-path that transitively imports it) guarantees every catalog is fully wired before consumer code reads it. The coordinator runs each catalog's first-pass module-init (handled automatically by ESM import-graph evaluation), then invokes the `wireNav` functions in dependency order:
+Importing `@dcsv-io/d2-geo-default/init` (or any sub-path that transitively imports it) guarantees every catalog is fully wired before consumer code reads it. The coordinator runs each catalog's first-pass module-init (handled automatically by ESM import-graph evaluation), then invokes the `wireNav` functions in dependency order:
 
 1. `wireSubdivisionNav` (Country → Subdivision.country)
 2. `wireCountryNav` (consumes Subdivision / Currency / Locale / Language)
@@ -170,7 +170,7 @@ Files under `src/generated/` are emitted by `tools/ts-codegen/src/geo-emitter/` 
 
 ## Dependencies
 
-- `@d2/geo-abstractions` — provides the single record shapes (`Country` / `Subdivision` / …), branded code types (`SubdivisionCode` / `LocaleCode` / `TimezoneCode`), and `Code`-suffixed real enums (`CountryCode` / `CurrencyCode` / `LanguageCode` / `GeopoliticalEntityCode`), plus the `IGeoNameResolver` contract + `normalize` / `compare` helpers consumed by the resolver.
-- `@d2/result` — `D2Result` envelope + semantic factories (`ok`, `notFound`, `validationFailed`) returned by every public resolver method.
-- `@d2/utilities` — `truthyOrUndefined` boundary helper used in input validation.
-- `@d2/request-context-abstractions` — `IRequestContext` receiver for the Default-layer record-returning helpers.
+- `@dcsv-io/d2-geo-abstractions` — provides the single record shapes (`Country` / `Subdivision` / …), branded code types (`SubdivisionCode` / `LocaleCode` / `TimezoneCode`), and `Code`-suffixed real enums (`CountryCode` / `CurrencyCode` / `LanguageCode` / `GeopoliticalEntityCode`), plus the `IGeoNameResolver` contract + `normalize` / `compare` helpers consumed by the resolver.
+- `@dcsv-io/d2-result` — `D2Result` envelope + semantic factories (`ok`, `notFound`, `validationFailed`) returned by every public resolver method.
+- `@dcsv-io/d2-utilities` — `truthyOrUndefined` boundary helper used in input validation.
+- `@dcsv-io/d2-request-context-abstractions` — `IRequestContext` receiver for the Default-layer record-returning helpers.

@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.TokenExchange;
+namespace DcsvIo.D2.Auth.Outbound.TokenExchange;
 
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound.Telemetry;
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Resilience.Singleflight;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Diagnostics;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound.Telemetry;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.Singleflight;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Extensions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

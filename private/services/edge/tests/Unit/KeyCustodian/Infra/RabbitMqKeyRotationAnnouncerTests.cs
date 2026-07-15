@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
-using D2.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
-using D2.Shared.Auth.Events;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Auth.Events;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
 using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>

@@ -5,39 +5,59 @@
 
 // Manifest loader — discovers consumable packages from the repository tree.
 //
-// A package is consumable iff it matches the classification rule:
-//   npm:   a package.json under public/packages/typescript/**  — OR the
-//          service-owned KeyCustodian client at
-//          private/services/edge/key-custodian/client-ts — that is NOT private
-//          tooling (typespec-decorators, typespec-emitters) and NOT a test
-//          harness (contract-tests). Specifically: every package whose name
-//          starts with "@d2/" (scoped) and is not in the exclusion list.
-//   nuget: a .csproj under public/packages/dotnet/** that is NOT a SourceGen
-//          shell (filename ends *SourceGen.csproj) and NOT the shared test
-//          project (D2.Shared.Tests.csproj). Additionally, the consumable
-//          csproj must carry a <Version> element (it was seeded in Wave A).
+// Dual inventory (step 05 / I12):
+//   PUBLIC publish lane (loadNpmPackages / loadNugetPackages / loadAllPackages):
+//     roots = public/packages/typescript/** and public/packages/dotnet/** ONLY.
+//     open npm: startsWith("@dcsv-io/d2-") AND NOT containing "d2-private-".
+//     open NuGet: basename must NOT contain ".Private."; exclude SourceGen shells
+//       and mega-tests assembly DcsvIo.D2.Tests; require <Version>.
+//     exclusions: typespec-decorators, typespec-emitters, contract-tests.
+//   PRIVATE consumable lane (§26.19 versioning — NOT mixed into public --list):
+//     loadPrivateConsumableNpmPackages / loadPrivateConsumableNugetPackages
+//     → KeyCustodian client-ts + KC .NET Client under private/services only.
 //
-// The loader also accepts the KC client csproj if present under
-// private/services/edge/key-custodian/client/.
-//
-// Both the npm and nuget loaders read the version from the manifest so the
-// caller does not need a separate readManifestVersion call.
+// Bare startsWith("@dcsv-io/d2-") alone is FORBIDDEN as the sole public filter
+// (superset of closed @dcsv-io/d2-private-* names).
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import { readNpmVersion, readNugetVersion } from "./manifest-editor.js";
 import type { PackageDescriptor } from "./types.js";
 
 // ---------------------------------------------------------------------------
-// Non-consumable name exclusion list (npm)
+// Non-consumable name exclusion list (npm) — public tooling / harnesses
 // ---------------------------------------------------------------------------
 
 const NPM_EXCLUDED_NAMES = new Set([
-  "@d2/typespec-decorators",
-  "@d2/typespec-emitters",
-  "@d2/contract-tests",
+  "@dcsv-io/d2-typespec-decorators",
+  "@dcsv-io/d2-typespec-emitters",
+  "@dcsv-io/d2-contract-tests",
 ]);
+
+/** Open public npm name: scoped d2 leaf without closed d2-private marker. */
+export function isOpenPublicNpmName(name: string): boolean {
+  return (
+    name.startsWith("@dcsv-io/d2-") &&
+    !name.includes("d2-private-") &&
+    !NPM_EXCLUDED_NAMES.has(name)
+  );
+}
+
+/** Closed private-framework npm name under @dcsv-io with d2-private marker. */
+export function isPrivateConsumableNpmName(name: string): boolean {
+  return name.startsWith("@dcsv-io/d2-") && name.includes("d2-private-");
+}
+
+/** Open public NuGet basename: DcsvIo.D2.* without .Private. segment. */
+export function isOpenPublicNugetName(name: string): boolean {
+  return (
+    name.startsWith("DcsvIo.D2.") &&
+    !name.includes(".Private.") &&
+    name !== "DcsvIo.D2.Tests" &&
+    !name.endsWith(".SourceGen")
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -85,18 +105,16 @@ function csprojHasVersion(text: string): boolean {
 }
 
 /**
- * Extract all `@d2/*` dependency names from a package.json text.
+ * Extract all `@dcsv-io/d2-*` dependency names from a package.json text.
  *
  * Scans both `"dependencies"` and `"devDependencies"` blocks. Returns every
- * key that starts with `"@d2/"`. The caller filters the result against the
+ * key that starts with `"@dcsv-io/d2-"`. The caller filters the result against the
  * consumable name set.
  */
 function extractNpmDeps(text: string): string[] {
-  // Match both "dependencies" and "devDependencies" blocks.
   const deps: string[] = [];
-  // Regex matches "@d2/something": "..." in any JSON object property.
-  // Using a simple per-key match is sufficient since package names are well-formed.
-  const DEP_RE = /"(@d2\/[^"]+)"\s*:/g;
+  // Match scoped d2 package keys (open + private-marker forms).
+  const DEP_RE = /"(@dcsv-io\/d2-[^"]+)"\s*:/g;
   let match: RegExpExecArray | null;
 
   while ((match = DEP_RE.exec(text)) !== null) {
@@ -137,29 +155,26 @@ export function extractNugetProjectRefs(
   return refs;
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
+function toRepoRelDir(manifestPath: string, repoRoot: string): string {
+  return dirname(manifestPath)
+    .replace(/\\/g, "/")
+    .replace(repoRoot.replace(/\\/g, "/") + "/", "");
+}
 
-/**
- * Load the consumable npm package inventory from the repo tree.
- *
- * @param repoRoot - Absolute path to the repository root.
- * @returns PackageDescriptor[] for all consumable @d2/* packages.
- */
-export function loadNpmPackages(repoRoot: string): PackageDescriptor[] {
-  const tsSharedRoot = resolve(repoRoot, "public/packages/typescript");
-  // Service-owned TS client packages live beside their service, NOT under
-  // public/packages/typescript — the KeyCustodian client (@d2/key-custodian-client)
-  // is the npm analogue of the special-cased KC .NET client below. Additional
-  // service-owned client roots join this list as they are introduced.
-  const kcClientTsRoot = resolve(
-    repoRoot,
-    "private/services/edge/key-custodian/client-ts",
-  );
+interface RawNpmEntry {
+  manifestPath: string;
+  name: string;
+  text: string;
+  currentVersion: string;
+  dir: string;
+  changelogPath: string;
+}
 
-  const searchRoots = [tsSharedRoot, kcClientTsRoot].filter(existsSync);
-
+function collectNpmFromRoots(
+  repoRoot: string,
+  searchRoots: string[],
+  acceptName: (name: string) => boolean,
+): PackageDescriptor[] {
   if (searchRoots.length === 0) return [];
 
   const packageJsonFiles = searchRoots.flatMap((root) =>
@@ -169,91 +184,60 @@ export function loadNpmPackages(repoRoot: string): PackageDescriptor[] {
     ),
   );
 
-  // First pass: collect name + raw text so we can resolve deps after building
-  // the consumable name set.
-  interface RawEntry {
-    manifestPath: string;
-    name: string;
-    text: string;
-    currentVersion: string;
-    dir: string;
-    changelogPath: string;
-  }
-
-  const rawEntries: RawEntry[] = [];
+  const rawEntries: RawNpmEntry[] = [];
 
   for (const manifestPath of packageJsonFiles) {
     const text = readFileSync(manifestPath, "utf-8");
     const name = extractNpmName(text);
 
     if (name === undefined) continue;
-    if (!name.startsWith("@d2/")) continue;
-    if (NPM_EXCLUDED_NAMES.has(name)) continue;
+    if (!acceptName(name)) continue;
 
     let currentVersion: string;
 
     try {
       currentVersion = readNpmVersion(manifestPath);
     } catch {
-      continue; // skip packages without a parseable version
+      continue;
     }
-
-    const dir = dirname(manifestPath)
-      .replace(/\\/g, "/")
-      .replace(repoRoot.replace(/\\/g, "/") + "/", "");
-
-    const changelogPath = join(dirname(manifestPath), "CHANGELOG.md");
 
     rawEntries.push({
       manifestPath,
       name,
       text,
       currentVersion,
-      dir,
-      changelogPath,
+      dir: toRepoRelDir(manifestPath, repoRoot),
+      changelogPath: join(dirname(manifestPath), "CHANGELOG.md"),
     });
   }
 
-  // Build consumable name set for edge filtering.
   const nameSet = new Set(rawEntries.map((e) => e.name));
 
-  // Second pass: resolve dependencies against the consumable set.
-  const descriptors: PackageDescriptor[] = rawEntries.map((e) => ({
+  return rawEntries.map((e) => ({
     name: e.name,
-    ecosystem: "npm",
+    ecosystem: "npm" as const,
     dir: e.dir,
     manifestPath: e.manifestPath,
     changelogPath: e.changelogPath,
     currentVersion: e.currentVersion,
     dependencies: extractNpmDeps(e.text).filter((d) => nameSet.has(d)),
   }));
-
-  return descriptors;
 }
 
-/**
- * Load the consumable NuGet package inventory from the repo tree.
- *
- * Includes:
- *   - All D2.Shared.*.csproj under public/packages/dotnet/** that carry
- *     <Version> and are NOT source-gen shells or the test project.
- *   - The KC client csproj if present (carries <Version>).
- *
- * @param repoRoot - Absolute path to the repository root.
- * @returns PackageDescriptor[] for all consumable NuGet packages.
- */
-export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
-  const dotnetSharedRoot = resolve(repoRoot, "public/packages/dotnet");
-  const kcClientPath = resolve(
-    repoRoot,
-    "private/services/edge/key-custodian/client",
-  );
+interface RawNugetEntry {
+  manifestPath: string;
+  name: string;
+  text: string;
+  currentVersion: string;
+  dir: string;
+  changelogPath: string;
+}
 
-  const searchRoots: string[] = [];
-
-  if (existsSync(dotnetSharedRoot)) searchRoots.push(dotnetSharedRoot);
-  if (existsSync(kcClientPath)) searchRoots.push(kcClientPath);
-
+function collectNugetFromRoots(
+  repoRoot: string,
+  searchRoots: string[],
+  acceptName: (name: string) => boolean,
+): PackageDescriptor[] {
   if (falsey(searchRoots)) return [];
 
   const csprojFiles: string[] = [];
@@ -264,27 +248,16 @@ export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
       (f) =>
         f.endsWith(".csproj") &&
         !f.endsWith("SourceGen.csproj") &&
-        !f.endsWith("D2.Shared.Tests.csproj"),
+        !f.endsWith("DcsvIo.D2.Tests.csproj"),
       csprojFiles,
     );
   }
 
-  // First pass: gather raw entries to build the consumable name set.
-  interface RawEntry {
-    manifestPath: string;
-    name: string;
-    text: string;
-    currentVersion: string;
-    dir: string;
-    changelogPath: string;
-  }
-
-  const rawEntries: RawEntry[] = [];
+  const rawEntries: RawNugetEntry[] = [];
 
   for (const manifestPath of csprojFiles) {
     const text = readFileSync(manifestPath, "utf-8");
 
-    // Skip csprojs without a Version element (unseeded or non-consumable).
     if (!csprojHasVersion(text)) continue;
 
     let currentVersion: string;
@@ -295,30 +268,23 @@ export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
       continue;
     }
 
-    // Derive package name from the manifest filename (strip extension).
     const name = basename(manifestPath, ".csproj");
 
-    const dir = dirname(manifestPath)
-      .replace(/\\/g, "/")
-      .replace(repoRoot.replace(/\\/g, "/") + "/", "");
-
-    const changelogPath = join(dirname(manifestPath), "CHANGELOG.md");
+    if (!acceptName(name)) continue;
 
     rawEntries.push({
       manifestPath,
       name,
       text,
       currentVersion,
-      dir,
-      changelogPath,
+      dir: toRepoRelDir(manifestPath, repoRoot),
+      changelogPath: join(dirname(manifestPath), "CHANGELOG.md"),
     });
   }
 
-  // Build consumable name set for edge filtering.
   const nameSet = new Set(rawEntries.map((e) => e.name));
 
-  // Second pass: resolve <ProjectReference> edges against the consumable set.
-  const descriptors: PackageDescriptor[] = rawEntries.map((e) => {
+  return rawEntries.map((e) => {
     const csprojDir = dirname(e.manifestPath);
     const refPaths = extractNugetProjectRefs(e.text, csprojDir);
     const dependencies = refPaths
@@ -327,7 +293,7 @@ export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
 
     return {
       name: e.name,
-      ecosystem: "nuget",
+      ecosystem: "nuget" as const,
       dir: e.dir,
       manifestPath: e.manifestPath,
       changelogPath: e.changelogPath,
@@ -335,19 +301,95 @@ export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
       dependencies,
     };
   });
+}
 
-  return descriptors;
+// ---------------------------------------------------------------------------
+// Public publish lane
+// ---------------------------------------------------------------------------
+
+/**
+ * Load PUBLIC consumable npm packages (open @dcsv-io/d2-* only).
+ * Roots: public/packages/typescript only. Rejects d2-private- names.
+ */
+export function loadNpmPackages(repoRoot: string): PackageDescriptor[] {
+  const tsSharedRoot = resolve(repoRoot, "public/packages/typescript");
+  const searchRoots = [tsSharedRoot].filter(existsSync);
+
+  return collectNpmFromRoots(repoRoot, searchRoots, isOpenPublicNpmName);
 }
 
 /**
- * Load all consumable packages (npm + nuget) from the repo tree.
- *
- * @param repoRoot - Absolute path to the repository root.
- * @returns Combined PackageDescriptor[] sorted by name.
+ * Load PUBLIC consumable NuGet packages under public/packages/dotnet only.
+ * Rejects basenames containing `.Private.` and the mega-tests project.
+ */
+export function loadNugetPackages(repoRoot: string): PackageDescriptor[] {
+  const dotnetSharedRoot = resolve(repoRoot, "public/packages/dotnet");
+  const searchRoots = [dotnetSharedRoot].filter(existsSync);
+
+  return collectNugetFromRoots(repoRoot, searchRoots, (name) =>
+    isOpenPublicNugetName(name),
+  );
+}
+
+/**
+ * Load all PUBLIC consumable packages (npm + nuget). Used by public `--list`
+ * / publish discovery. Never includes private/** or d2-private- / .Private.
  */
 export function loadAllPackages(repoRoot: string): PackageDescriptor[] {
   const npm = loadNpmPackages(repoRoot);
   const nuget = loadNugetPackages(repoRoot);
+
+  return [...npm, ...nuget].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// ---------------------------------------------------------------------------
+// Private consumable lane (§26.19 — versioned closed clients; not public list)
+// ---------------------------------------------------------------------------
+
+/**
+ * Private consumable npm packages (e.g. KC client-ts). Separate from public
+ * publish inventory; must never leak into loadNpmPackages / loadAllPackages.
+ */
+export function loadPrivateConsumableNpmPackages(
+  repoRoot: string,
+): PackageDescriptor[] {
+  const kcClientTsRoot = resolve(
+    repoRoot,
+    "private/services/edge/key-custodian/client-ts",
+  );
+  const searchRoots = [kcClientTsRoot].filter(existsSync);
+
+  return collectNpmFromRoots(repoRoot, searchRoots, isPrivateConsumableNpmName);
+}
+
+/**
+ * Private consumable NuGet packages (e.g. KC .NET Client). Separate lane.
+ */
+export function loadPrivateConsumableNugetPackages(
+  repoRoot: string,
+): PackageDescriptor[] {
+  const kcClientPath = resolve(
+    repoRoot,
+    "private/services/edge/key-custodian/client",
+  );
+  const searchRoots = [kcClientPath].filter(existsSync);
+
+  return collectNugetFromRoots(
+    repoRoot,
+    searchRoots,
+    (name) => name.includes(".Private.") && name.startsWith("DcsvIo.D2."),
+  );
+}
+
+/**
+ * Combined private consumable inventory (npm + nuget). Not used by public
+ * `--list`; retained for §26.19 private versioning tooling.
+ */
+export function loadPrivateConsumablePackages(
+  repoRoot: string,
+): PackageDescriptor[] {
+  const npm = loadPrivateConsumableNpmPackages(repoRoot);
+  const nuget = loadPrivateConsumableNugetPackages(repoRoot);
 
   return [...npm, ...nuget].sort((a, b) => a.name.localeCompare(b.name));
 }

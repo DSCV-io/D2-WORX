@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/typespec-emitters
+# @dcsv-io/d2-typespec-emitters
 
 TypeSpec emitter suite that reads the `@d2*` operation-contract vocabulary and
 emits C# transport and contract artifacts from TypeSpec specs.
@@ -53,7 +53,7 @@ referenced by name in a consumer's `tspconfig.yaml` `emit:` list. When
 
 The emitter uses the TypeSpec compiler's `navigateProgram` + `program.stateMap`
 mechanism to walk every operation in the compiled program and read back the
-decorator state written by `@d2/typespec-decorators`. It then calls the
+decorator state written by `@dcsv-io/d2-typespec-decorators`. It then calls the
 compiler's `emitFile` API (via the `emitGeneratedFile` wrapper) to write
 artifacts to the `emitterOutputDir`.
 
@@ -81,7 +81,7 @@ Current output per `tsp compile`:
    `<Service>Base` and delegates to the injected façade (`@d2InProcess` ops) or
    `I<Op>Handler` (non-`@d2InProcess` ops). Every `D2Result` — success or
    business failure — is mapped onto the response via `result.ToProtoResponse()`
-   (built on `D2.Shared.Result.Grpc`), which populates the `D2ResultProto`
+   (built on `DcsvIo.D2.Result.Grpc`), which populates the `D2ResultProto`
    envelope (field 1) and, on success, the typed `<Op>Output` data message (field
    2). The gRPC status stays `StatusCode.OK` for all business results; `RpcException`
    is reserved for genuine transport or auth faults only. Mappers use
@@ -117,10 +117,10 @@ Reference this package as a TypeSpec emitter in a consumer's `tspconfig.yaml`:
 
 ```yaml
 emit:
-  - "@d2/typespec-emitters"
+  - "@dcsv-io/d2-typespec-emitters"
 
 options:
-  "@d2/typespec-emitters":
+  "@dcsv-io/d2-typespec-emitters":
     emitter-output-dir: "{output-dir}"
     csharp-namespace: "D2.YourService.Generated"
 ```
@@ -132,13 +132,13 @@ All supported `tspconfig.yaml` options are listed below.
 | `emitter-output-dir` | `string` | Required | — | Directory where emitted files are written. Pass `{output-dir}` to inherit the TypeSpec compiler default (fixture mode) or an explicit path (real-module mode). |
 | `csharp-namespace` | `string` | Required | `D2.Generated` | C# namespace for fixture-mode DTOs and the gRPC service-impl class when `csharp-app-namespace-base` is absent. Kept for backward compatibility; in real-module mode this namespace is used only for internal fixture ops. |
 | `csharp-clients-namespace` | `string` | Optional (real-module mode) | — | C# namespace for the Client project: exposed-op DTOs (`@d2InProcess`, `@d2GrpcMethod`, `@d2ServerPush`, `@route`) and the per-module façade interface land here. Omit when emitting fixture ops only. |
-| `csharp-app-namespace-base` | `string` | Optional (real-module mode) | — | Base C# namespace for app-layer handler interfaces. Per-op CQRS path is `<base>.<Category>.<PascalOp>` (e.g. `D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks`). When absent, the emitter falls back to fixture mode (handler interfaces land under `csharp-namespace`). |
+| `csharp-app-namespace-base` | `string` | Optional (real-module mode) | — | Base C# namespace for app-layer handler interfaces. Per-op CQRS path is `<base>.<Category>.<PascalOp>` (e.g. `DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks`). When absent, the emitter falls back to fixture mode (handler interfaces land under `csharp-namespace`). |
 | `proto-package` | `string` | Optional | `d2.generated.v1` | proto3 `package` declaration written into the emitted `.proto` file. Use a service-specific value in real-module mode (e.g. `d2.signfixtures.v2alpha`). |
 | `proto-csharp-namespace` | `string` | Optional | `D2.Generated.Protos.V1` | C# namespace declared via `option csharp_namespace` in the emitted `.proto` file. Must match the namespace Grpc.Tools generates for message + service types. |
 | `grpc-service-namespace` | `string` | Optional | `D2.Generated.Grpc` | C# namespace for the generated gRPC service-impl class and its transport mapper. Distinct from `proto-csharp-namespace` so generated proto types and the service impl do not collide. |
 | `process-kind-by-module` | `object` (ServedBy → string) | Optional (required for real-module `@route`) | — | Closed set `"edge-module"` \| `"standalone"` keyed by `@d2ServedBy`. Controls public HTTP emit: edge-module → in-process Map* (façade/handler); standalone → Edge HTTP→gRPC bridge (`I{Module}GrpcClient.{Op}Async`). Real-module + `@route` without ServedBy/map entry → D2TSP014/015. |
-| `csharp-routes-namespace` | `object` (ServedBy → string) | Optional (required for edge-module `@route` in real-module mode) | — | Full C# namespace for generated REST Map* registrations (e.g. `KeyCustodian: "D2.Edge.Api.Routes.KeyCustodian"`). **Not** hard-derived from `csharp-app-namespace-base` when set — App must not own AspNetCore. Missing key for edge-module → D2TSP017. |
-| `csharp-bridge-namespace` | `object` (ServedBy → string) | Optional (required for standalone bridge ops) | — | Full C# namespace for Edge HTTP→gRPC bridge registrations (e.g. `Audit: "D2.Edge.Api.Bridges.Audit"`). Missing key for standalone bridge → D2TSP018. |
+| `csharp-routes-namespace` | `object` (ServedBy → string) | Optional (required for edge-module `@route` in real-module mode) | — | Full C# namespace for generated REST Map* registrations (e.g. `KeyCustodian: "DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian"`). **Not** hard-derived from `csharp-app-namespace-base` when set — App must not own AspNetCore. Missing key for edge-module → D2TSP017. |
+| `csharp-bridge-namespace` | `object` (ServedBy → string) | Optional (required for standalone bridge ops) | — | Full C# namespace for Edge HTTP→gRPC bridge registrations (e.g. `Audit: "DcsvIo.D2.Private.Edge.Api.Bridges.Audit"`). Missing key for standalone bridge → D2TSP018. |
 
 **Process-kind emit matrix** (real-module mode = `csharp-clients-namespace` + `csharp-app-namespace-base` set):
 
@@ -151,12 +151,12 @@ All supported `tspconfig.yaml` options are listed below.
 
 Bridge DI is host-owned: `AddD2{Module}GrpcClients` + `{Module}GrpcClientOptions.Address` — the bridge never hardcodes a channel address. ClientMappers stay in the gRPC-client emitter; bridges never use server `TransportMappers`.
 
-The emitter reads `@d2/typespec-decorators` state keys and writes its output
+The emitter reads `@dcsv-io/d2-typespec-decorators` state keys and writes its output
 to `emitter-output-dir`. Set `csharp-namespace` to the target C# namespace.
 Import the decorators library in the `.tsp` spec:
 
 ```typespec
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 using D2;
 
 @d2ServedBy("Edge")
@@ -172,7 +172,7 @@ The `src/lib/` folder exposes shared utilities consumed by every emitter in
 the fleet. Core utilities (scalar registry, name transforms, banner, emit-file
 wrapper, model walker, DTO emitters, idempotency gate, and OpenAPI emitter) are
 re-exported from the package barrel (`src/index.ts`) and can be imported from
-`@d2/typespec-emitters` directly. The remaining emitters (REST route+policy,
+`@dcsv-io/d2-typespec-emitters` directly. The remaining emitters (REST route+policy,
 gRPC service-impl, handler-interface, and façade) are fleet-internal — called
 by `$onEmit` in `emitter.ts`, not individually importable from the barrel.
 
@@ -181,7 +181,7 @@ by `$onEmit` in `emitter.ts`, not individually importable from the barrel.
 Maps TypeSpec built-in scalar names to `{ cs, proto, ts }` target-type strings.
 
 ```typescript
-import { resolveScalar, hasScalar } from "@d2/typespec-emitters";
+import { resolveScalar, hasScalar } from "@dcsv-io/d2-typespec-emitters";
 
 const mapping = resolveScalar("int32");
 // { cs: "int", proto: "int32", ts: "number" }
@@ -221,7 +221,7 @@ Both regexes are linear, bounded-input (Bucket 2 — no `matchTimeout` needed).
 ### Banner (`src/lib/banner.ts`)
 
 ```typescript
-import { buildBanner } from "@d2/typespec-emitters";
+import { buildBanner } from "@dcsv-io/d2-typespec-emitters";
 
 const header = buildBanner("contracts/auth/v1/auth.tsp");
 ```
@@ -230,7 +230,7 @@ Returns the standard auto-generated banner (fenced `// <auto-generated>` block
 with `Source spec:` interpolation and `Manual edits will be lost on rebuild.`
 warning). Matches the canonical banner shape from `tools/ts-codegen` so
 cross-language grep / tooling lights up identically. Attribution names this
-pipeline: `Generated by the @d2/typespec-emitters TypeSpec emitter`.
+pipeline: `Generated by the @dcsv-io/d2-typespec-emitters TypeSpec emitter`.
 
 The banner is content-neutral from the emit-file wrapper's perspective — each
 emitter concatenates `buildBanner(...)` before calling `emitGeneratedFile`. JSON
@@ -242,7 +242,7 @@ Shared walker that both the C# and TS emitters consume from the same walk result
 guaranteeing cross-language parity by construction:
 
 ```typescript
-import { walkModel } from "@d2/typespec-emitters";
+import { walkModel } from "@dcsv-io/d2-typespec-emitters";
 
 const { fields, nestedModels } = walkModel(program, model, (code, message) => {
   // code: "unmapped-scalar" | "unsupported-property-type"
@@ -265,7 +265,7 @@ never defaulted).
 ### C# DTO emitter (`src/lib/csharp-dto-emitter.ts`)
 
 ```typescript
-import { emitCsharpDtos } from "@d2/typespec-emitters";
+import { emitCsharpDtos } from "@dcsv-io/d2-typespec-emitters";
 
 const [inputFile, outputFile] = emitCsharpDtos(
   "getJwks",
@@ -287,7 +287,7 @@ positional param, with `<reason>` threaded from the `@d2Redact` decorator (never
 defaulted; the emitter fails loud on an unrecognized reason). The `property:`
 attribute target is mandatory — a bare param target is not seen by
 `RedactDataDestructuringPolicy`. Conditional `using` directives for
-`D2.Shared.Utilities.Attributes` and `D2.Shared.Utilities.Enums` are emitted when
+`DcsvIo.D2.Utilities.Attributes` and `DcsvIo.D2.Utilities.Enums` are emitted when
 at least one field — top-level OR nested — is redacted.
 
 The emitter also honors the stock TypeSpec `@encodedName("application/json", "<wire>")`
@@ -308,7 +308,7 @@ JSON-name attribute precedes the redact attribute.
 ### TypeScript DTO emitter (`src/lib/ts-dto-emitter.ts`)
 
 ```typescript
-import { emitTsDtos } from "@d2/typespec-emitters";
+import { emitTsDtos } from "@dcsv-io/d2-typespec-emitters";
 
 const tsFile = emitTsDtos(
   "getJwks",
@@ -328,7 +328,7 @@ is a C# server-side concern, not a wire-protocol concern.
 ### Proto emitter (`src/lib/proto-emitter.ts`)
 
 ```typescript
-import { emitProto } from "@d2/typespec-emitters";
+import { emitProto } from "@dcsv-io/d2-typespec-emitters";
 
 const protoFile = emitProto(
   "sign",                                        // opName (banner context only)
@@ -376,20 +376,20 @@ const routeFile = emitRoutePolicy({
     typeName: "ISignFixtureSignerFacade",
     methodName: "SignAsync",
   },
-  delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
+  delegationTargetNamespace: "DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade",
   inputTypeName: "SignFixtureInput",
   outputTypeName: "SignFixtureOutput",
-  dtoNamespace: "D2.Edge.Tests.TypeSpecDto.Generated",
+  dtoNamespace: "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
   scopePolicy: { kind: "any", scopes: ["self.write"] },
   rateTier: "Standard",
   csrf: "exempt",
-  registrationNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated",
+  registrationNamespace: "DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated",
   sourceSpec: "contracts/typespec/fixtures/sign-shaped.tsp",
 });
 // routeFile.fileName → "SignFixtureRouteRegistration.g.cs"
 
 const markersFile = emitRoutePolicyMarkers(
-  "D2.Edge.Tests.TypeSpecRoute.Generated",
+  "DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated",
   "contracts/typespec/fixtures/sign-shaped.tsp",
 );
 // markersFile.fileName → "D2GeneratedRoutePolicyMarkers.g.cs"
@@ -433,11 +433,11 @@ This file is emitted once per module (not once per route).
 
 Route fixtures live in `private/services/edge/tests/Unit/KeyCustodian/TypeSpecRoute/Generated/`. They are
 byte-pinned by `tests/route-policy-emitter.test.ts` byte-parity describe blocks and validated by the
-`RoutePolicyEnforcementTests` + `RouteFacadeDelegationTests` TestServer suites in `D2.Edge.Tests`.
+`RoutePolicyEnforcementTests` + `RouteFacadeDelegationTests` TestServer suites in `DcsvIo.D2.Private.Edge.Tests`.
 
 ### Edge HTTP→gRPC bridge emitter (`src/lib/bridge-emitter.ts`)
 
-> **Barrel-public** — also re-exported from `@d2/typespec-emitters` (`src/index.ts`).
+> **Barrel-public** — also re-exported from `@dcsv-io/d2-typespec-emitters` (`src/index.ts`).
 > Called from `$onEmit` for `process-kind-by-module` **`standalone`** ops that
 > carry both `@route` and `@d2GrpcMethod`.
 
@@ -445,11 +445,11 @@ byte-pinned by `tests/route-policy-emitter.test.ts` byte-parity describe blocks 
 import {
   emitBridgeRegistration,
   emitMapAllBridges,
-} from "@d2/typespec-emitters";
+} from "@dcsv-io/d2-typespec-emitters";
 import type {
   BridgeEmitInput,
   BridgeModuleOp,
-} from "@d2/typespec-emitters";
+} from "@dcsv-io/d2-typespec-emitters";
 
 const bridgeFile = emitBridgeRegistration({
   opName: "pingAudit",
@@ -461,7 +461,7 @@ const bridgeFile = emitBridgeRegistration({
   outputTypeName: "PingAuditOutput",
   dtoNamespace: "D2.Services.Audit.Client.Ping",
   scopePolicy: { kind: "any", scopes: ["internal.audit.ping"] },
-  registrationNamespace: "D2.Edge.Api.Bridges.Audit",
+  registrationNamespace: "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
   sourceSpec: "contracts/typespec/…",
   // optional: idempotency: { keySource: "header", ttlSeconds: 86400, fields: [] },
 });
@@ -470,7 +470,7 @@ const bridgeFile = emitBridgeRegistration({
 const mapAll = emitMapAllBridges(
   "Audit",
   [{ opName: "pingAudit" }],
-  "D2.Edge.Api.Bridges.Audit",
+  "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
   "contracts/typespec/…",
 );
 // mapAll?.fileName → "AuditBridgeRegistrations.g.cs"
@@ -514,7 +514,7 @@ Compile/run validation lives in
 > barrel-exported but `GrpcDelegationTarget` is not).
 
 ```typescript
-import { emitGrpcService } from "@d2/typespec-emitters";
+import { emitGrpcService } from "@dcsv-io/d2-typespec-emitters";
 import type { GrpcDelegationTarget } from "./lib/grpc-service-emitter.js";
 
 // Façade delegation (when op has @d2InProcess):
@@ -522,15 +522,15 @@ const facadeTarget: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "ISignFixtureSignerFacade",
   methodName: "SignAsync",
-  targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
+  targetNamespace: "DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade",
 };
 const [serviceFile, mappersFile] = emitGrpcService(
   "sign",
   "SignFixtureSigner",
   "Sign",
   "D2.Services.Protos.SignFixtures.V2Alpha",
-  "D2.Edge.Tests.TypeSpecGrpc.Generated",
-  "D2.Edge.Tests.TypeSpecDto.Generated",
+  "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated",
+  "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
   "contracts/typespec/fixtures/sign-shaped.tsp",
   "SignRequest",
   "SignResponse",
@@ -556,7 +556,7 @@ constructor and call site change based on the `delegationTarget`:
   `I<Op>Handler handler` and calls `handler.HandleAsync(input, ct)`.
 
 In both cases the response shape is identical: the service calls
-`result.ToProtoResponse()` (built on `D2.Shared.Result.Grpc`'s `ToProto()`) to
+`result.ToProtoResponse()` (built on `DcsvIo.D2.Result.Grpc`'s `ToProto()`) to
 populate the `D2ResultProto` envelope (field 1) and, on success, the typed data
 message (field 2). Business failures ride the envelope with their real HTTP status
 code; the gRPC status is always `StatusCode.OK`. `RpcException` is reserved for
@@ -578,12 +578,12 @@ import { emitHandlerInterface } from "./lib/handler-interface-emitter.js";
 
 const interfaceFile = emitHandlerInterface(
   "getJwks",
-  "D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks",
+  "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks",
   "GetJwksInput",
   "GetJwksOutput",
   /*emitUsing*/ false,
   "contracts/typespec/key-custodian/key-custodian.tsp",
-  /*dtoNamespace*/ "D2.Edge.KeyCustodian.Client",
+  /*dtoNamespace*/ "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
 );
 // interfaceFile.fileName → "IGetJwksHandler.g.cs"
 ```
@@ -596,8 +596,8 @@ directly.
 Parameters:
 
 - `emitUsing` — when `false`, the consuming app project supplies the
-  `D2.Shared.Handler.Abstractions` import via `GlobalUsings.cs` (real KC app). When
-  `true`, the file must carry a per-file `using D2.Shared.Handler.Abstractions;`
+  `DcsvIo.D2.Handler.Abstractions` import via `GlobalUsings.cs` (real KC app). When
+  `true`, the file must carry a per-file `using DcsvIo.D2.Handler.Abstractions;`
   (fixture namespaces where no global using is present).
 - `dtoNamespace` — optional. When the DTO types live in a different namespace than
   the handler interface (e.g. exposed ops whose DTOs are in the `Client` project),
@@ -623,8 +623,8 @@ const [ifaceFile, implFile, diFile] = emitFacade(
       category: "Queries",
     },
   ],
-  "D2.Edge.KeyCustodian.Client",
-  "D2.Edge.KeyCustodian.App.Application",
+  "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
+  "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application",
 );
 // ifaceFile.fileName → "IKeyCustodianApi.g.cs"
 // implFile.fileName  → "KeyCustodianApi.g.cs"
@@ -677,7 +677,7 @@ that cannot be expressed on a wire boundary.
 ### OpenAPI `x-d2-*` extension emitter (`src/lib/openapi-emitter.ts`)
 
 ```typescript
-import { emitOpenApiDocuments } from "@d2/typespec-emitters";
+import { emitOpenApiDocuments } from "@dcsv-io/d2-typespec-emitters";
 
 // One OpenAPI 3.0 document per @service namespace × version. The HTTP shape
 // is produced by the genuine stock @typespec/openapi3 emitter; x-d2-* policy
@@ -722,11 +722,11 @@ import {
   type IdempotencyGateInput,
   type IdempotencyGateWeave,
   type IdempotencyKeySource,
-} from "@d2/typespec-emitters";
+} from "@dcsv-io/d2-typespec-emitters";
 
 // Emit the D2GeneratedIdempotencyStore seam interface (one per registration namespace):
 const seamFile = emitIdempotencyStoreSeam(
-  "D2.Edge.Tests.TypeSpecRoute.Generated",
+  "DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated",
   "contracts/typespec/fixtures/sign-shaped.tsp",
 );
 // seamFile.fileName → "D2GeneratedIdempotencyStore.g.cs"
@@ -780,12 +780,12 @@ Two exports:
 
 Gate fixtures are byte-pinned by `tests/idempotency-gate-emitter.test.ts` and
 exercised end-to-end by the `RouteIdempotencyGateTests` and `RouteFacadeDelegationTests`
-suites in `D2.Edge.Tests`.
+suites in `DcsvIo.D2.Private.Edge.Tests`.
 
 ### Emit-file wrapper (`src/lib/emit-file.ts`)
 
 ```typescript
-import { emitGeneratedFile, resolveOutputPath } from "@d2/typespec-emitters";
+import { emitGeneratedFile, resolveOutputPath } from "@dcsv-io/d2-typespec-emitters";
 
 const path = resolveOutputPath(context, "contracts", "auth.proto");
 await emitGeneratedFile(program, path, content);
@@ -805,7 +805,7 @@ The `D2TSP*` family is the TypeSpec emitter fleet's cross-tooling diagnostic
 ID prefix. It is registered in `docs/SRC_GEN.md §1.2`.
 
 The TypeSpec-native diagnostic surface uses named codes (kebab strings)
-surfaced by the compiler as `@d2/typespec-emitters/<name>`. The `D2TSP` ids
+surfaced by the compiler as `@dcsv-io/d2-typespec-emitters/<name>`. The `D2TSP` ids
 are the grep-stable cross-tooling identifiers noted in comments alongside each
 catalog entry in `src/lib.ts`.
 
@@ -989,7 +989,7 @@ the fixtures in one command:
 
 ```sh
 # From the repo root:
-pnpm --filter @d2/typespec-emitters regen
+pnpm --filter @dcsv-io/d2-typespec-emitters regen
 
 # Or equivalently:
 node tools/scripts/regen-typespec-emitters.mjs
@@ -1062,10 +1062,10 @@ The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
 
 After running `pnpm regen`:
 
-1. Run `pnpm --filter @d2/typespec-emitters test` to confirm all byte-parity tests
+1. Run `pnpm --filter @dcsv-io/d2-typespec-emitters test` to confirm all byte-parity tests
    pass. All byte-gate tests read the committed files from disk (Type B) and
    auto-refresh when the committed files are updated — no in-test constants to edit.
-2. Run `dotnet build` + `dotnet test` (scoped to `D2.Edge.Tests`) to confirm the C#
+2. Run `dotnet build` + `dotnet test` (scoped to `DcsvIo.D2.Private.Edge.Tests`) to confirm the C#
    validation and gRPC harness tests still compile and pass against the new fixtures.
 3. Commit the updated fixture files in one atomic change.
 
@@ -1080,7 +1080,7 @@ will fail the byte-parity tests until the fixtures are refreshed.
 | Kind               | Package                   | Version       | Notes                                                                            |
 | ------------------ | ------------------------- | ------------- | -------------------------------------------------------------------------------- |
 | `peerDependencies` | `@typespec/compiler`      | `^1.13.0`     | Must match the decorators package peer range                                     |
-| `dependencies`     | `@d2/typespec-decorators` | `workspace:*` | State-key symbols + resilience DSL parser                                        |
+| `dependencies`     | `@dcsv-io/d2-typespec-decorators` | `workspace:*` | State-key symbols + resilience DSL parser                                        |
 | `dependencies`     | `@typespec/http`          | `1.13.0`      | Used by the route+policy + OpenAPI emitters (`getHttpOperation` / `getAllHttpServices` for verb + path resolution) |
 | `devDependencies`  | `@typespec/compiler`      | `1.13.0`      | Pinned exact version (matches decorators package)                                |
 | `devDependencies`  | `@typespec/openapi3`      | `1.13.0`      | The genuine stock OpenAPI 3.0 emitter — `getOpenAPI3` produces the HTTP shape the OpenAPI emitter layers `x-d2-*` onto (build/test-time only; the emitted doc is data) |

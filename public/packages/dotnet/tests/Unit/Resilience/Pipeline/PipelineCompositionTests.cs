@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.Pipeline;
+namespace DcsvIo.D2.Tests.Unit.Resilience.Pipeline;
 
 using AwesomeAssertions;
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Resilience.RateLimiting;
-using D2.Shared.Resilience.Timeout;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.Pipeline;
+using DcsvIo.D2.Resilience.RateLimiting;
+using DcsvIo.D2.Resilience.Timeout;
 using Xunit;
-using SingleflightT = D2.Shared.Resilience.Singleflight.Singleflight<string, int>;
+using SingleflightT = DcsvIo.D2.Resilience.Singleflight.Singleflight<string, int>;
 
 /// <summary>
 /// Adversarial nesting tests covering all six pipeline layers in varied
@@ -220,7 +220,7 @@ public sealed class PipelineCompositionTests
             // Using -1 instead of a finite 500 ms removes the timing race: the timeout
             // fires deterministically before an infinite wait completes, regardless of
             // scheduler pressure or CPU contention. Note: `Timeout` is ambiguous here
-            // (D2.Shared.Tests.Unit.Resilience.Timeout namespace shadows System.Threading.Timeout),
+            // (DcsvIo.D2.Tests.Unit.Resilience.Timeout namespace shadows System.Threading.Timeout),
             // so the literal -1 is used directly — identical to Timeout.Infinite.
             await Task.Delay(-1, ct);
             return 1;
@@ -257,7 +257,7 @@ public sealed class PipelineCompositionTests
                 // Using -1 instead of a finite 500 ms removes the timing race — the
                 // 50 ms timeout fires deterministically before an infinite wait completes,
                 // regardless of scheduler jitter. Note: `Timeout` is ambiguous here
-                // (D2.Shared.Tests.Unit.Resilience.Timeout namespace shadows System.Threading.Timeout),
+                // (DcsvIo.D2.Tests.Unit.Resilience.Timeout namespace shadows System.Threading.Timeout),
                 // so the literal -1 is used directly — identical to Timeout.Infinite.
                 await Task.Delay(-1, ct);
             }
@@ -289,7 +289,7 @@ public sealed class PipelineCompositionTests
             _ => false,
             options: new(failureThreshold: 100));
 
-        using var rateLimiter = new D2.Shared.Resilience.RateLimiting.RateLimiter(
+        using var rateLimiter = new DcsvIo.D2.Resilience.RateLimiting.RateLimiter(
             new RateLimiterOptions(maxConcurrency: 1, acquisitionTimeout: TimeSpan.Zero));
 
         using var pipeline = new ResilientPipeline<string, int>(
@@ -345,7 +345,7 @@ public sealed class PipelineCompositionTests
         // acquisitionTimeout=Zero). RateLimitRejectedException is NOT in
         // IsTransientException → R does NOT retry.
         // Result: TooManyRequests after a single attempt.
-        using var rateLimiter = new D2.Shared.Resilience.RateLimiting.RateLimiter(
+        using var rateLimiter = new DcsvIo.D2.Resilience.RateLimiting.RateLimiter(
             new RateLimiterOptions(maxConcurrency: 1, acquisitionTimeout: TimeSpan.Zero));
 
         using var pipeline = new ResilientPipeline<string, int>(

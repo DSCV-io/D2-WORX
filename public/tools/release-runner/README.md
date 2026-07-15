@@ -88,7 +88,7 @@ node tools/release-runner/dist/cli.js --against <baseline> --apply
 node tools/release-runner/dist/cli.js --against <baseline> --graduate <package-name>
 
 # Restrict to one package:
-node tools/release-runner/dist/cli.js --against <baseline> --package D2.Shared.Result
+node tools/release-runner/dist/cli.js --against <baseline> --package DcsvIo.D2.Result
 
 # Print the full consumable package inventory as JSON and exit (read-only):
 node tools/release-runner/dist/cli.js --list
@@ -147,7 +147,7 @@ integration test.
 
 ## Versioning discipline
 
-Each consumable package (`D2.Shared.*`, `@d2/*`) carries its own semver version and
+Each consumable package (`DcsvIo.D2.*`, `@dcsv-io/d2-*`) carries its own semver version and
 `CHANGELOG.md`. The runner computes the bump from the artifact diff, writes the version
 slot, and prepends the changelog block. The commit footer is the authoritative override
 to escalate that diff-derived bump; the commit type drives the changelog category only.

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 DLQ failure-metadata spec",
-  "description": "Schema for contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json — the source-of-truth catalog of (a) JSON property-name constants for the DlqFailureMetadata record and (b) closed-enum string values for the failure-cause taxonomy. D2.Shared.Messaging.DlqMetadata.SourceGen dispatches multi-target: the fields catalog emits DlqFailureMetadataFields into D2.Shared.Messaging.Abstractions; the causes catalog emits DlqFailureCauses into D2.Shared.Messaging.RabbitMq. tools/ts-codegen emits both into @d2/messaging-abstractions.",
+  "description": "Schema for contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json — the source-of-truth catalog of (a) JSON property-name constants for the DlqFailureMetadata record and (b) closed-enum string values for the failure-cause taxonomy. DcsvIo.D2.Messaging.DlqMetadata.SourceGen dispatches multi-target: the fields catalog emits DlqFailureMetadataFields into DcsvIo.D2.Messaging.Abstractions; the causes catalog emits DlqFailureCauses into DcsvIo.D2.Messaging.RabbitMq. tools/ts-codegen emits both into @dcsv-io/d2-messaging-abstractions.",
   "type": "object",
   "required": ["fields", "causes"],
   "additionalProperties": false,

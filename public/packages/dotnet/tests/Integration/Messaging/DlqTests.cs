@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
 using System.Text;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Headers.Amqp;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq.Topology;
+using DcsvIo.D2.Headers.Amqp;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq.Topology;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;

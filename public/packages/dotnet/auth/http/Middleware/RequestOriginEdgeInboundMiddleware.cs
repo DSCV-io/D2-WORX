@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http.Middleware;
+namespace DcsvIo.D2.Auth.Http.Middleware;
 
 using System;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Http.Telemetry;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Time;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Http.Telemetry;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Time;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

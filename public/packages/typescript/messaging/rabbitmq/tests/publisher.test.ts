@@ -12,12 +12,12 @@ import {
   PayloadSealer,
   RecipientPrivateKeyring,
   RecipientPublicKeyring,
-} from "@d2/encryption";
-import { AmqpHeaders } from "@d2/headers-amqp";
+} from "@dcsv-io/d2-encryption";
+import { AmqpHeaders } from "@dcsv-io/d2-headers-amqp";
 import {
   MqMessagesRegistry,
   type MqMessageDescriptor,
-} from "@d2/messaging-abstractions";
+} from "@dcsv-io/d2-messaging-abstractions";
 import type { Connection } from "rabbitmq-client";
 import { describe, expect, it } from "vitest";
 
@@ -85,7 +85,7 @@ function recordingSender(): {
 
 const AUDIT_DESCRIPTOR: MqMessageDescriptor = {
   constant: "AuditWrittenFixture",
-  messageType: "D2.Audit.Events.AuditWrittenFixture",
+  messageType: "DcsvIo.D2.Private.Audit.Events.AuditWrittenFixture",
   exchange: "d2.audit.written",
   exchangeType: "fanout",
   encryption: "payload-fixture-sealed",
@@ -188,7 +188,7 @@ describe("publishVia", () => {
     expect(envelope.routingKey).toBe("");
     expect(envelope.contentType).toBe("application/octet-stream");
     expect(envelope.headers[AmqpHeaders.PROTO_TYPE]).toBe(
-      "D2.Shared.Auth.Events.KeyRotatedEvent",
+      "DcsvIo.D2.Auth.Events.KeyRotatedEvent",
     );
     expect(envelope.headers[AmqpHeaders.ENCRYPTION_KID]).toBeUndefined();
     expect(envelope.messageId).toMatch(

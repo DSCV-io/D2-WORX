@@ -2,22 +2,22 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Geo.SourceGen
+# DcsvIo.D2.Geo.SourceGen
 
 > Parent: [`public/packages/dotnet/README.md`](../../README.md)
 
-> **Audience**: D² framework engineers extending or maintaining the geo data pipeline and the codegen emitting strongly-typed geo records into `D2.Shared.Geo.Abstractions` and `D2.Shared.Geo.Default`.
+> **Audience**: D² framework engineers extending or maintaining the geo data pipeline and the codegen emitting strongly-typed geo records into `DcsvIo.D2.Geo.Abstractions` and `DcsvIo.D2.Geo.Default`.
 
 Roslyn `IIncrementalGenerator` that turns the seven pipeline-assembled geo spec files
-under `contracts/geo/` into typed .NET source — consumed by `D2.Shared.Geo.Abstractions`
-(TYPES) and `D2.Shared.Geo.Default` (DATA).
+under `contracts/geo/` into typed .NET source — consumed by `DcsvIo.D2.Geo.Abstractions`
+(TYPES) and `DcsvIo.D2.Geo.Default` (DATA).
 
 ## Who consumes this
 
 Any .NET service that needs typed ISO geo lookups —
-`D2.Shared.Geo.Abstractions` pulls this analyzer to receive its enums /
+`DcsvIo.D2.Geo.Abstractions` pulls this analyzer to receive its enums /
 wrapper structs / record shapes / JsonConverters / `GeoCatalog`
-constants; `D2.Shared.Geo.Default` pulls the same analyzer to receive
+constants; `DcsvIo.D2.Geo.Default` pulls the same analyzer to receive
 the per-entity static instance data and lookup tables.
 
 ## Inputs
@@ -41,11 +41,11 @@ Each spec carries the envelope shape `{ catalogVersion, generatedAt, entries: [.
 The single `GeoGenerator` inspects `compilation.AssemblyName` and
 dispatches per target:
 
-- `D2.Shared.Geo.Abstractions` → emit TYPES.
-- `D2.Shared.Geo.Default` → emit DATA.
+- `DcsvIo.D2.Geo.Abstractions` → emit TYPES.
+- `DcsvIo.D2.Geo.Default` → emit DATA.
 - Anything else → emit nothing.
 
-Pattern mirrors `D2.Shared.Context.SourceGen`'s assembly-based dispatch.
+Pattern mirrors `DcsvIo.D2.Context.SourceGen`'s assembly-based dispatch.
 
 ## Diagnostic IDs
 

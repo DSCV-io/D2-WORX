@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.SourceGen;
+namespace DcsvIo.D2.Messaging.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by <c>MqGenerator</c>.

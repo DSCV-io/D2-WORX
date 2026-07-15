@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 /// <summary>
 /// Tests for <see cref="GenerateKeyHandler"/> — happy path, adversarial domain inputs,

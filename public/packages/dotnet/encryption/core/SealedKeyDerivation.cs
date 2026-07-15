@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Encryption;
+namespace DcsvIo.D2.Encryption;
 
 using System.Buffers.Binary;
 using System.Security.Cryptography;

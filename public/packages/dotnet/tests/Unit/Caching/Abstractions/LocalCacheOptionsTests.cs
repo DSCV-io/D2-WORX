@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Caching.Abstractions;
+namespace DcsvIo.D2.Tests.Unit.Caching.Abstractions;
 
 using System;
 using AwesomeAssertions;
-using D2.Shared.Caching;
+using DcsvIo.D2.Caching;
 using Xunit;
 
 /// <summary>

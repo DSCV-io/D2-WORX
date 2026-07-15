@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Repo.Abstractions;
+namespace DcsvIo.D2.Handler.Repo.Abstractions;
 
 using System;
 
@@ -16,7 +16,7 @@ using System;
 /// </summary>
 /// <remarks>
 /// One implementation per database provider. PostgreSQL lives in
-/// <c>D2.Shared.Handler.Repo.Postgres</c>; future SQL Server / SQLite /
+/// <c>DcsvIo.D2.Handler.Repo.Postgres</c>; future SQL Server / SQLite /
 /// MySQL implementations would be sibling packages registering the same
 /// interface. The base repo handler stays provider-agnostic.
 /// <para>

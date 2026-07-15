@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.Scopes.SourceGen;
+using DcsvIo.D2.Auth.Scopes.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -44,7 +44,7 @@ public sealed class ScopesGeneratorTests
     """;
 
     private const string _ENUM_SOURCE = """
-    namespace D2.Shared.Auth.Abstractions
+    namespace DcsvIo.D2.Auth.Abstractions
     {
         public enum OrgType { Admin, Customer }
         public enum Role { Owner, Agent }
@@ -74,7 +74,7 @@ public sealed class ScopesGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsScopesGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -107,7 +107,7 @@ public sealed class ScopesGeneratorTests
     {
         // No AdditionalText supplied — generator must fire D2SCP009.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -121,7 +121,7 @@ public sealed class ScopesGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnosticAndStillProducesEmptyShell()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -141,7 +141,7 @@ public sealed class ScopesGeneratorTests
         // for OrgType; Owner + Agent for Role). Wildcard expansion must use
         // exactly these — not a hard-coded list inside the SrcGen.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: _SAMPLE_SPEC);
 
         var src = driver.GetRunResult().GeneratedTrees.Single().ToString();
@@ -163,12 +163,12 @@ public sealed class ScopesGeneratorTests
         // Cache stability — identical inputs must produce identical generator
         // output (otherwise downstream incremental builds re-run unnecessarily).
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Abstractions",
+                assemblyName: "DcsvIo.D2.Auth.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees.Single().ToString();
 
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Abstractions",
+                assemblyName: "DcsvIo.D2.Auth.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees.Single().ToString();
 
@@ -182,10 +182,10 @@ public sealed class ScopesGeneratorTests
     [Fact]
     public void Generator_PrivateAuthAbstractionsExtensions_MultiSpec_EmitsProductScopesUnion()
     {
-        // Public∪private AdditionalFiles on D2.Shared.Auth.Abstractions.Extensions → ProductScopes.g.cs
+        // Public∪private AdditionalFiles on DcsvIo.D2.Private.Auth.Abstractions.Extensions → ProductScopes.g.cs
         // with both halves present (multi-spec merge).
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions.Extensions",
+            assemblyName: "DcsvIo.D2.Private.Auth.Abstractions.Extensions",
             specJson: null,
             multiSpecs:
             [
@@ -199,7 +199,7 @@ public sealed class ScopesGeneratorTests
             .Should().Be("ProductScopes.g.cs");
 
         var src = result.GeneratedTrees.Single().ToString();
-        src.Should().Contain("namespace D2.Private.Auth;");
+        src.Should().Contain("namespace DcsvIo.D2.Private.Auth;");
         src.Should().Contain("public static partial class ProductScopes");
         src.Should().Contain("\"self.read\"");
         src.Should().Contain("\"internal.kc.sign\"");
@@ -226,7 +226,7 @@ public sealed class ScopesGeneratorTests
         """;
 
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions.Extensions",
+            assemblyName: "DcsvIo.D2.Private.Auth.Abstractions.Extensions",
             specJson: null,
             multiSpecs:
             [

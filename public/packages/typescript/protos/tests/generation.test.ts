@@ -27,7 +27,7 @@ function findRepoRoot(): string {
 
 const repoRoot = findRepoRoot();
 
-describe("@d2/protos — generation surface", () => {
+describe("@dcsv-io/d2-protos — generation surface", () => {
   it("contracts/protos/ exists at repo root", () => {
     const protosDir = join(repoRoot, "contracts", "protos");
     expect(existsSync(protosDir)).toBe(true);

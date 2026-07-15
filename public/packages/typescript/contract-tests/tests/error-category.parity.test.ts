@@ -8,7 +8,7 @@ import {
   ALL_ERROR_CATEGORIES,
   ErrorCategoryWire,
   type ErrorCategory,
-} from "@d2/error-category";
+} from "@dcsv-io/d2-error-category";
 import { canonicalize, loadFixture } from "../src/index.js";
 
 // ---------------------------------------------------------------------------
@@ -17,7 +17,7 @@ import { canonicalize, loadFixture } from "../src/index.js";
 // The .NET side emits `contract-tests/fixtures/error-category/mapping.json`
 // (via `ErrorCategoryFixtureEmitter`) — a PascalCase member name → snake_case
 // wire string map reflected off the .NET `ErrorCategory` enum. The TS side
-// exposes the same map via `ErrorCategoryWire` from `@d2/error-category`.
+// exposes the same map via `ErrorCategoryWire` from `@dcsv-io/d2-error-category`.
 //
 // PARITY AXES:
 //   member set      : fixture keys (PascalCase members) === ErrorCategoryWire keys

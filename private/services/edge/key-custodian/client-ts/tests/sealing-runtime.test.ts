@@ -8,14 +8,14 @@ import {
   PayloadSealer,
   RecipientPrivateKeyring,
   RecipientPublicKeyring,
-} from "@d2/encryption";
-import type { ILogger, LogBindings } from "@d2/logging";
+} from "@dcsv-io/d2-encryption";
+import type { ILogger, LogBindings } from "@dcsv-io/d2-logging";
 import {
   type D2Result,
   ok,
   serviceUnavailable,
   validationFailed,
-} from "@d2/result";
+} from "@dcsv-io/d2-result";
 import { describe, expect, it, vi } from "vitest";
 
 import type { KeyCustodianGrpcClient } from "../src/facade/key-custodian-grpc-client.g.js";

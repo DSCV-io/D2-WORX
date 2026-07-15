@@ -4,23 +4,23 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Audiences.SourceGen;
+namespace DcsvIo.D2.Auth.Audiences.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits audience catalogs from
 /// <c>contracts/auth-audiences/audiences.spec.json</c> via <c>AdditionalFiles</c>.
-/// Dual-target: public assembly <c>D2.Shared.Auth.Abstractions</c> → <c>Audiences</c>
+/// Dual-target: public assembly <c>DcsvIo.D2.Auth.Abstractions</c> → <c>Audiences</c>
 /// (public values only); private Extensions assembly
-/// <c>D2.Shared.Auth.Abstractions.Extensions</c> → <c>ProductAudiences</c>
-/// (public∪private values, distinct FQN under <c>D2.Private.Auth</c>).
+/// <c>DcsvIo.D2.Private.Auth.Abstractions.Extensions</c> → <c>ProductAudiences</c>
+/// (public∪private values, distinct FQN under <c>DcsvIo.D2.Private.Auth</c>).
 /// </summary>
 [Generator]
 public sealed class AudiencesGenerator : IIncrementalGenerator
@@ -28,10 +28,10 @@ public sealed class AudiencesGenerator : IIncrementalGenerator
     private const string _GENERATED_SOURCE_NAME = "Audiences.g.cs";
     private const string _PRIVATE_GENERATED_SOURCE_NAME = "ProductAudiences.g.cs";
     private const string _SPEC_FILE_NAME = "audiences.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.Auth.Abstractions";
-    private const string _PRIVATE_TARGET_ASSEMBLY_NAME = "D2.Shared.Auth.Abstractions.Extensions";
-    private const string _PUBLIC_ROOT_NAMESPACE = "D2.Shared.Auth.Abstractions";
-    private const string _PRIVATE_ROOT_NAMESPACE = "D2.Private.Auth";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Auth.Abstractions";
+    private const string _PRIVATE_TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Private.Auth.Abstractions.Extensions";
+    private const string _PUBLIC_ROOT_NAMESPACE = "DcsvIo.D2.Auth.Abstractions";
+    private const string _PRIVATE_ROOT_NAMESPACE = "DcsvIo.D2.Private.Auth";
     private const string _PUBLIC_CLASS_NAME = "Audiences";
     private const string _PRIVATE_CLASS_NAME = "ProductAudiences";
 

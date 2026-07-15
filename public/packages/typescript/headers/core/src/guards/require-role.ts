@@ -3,10 +3,10 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { AuthErrorCodes } from "@d2/auth-abstractions";
-import type { Role } from "@d2/auth-context-abstractions";
-import { forbidden, HttpStatusCode } from "@d2/result";
-import { PROBLEM_DETAILS_CONTENT_TYPE } from "@d2/problem-details-abstractions";
+import { AuthErrorCodes } from "@dcsv-io/d2-auth-abstractions";
+import type { Role } from "@dcsv-io/d2-auth-context-abstractions";
+import { forbidden, HttpStatusCode } from "@dcsv-io/d2-result";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "@dcsv-io/d2-problem-details-abstractions";
 import { toProblemDetails } from "../problem-details.js";
 import type {
   AuthenticatedRequestContext,

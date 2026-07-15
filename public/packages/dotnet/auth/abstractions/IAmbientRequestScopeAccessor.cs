@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions;
+namespace DcsvIo.D2.Auth.Abstractions;
 
 /// <summary>
 /// Framework-free port that resolves the <see cref="IServiceProvider"/> of the
 /// inbound request scope currently executing on the ambient (async-local)
 /// execution context. The outbound forwarding credential
-/// (<c>ForwardedJwtCallCredentials</c> in <c>D2.Shared.Auth.Outbound</c>) depends
+/// (<c>ForwardedJwtCallCredentials</c> in <c>DcsvIo.D2.Auth.Outbound</c>) depends
 /// on THIS port — never on a concrete ambient mechanism — so the outbound lib stays
 /// free of any web / hosting framework reference.
 /// </summary>

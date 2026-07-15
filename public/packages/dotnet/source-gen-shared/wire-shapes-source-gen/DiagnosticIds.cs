@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.WireShapes.SourceGen;
+namespace DcsvIo.D2.WireShapes.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by

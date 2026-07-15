@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.SpecsConsistency;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.SpecsConsistency;
 
 using System.Text.Json;
 

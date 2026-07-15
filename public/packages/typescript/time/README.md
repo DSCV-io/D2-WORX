@@ -2,14 +2,14 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/time
+# @dcsv-io/d2-time
 
 > Parent: [`public/packages/typescript/`](../README.md)
 >
-> **Audience**: backend Node/TypeScript service and BFF engineers who need the same deterministic clock seam and temporal storage types as `D2.Shared.Time` (.NET).
+> **Audience**: backend Node/TypeScript service and BFF engineers who need the same deterministic clock seam and temporal storage types as `DcsvIo.D2.Time` (.NET).
 
 Temporal-API wrapper providing the `IClock` injection seam + Category 1/3
-temporal storage types. Mirrors `D2.Shared.Time` (.NET).
+temporal storage types. Mirrors `DcsvIo.D2.Time` (.NET).
 
 ## Overview
 
@@ -57,7 +57,7 @@ loaded by both .NET (`CrossLanguageTemporalParityTests`) and TS
 ## Construction (smart-constructor pattern)
 
 ```ts
-import { ZonedInstant, LocalAnchoredEvent } from "@d2/time";
+import { ZonedInstant, LocalAnchoredEvent } from "@dcsv-io/d2-time";
 import { Temporal } from "temporal-polyfill";
 
 const zoned = ZonedInstant.create(
@@ -88,7 +88,7 @@ different error modes; documented as a contract divergence).
 ## TestClock usage
 
 ```ts
-import { TestClock } from "@d2/time";
+import { TestClock } from "@dcsv-io/d2-time";
 import { Temporal } from "temporal-polyfill";
 
 const clock = new TestClock(Temporal.Instant.from("2026-01-15T12:00:00Z"));
@@ -121,5 +121,5 @@ No configuration — zero-config; consumers register `IClock → SystemClock` th
 ## Dependencies
 
 - `temporal-polyfill` (npm)
-- `@d2/i18n-keys` (workspace) — generated TK constant catalog; `TK.common.errors.*` and `TK.common.time.*` keys used by the `create` factories.
-- `@d2/result` (workspace) — `D2Result<T>`, `InputError`, and TK helpers returned by the `create` factories.
+- `@dcsv-io/d2-i18n-keys` (workspace) — generated TK constant catalog; `TK.common.errors.*` and `TK.common.time.*` keys used by the `create` factories.
+- `@dcsv-io/d2-result` (workspace) — `D2Result<T>`, `InputError`, and TK helpers returned by the `create` factories.

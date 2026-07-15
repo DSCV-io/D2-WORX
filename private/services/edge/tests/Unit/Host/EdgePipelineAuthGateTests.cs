@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
 using System.Text.Json;
 using System.Threading.Tasks;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Private.Auth;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Http;
-using D2.Shared.Auth.Http.Endpoints;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Auth.Http.Endpoints;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;

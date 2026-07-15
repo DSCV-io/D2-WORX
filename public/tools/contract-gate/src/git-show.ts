@@ -14,7 +14,7 @@
 
 import { spawnSync } from "node:child_process";
 
-import { truthy } from "@d2/utilities";
+import { truthy } from "@dcsv-io/d2-utilities";
 
 import { validateGitPath, validateGitRef } from "./safe-args.js";
 

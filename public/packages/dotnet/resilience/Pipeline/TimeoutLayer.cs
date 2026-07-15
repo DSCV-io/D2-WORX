@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Pipeline;
+namespace DcsvIo.D2.Resilience.Pipeline;
 
-using D2.Shared.Resilience.Timeout;
+using DcsvIo.D2.Resilience.Timeout;
 
 /// <summary>
 /// Pipeline layer that bounds the wrapped operation with a wall-clock timeout via a

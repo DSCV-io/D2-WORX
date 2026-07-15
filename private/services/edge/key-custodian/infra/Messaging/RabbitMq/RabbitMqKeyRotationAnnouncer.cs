@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
 
-using D2.Edge.KeyCustodian.Infra.Observability;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Observability;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

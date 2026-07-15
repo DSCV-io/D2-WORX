@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Sealing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Sealing;
 
 /// <summary>
 /// The Active + Retiring ECDH sealing keys serving a <c>seal:&lt;serviceId&gt;</c> domain,

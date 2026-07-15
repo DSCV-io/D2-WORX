@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.ProblemDetails.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.ProblemDetails.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -29,7 +29,7 @@ using Xunit;
 /// </summary>
 public sealed class ProblemDetailsOutputParityTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.ProblemDetails.Abstractions";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.ProblemDetails.Abstractions";
 
     private static readonly string sr_generatedBase =
         Path.Combine(
@@ -40,8 +40,8 @@ public sealed class ProblemDetailsOutputParityTests
             "problem-details",
             "abstractions",
             "Generated",
-            "D2.Shared.ProblemDetails.SourceGen",
-            "D2.Shared.ProblemDetails.SourceGen.ProblemDetailsGenerator");
+            "DcsvIo.D2.ProblemDetails.SourceGen",
+            "DcsvIo.D2.ProblemDetails.SourceGen.ProblemDetailsGenerator");
 
     [Fact]
     public void D2ProblemDetailsKeys_RegeneratedOutput_MatchesCommittedFile()

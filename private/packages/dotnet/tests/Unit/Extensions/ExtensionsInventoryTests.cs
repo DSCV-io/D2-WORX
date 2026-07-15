@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Extensions;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Extensions;
 
 using System;
 using System.IO;
@@ -23,15 +23,15 @@ public sealed class ExtensionsInventoryTests
         Path.Combine(
             "auth",
             "abstractions-extensions",
-            "D2.Shared.Auth.Abstractions.Extensions.csproj"),
+            "DcsvIo.D2.Private.Auth.Abstractions.Extensions.csproj"),
         Path.Combine(
             "encryption",
             "extensions",
-            "D2.Shared.Encryption.Extensions.csproj"),
+            "DcsvIo.D2.Private.Encryption.Extensions.csproj"),
         Path.Combine(
             "i18n",
             "keys-extensions",
-            "D2.Shared.I18n.Keys.Extensions.csproj"),
+            "DcsvIo.D2.Private.I18n.Keys.Extensions.csproj"),
     ];
 
     [Fact]
@@ -40,7 +40,7 @@ public sealed class ExtensionsInventoryTests
         var root = Path.Combine(RepoRootFixture.Resolve(), "private", "packages", "dotnet");
         var csprojs = Directory.GetFiles(root, "*.csproj", SearchOption.AllDirectories)
             .Where(p => !p.Contains(
-                Path.Combine("tests", "D2.Private.Packages.Tests"),
+                Path.Combine("tests", "DcsvIo.D2.Private.Packages.Tests"),
                 StringComparison.OrdinalIgnoreCase))
             .Select(p => Path.GetRelativePath(root, p))
             .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
@@ -59,15 +59,15 @@ public sealed class ExtensionsInventoryTests
         Directory.Exists(Path.Combine(root, "product-constants"))
             .Should().BeFalse();
         Directory.Exists(Path.Combine(root, "i18n-keys"))
-            .Should().BeFalse("private bag i18n-keys — public @d2/i18n-keys is allowlisted elsewhere");
+            .Should().BeFalse("private bag i18n-keys — public @dcsv-io/d2-i18n-keys is allowlisted elsewhere");
 
         var allText = Directory.GetFiles(root, "*.csproj", SearchOption.AllDirectories)
             .Select(File.ReadAllText)
             .ToList();
 
         allText.Should().OnlyContain(xml =>
-            !xml.Contains("D2.Private.ProductConstants", StringComparison.Ordinal)
-            && !xml.Contains("AssemblyName>D2.Private.I18n.Keys<", StringComparison.Ordinal));
+            !xml.Contains("DcsvIo.D2.Private.ProductConstants", StringComparison.Ordinal)
+            && !xml.Contains("AssemblyName>DcsvIo.D2.Private.I18n.Keys<", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -76,16 +76,16 @@ public sealed class ExtensionsInventoryTests
         var slnx = File.ReadAllText(Path.Combine(RepoRootFixture.Resolve(), "D2.slnx"));
 
         slnx.Should().Contain(
-            "private/packages/dotnet/auth/abstractions-extensions/D2.Shared.Auth.Abstractions.Extensions.csproj");
+            "private/packages/dotnet/auth/abstractions-extensions/DcsvIo.D2.Private.Auth.Abstractions.Extensions.csproj");
         slnx.Should().Contain(
-            "private/packages/dotnet/encryption/extensions/D2.Shared.Encryption.Extensions.csproj");
+            "private/packages/dotnet/encryption/extensions/DcsvIo.D2.Private.Encryption.Extensions.csproj");
         slnx.Should().Contain(
-            "private/packages/dotnet/i18n/keys-extensions/D2.Shared.I18n.Keys.Extensions.csproj");
+            "private/packages/dotnet/i18n/keys-extensions/DcsvIo.D2.Private.I18n.Keys.Extensions.csproj");
         slnx.Should().Contain(
-            "private/packages/dotnet/tests/D2.Private.Packages.Tests.csproj");
+            "private/packages/dotnet/tests/DcsvIo.D2.Private.Packages.Tests.csproj");
         slnx.Should().NotContain("product-constants");
         slnx.Should().NotContain("private/packages/dotnet/i18n-keys/");
-        slnx.Should().NotContain("D2.Private.ProductConstants");
-        slnx.Should().NotContain("D2.Private.I18n.Keys.csproj");
+        slnx.Should().NotContain("DcsvIo.D2.Private.ProductConstants");
+        slnx.Should().NotContain("DcsvIo.D2.Private.I18n.Keys.csproj");
     }
 }

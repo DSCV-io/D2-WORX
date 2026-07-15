@@ -5,8 +5,13 @@
 import {
   RecipientPrivateKeyring,
   RecipientPublicKeyring,
-} from "@d2/encryption";
-import { type D2Result, bubbleFail, ok, serviceUnavailable } from "@d2/result";
+} from "@dcsv-io/d2-encryption";
+import {
+  type D2Result,
+  bubbleFail,
+  ok,
+  serviceUnavailable,
+} from "@dcsv-io/d2-result";
 
 import type { KeyCustodianGrpcClient } from "../facade/key-custodian-grpc-client.g.js";
 import type { SealPrivateEntry } from "./get-or-lazy-provision-own-seal-private-key-dto.g.js";
@@ -24,7 +29,7 @@ const _SEAL_CALL_DEADLINE_MS = 10_000;
 /**
  * Least-privilege port over the two KeyCustodian seal ops — the TS twin of the
  * .NET `ISealingClient`. Maps the emitted wire DTOs to validated
- * `@d2/encryption` keyrings (P-256 import validated at construction).
+ * `@dcsv-io/d2-encryption` keyrings (P-256 import validated at construction).
  */
 export interface SealingClient {
   /**

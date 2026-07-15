@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/`](../README.md)
 
-> **Status**: BROKEN-BY-DESIGN. The `@d2/*` workspace deps in `package.json` reference packages outside this workspace's resolution graph (this directory is intentionally omitted from `pnpm-workspace.yaml`); `pnpm install` fails on this package. The directory holds the SvelteKit BFF source — a working reference for library picks + structure (workspace re-wire is a tracked future task).
+> **Status**: BROKEN-BY-DESIGN. The `@dcsv-io/d2-*` workspace deps in `package.json` reference packages outside this workspace's resolution graph (this directory is intentionally omitted from `pnpm-workspace.yaml`); `pnpm install` fails on this package. The directory holds the SvelteKit BFF source — a working reference for library picks + structure (workspace re-wire is a tracked future task).
 >
 > **Strategy reference** (library choices, testing approach): [STRATEGY.md](STRATEGY.md).
 

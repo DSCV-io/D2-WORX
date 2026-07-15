@@ -16,28 +16,28 @@ Deliverable 0009-geo-libs is the second half of Phase 1. It consumes the 7 Tier-
 
 Four .NET libs shipped:
 
-- **`D2.Shared.Time`** — NodaTime wrapper, `IClock` / `SystemClock` / `TestClock`, `ZonedInstant`, `LocalAnchoredEvent`, Npgsql.NodaTime EF value-converter wiring. Foundation for the three-timestamp-category model.
-- **`D2.Shared.Geo.Abstractions`** — 4-file hand-written API surface (`IGeoReference`, `IGeoNameResolver`, `IRequestContextGeoExtensions`, `DeprecationInfo`) plus all spec-derived TYPES emitted by `D2.Shared.Geo.SourceGen` — single-shape records per Amendment 41, `Code`-suffixed closed-set enums per Amendment 41 Option B, open-set wrapper structs, JsonConverters, `GeoCatalog` constants. `InternalsVisibleTo("D2.Shared.Geo.Default")` enables cycle resolution without breaking record immutability for outside callers.
-- **`D2.Shared.Geo.Default`** — catalog DATA emitted by `D2.Shared.Geo.SourceGen`; denormalized in-memory lookups via `FrozenDictionary`; two-pass populate for recursive nav refs; `DefaultGeoNameResolver` 4-pass fail-closed cascade with 8 safety predicates (Amendment 40).
-- **`D2.Shared.Location`** — three value objects (`Coordinates` with 3-rep storage + geohash-canonical hash, `StreetAddress` 5-line + hash-normalization, `AdminLocation` with coherence validation), `ComposeLocationHash` free function, `IPostalCodeValidator` + `DefaultPostalCodeValidator`.
+- **`DcsvIo.D2.Time`** — NodaTime wrapper, `IClock` / `SystemClock` / `TestClock`, `ZonedInstant`, `LocalAnchoredEvent`, Npgsql.NodaTime EF value-converter wiring. Foundation for the three-timestamp-category model.
+- **`DcsvIo.D2.Geo.Abstractions`** — 4-file hand-written API surface (`IGeoReference`, `IGeoNameResolver`, `IRequestContextGeoExtensions`, `DeprecationInfo`) plus all spec-derived TYPES emitted by `DcsvIo.D2.Geo.SourceGen` — single-shape records per Amendment 41, `Code`-suffixed closed-set enums per Amendment 41 Option B, open-set wrapper structs, JsonConverters, `GeoCatalog` constants. `InternalsVisibleTo("DcsvIo.D2.Geo.Default")` enables cycle resolution without breaking record immutability for outside callers.
+- **`DcsvIo.D2.Geo.Default`** — catalog DATA emitted by `DcsvIo.D2.Geo.SourceGen`; denormalized in-memory lookups via `FrozenDictionary`; two-pass populate for recursive nav refs; `DefaultGeoNameResolver` 4-pass fail-closed cascade with 8 safety predicates (Amendment 40).
+- **`DcsvIo.D2.Location`** — three value objects (`Coordinates` with 3-rep storage + geohash-canonical hash, `StreetAddress` 5-line + hash-normalization, `AdminLocation` with coherence validation), `ComposeLocationHash` free function, `IPostalCodeValidator` + `DefaultPostalCodeValidator`.
 
 Three TypeScript parity packages mirror the .NET shape exactly, driven by the same JSON specs via `tools/ts-codegen/src/geo-emitter/`:
 
-- **`@d2/time`** — Temporal API wrapper (Node 22+ native; polyfilled via `temporal-polyfill`).
-- **`@d2/geo-abstractions`** — interfaces, `DeprecationInfo`, name-resolution helpers, emitted type catalog.
-- **`@d2/geo-default`** — emitted catalogs, name-resolver, Default-layer extensions.
+- **`@dcsv-io/d2-time`** — Temporal API wrapper (Node 22+ native; polyfilled via `temporal-polyfill`).
+- **`@dcsv-io/d2-geo-abstractions`** — interfaces, `DeprecationInfo`, name-resolution helpers, emitted type catalog.
+- **`@dcsv-io/d2-geo-default`** — emitted catalogs, name-resolver, Default-layer extensions.
 
-Step 5 landed cross-cutting spec and doc changes: `IRequestContext.Region` field DROPPED; `CountryCode` / `SubdivisionCode` renamed to standards-explicit `CountryIso31661Alpha2Code` / `SubdivisionIso31662Code` (§7.Z naming convention); 3 new Tracing fields (HttpMethod / RequestStartedAt / IdempotencyKey); 3 new context sections (Infrastructure / User Preferences / Entitlements; 6 fields); 2 new IAuthContext fields (AuthMethod / LastStepUpAt); 4 new HTTP header constants (Accept-Language / X-D2-Locale / X-D2-Timezone / X-D2-Currency); 2 new JWT claim constants (AMR / STEP_UP_AT). New `docs/TIMESTAMPS.md` authoritative temporal reference. `docs/PATTERNS.md` gained 6 new sections (Reference Data / Hash Composition / Typed access on IRequestContext / Typed geo catalogs / Geo name resolution / User-preference cascades). `server/web` BFF migrated from `@d2/protos` → `@d2/geo-default`; `georefdata.bin` deleted.
+Step 5 landed cross-cutting spec and doc changes: `IRequestContext.Region` field DROPPED; `CountryCode` / `SubdivisionCode` renamed to standards-explicit `CountryIso31661Alpha2Code` / `SubdivisionIso31662Code` (§7.Z naming convention); 3 new Tracing fields (HttpMethod / RequestStartedAt / IdempotencyKey); 3 new context sections (Infrastructure / User Preferences / Entitlements; 6 fields); 2 new IAuthContext fields (AuthMethod / LastStepUpAt); 4 new HTTP header constants (Accept-Language / X-D2-Locale / X-D2-Timezone / X-D2-Currency); 2 new JWT claim constants (AMR / STEP_UP_AT). New `docs/TIMESTAMPS.md` authoritative temporal reference. `docs/PATTERNS.md` gained 6 new sections (Reference Data / Hash Composition / Typed access on IRequestContext / Typed geo catalogs / Geo name resolution / User-preference cascades). `server/web` BFF migrated from `@dcsv-io/d2-protos` → `@dcsv-io/d2-geo-default`; `georefdata.bin` deleted.
 
 ## Steps shipped
 
 | Step | Scope | Notes |
 |---|---|---|
 | 0 — Branch checkout | `n/geo-libs` off clean `nova` | Prior session |
-| 1 — `D2.Shared.Time` + `@d2/time` | `IClock` / `SystemClock` / `TestClock` / `ZonedInstant` / `LocalAnchoredEvent` / Npgsql.NodaTime EF wiring + Temporal API TS wrapper + cross-language temporal-adversarial fixture | Prior session |
-| 2 — `D2.Shared.Geo.Abstractions` + `@d2/geo-abstractions` + codegen infrastructure | 4-file hand-written API surface + `D2.Shared.Geo.SourceGen` Roslyn analyzer + `tools/ts-codegen/src/geo-emitter/` + 7-spec consumption + emission of all TYPES (single-shape records, Option B enum naming, wrapper structs, JsonConverters, GeoCatalog constants, dual-rep nav fields) | Commits `49495d1c` / `94406097` / `d73a7701` / `1c5eb3dd` |
-| 3 — `D2.Shared.Geo.Default` + `@d2/geo-default` + BFF migration | Catalog DATA emission (two-pass populate via `InternalsVisibleTo` + `internal set`) + `FrozenDictionary` lookups + `DefaultGeoNameResolver` 4-pass cascade with 8 fail-closed safety predicates + `IRequestContextGeoExtensions` Default-layer wrappers + BFF migration replacing `@d2/protos` import + `georefdata.bin` deletion | Multi-commit (Steps 3a / 3b / 3c) |
-| 4 — `D2.Shared.Location` + cross-language parity | 3 value objects (Coordinates 3-rep / StreetAddress 5-line / AdminLocation coherence) + `ComposeLocationHash` + `DefaultPostalCodeValidator` + `GeohashEncoder` + `PlusCodeEncoder` + cross-language parity fixture (`contracts/location/parity-fixtures.json`) | Steps 4a / 4b |
+| 1 — `DcsvIo.D2.Time` + `@dcsv-io/d2-time` | `IClock` / `SystemClock` / `TestClock` / `ZonedInstant` / `LocalAnchoredEvent` / Npgsql.NodaTime EF wiring + Temporal API TS wrapper + cross-language temporal-adversarial fixture | Prior session |
+| 2 — `DcsvIo.D2.Geo.Abstractions` + `@dcsv-io/d2-geo-abstractions` + codegen infrastructure | 4-file hand-written API surface + `DcsvIo.D2.Geo.SourceGen` Roslyn analyzer + `tools/ts-codegen/src/geo-emitter/` + 7-spec consumption + emission of all TYPES (single-shape records, Option B enum naming, wrapper structs, JsonConverters, GeoCatalog constants, dual-rep nav fields) | Commits `49495d1c` / `94406097` / `d73a7701` / `1c5eb3dd` |
+| 3 — `DcsvIo.D2.Geo.Default` + `@dcsv-io/d2-geo-default` + BFF migration | Catalog DATA emission (two-pass populate via `InternalsVisibleTo` + `internal set`) + `FrozenDictionary` lookups + `DefaultGeoNameResolver` 4-pass cascade with 8 fail-closed safety predicates + `IRequestContextGeoExtensions` Default-layer wrappers + BFF migration replacing `@dcsv-io/d2-protos` import + `georefdata.bin` deletion | Multi-commit (Steps 3a / 3b / 3c) |
+| 4 — `DcsvIo.D2.Location` + cross-language parity | 3 value objects (Coordinates 3-rep / StreetAddress 5-line / AdminLocation coherence) + `ComposeLocationHash` + `DefaultPostalCodeValidator` + `GeohashEncoder` + `PlusCodeEncoder` + cross-language parity fixture (`contracts/location/parity-fixtures.json`) | Steps 4a / 4b |
 | 5 — Cross-cutting spec + doc updates | `IRequestContext` rename / drop / additions + `IAuthContext` additions + Headers additions + JWT-claims additions + `PATTERNS.md` 6 new sections + `TIMESTAMPS.md` NEW + `CLAUDE.md §3.5` row + `V2.md` Phase 1 row enrichment + context-source-gen TS emitter fix (`string \| null` → `string \| undefined`) | Step 5 |
 | 6 — Final-review | K=12 + Aggregator audit of full deliverable scope; 5 R1 findings closed (FIX-FR-01 through FIX-FR-04 + F-FR-A1-01 user-approved anti-pattern alternative); 2 R2 findings closed (FIX-FR-05 prettier / FIX-FR-06 big-table populate) | Step 6 |
 | 7 — SHIP | rules.md §6.15 TS optional `?:` predicate added; deliverable snapshot created; deliverable README marked SHIPPED | This file |
@@ -92,7 +92,7 @@ Predicates added to `rules.md` during this deliverable (not at SHIP — already 
 
 - **Mid-deliverable architectural pivots cost more when Plan currency is not enforced** — Amendments 41 + 42 (single shape per entity + dual-representation rule) emerged AFTER Step 3a Implementer was in flight. §24.17 (Plan currency before next dispatch) was authored partly in response. Future: any architectural decision discovered during EXECUTE must land in the Plan before the next sub-agent dispatch, in the same orchestrator turn.
 - **Sonnet sub-agent self-attestation requires orchestrator verification** — R1 Fixer claims closure; R2 Auditor surfaces residual gap (FIX-FR-05 prettier; FIX-FR-06 big-table format). Trust-but-verify discipline (process.md §4 orchestrator verification) directly addresses this; orchestrator must read cited journal sections and spot-check file:line references before accepting closure claims.
-- **Convention drift in test files outpaces production code** — Step 6 FIX-FR-01 (51 `jb inspectcode` warnings in `D2.Shared.Tests.csproj`) surfaced because test files use looser conventions than production. Inspectcode walk MUST include test projects — the `--project` filter flag does not exclude test assemblies by default.
+- **Convention drift in test files outpaces production code** — Step 6 FIX-FR-01 (51 `jb inspectcode` warnings in `DcsvIo.D2.Tests.csproj`) surfaced because test files use looser conventions than production. Inspectcode walk MUST include test projects — the `--project` filter flag does not exclude test assemblies by default.
 - **Generated file hand-edits feel like the fast path until the next pipeline run** — Step 5 fix-log entry 7 (`PropagatedContext.g.cs` `[JsonIgnore]` fix) demonstrated §26.5 in action: the fix landed in the GENERATOR first (`PropagatedEmitter.cs:127`), then propagated to `.g.cs` output. Without §26.5 discipline the next build silently overwrites the manual fix.
 - **Plan-Audit cluster partition reveals planning gaps the Planner missed** — Step 5 Plan-Audit R1 surfaced 13 findings via K=12 partition (adversarial coverage matrix gap, TS emitter `string | null` gap, temporal-adversarial gap, etc.). Plan-amender batch closed all 13 before Implementer dispatch.
 - **Carve-outs need explicit named-form recognition in the predicate** — §1.20 deliberate-drift evidence is now recognized in two forms (execute-revert + permanent anti-pattern test per §B-8 in distillation report). The first time a deliverable encounters a carve-out, the predicate needs to grow to recognize it explicitly.
@@ -103,9 +103,9 @@ Predicates added to `rules.md` during this deliverable (not at SHIP — already 
 - `dotnet build server/D2.slnx` — 0 warnings, 0 errors (verified Step 6 R1 Fixer + Step 7 doc-only changes do not affect build)
 - `jb inspectcode server/D2.slnx --severity=WARNING` — 0 warnings (verified Step 6 R1 Fixer)
 - `dotnet test server/D2.slnx --no-build` — 4297/4297 .NET tests pass (verified at SHIP)
-- `pnpm -F @d2/contract-tests exec vitest run` — 2076 contract tests pass
-- `pnpm -F @d2/time exec vitest run` — 97 TS time tests pass
-- `pnpm -F @d2/geo-default exec vitest run` — TS geo-default tests pass (cross-language parity green)
+- `pnpm -F @dcsv-io/d2-contract-tests exec vitest run` — 2076 contract tests pass
+- `pnpm -F @dcsv-io/d2-time exec vitest run` — 97 TS time tests pass
+- `pnpm -F @dcsv-io/d2-geo-default exec vitest run` — TS geo-default tests pass (cross-language parity green)
 - `cd server/web && pnpm exec svelte-check` — 0 errors (post BFF migration; verified Step 3c)
 - All 6 deliverable-scope TS packages `tsc --noEmit` — 0 errors
 - ESLint clean across deliverable scope
@@ -121,7 +121,7 @@ Predicates added to `rules.md` during this deliverable (not at SHIP — already 
 
 - `docs/wip/0009-geo-libs/README.md` — deliverable Plan + all 61 amendments in Cross-cutting decisions table
 - `docs/wip/0009-geo-libs/00-branch-checkout/journal.md` — Step 0 branch setup
-- `docs/wip/0009-geo-libs/01-time/journal.md` — Step 1 D2.Shared.Time + @d2/time + temporal-adversarial fixture
+- `docs/wip/0009-geo-libs/01-time/journal.md` — Step 1 DcsvIo.D2.Time + @dcsv-io/d2-time + temporal-adversarial fixture
 - `docs/wip/0009-geo-libs/02-abstractions-and-codegen/journal.md` — Step 2 Abstractions + Roslyn SourceGen + Amendments 41/42 architecture pivots
 - `docs/wip/0009-geo-libs/03-defaults/journal.md` — Step 3a Default catalog emission
 - `docs/wip/0009-geo-libs/03b-resolver-and-extensions/journal.md` — Step 3b DefaultGeoNameResolver + extensions + 8 fail-closed safety predicates; §24.0i pre-extension violation disclosure at line 2456
@@ -159,7 +159,7 @@ I attest that this deliverable's process integrity has been verified against the
 | **Self-audit rows §24.0–§24.16 present + PASS-cited** | ✅ YES | Final-review journal §24.x rows verified |
 | **Test coverage for code changes** | ✅ YES | 4297/4297 .NET tests; 2076 contract tests; 97 TS time tests; geo-default parity tests |
 | **`dotnet build server/D2.slnx` zero warnings** | ✅ YES | Step 6 R1 Fixer; Step 7 changes are doc-only |
-| **`jb inspectcode` zero warnings** | ✅ YES | Step 6 R1 Fixer; `D2.Shared.Tests` included |
+| **`jb inspectcode` zero warnings** | ✅ YES | Step 6 R1 Fixer; `DcsvIo.D2.Tests` included |
 | **Test suite passes** | ✅ YES | `dotnet test --no-build` 4297/4297 verified at SHIP |
 | **Final-review journal exists** | ✅ YES | `docs/wip/0009-geo-libs/06-final-review/journal.md` |
 | **Final-review sweeps entire deliverable** | ✅ YES | K=12 cluster partition over 665 files + 3 commits per shared-context.md |
@@ -182,7 +182,7 @@ I attest that this deliverable's process integrity has been verified against the
 | **K=12 cluster partition + Aggregator per audit round** | ✅ YES | Steps 3b/4/5/6 all K=12; Step 3c K=1 with explicit user authorization; §24.0h PASS row |
 | **§26.5 generated-output discipline** | ✅ YES | Every generated-file fix landed in generator first; FIX-FR-01 `sr_` rename applied to emitters then propagated to `.g.cs`; §26.5 PASS row in final-review journal |
 | **Cross-language parity for all spec-derived types + fixtures** | ✅ YES | `.NET` + TS parity tests via §26.3.1 fixture-reflection for all 7 catalogs; confusables + temporal-adversarial shared fixtures |
-| **BFF migration shipped + verified** | ✅ YES | `server/web/src/lib/shared/forms/geo-ref-data.ts:11` import `@d2/protos` → `@d2/geo-default`; `georefdata.bin` deleted; `svelte-check` green |
+| **BFF migration shipped + verified** | ✅ YES | `server/web/src/lib/shared/forms/geo-ref-data.ts:11` import `@dcsv-io/d2-protos` → `@dcsv-io/d2-geo-default`; `georefdata.bin` deleted; `svelte-check` green |
 | **Deliverable snapshot created** | ✅ YES | This file (`docs/dev/deliverables/0009-geo-libs.md`) |
 | **rules.md §6.15 TS optional `?:` predicate applied** | ✅ YES | `docs/dev/rules.md` §6 updated at SHIP; predicate number §6.15 |
 

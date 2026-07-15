@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Http.Middleware;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Http.Middleware;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Http.Middleware;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Http.Middleware;
+using DcsvIo.D2.Context.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Xunit;
 

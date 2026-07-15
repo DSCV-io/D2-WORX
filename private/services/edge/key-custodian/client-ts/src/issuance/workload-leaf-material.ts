@@ -6,7 +6,7 @@ import type { Temporal } from "temporal-polyfill";
 
 /**
  * Transport-agnostic value types for the workload-leaf client. The TS twin of
- * the .NET `D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial`
+ * the .NET `DcsvIo.D2.Auth.Outbound.WorkloadCertificate.WorkloadLeafMaterial`
  * shape — DER byte arrays + validity, never a wire DTO and never a service
  * domain type. All material here is PUBLIC (leaf + issuing intermediate + root
  * are presented on the wire in the TLS handshake); nothing here is secret. The

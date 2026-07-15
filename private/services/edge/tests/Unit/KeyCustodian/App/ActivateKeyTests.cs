@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 
 /// <summary>
 /// Tests for <see cref="ActivateKeyHandler"/> — happy path, not-found / wrong-state

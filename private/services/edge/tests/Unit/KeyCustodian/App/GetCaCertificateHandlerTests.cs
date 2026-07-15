@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
-using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Private.Auth;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -46,7 +46,7 @@ public sealed class GetCaCertificateHandlerTests
             db, r_crypto, KcAppTestKit.SR_BaseInstant);
 
         var result = await Build(db, origin, "files")
-            .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+            .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
         result.Success.Should().BeTrue();
         var output = result.Data!;
@@ -71,7 +71,7 @@ public sealed class GetCaCertificateHandlerTests
     [Fact]
     public void Output_HasNoPrivateMaterialMember_Structural()
     {
-        typeof(D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput).GetProperties()
+        typeof(DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput).GetProperties()
             .Should().NotContain(
                 p => p.Name.Contains("PrivateKey")
                     || p.Name.Contains("Pkcs8")
@@ -94,7 +94,7 @@ public sealed class GetCaCertificateHandlerTests
         using (listener)
         {
             var result = await Build(db, RequestOrigin.CrossProcessHop, "files", logger: logger)
-                .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+                .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
             result.Success.Should().BeFalse();
             result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -115,7 +115,7 @@ public sealed class GetCaCertificateHandlerTests
         await KcAppTestKit.SeedCaRootAsync(db, r_crypto, KcAppTestKit.SR_BaseInstant);
 
         var result = await Build(db, RequestOrigin.CrossProcessHop, "files")
-            .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+            .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
@@ -129,7 +129,7 @@ public sealed class GetCaCertificateHandlerTests
         await KcAppTestKit.SeedCaAsync(db, r_crypto, KcAppTestKit.SR_BaseInstant);
 
         var result = await Build(db, RequestOrigin.CrossProcessHop, "files")
-            .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+            .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
@@ -146,7 +146,7 @@ public sealed class GetCaCertificateHandlerTests
             db, r_crypto, KcAppTestKit.SR_BaseInstant, KeyStatus.Retired);
 
         var result = await Build(db, RequestOrigin.CrossProcessHop, "files")
-            .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+            .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     }
@@ -167,7 +167,7 @@ public sealed class GetCaCertificateHandlerTests
             KcAppTestKit.SR_BaseInstant);
 
         var result = await Build(db, RequestOrigin.CrossProcessHop, "files")
-            .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+            .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
@@ -199,7 +199,7 @@ public sealed class GetCaCertificateHandlerTests
         await db.SaveChangesAsync(CancellationToken.None);
 
         var result = await Build(db, RequestOrigin.CrossProcessHop, "files")
-            .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+            .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA);
@@ -220,7 +220,7 @@ public sealed class GetCaCertificateHandlerTests
         using (listener)
         {
             var result = await Build(db, RequestOrigin.Unestablished, "files", logger: logger)
-                .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+                .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
             result.Success.Should().BeFalse();
             result.ErrorCode.Should().Be(
@@ -247,7 +247,7 @@ public sealed class GetCaCertificateHandlerTests
         using (listener)
         {
             var result = await Build(db, origin, "files")
-                .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+                .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
             result.Success.Should().BeFalse();
             result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -271,7 +271,7 @@ public sealed class GetCaCertificateHandlerTests
         using (listener)
         {
             var result = await Build(db, RequestOrigin.CrossProcessHop, caller: null)
-                .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+                .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
             result.Success.Should().BeFalse();
             result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -297,7 +297,7 @@ public sealed class GetCaCertificateHandlerTests
                 RequestOrigin.CrossProcessHop,
                 "files",
                 scopes: new HashSet<string>(StringComparer.Ordinal))
-            .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+            .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(
@@ -316,7 +316,7 @@ public sealed class GetCaCertificateHandlerTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
 
         var result = await Build(db, RequestOrigin.EdgeInbound, "files")
-            .HandleAsync(new D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
+            .HandleAsync(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput());
 
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }

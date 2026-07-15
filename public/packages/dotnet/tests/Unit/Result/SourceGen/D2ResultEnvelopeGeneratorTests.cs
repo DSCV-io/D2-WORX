@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Result.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Result.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Result.Envelope.SourceGen;
+using DcsvIo.D2.Result.Envelope.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -20,13 +20,13 @@ using Xunit;
 /// IIncrementalGenerator integration tests for the d2result-envelope SrcGen
 /// — drive <see cref="D2ResultEnvelopeGenerator"/> via a synthetic
 /// <see cref="CSharpGeneratorDriver"/> rather than the build pipeline.
-/// Asserts the single-target dispatch behavior: D2.Shared.Result gets
+/// Asserts the single-target dispatch behavior: DcsvIo.D2.Result gets
 /// D2ResultEnvelopeFieldNames from d2result-envelope.spec.json; anything
 /// else emits nothing.
 /// </summary>
 public sealed class D2ResultEnvelopeGeneratorTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.Result";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.Result";
 
     private const string _VALID_SPEC = """
     {
@@ -50,7 +50,7 @@ public sealed class D2ResultEnvelopeGeneratorTests
         Path.GetFileName(result.GeneratedTrees[0].FilePath)
             .Should().Be("D2ResultEnvelopeFieldNames.g.cs");
         result.GeneratedTrees[0].ToString().Should().Contain(
-            "namespace D2.Shared.Result;");
+            "namespace DcsvIo.D2.Result;");
         result.GeneratedTrees[0].ToString().Should().Contain(
             "public const string SUCCESS = \"success\";");
         result.GeneratedTrees[0].ToString().Should().Contain(

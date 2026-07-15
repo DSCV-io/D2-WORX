@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 
 /// <summary>
 /// Input to <c>SeedCertificateAuthority</c>. The hierarchy to seed is read from

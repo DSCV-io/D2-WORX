@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Encryption.SourceGen;
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.EncryptionDomains.SourceGen;
+using DcsvIo.D2.EncryptionDomains.SourceGen;
 using Xunit;
 
 /// <summary>

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.SourceGen;
+namespace DcsvIo.D2.Context.SourceGen;
 
 using System.Collections.Immutable;
 

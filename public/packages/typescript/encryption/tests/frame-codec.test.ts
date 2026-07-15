@@ -3,7 +3,10 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { EncryptionFrame, SealedFrame } from "@d2/encryption-abstractions";
+import {
+  EncryptionFrame,
+  SealedFrame,
+} from "@dcsv-io/d2-encryption-abstractions";
 import { describe, expect, it } from "vitest";
 
 import {

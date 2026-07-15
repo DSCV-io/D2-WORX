@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore.Internal;
+namespace DcsvIo.D2.AspNetCore.Internal;
 
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 

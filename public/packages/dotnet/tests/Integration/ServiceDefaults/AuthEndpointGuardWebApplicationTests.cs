@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Http.Endpoints;
-using D2.Shared.Auth.Startup;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Protos;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Http.Endpoints;
+using DcsvIo.D2.Auth.Startup;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Protos;
 using global::Grpc.Core;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.Http;
@@ -109,7 +109,7 @@ public sealed class AuthEndpointGuardWebApplicationTests
                     (Guid id) => Results.Text($"ok {id}"))
                 .WithMetadata(EndpointScopeMetadata.ForScopes(
                     ["files.read"],
-                    D2.Shared.Auth.Abstractions.ScopeMatch.Any)));
+                    DcsvIo.D2.Auth.Abstractions.ScopeMatch.Any)));
 
         await host.StartAsync();
 
@@ -170,7 +170,7 @@ public sealed class AuthEndpointGuardWebApplicationTests
             app.MapGrpcService<EchoService>()
                .WithMetadata(MethodScopeMetadata.ForScopes(
                    ["test.scope"],
-                   D2.Shared.Auth.Abstractions.ScopeMatch.Any)));
+                   DcsvIo.D2.Auth.Abstractions.ScopeMatch.Any)));
 
         await host.StartAsync();
 

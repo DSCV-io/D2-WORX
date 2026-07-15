@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.DataGovernance.EntityFrameworkCore;
+namespace DcsvIo.D2.Tests.Unit.DataGovernance.EntityFrameworkCore;
 
 using AwesomeAssertions;
-using D2.Shared.DataGovernance.EntityFrameworkCore;
+using DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Xunit;

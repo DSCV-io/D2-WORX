@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth;
+namespace DcsvIo.D2.Auth;
 
-using D2.Shared.Auth.Jwks;
-using D2.Shared.Auth.Sessions;
-using D2.Shared.Auth.Validation;
+using DcsvIo.D2.Auth.Jwks;
+using DcsvIo.D2.Auth.Sessions;
+using DcsvIo.D2.Auth.Validation;
 
 /// <summary>
 /// Configuration for the inbound auth runtime. Bound from
@@ -40,7 +40,7 @@ public sealed record AuthOptions
     /// <summary>
     /// Gets or sets the audience this service expects to find in JWT
     /// <c>aud</c> claims. Use one of the
-    /// <c>D2.Shared.Auth.Abstractions.Audiences</c> codegen constants.
+    /// <c>DcsvIo.D2.Auth.Abstractions.Audiences</c> codegen constants.
     /// Required at startup (validated at host build time via
     /// <c>ValidateOnStart</c>).
     /// </summary>

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "D2.Audit.Api": {
+    "DcsvIo.D2.Private.Audit.Api": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {

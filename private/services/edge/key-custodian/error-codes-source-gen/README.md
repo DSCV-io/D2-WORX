@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge.KeyCustodian.ErrorCodes.SourceGen
+# DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen
 
 > Parent: [`private/services/edge/key-custodian/`](../README.md)
 
 **Input contract:** [`contracts/keycustodian-error-codes/`](../../../../../contracts/keycustodian-error-codes/README.md)
 
-For engineers adding or modifying KeyCustodian error codes, or extending the shared source-gen engine. A thin `[Generator]` shell over the shared unified error-codes engine ([`source-gen-shared/error-codes-emit`](../../../../shared/dotnet/source-gen-shared/error-codes-emit/README.md)). It emits the `KeyCustodianErrorCodes` const-string catalog + the `KeyCustodianFailures` semantic-factory class + the typed `KeyCustodianFailures<T>` twin into `D2.Edge.KeyCustodian.Domain` by reading `contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Edge.KeyCustodian.Domain`. The shell owns only the keycustodian catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN, both load-bearing for the on-disk generated path) + its `CatalogConfig`; all generation logic lives in the shared engine.
+For engineers adding or modifying KeyCustodian error codes, or extending the shared source-gen engine. A thin `[Generator]` shell over the shared unified error-codes engine ([`source-gen-shared/error-codes-emit`](../../../../shared/dotnet/source-gen-shared/error-codes-emit/README.md)). It emits the `KeyCustodianErrorCodes` const-string catalog + the `KeyCustodianFailures` semantic-factory class + the typed `KeyCustodianFailures<T>` twin into `DcsvIo.D2.Private.Edge.KeyCustodian.Domain` by reading `contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `DcsvIo.D2.Private.Edge.KeyCustodian.Domain`. The shell owns only the keycustodian catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN, both load-bearing for the on-disk generated path) + its `CatalogConfig`; all generation logic lives in the shared engine.
 
 The spec file is the single source of truth for the platform's keycustodian error taxonomy. Every `d2_error_code` constant surfaced on a `D2Result` failure, every `KeyCustodianFailures<T>.*` factory the domain calls, and the cross-spec merged registry (`ErrorCodeRegistry`) all derive from one JSON file — no hand-written parallel constants, no per-domain drift.
 
@@ -29,7 +29,7 @@ The spec file is the single source of truth for the platform's keycustodian erro
 | `D2ERC002` | Error    | A `userMessageKey` does not inverse-resolve to a key in `contracts/messages/en-US.json` (catalog-neutral engine diagnostic)               |
 | `D2ERC003` | Error    | A `factoryShape` is not supported by the delegating emitter (`FactoryHost.Domain` supports the universal `standard` shape and `none` only) |
 
-The `D2ERC*` rows are the shared engine's catalog-neutral diagnostics (they fire for any catalog); the `D2KEC*` rows are this catalog's own validation diagnostics. The `D2ERC002` cross-check requires `contracts/messages/en-US.json` to be surfaced via `<AdditionalFiles>` on the consuming `D2.Edge.KeyCustodian.Domain.csproj` (the generator reduces it to just its key set so a translation-value edit does not re-run codegen).
+The `D2ERC*` rows are the shared engine's catalog-neutral diagnostics (they fire for any catalog); the `D2KEC*` rows are this catalog's own validation diagnostics. The `D2ERC002` cross-check requires `contracts/messages/en-US.json` to be surfaced via `<AdditionalFiles>` on the consuming `DcsvIo.D2.Private.Edge.KeyCustodian.Domain.csproj` (the generator reduces it to just its key set so a translation-value edit does not re-run codegen).
 
 ---
 
@@ -75,11 +75,11 @@ The `D2ERC*` rows are the shared engine's catalog-neutral diagnostics (they fire
 
 ## Emitted output (three `.g.cs` files)
 
-All three files emit into the consuming assembly (`D2.Edge.KeyCustodian.Domain`) from the same spec, under `Generated/D2.Edge.KeyCustodian.ErrorCodes.SourceGen/D2.Edge.KeyCustodian.ErrorCodes.SourceGen.ErrorCodesGenerator/`:
+All three files emit into the consuming assembly (`DcsvIo.D2.Private.Edge.KeyCustodian.Domain`) from the same spec, under `Generated/DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen/DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen.ErrorCodesGenerator/`:
 
-1. **`KeyCustodianErrorCodes.g.cs`** — `D2.Edge.KeyCustodian.Domain.Errors.KeyCustodianErrorCodes` static class with one `public const string` per spec entry, `IReadOnlyList<string> AllCodes`, and `int GetHttpStatus(string)`.
-2. **`KeyCustodianFailures.g.cs`** — `D2.Edge.KeyCustodian.Domain.Errors.KeyCustodianFailures` static class with one `public static D2Result FactoryName(IReadOnlyList<TKMessage>? messages = null)` per spec entry (delegating to the `httpStatus`-selected base factory — `ValidationFailed` for the `400` codes, `NotFound` for the `404` codes, `Conflict` for the `409` codes, `UnhandledException` for the `500` codes — stamped with the matching `KeyCustodianErrorCodes` constant + the entry's `ErrorCategory`). The optional `messages` override defaults to the entry's `userMessageKey` when omitted and replaces it when supplied, so a lifecycle guard can name the offending argument via `TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "<name>")`.
-3. **`KeyCustodianFailures.Generic.g.cs`** — `D2.Edge.KeyCustodian.Domain.Errors.KeyCustodianFailures<T>`, the typed twin: identical method names, each delegating to the typed `D2Result<T>` base factory so callers can produce a typed domain failure (e.g. `KeyCustodianFailures<Kid>.KidInvalid()`). A distinct sibling file (distinct `AddSource` hint name) so `KeyCustodianFailures.g.cs` stays byte-identical. `KeyCustodianFailures` (non-generic) and `KeyCustodianFailures<T>` (generic) are distinct types — arity differs — exactly as `D2Result` / `D2Result<T>` coexist.
+1. **`KeyCustodianErrorCodes.g.cs`** — `DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors.KeyCustodianErrorCodes` static class with one `public const string` per spec entry, `IReadOnlyList<string> AllCodes`, and `int GetHttpStatus(string)`.
+2. **`KeyCustodianFailures.g.cs`** — `DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors.KeyCustodianFailures` static class with one `public static D2Result FactoryName(IReadOnlyList<TKMessage>? messages = null)` per spec entry (delegating to the `httpStatus`-selected base factory — `ValidationFailed` for the `400` codes, `NotFound` for the `404` codes, `Conflict` for the `409` codes, `UnhandledException` for the `500` codes — stamped with the matching `KeyCustodianErrorCodes` constant + the entry's `ErrorCategory`). The optional `messages` override defaults to the entry's `userMessageKey` when omitted and replaces it when supplied, so a lifecycle guard can name the offending argument via `TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "<name>")`.
+3. **`KeyCustodianFailures.Generic.g.cs`** — `DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors.KeyCustodianFailures<T>`, the typed twin: identical method names, each delegating to the typed `D2Result<T>` base factory so callers can produce a typed domain failure (e.g. `KeyCustodianFailures<Kid>.KidInvalid()`). A distinct sibling file (distinct `AddSource` hint name) so `KeyCustodianFailures.g.cs` stays byte-identical. `KeyCustodianFailures` (non-generic) and `KeyCustodianFailures<T>` (generic) are distinct types — arity differs — exactly as `D2Result` / `D2Result<T>` coexist.
 
 The multi-emitter split lives in one sourcegen because all outputs derive from the same spec rows — keeping them co-located ensures any spec edit re-emits every file together and prevents the constants catalog from drifting from the factory surface.
 
@@ -120,4 +120,4 @@ Shared source (via `<Compile Include>` — compiled into this shell, not referen
 - [`source-gen-shared/error-codes-emit`](../../../../shared/dotnet/source-gen-shared/error-codes-emit/README.md) — the shared unified engine this shell drives
 - [`contracts/keycustodian-error-codes/schema.json`](../../../../../contracts/keycustodian-error-codes/schema.json) — JSON Schema for the spec (a domain-specialized copy of the canonical schema)
 - [`contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json`](../../../../../contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json) — the source-of-truth catalog
-- [`D2.Edge.KeyCustodian.Domain`](../domain/README.md) — the consuming assembly where generated output is emitted
+- [`DcsvIo.D2.Private.Edge.KeyCustodian.Domain`](../domain/README.md) — the consuming assembly where generated output is emitted

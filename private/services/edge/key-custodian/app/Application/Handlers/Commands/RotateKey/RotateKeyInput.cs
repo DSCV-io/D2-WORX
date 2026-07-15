@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 
 /// <summary>
 /// Input to <c>RotateKey</c>: the domain whose active incumbent should be

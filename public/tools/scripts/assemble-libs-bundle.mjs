@@ -117,10 +117,10 @@ The \`nuget/\` folder is a valid local NuGet folder feed.
 3. Add a package reference:
 
 \`\`\`
-dotnet add package D2.Shared.Result --version 0.1.0
+dotnet add package DcsvIo.D2.Result --version 0.1.0
 \`\`\`
 
-Inter-D2 NuGet dependencies (e.g. \`D2.Shared.Result\` → \`D2.Shared.Utilities\`) resolve
+Inter-D2 NuGet dependencies (e.g. \`DcsvIo.D2.Result\` → \`DcsvIo.D2.Utilities\`) resolve
 from the same \`nuget/\` folder — no internet access needed for D2 packages.
 
 ## npm / TypeScript

@@ -7,7 +7,7 @@ import { type ContextSpec, emitAuthContext } from "../src/auth-context-emit.js";
 
 const minSpec: ContextSpec = {
   name: "IFakeContext",
-  namespace: "D2.Shared.Fake",
+  namespace: "DcsvIo.D2.Fake",
   description: "Fake context for testing.",
   extends: null,
   sections: [
@@ -98,9 +98,9 @@ describe("emitAuthContext", () => {
 describe("emitAuthContext — extends honor (Fix A)", () => {
   const extendingSpec: ContextSpec = {
     name: "IDerivedContext",
-    namespace: "D2.Shared.Fake",
+    namespace: "DcsvIo.D2.Fake",
     description: "Derived context for testing.",
-    extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+    extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
     sections: [
       {
         name: "Tracing",
@@ -119,7 +119,7 @@ describe("emitAuthContext — extends honor (Fix A)", () => {
     const r = emitAuthContext(extendingSpec, "package");
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain(
-      'import type { IAuthContext } from "@d2/auth-context-abstractions";',
+      'import type { IAuthContext } from "@dcsv-io/d2-auth-context-abstractions";',
     );
     expect(r.source).toContain(
       "export interface IDerivedContext extends IAuthContext {",
@@ -132,7 +132,7 @@ describe("emitAuthContext — extends honor (Fix A)", () => {
     const r = emitAuthContext(extendingSpec, "relative");
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain(
-      'import type { IAuthContext } from "@d2/auth-context-abstractions";',
+      'import type { IAuthContext } from "@dcsv-io/d2-auth-context-abstractions";',
     );
     expect(r.source).toContain(
       "export interface IDerivedContext extends IAuthContext {",
@@ -143,20 +143,20 @@ describe("emitAuthContext — extends honor (Fix A)", () => {
     const r = emitAuthContext(
       {
         ...extendingSpec,
-        extends: "D2.Shared.SomeNested.Pkg.Abstractions.IBase",
+        extends: "DcsvIo.D2.SomeNested.Pkg.Abstractions.IBase",
       },
       "package",
     );
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain(
-      'import type { IBase } from "@d2/some-nested-pkg-abstractions";',
+      'import type { IBase } from "@dcsv-io/d2-some-nested-pkg-abstractions";',
     );
     expect(r.source).toContain(
       "export interface IDerivedContext extends IBase {",
     );
   });
 
-  it("flags D2CTX005 for FQN missing the 'D2.Shared.' prefix", () => {
+  it("flags D2CTX005 for FQN missing the 'DcsvIo.D2.' prefix", () => {
     const r = emitAuthContext(
       {
         ...extendingSpec,
@@ -168,15 +168,15 @@ describe("emitAuthContext — extends honor (Fix A)", () => {
     expect(r.source).toBe("");
   });
 
-  it("flags D2CTX005 for FQN with no segments after 'D2.Shared.'", () => {
+  it("flags D2CTX005 for FQN with no segments after 'DcsvIo.D2.'", () => {
     const r = emitAuthContext(
       {
         ...extendingSpec,
-        extends: "D2.Shared.IBareInterface",
+        extends: "DcsvIo.D2.IBareInterface",
       },
       "package",
     );
-    // After stripping 'D2.Shared.' the rest is 'IBareInterface' (single
+    // After stripping 'DcsvIo.D2.' the rest is 'IBareInterface' (single
     // segment) — there's no package segment, so the resolver fails.
     expect(r.diagnostics[0]?.id).toBe("D2CTX005");
   });

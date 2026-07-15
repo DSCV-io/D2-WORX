@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 
-using D2.Services.Protos.KeyCustodian.V2Alpha;
-using D2.Shared.Encryption;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.KeyCustodian.V2Alpha;
 using OwnSealPrivateKeyStub =
-    D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient;
+    global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient;
 using SealPublicKeyStub =
-    D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient;
+    global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient;
 
 /// <summary>
 /// Cross-process seal-keyring fetch source — the sealed sibling of

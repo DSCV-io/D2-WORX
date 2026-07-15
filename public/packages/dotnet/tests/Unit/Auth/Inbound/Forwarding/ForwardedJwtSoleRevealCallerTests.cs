@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Forwarding;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Forwarding;
 
 using System.IO;
 using AwesomeAssertions;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Xunit;
 
 /// <summary>
-/// Pins the single-reveal-seam contract: <see cref="D2.Shared.Auth.Abstractions.ForwardedJwt.RevealForForwarding"/>
+/// Pins the single-reveal-seam contract: <see cref="DcsvIo.D2.Auth.Abstractions.ForwardedJwt.RevealForForwarding"/>
 /// is the SOLE escape hatch for the raw bearer bytes, so its set of production
 /// callers must be tightly controlled. A source-text scan over the
 /// <c>server/</c> tree asserts that — apart from the type's own definition file

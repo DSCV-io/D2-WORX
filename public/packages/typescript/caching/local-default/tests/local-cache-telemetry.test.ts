@@ -23,7 +23,7 @@ describe("DefaultLocalCache telemetry", () => {
   });
 
   it("localCacheMeterName_pinsD2SharedCachingLocal", () => {
-    expect(LOCAL_CACHE_METER_NAME).toBe("D2.Shared.Caching.Local");
+    expect(LOCAL_CACHE_METER_NAME).toBe("DcsvIo.D2.Caching.Local");
   });
 
   it("meter_scopeNameAndVersion_pinnedFromCollectedMetrics", async () => {

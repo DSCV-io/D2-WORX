@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Encryption;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Encryption;
 
 using System;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using AwesomeAssertions;
-using D2.Shared.EncryptionDomains.SourceGen;
+using DcsvIo.D2.EncryptionDomains.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -28,7 +28,7 @@ using Xunit;
 [Trait("Category", "Unit")]
 public sealed class ProductEncryptionDomainsOutputParityTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.Encryption.Extensions";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.Private.Encryption.Extensions";
     private const string _FILE_NAME = "ProductEncryptionDomains.g.cs";
 
     [Fact]
@@ -44,7 +44,7 @@ public sealed class ProductEncryptionDomainsOutputParityTests
             because:
                 "committed ProductEncryptionDomains.g.cs must match a fresh generation from "
                 + "public∪private encryption-domains specs; run dotnet build on "
-                + "D2.Shared.Encryption.Extensions to regenerate");
+                + "DcsvIo.D2.Private.Encryption.Extensions to regenerate");
     }
 
     [Fact]
@@ -52,15 +52,15 @@ public sealed class ProductEncryptionDomainsOutputParityTests
     {
         var privateSpec = File.ReadAllText(PrivateSpecPath());
 
-        // Private dual-values spec uses PowerShell-ish spacing: `"constName":  "AUDIT"`.
-        const string originalConst = "\"constName\":  \"AUDIT\"";
+        // Drift pin mutates the live AUDIT constName token (JSON spacing may be single-space).
+        const string originalConst = "\"constName\": \"AUDIT\"";
         privateSpec.Should().Contain(
             originalConst,
             because: "drift pin mutates the real AUDIT constName token");
 
         var drifted = privateSpec.Replace(
             originalConst,
-            "\"constName\":  \"AUDIT_DRIFT_MARKER\"");
+            "\"constName\": \"AUDIT_DRIFT_MARKER\"");
 
         var regenerated = RunGenerator(
             File.ReadAllText(PublicSpecPath()),
@@ -102,8 +102,8 @@ public sealed class ProductEncryptionDomainsOutputParityTests
             "encryption",
             "extensions",
             "Generated",
-            "D2.Shared.EncryptionDomains.SourceGen",
-            "D2.Shared.EncryptionDomains.SourceGen.EncryptionDomainsGenerator",
+            "DcsvIo.D2.EncryptionDomains.SourceGen",
+            "DcsvIo.D2.EncryptionDomains.SourceGen.EncryptionDomainsGenerator",
             _FILE_NAME);
     }
 

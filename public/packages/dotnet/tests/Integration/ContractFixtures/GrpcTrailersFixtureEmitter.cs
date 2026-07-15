@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using D2.Shared.Auth.Grpc.Status;
+using DcsvIo.D2.Auth.Grpc.Status;
 using Xunit;
 
 /// <summary>
@@ -18,7 +18,7 @@ using Xunit;
 /// <see cref="D2GrpcTrailers"/> class enumeration is canonicalized to a
 /// sorted <c>{ constName: wireValue }</c> map; the TS-side parity test
 /// asserts the same membership + wire values exist on the matching
-/// <c>D2GrpcTrailers</c> <c>as const</c> object in <c>@d2/grpc-client</c>.
+/// <c>D2GrpcTrailers</c> <c>as const</c> object in <c>@dcsv-io/d2-grpc-client</c>.
 /// </summary>
 public sealed class GrpcTrailersFixtureEmitter
 {

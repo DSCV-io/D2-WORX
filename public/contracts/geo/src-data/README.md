@@ -26,7 +26,7 @@ These files are **pipeline-raw** — they include:
 - Top-level `fieldCoverage`, `orderBreakdown`, `wikidataFills`, `tagShape` and other build-time diagnostics
 - `$note` flagging build-version + remaining gaps
 
-The codegen-ready specs that `D2.Shared.Geo.Default` / `@d2/geo-default` consume live **one level up** at `contracts/geo/*.spec.json`, produced by the Tier 2 clean-pass (`tools/geo-data-pipeline/src/tier-2/`) which strips diagnostics + applies cross-catalog M:M backfill + Locale denormalization + `IsSelectable`/`IsSupported` derivation.
+The codegen-ready specs that `DcsvIo.D2.Geo.Default` / `@dcsv-io/d2-geo-default` consume live **one level up** at `contracts/geo/*.spec.json`, produced by the Tier 2 clean-pass (`tools/geo-data-pipeline/src/tier-2/`) which strips diagnostics + applies cross-catalog M:M backfill + Locale denormalization + `IsSelectable`/`IsSupported` derivation.
 
 See [`../README.md`](../README.md) for the full three-tier layout (src-data → Tier 2 → hand-rolled GeopoliticalEntity).
 

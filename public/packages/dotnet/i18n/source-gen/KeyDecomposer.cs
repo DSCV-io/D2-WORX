@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.I18n.SourceGen;
+namespace DcsvIo.D2.I18n.SourceGen;
 
 using System;
 using System.Collections.Generic;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for decomposing a translation key (e.g. <c>"common_errors_NOT_FOUND"</c>)

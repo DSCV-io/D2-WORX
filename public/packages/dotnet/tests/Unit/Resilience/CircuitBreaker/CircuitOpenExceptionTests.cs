@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.CircuitBreaker;
+namespace DcsvIo.D2.Tests.Unit.Resilience.CircuitBreaker;
 
 using AwesomeAssertions;
-using D2.Shared.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.CircuitBreaker;
 using Xunit;
 
 public sealed class CircuitOpenExceptionTests

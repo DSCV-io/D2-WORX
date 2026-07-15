@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.SourceGen;
+namespace DcsvIo.D2.Context.SourceGen;
 
 /// <summary>
 /// One property declaration within a <see cref="Section"/>. Renders as an
@@ -71,7 +71,7 @@ namespace D2.Shared.Context.SourceGen;
 /// and telemetry. The emitter places <c>[RedactData]</c> on the generated
 /// interface property AND the matching property on
 /// <c>MutableRequestContext</c>; the Serilog destructuring policy
-/// (<c>D2.Shared.Logging.Destructuring.RedactDataDestructuringPolicy</c>)
+/// (<c>DcsvIo.D2.Logging.Destructuring.RedactDataDestructuringPolicy</c>)
 /// reflects over the concrete type at log time. The TS-side codegen
 /// emits the same property name into a <c>RedactPaths</c> array; cross-
 /// spec parity is enforced by the

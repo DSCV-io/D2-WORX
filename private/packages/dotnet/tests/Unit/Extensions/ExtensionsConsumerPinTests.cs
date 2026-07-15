@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Extensions;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Extensions;
 
 using System.IO;
 using AwesomeAssertions;
@@ -18,26 +18,26 @@ using Xunit;
 public sealed class ExtensionsConsumerPinTests
 {
     private const string _AUTH =
-        "auth\\abstractions-extensions\\D2.Shared.Auth.Abstractions.Extensions.csproj";
+        "auth\\abstractions-extensions\\DcsvIo.D2.Private.Auth.Abstractions.Extensions.csproj";
 
     private const string _ENC =
-        "encryption\\extensions\\D2.Shared.Encryption.Extensions.csproj";
+        "encryption\\extensions\\DcsvIo.D2.Private.Encryption.Extensions.csproj";
 
     private const string _I18N =
-        "i18n\\keys-extensions\\D2.Shared.I18n.Keys.Extensions.csproj";
+        "i18n\\keys-extensions\\DcsvIo.D2.Private.I18n.Keys.Extensions.csproj";
 
     [Theory]
-    [InlineData("private/services/edge/app/D2.Edge.App.csproj", false, false, false)]
-    [InlineData("private/services/edge/domain/D2.Edge.Domain.csproj", false, false, false)]
-    [InlineData("private/services/edge/infra/D2.Edge.Infra.csproj", false, false, false)]
-    [InlineData("private/services/edge/key-custodian/infra/D2.Edge.KeyCustodian.Infra.csproj", false, false, false)]
-    [InlineData("private/services/edge/api/D2.Edge.Api.csproj", true, false, false)]
-    [InlineData("private/services/audit/api/D2.Audit.Api.csproj", true, false, false)]
-    [InlineData("private/services/audit/tests/D2.Audit.Tests.csproj", true, false, false)]
-    [InlineData("private/services/edge/tests/D2.Edge.Tests.csproj", true, true, true)]
-    [InlineData("private/services/edge/key-custodian/domain/D2.Edge.KeyCustodian.Domain.csproj", false, true, true)]
-    [InlineData("private/services/edge/key-custodian/app/D2.Edge.KeyCustodian.App.csproj", true, true, false)]
-    [InlineData("private/services/edge/key-custodian/client/D2.Edge.KeyCustodian.Client.csproj", false, true, false)]
+    [InlineData("private/services/edge/app/DcsvIo.D2.Private.Edge.App.csproj", false, false, false)]
+    [InlineData("private/services/edge/domain/DcsvIo.D2.Private.Edge.Domain.csproj", false, false, false)]
+    [InlineData("private/services/edge/infra/DcsvIo.D2.Private.Edge.Infra.csproj", false, false, false)]
+    [InlineData("private/services/edge/key-custodian/infra/DcsvIo.D2.Private.Edge.KeyCustodian.Infra.csproj", false, false, false)]
+    [InlineData("private/services/edge/api/DcsvIo.D2.Private.Edge.Api.csproj", true, false, false)]
+    [InlineData("private/services/audit/api/DcsvIo.D2.Private.Audit.Api.csproj", true, false, false)]
+    [InlineData("private/services/audit/tests/DcsvIo.D2.Private.Audit.Tests.csproj", true, false, false)]
+    [InlineData("private/services/edge/tests/DcsvIo.D2.Private.Edge.Tests.csproj", true, true, true)]
+    [InlineData("private/services/edge/key-custodian/domain/DcsvIo.D2.Private.Edge.KeyCustodian.Domain.csproj", false, true, true)]
+    [InlineData("private/services/edge/key-custodian/app/DcsvIo.D2.Private.Edge.KeyCustodian.App.csproj", true, true, false)]
+    [InlineData("private/services/edge/key-custodian/client/DcsvIo.D2.Private.Edge.KeyCustodian.Client.csproj", false, true, false)]
     public void Consumer_ExtensionsMatrix_PresenceAndAbsence(
         string relativeCsproj,
         bool auth,

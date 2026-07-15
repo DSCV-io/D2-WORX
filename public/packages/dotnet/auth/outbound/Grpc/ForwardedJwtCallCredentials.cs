@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.Grpc;
+namespace DcsvIo.D2.Auth.Outbound.Grpc;
 
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Headers.Grpc;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Headers.Grpc;
 using global::Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 

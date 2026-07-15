@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.IO;
@@ -12,11 +12,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Headers.Amqp;
-using D2.Shared.Headers.Common;
-using D2.Shared.Headers.Grpc;
-using D2.Shared.Headers.Http;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Headers.Amqp;
+using DcsvIo.D2.Headers.Common;
+using DcsvIo.D2.Headers.Grpc;
+using DcsvIo.D2.Headers.Http;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Xunit;
 
 /// <summary>

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.OtelMessagingTags.SourceGen;
+namespace DcsvIo.D2.OtelMessagingTags.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Pure logic for parsing <c>otel-messaging-tags.spec.json</c> into an

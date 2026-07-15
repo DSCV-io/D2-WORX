@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation;
+namespace DcsvIo.D2.Validation;
 
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Validation.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 /// <summary>
-/// DI registration entry point for <c>D2.Shared.Validation</c>.
+/// DI registration entry point for <c>DcsvIo.D2.Validation</c>.
 /// </summary>
 public static class DependencyInjection
 {
@@ -24,7 +24,7 @@ public static class DependencyInjection
         /// <see cref="DefaultPhoneValidator"/> for <see cref="IPhoneValidator"/>,
         /// and <see cref="DefaultPostalCodeValidator"/> for
         /// <see cref="IPostalCodeValidator"/> (country-aware, from
-        /// <c>D2.Shared.Validation.Abstractions</c>).
+        /// <c>DcsvIo.D2.Validation.Abstractions</c>).
         /// </summary>
         /// <remarks>
         /// All three validators are stateless (regex patterns and phone-number

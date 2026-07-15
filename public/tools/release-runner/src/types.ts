@@ -40,7 +40,7 @@ export type PackageEcosystem = "npm" | "nuget";
  * `*.csproj` (nuget) files found under the repo tree.
  */
 export interface PackageDescriptor {
-  /** Unique key used to refer to this package (e.g. "@d2/result", "D2.Shared.Result"). */
+  /** Unique key used to refer to this package (e.g. "@dcsv-io/d2-result", "DcsvIo.D2.Result"). */
   readonly name: string;
   readonly ecosystem: PackageEcosystem;
   /** Directory that owns the manifest file, repo-root-relative (no trailing slash). */
@@ -54,7 +54,7 @@ export interface PackageDescriptor {
   /**
    * Names of consumable packages this package directly depends on.
    *
-   * npm: `@d2/*` entries from `dependencies` + `devDependencies` that are in
+   * npm: `@dcsv-io/d2-*` entries from `dependencies` + `devDependencies` that are in
    * the consumable set. nuget: `<ProjectReference>` targets resolved to their
    * descriptor name (basename minus `.csproj`), filtered to the consumable set.
    * Non-consumable edges (SourceGen shells, external packages) are excluded.

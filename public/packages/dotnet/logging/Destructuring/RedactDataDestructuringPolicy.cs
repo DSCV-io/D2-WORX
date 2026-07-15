@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Logging.Destructuring;
+namespace DcsvIo.D2.Logging.Destructuring;
 
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using D2.Shared.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Attributes;
 using Serilog.Core;
 using Serilog.Events;
 

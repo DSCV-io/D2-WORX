@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen;
+namespace DcsvIo.D2.Geo.SourceGen;
 
 using Microsoft.CodeAnalysis;
 
@@ -157,5 +157,5 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    private const string _CATEGORY = "D2.Shared.Geo.SourceGen";
+    private const string _CATEGORY = "DcsvIo.D2.Geo.SourceGen";
 }

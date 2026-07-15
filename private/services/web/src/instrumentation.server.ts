@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { IncomingMessage } from "node:http";
-import { loadEnv } from "@d2/service-defaults/config";
+import { loadEnv } from "@dcsv-io/d2-service-defaults/config";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
@@ -23,7 +23,7 @@ import { createAddHookMessageChannel } from "import-in-the-middle";
 import { register } from "node:module";
 
 // Load .env.local BEFORE anything else — mirrors Node.js services which use
-// `--import @d2/service-defaults/register`. SvelteKit can't use --import
+// `--import @dcsv-io/d2-service-defaults/register`. SvelteKit can't use --import
 // (Vite manages the process), so we call loadEnv() here instead.
 loadEnv();
 
@@ -178,7 +178,7 @@ export const sdk = new NodeSDK({
       "@opentelemetry/instrumentation-http": {
         requestHook: (span: Span, request: unknown) => {
           if (request instanceof IncomingMessage) {
-            // Stash span on raw request (same pattern as @d2/service-defaults)
+            // Stash span on raw request (same pattern as @dcsv-io/d2-service-defaults)
             (request as OTelIncomingMessage)[OTEL_SPAN_KEY] = span;
             // Store span on IncomingMessage (WeakMap — GC'd automatically)
             spanByIncoming.set(request, span);

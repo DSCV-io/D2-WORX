@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.I18n;
+namespace DcsvIo.D2.I18n;
 
 using System.Collections.Generic;
 using System.Linq;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>

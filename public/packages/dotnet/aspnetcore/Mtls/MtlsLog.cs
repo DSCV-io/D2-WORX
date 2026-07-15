@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore.Mtls;
+namespace DcsvIo.D2.AspNetCore.Mtls;
 
 using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// High-performance <c>[LoggerMessage]</c> source-generated log delegates for the
 /// mutual-TLS peer-certificate validator. The only <c>[LoggerMessage]</c> surface
-/// in <c>D2.Shared.AspNetCore</c> — a peer-certificate rejection at the TLS
+/// in <c>DcsvIo.D2.AspNetCore</c> — a peer-certificate rejection at the TLS
 /// handshake is a security event worth a structured, allocation-free record.
 /// </summary>
 /// <remarks>

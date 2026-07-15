@@ -1,4 +1,4 @@
-# Changelog — @d2/headers-common
+# Changelog — @dcsv-io/d2-headers-common
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.

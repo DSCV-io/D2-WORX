@@ -370,7 +370,7 @@ Track answers here when product owner decides; then fold into keep L*.
 - No OAuth auto-link; email/IdP law **L78–L86** (C1/H9 closed)  
 - OAuth-only may **set password** via recovery email (L83)  
 - Suspend-while-PendingDeletion holds identity (abuse)  
-- Dual audit homes (Auth online vs D2.Audit)  
+- Dual audit homes (Auth online vs DcsvIo.D2.Private.Audit)  
 - Platform sub entitlements: flag→entitlement→scope, local snapshot, RYW (C3 arch / L100–L108)  
 - Org↔org business rels not Auth-owned  
 - Rate limiting + fingerprinting design locked (PHASE_3_RATE_LIMITING + PHASE_3_FINGERPRINTING; L77)  

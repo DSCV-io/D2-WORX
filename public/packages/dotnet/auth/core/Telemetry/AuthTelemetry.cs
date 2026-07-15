@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Telemetry;
+namespace DcsvIo.D2.Auth.Telemetry;
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -23,13 +23,13 @@ public static class AuthTelemetry
     /// to their <c>OpenTelemetryBuilder</c> via
     /// <c>.WithTracing(t => t.AddSource(AuthTelemetry.ACTIVITY_SOURCE_NAME))</c>.
     /// </summary>
-    public const string ACTIVITY_SOURCE_NAME = "D2.Shared.Auth";
+    public const string ACTIVITY_SOURCE_NAME = "DcsvIo.D2.Auth";
 
     /// <summary>
     /// The OpenTelemetry <see cref="Meter"/> name. Hosts add this via
     /// <c>.WithMetrics(m => m.AddMeter(AuthTelemetry.METER_NAME))</c>.
     /// </summary>
-    public const string METER_NAME = "D2.Shared.Auth";
+    public const string METER_NAME = "DcsvIo.D2.Auth";
 
     /// <summary>The shared <see cref="ActivitySource"/> for this lib.</summary>
     public static readonly ActivitySource SR_Activity = new(ACTIVITY_SOURCE_NAME);
@@ -86,13 +86,13 @@ public static class AuthTelemetry
     /// <summary>
     /// Counter — auth-failure responses emitted by the transport-binding
     /// libraries: RFC 7807 ProblemDetails from the HTTP middleware
-    /// (<c>D2.Shared.Auth.Http</c>) AND <see cref="System.Exception"/>-
+    /// (<c>DcsvIo.D2.Auth.Http</c>) AND <see cref="System.Exception"/>-
     /// shaped <c>RpcException(Status, Trailers)</c> from the gRPC interceptor
-    /// (<c>D2.Shared.Auth.Grpc</c>). Single sink across both transports so
+    /// (<c>DcsvIo.D2.Auth.Grpc</c>). Single sink across both transports so
     /// dashboards aggregate cleanly. Tagged with <c>d2_error_code</c>
     /// (<see cref="AuthTelemetryTags.ProblemEmitted.TAG_D2_ERROR_CODE"/>);
     /// values are the <c>AUTH_*</c> constants from
-    /// <see cref="D2.Shared.Auth.Errors.AuthErrorCodes"/> (cross-spec
+    /// <see cref="DcsvIo.D2.Auth.Errors.AuthErrorCodes"/> (cross-spec
     /// resolved by codegen — see
     /// <c>contracts/telemetry/telemetry.spec.json</c>).
     /// </summary>

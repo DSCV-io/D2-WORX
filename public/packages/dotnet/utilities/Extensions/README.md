@@ -2,9 +2,9 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Utilities — Extensions
+# DcsvIo.D2.Utilities — Extensions
 
-> Part of [`D2.Shared.Utilities`](../README.md).
+> Part of [`DcsvIo.D2.Utilities`](../README.md).
 
 The most-used surface in the lib. Boundary-check helpers (`Truthy`/`Falsey`/`ToNullIfEmpty`), optional-string parsers (`TryParseTruthyNull`), display cleaners, and `D2Result`-returning validators that compose into smart-constructor patterns.
 
@@ -50,7 +50,7 @@ for (int i = 0; i < additionalScopes.Length; i++)
 **Carve-outs** — use BCL `ThrowIfNull` (not `ThrowIfFalsey`) for:
 
 - Plain reference-type null-guards: DI services / loggers / options that have no present-but-falsey concept.
-- Projects that do not reference `D2.Shared.Utilities` (e.g. avoid adding a reference that would introduce a dependency cycle).
+- Projects that do not reference `DcsvIo.D2.Utilities` (e.g. avoid adding a reference that would introduce a dependency cycle).
 - Guards requiring a bespoke `ArgumentException` message (`ThrowIfFalsey` has no custom-message overload).
 
 At each carve-out site, add a one-line comment citing `// §5.1a carve-out: <reason>`.

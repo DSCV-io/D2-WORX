@@ -29,7 +29,7 @@
 //   pattern uses alternation inside a quantifier. Matches the rationale comment in
 //   wire-channel.ts:20-24.
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 // ---------------------------------------------------------------------------
 // Types

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions;
+namespace DcsvIo.D2.Auth.Abstractions;
 
 /// <summary>
 /// Per-scope discriminator that captures "how dangerous is this action if it

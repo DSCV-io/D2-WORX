@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Subscribing;
+namespace DcsvIo.D2.Messaging.RabbitMq.Subscribing;
 
 using System.Diagnostics;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Headers.Amqp;
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Messaging.RabbitMq.Encryption;
-using D2.Shared.Messaging.RabbitMq.Telemetry;
-using D2.Shared.Messaging.RabbitMq.Topology;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Diagnostics;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Headers.Amqp;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Encryption;
+using DcsvIo.D2.Messaging.RabbitMq.Telemetry;
+using DcsvIo.D2.Messaging.RabbitMq.Topology;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Extensions;
 using global::RabbitMQ.Client;
 using global::RabbitMQ.Client.Events;
 using JetBrains.Annotations;

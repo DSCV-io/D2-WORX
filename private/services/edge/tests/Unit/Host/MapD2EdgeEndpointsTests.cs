@@ -4,30 +4,30 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
 using System.Net;
-using D2.Audit.Client;
-using D2.Audit.Client.Ping;
-using D2.Edge.Api.Composition;
-using D2.Edge.Api.Grpc.KeyCustodian;
-using D2.Edge.Api.Routes.KeyCustodian;
-using D2.Edge.KeyCustodian.App.Application.Facade;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Client.Facade;
-using D2.Edge.Tests.Unit.KeyCustodian.App;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
-using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Result;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Private.Audit.Client;
+using DcsvIo.D2.Private.Audit.Client.Ping;
+using DcsvIo.D2.Private.Edge.Api.Composition;
+using DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian;
+using DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
+using DcsvIo.D2.Resilience.Pipeline;
+using DcsvIo.D2.Result;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
@@ -101,32 +101,32 @@ public sealed class MapD2EdgeEndpointsTests
     public void ProductionWellKnownTypes_LiveInEdgeApiAssembly()
     {
         typeof(GetJwksRouteRegistration).Assembly.GetName().Name
-            .Should().Be("D2.Edge.Api");
+            .Should().Be("DcsvIo.D2.Private.Edge.Api");
 
         typeof(GetOidcConfigurationRouteRegistration).Assembly.GetName().Name
-            .Should().Be("D2.Edge.Api");
+            .Should().Be("DcsvIo.D2.Private.Edge.Api");
     }
 
     [Fact]
     public void ProductionKcGrpcServiceTypes_LiveInEdgeApiAssembly()
     {
         typeof(KeyCustodianSignerService).Assembly.GetName().Name
-            .Should().Be("D2.Edge.Api");
+            .Should().Be("DcsvIo.D2.Private.Edge.Api");
 
         typeof(KeyCustodianKeyringService).Assembly.GetName().Name
-            .Should().Be("D2.Edge.Api");
+            .Should().Be("DcsvIo.D2.Private.Edge.Api");
 
         typeof(KeyCustodianCertificateAuthorityService).Assembly.GetName().Name
-            .Should().Be("D2.Edge.Api");
+            .Should().Be("DcsvIo.D2.Private.Edge.Api");
 
         typeof(KeyCustodianCaCertificateService).Assembly.GetName().Name
-            .Should().Be("D2.Edge.Api");
+            .Should().Be("DcsvIo.D2.Private.Edge.Api");
 
         typeof(KeyCustodianSealPublicKeyService).Assembly.GetName().Name
-            .Should().Be("D2.Edge.Api");
+            .Should().Be("DcsvIo.D2.Private.Edge.Api");
 
         typeof(KeyCustodianOwnSealPrivateKeyService).Assembly.GetName().Name
-            .Should().Be("D2.Edge.Api");
+            .Should().Be("DcsvIo.D2.Private.Edge.Api");
     }
 
     [Theory]
@@ -281,7 +281,7 @@ public sealed class MapD2EdgeEndpointsTests
     public void EdgeApiTests_Csproj_HasNoProductionKeyCustodianProtobufIncludes()
     {
         var testsRoot = EdgeHostTestKit.ResolveEdgeTestsSourceRoot();
-        var csproj = Path.Combine(testsRoot, "D2.Edge.Tests.csproj");
+        var csproj = Path.Combine(testsRoot, "DcsvIo.D2.Private.Edge.Tests.csproj");
         File.Exists(csproj).Should().BeTrue();
 
         var text = File.ReadAllText(csproj);

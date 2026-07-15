@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Channels;
+namespace DcsvIo.D2.Messaging.RabbitMq.Channels;
 
 using global::RabbitMQ.Client;
 using JetBrains.Annotations;

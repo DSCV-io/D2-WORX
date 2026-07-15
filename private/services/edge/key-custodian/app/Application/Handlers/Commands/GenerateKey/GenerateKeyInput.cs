@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 
 /// <summary>
 /// Input to <c>GenerateKey</c>: which domain + key type to generate a new

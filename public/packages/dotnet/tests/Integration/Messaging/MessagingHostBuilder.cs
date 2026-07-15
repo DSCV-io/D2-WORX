@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
 using System.Security.Cryptography;
 using System.Text;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Encryption;
-using D2.Shared.Handler;
-using D2.Shared.Messaging.RabbitMq;
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Messaging.RabbitMq.Subscribing;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Messaging.RabbitMq;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Subscribing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

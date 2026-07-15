@@ -19,15 +19,15 @@ D2.Services.Protos.Common.V1.InputErrorProto.InputErrorProto() -> void
 D2.Services.Protos.Common.V1.TKMessageProto
 D2.Services.Protos.Common.V1.TKMessageProto.CalculateSize() -> int
 D2.Services.Protos.Common.V1.TKMessageProto.TKMessageProto() -> void
-D2.Shared.Result.Grpc.ProtoExtensions
-D2.Shared.Result.Grpc.ProtoExtensions.extension(D2.Services.Protos.Common.V1.D2ResultProto!)
-D2.Shared.Result.Grpc.ProtoExtensions.extension(D2.Services.Protos.Common.V1.D2ResultProto!).ToD2Result<TData>(TData? data = default(TData?)) -> D2.Shared.Result.D2Result<TData>!
-D2.Shared.Result.Grpc.ProtoExtensions.extension(D2.Shared.Result.D2Result!)
-D2.Shared.Result.Grpc.ProtoExtensions.extension(D2.Shared.Result.D2Result!).ToProto() -> D2.Services.Protos.Common.V1.D2ResultProto!
-D2.Shared.Result.Grpc.ProtoExtensions.extension(Grpc.Core.RpcException!)
-D2.Shared.Result.Grpc.ProtoExtensions.extension(Grpc.Core.RpcException!).ToTransportFaultResult<TData>(Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
-D2.Shared.Result.Grpc.ProtoExtensions.extension<TProto>(Grpc.Core.AsyncUnaryCall<TProto>!)
-D2.Shared.Result.Grpc.ProtoExtensions.extension<TProto>(Grpc.Core.AsyncUnaryCall<TProto>!).HandleAsync<TData>(System.Func<TProto, D2.Services.Protos.Common.V1.D2ResultProto!>! resultSelector, System.Func<TProto, TData?>! dataSelector, Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TData>!>!
+DcsvIo.D2.Result.Grpc.ProtoExtensions
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(D2.Services.Protos.Common.V1.D2ResultProto!)
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(D2.Services.Protos.Common.V1.D2ResultProto!).ToD2Result<TData>(TData? data = default(TData?)) -> DcsvIo.D2.Result.D2Result<TData>!
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(DcsvIo.D2.Result.D2Result!)
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(DcsvIo.D2.Result.D2Result!).ToProto() -> D2.Services.Protos.Common.V1.D2ResultProto!
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(Grpc.Core.RpcException!)
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension(Grpc.Core.RpcException!).ToTransportFaultResult<TData>(Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension<TProto>(Grpc.Core.AsyncUnaryCall<TProto>!)
+DcsvIo.D2.Result.Grpc.ProtoExtensions.extension<TProto>(Grpc.Core.AsyncUnaryCall<TProto>!).HandleAsync<TData>(System.Func<TProto, D2.Services.Protos.Common.V1.D2ResultProto!>! resultSelector, System.Func<TProto, TData?>! dataSelector, Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TData>!>!
 const D2.Services.Protos.Common.V1.D2ResultProto.CategoryFieldNumber = 4 -> int
 const D2.Services.Protos.Common.V1.D2ResultProto.ErrorCodeFieldNumber = 3 -> int
 const D2.Services.Protos.Common.V1.D2ResultProto.InputErrorsFieldNumber = 7 -> int
@@ -42,11 +42,11 @@ const D2.Services.Protos.Common.V1.TKMessageProto.ParamsFieldNumber = 2 -> int
 override D2.Services.Protos.Common.V1.D2ResultProto.GetHashCode() -> int
 override D2.Services.Protos.Common.V1.InputErrorProto.GetHashCode() -> int
 override D2.Services.Protos.Common.V1.TKMessageProto.GetHashCode() -> int
-static D2.Shared.Result.Grpc.ProtoExtensions.HandleAsync<TProto, TData>(this Grpc.Core.AsyncUnaryCall<TProto>! call, System.Func<TProto, D2.Services.Protos.Common.V1.D2ResultProto!>! resultSelector, System.Func<TProto, TData?>! dataSelector, Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> System.Threading.Tasks.Task<D2.Shared.Result.D2Result<TData>!>!
-static D2.Shared.Result.Grpc.ProtoExtensions.IsTransientGrpcException(Grpc.Core.RpcException! ex) -> bool
-static D2.Shared.Result.Grpc.ProtoExtensions.ToD2Result<TData>(this D2.Services.Protos.Common.V1.D2ResultProto! proto, TData? data = default(TData?)) -> D2.Shared.Result.D2Result<TData>!
-static D2.Shared.Result.Grpc.ProtoExtensions.ToProto(this D2.Shared.Result.D2Result! result) -> D2.Services.Protos.Common.V1.D2ResultProto!
-static D2.Shared.Result.Grpc.ProtoExtensions.ToTransportFaultResult<TData>(this Grpc.Core.RpcException! ex, Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> D2.Shared.Result.D2Result<TData>!
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.HandleAsync<TProto, TData>(this Grpc.Core.AsyncUnaryCall<TProto>! call, System.Func<TProto, D2.Services.Protos.Common.V1.D2ResultProto!>! resultSelector, System.Func<TProto, TData?>! dataSelector, Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TData>!>!
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.IsTransientGrpcException(Grpc.Core.RpcException! ex) -> bool
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.ToD2Result<TData>(this D2.Services.Protos.Common.V1.D2ResultProto! proto, TData? data = default(TData?)) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.ToProto(this DcsvIo.D2.Result.D2Result! result) -> D2.Services.Protos.Common.V1.D2ResultProto!
+static DcsvIo.D2.Result.Grpc.ProtoExtensions.ToTransportFaultResult<TData>(this Grpc.Core.RpcException! ex, Microsoft.Extensions.Logging.ILogger? logger = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
 ~D2.Services.Protos.Common.V1.D2ResultProto.Category.get -> string
 ~D2.Services.Protos.Common.V1.D2ResultProto.Category.set -> void
 ~D2.Services.Protos.Common.V1.D2ResultProto.Clone() -> D2.Services.Protos.Common.V1.D2ResultProto

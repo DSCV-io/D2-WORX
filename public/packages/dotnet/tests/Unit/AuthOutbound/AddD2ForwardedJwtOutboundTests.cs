@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound;
 
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Http;
-using D2.Shared.Auth.Outbound;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Auth.Outbound;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -98,7 +98,7 @@ public sealed class AddD2ForwardedJwtOutboundTests
 
         // Singleton: the ambient-scope adapter the channel-build resolves.
         var ambient = provider.GetRequiredService<IAmbientRequestScopeAccessor>();
-        ambient.Should().BeOfType<D2.Shared.Auth.Http.Ambient.HttpContextAmbientRequestScopeAccessor>();
+        ambient.Should().BeOfType<DcsvIo.D2.Auth.Http.Ambient.HttpContextAmbientRequestScopeAccessor>();
 
         // IHttpContextAccessor (the adapter's backing seam) resolves too.
         provider.GetRequiredService<IHttpContextAccessor>().Should().NotBeNull();

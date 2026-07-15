@@ -10,7 +10,7 @@
 
 /**
  * D2 RFC 7807 ProblemDetails wire-format catalog. Mirrors the .NET
- * D2.Shared.ProblemDetails.D2ProblemDetailsKeys constants byte-for-byte
+ * DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys constants byte-for-byte
  * (single spec source emits both sides; cross-language drift is
  * structurally impossible).
  */

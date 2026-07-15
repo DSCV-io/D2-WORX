@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Shared.Auth.Events;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
+using DcsvIo.D2.Auth.Events;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.EncryptionDomains.SourceGen
+# DcsvIo.D2.EncryptionDomains.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
@@ -14,8 +14,8 @@ Roslyn incremental source generator that emits encryption-domain catalogs from `
 
 | Consuming assembly | Emitted types | Values |
 | --- | --- | --- |
-| `D2.Shared.Encryption` | `EncryptionDomains` / `EncryptionDomainMode` / `EncryptionDomainModes` | public AdditionalFiles only |
-| `D2.Shared.Encryption.Extensions` | `ProductEncryptionDomains` / `ProductEncryptionDomainMode` / `ProductEncryptionDomainModes` under `D2.Private.Encryption` | public∪private AdditionalFiles |
+| `DcsvIo.D2.Encryption` | `EncryptionDomains` / `EncryptionDomainMode` / `EncryptionDomainModes` | public AdditionalFiles only |
+| `DcsvIo.D2.Private.Encryption.Extensions` | `ProductEncryptionDomains` / `ProductEncryptionDomainMode` / `ProductEncryptionDomainModes` under `DcsvIo.D2.Private.Encryption` | public∪private AdditionalFiles |
 
 Any other assembly → no emit. Private host PackageId is 1:1 with the public twin + `.Extensions`.
 
@@ -23,7 +23,7 @@ Any other assembly → no emit. Private host PackageId is 1:1 with the public tw
 
 ## What this emits
 
-When the consuming assembly is `D2.Shared.Encryption`, the generator emits `EncryptionDomains.g.cs` containing:
+When the consuming assembly is `DcsvIo.D2.Encryption`, the generator emits `EncryptionDomains.g.cs` containing:
 
 - one `public const string` per spec entry plus an `AllDomains` membership list;
 - `public enum EncryptionDomainMode { Symmetric, Sealed }` — the per-domain encryption mode;
@@ -41,7 +41,7 @@ A typo on either the producer or consumer side surfaces as a compile error rathe
 
 ## Cross-language parity
 
-The SAME spec drives `@d2/encryption-abstractions` via `public/tools/ts-codegen/src/encryption-domains-emit.ts`. Any TS code reading the catalog (ops tooling, RabbitMQ subscribers, encryption pipelines) shares byte-equal identifiers with the .NET producers.
+The SAME spec drives `@dcsv-io/d2-encryption-abstractions` via `public/tools/ts-codegen/src/encryption-domains-emit.ts`. Any TS code reading the catalog (ops tooling, RabbitMQ subscribers, encryption pipelines) shares byte-equal identifiers with the .NET producers.
 
 ## Diagnostics
 

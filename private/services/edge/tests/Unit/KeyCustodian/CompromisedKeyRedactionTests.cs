@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
 /// Regression tests for the <see cref="CompromisedKey"/> <c>ToString</c> /

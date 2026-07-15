@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Extensions;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Extensions;
 
 using System.IO;
 using System.Linq;
@@ -24,12 +24,12 @@ public sealed class ExtensionsPackageLawDriftTests
         const string drifted = """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
-                <AssemblyName>D2.Shared.Auth.Abstractions.Extensions</AssemblyName>
+                <AssemblyName>DcsvIo.D2.Private.Auth.Abstractions.Extensions</AssemblyName>
                 <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
                 <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
               </PropertyGroup>
               <ItemGroup>
-                <ProjectReference Include="scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj"
+                <ProjectReference Include="scopes-source-gen\DcsvIo.D2.Auth.Scopes.SourceGen.csproj"
                                   OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
               </ItemGroup>
             </Project>
@@ -37,7 +37,7 @@ public sealed class ExtensionsPackageLawDriftTests
 
         ExtensionsCsprojLaw.HasTwinProjectReference(
                 drifted,
-                @"auth\abstractions\D2.Shared.Auth.Abstractions.csproj")
+                @"auth\abstractions\DcsvIo.D2.Auth.Abstractions.csproj")
             .Should()
             .BeFalse(
                 "dropping the public twin ProjectReference must fail the twin law check");
@@ -49,13 +49,13 @@ public sealed class ExtensionsPackageLawDriftTests
         var root = Path.Combine(RepoRootFixture.Resolve(), "private", "packages", "dotnet");
         var real = Directory.GetFiles(
             root,
-            "D2.Shared.*.Extensions.csproj",
+            "DcsvIo.D2.*.Extensions.csproj",
             SearchOption.AllDirectories);
         real.Should().HaveCount(3);
 
         var synthetic = real
             .Select(Path.GetFileNameWithoutExtension)
-            .Append("D2.Shared.Fake.Concern.Extensions")
+            .Append("DcsvIo.D2.Fake.Concern.Extensions")
             .OrderBy(s => s)
             .ToList();
 
@@ -63,9 +63,9 @@ public sealed class ExtensionsPackageLawDriftTests
         synthetic.Should().NotBeEquivalentTo(
             new[]
             {
-                "D2.Shared.Auth.Abstractions.Extensions",
-                "D2.Shared.Encryption.Extensions",
-                "D2.Shared.I18n.Keys.Extensions",
+                "DcsvIo.D2.Private.Auth.Abstractions.Extensions",
+                "DcsvIo.D2.Private.Encryption.Extensions",
+                "DcsvIo.D2.Private.I18n.Keys.Extensions",
             },
             "a fourth invented Extensions PackageId must fail the exact inventory pin");
     }
@@ -76,7 +76,7 @@ public sealed class ExtensionsPackageLawDriftTests
         const string drifted = """
             <Project Sdk="Microsoft.NET.Sdk">
               <ItemGroup>
-                <ProjectReference Include="..\..\..\private\packages\dotnet\auth\abstractions-extensions\D2.Shared.Auth.Abstractions.Extensions.csproj" />
+                <ProjectReference Include="..\..\..\private\packages\dotnet\auth\abstractions-extensions\DcsvIo.D2.Private.Auth.Abstractions.Extensions.csproj" />
               </ItemGroup>
             </Project>
             """;
@@ -93,18 +93,18 @@ public sealed class ExtensionsPackageLawDriftTests
         const string drifted = """
             <Project Sdk="Microsoft.NET.Sdk">
               <ItemGroup>
-                <ProjectReference Include="$(D2PrivatePackagesDotnetRoot)auth\abstractions-extensions\D2.Shared.Auth.Abstractions.Extensions.csproj" />
-                <ProjectReference Include="$(D2PrivatePackagesDotnetRoot)encryption\extensions\D2.Shared.Encryption.Extensions.csproj" />
+                <ProjectReference Include="$(D2PrivatePackagesDotnetRoot)auth\abstractions-extensions\DcsvIo.D2.Private.Auth.Abstractions.Extensions.csproj" />
+                <ProjectReference Include="$(D2PrivatePackagesDotnetRoot)encryption\extensions\DcsvIo.D2.Private.Encryption.Extensions.csproj" />
               </ItemGroup>
             </Project>
             """;
 
         var hasAuth = ExtensionsCsprojLaw.ReferencesExtensionsPackage(
             drifted,
-            "auth\\abstractions-extensions\\D2.Shared.Auth.Abstractions.Extensions.csproj");
+            "auth\\abstractions-extensions\\DcsvIo.D2.Private.Auth.Abstractions.Extensions.csproj");
         var hasEnc = ExtensionsCsprojLaw.ReferencesExtensionsPackage(
             drifted,
-            "encryption\\extensions\\D2.Shared.Encryption.Extensions.csproj");
+            "encryption\\extensions\\DcsvIo.D2.Private.Encryption.Extensions.csproj");
 
         // Measured matrix: Audit Api = Auth only. Sibling Encryption is over-dep.
         (hasAuth && !hasEnc)

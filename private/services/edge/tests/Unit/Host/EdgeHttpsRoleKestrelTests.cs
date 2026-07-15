@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
 using System.Net;
 using System.Reflection;
-using D2.Edge.Api.Composition;
-using D2.Edge.Api.Kestrel;
-using D2.Shared.AspNetCore.Mtls;
+using DcsvIo.D2.AspNetCore.Mtls;
+using DcsvIo.D2.Private.Edge.Api.Composition;
+using DcsvIo.D2.Private.Edge.Api.Kestrel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;

@@ -38,13 +38,13 @@ import {
 describe("seed↔provider byte-identity — .NET (nuget) composition", () => {
   const nugetInput = {
     sourceDump:
-      "F:D2.Shared.Time.csproj\n<Project></Project>\n" +
-      "F:Clock.cs\nnamespace D2.Shared.Time;\npublic sealed class Clock {}\n",
+      "F:DcsvIo.D2.Time.csproj\n<Project></Project>\n" +
+      "F:Clock.cs\nnamespace DcsvIo.D2.Time;\npublic sealed class Clock {}\n",
     apiReport:
-      "#nullable enable\nD2.Shared.Time.Clock\nD2.Shared.Time.Clock.Clock() -> void\n" +
+      "#nullable enable\nDcsvIo.D2.Time.Clock\nDcsvIo.D2.Time.Clock.Clock() -> void\n" +
       "#nullable enable\n",
     depsJson:
-      '{"packageId":"D2.Shared.Time","version":"0.1.0","deps":{"D2.Shared.Primitives":"0.1.0"}}',
+      '{"packageId":"DcsvIo.D2.Time","version":"0.1.0","deps":{"DcsvIo.D2.Primitives":"0.1.0"}}',
     toolchainJson:
       '{"langVersion":"latest","rollForward":"latestFeature","sdk":"10.0.200","targetFramework":"net10.0"}',
   };
@@ -79,12 +79,12 @@ describe("seed↔provider byte-identity — .NET (nuget) composition", () => {
 describe("seed↔provider byte-identity — npm composition", () => {
   const npmInput = {
     sourceDump:
-      'F:package.json\n{"name":"@d2/result","version":"0.1.0"}\n' +
+      'F:package.json\n{"name":"@dcsv-io/d2-result","version":"0.1.0"}\n' +
       "F:src/index.ts\nexport const ok = true;\n",
     apiReport:
-      '## API Report File for "@d2/result"\n\n```ts\nexport const ok: boolean;\n```\n',
+      '## API Report File for "@dcsv-io/d2-result"\n\n```ts\nexport const ok: boolean;\n```\n',
     depsJson:
-      '{"name":"@d2/result","version":"0.1.0","dependencies":{"@d2/error-category":"0.1.0"}}',
+      '{"name":"@dcsv-io/d2-result","version":"0.1.0","dependencies":{"@dcsv-io/d2-error-category":"0.1.0"}}',
     toolchainJson: '{"module":"ESNext","target":"ES2022","typescript":"5.9.3"}',
   };
 

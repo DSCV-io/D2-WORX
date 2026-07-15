@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { CountryCode } from "@d2/geo-abstractions";
+import type { CountryCode } from "@dcsv-io/d2-geo-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { CountryLookup } from "../../src/countries.js";

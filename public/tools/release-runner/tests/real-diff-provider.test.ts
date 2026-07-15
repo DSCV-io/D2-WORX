@@ -14,7 +14,7 @@
 //   - source-based fingerprint: changed source / report / deps / toolchain → moves
 //   - propagation (S4): a changed resolved dep version flips the fingerprint
 //   - baselineMissing (no committed fingerprint / report)
-//   - provider source-dump determinism (S9) against the real D2.Shared.Utilities tree
+//   - provider source-dump determinism (S9) against the real DcsvIo.D2.Utilities tree
 //     (the seed↔provider byte-identity of the COMPOSITION is pinned separately in
 //     seed-provider-fingerprint-identity.test.ts)
 //   - the DEPS helpers (buildNugetManifestMeta / substituteResolvedDeps / buildNpmManifestMeta)
@@ -50,23 +50,23 @@ import { repoRoot } from "./repo-root.js";
 // ---------------------------------------------------------------------------
 
 const nugetPkg: PackageDescriptor = {
-  name: "D2.Shared.Result",
+  name: "DcsvIo.D2.Result",
   ecosystem: "nuget",
   dir: "/abs/result/core",
-  manifestPath: "/abs/result/core/D2.Shared.Result.csproj",
+  manifestPath: "/abs/result/core/DcsvIo.D2.Result.csproj",
   changelogPath: "/abs/result/core/CHANGELOG.md",
   currentVersion: "0.1.0",
-  dependencies: ["D2.Shared.Utilities"],
+  dependencies: ["DcsvIo.D2.Utilities"],
 };
 
 const npmPkg: PackageDescriptor = {
-  name: "@d2/result",
+  name: "@dcsv-io/d2-result",
   ecosystem: "npm",
   dir: "/abs/ts/result",
   manifestPath: "/abs/ts/result/package.json",
   changelogPath: "/abs/ts/result/CHANGELOG.md",
   currentVersion: "0.1.0",
-  dependencies: ["@d2/utilities"],
+  dependencies: ["@dcsv-io/d2-utilities"],
 };
 
 // A stable toolchain reader for both ecosystems.
@@ -156,15 +156,15 @@ describe("buildNugetManifestMeta", () => {
     const meta = buildNugetManifestMeta(
       nugetPkg,
       new Map([
-        ["D2.Shared.Result", "0.1.0"],
-        ["D2.Shared.Utilities", "0.3.0"],
+        ["DcsvIo.D2.Result", "0.1.0"],
+        ["DcsvIo.D2.Utilities", "0.3.0"],
       ]),
     );
 
     expect(JSON.parse(meta)).toEqual({
-      packageId: "D2.Shared.Result",
+      packageId: "DcsvIo.D2.Result",
       version: "0.1.0",
-      deps: { "D2.Shared.Utilities": "0.3.0" },
+      deps: { "DcsvIo.D2.Utilities": "0.3.0" },
     });
   });
 
@@ -172,25 +172,25 @@ describe("buildNugetManifestMeta", () => {
     const meta = buildNugetManifestMeta(nugetPkg, new Map());
 
     expect(JSON.parse(meta).version).toBe("0.1.0");
-    expect(JSON.parse(meta).deps).toEqual({ "D2.Shared.Utilities": "" });
+    expect(JSON.parse(meta).deps).toEqual({ "DcsvIo.D2.Utilities": "" });
   });
 
   it("sorts deps deterministically", () => {
     const pkg: PackageDescriptor = {
       ...nugetPkg,
-      dependencies: ["D2.Shared.Zebra", "D2.Shared.Alpha"],
+      dependencies: ["DcsvIo.D2.Zebra", "DcsvIo.D2.Alpha"],
     };
     const meta = buildNugetManifestMeta(
       pkg,
       new Map([
-        ["D2.Shared.Zebra", "1.0.0"],
-        ["D2.Shared.Alpha", "2.0.0"],
+        ["DcsvIo.D2.Zebra", "1.0.0"],
+        ["DcsvIo.D2.Alpha", "2.0.0"],
       ]),
     );
 
     expect(Object.keys(JSON.parse(meta).deps)).toEqual([
-      "D2.Shared.Alpha",
-      "D2.Shared.Zebra",
+      "DcsvIo.D2.Alpha",
+      "DcsvIo.D2.Zebra",
     ]);
   });
 });
@@ -203,14 +203,14 @@ describe("substituteResolvedDeps", () => {
   it("replaces a consumable dep literal with its resolved version", () => {
     const out = substituteResolvedDeps(
       {
-        name: "@d2/result",
+        name: "@dcsv-io/d2-result",
         version: "0.1.0",
-        dependencies: { "@d2/utilities": "workspace:*" },
+        dependencies: { "@dcsv-io/d2-utilities": "workspace:*" },
       },
-      new Map([["@d2/utilities", "0.5.0"]]),
+      new Map([["@dcsv-io/d2-utilities", "0.5.0"]]),
     );
 
-    expect(out.dependencies).toEqual({ "@d2/utilities": "0.5.0" });
+    expect(out.dependencies).toEqual({ "@dcsv-io/d2-utilities": "0.5.0" });
   });
 
   it("keeps the original literal for an unresolved dep", () => {
@@ -224,8 +224,8 @@ describe("substituteResolvedDeps", () => {
 
   it("substitutes the package's own resolved version", () => {
     const out = substituteResolvedDeps(
-      { name: "@d2/result", version: "0.1.0", dependencies: {} },
-      new Map([["@d2/result", "0.2.0"]]),
+      { name: "@dcsv-io/d2-result", version: "0.1.0", dependencies: {} },
+      new Map([["@dcsv-io/d2-result", "0.2.0"]]),
     );
 
     expect(out.version).toBe("0.2.0");
@@ -233,7 +233,7 @@ describe("substituteResolvedDeps", () => {
 
   it("handles a package.json with no dependencies", () => {
     const out = substituteResolvedDeps(
-      { name: "@d2/x", version: "1.0.0" },
+      { name: "@dcsv-io/d2-x", version: "1.0.0" },
       new Map(),
     );
 
@@ -255,15 +255,15 @@ describe("buildNpmManifestMeta", () => {
     expect(
       JSON.parse(
         buildNpmManifestMeta({
-          name: "@d2/x",
+          name: "@dcsv-io/d2-x",
           version: "1.0.0",
-          dependencies: { "@d2/y": "1.0.0" },
+          dependencies: { "@dcsv-io/d2-y": "1.0.0" },
         }),
       ),
     ).toEqual({
-      name: "@d2/x",
+      name: "@dcsv-io/d2-x",
       version: "1.0.0",
-      dependencies: { "@d2/y": "1.0.0" },
+      dependencies: { "@dcsv-io/d2-y": "1.0.0" },
     });
   });
 });
@@ -277,7 +277,7 @@ describe("makeRealDiffProvider — nuget", () => {
   const unshippedAbs = "/abs/result/core/PublicAPI.Unshipped.txt";
   const fpAbs = "/abs/result/core/.release-fingerprint";
   const sourceAbs = "/abs/result/core/Result.cs";
-  const csprojAbs = "/abs/result/core/D2.Shared.Result.csproj";
+  const csprojAbs = "/abs/result/core/DcsvIo.D2.Result.csproj";
 
   const cleanFiles: Record<string, string> = {
     [shippedAbs]: "#nullable enable\nD2.Foo\n",
@@ -310,7 +310,7 @@ describe("makeRealDiffProvider — nuget", () => {
 
     const diff = provider.getDiff({
       pkg: nugetPkg,
-      resolvedVersions: new Map([["D2.Shared.Result", "0.1.0"]]),
+      resolvedVersions: new Map([["DcsvIo.D2.Result", "0.1.0"]]),
     });
 
     expect(diff.apiDiff.added).toBe(true);
@@ -321,7 +321,7 @@ describe("makeRealDiffProvider — nuget", () => {
   });
 
   it("clean no-op: committed fp == fresh composed → fingerprintDiff.changed false", () => {
-    const resolved = new Map([["D2.Shared.Utilities", "0.1.0"]]);
+    const resolved = new Map([["DcsvIo.D2.Utilities", "0.1.0"]]);
     const committed = composeNugetFpDirect(cleanFiles, resolved);
 
     const provider = makeRealDiffProvider(repoRoot, {
@@ -423,7 +423,7 @@ describe("makeRealDiffProvider — nuget", () => {
     // Committed fp == the fp at dep@0.1.0 → still 0.1.0 unchanged; 0.2.0 changed.
     const committed = composeNugetFpDirect(
       files,
-      new Map([["D2.Shared.Utilities", "0.1.0"]]),
+      new Map([["DcsvIo.D2.Utilities", "0.1.0"]]),
     );
 
     const provider = makeRealDiffProvider(repoRoot, {
@@ -435,11 +435,11 @@ describe("makeRealDiffProvider — nuget", () => {
 
     const still010 = provider.getDiff({
       pkg: nugetPkg,
-      resolvedVersions: new Map([["D2.Shared.Utilities", "0.1.0"]]),
+      resolvedVersions: new Map([["DcsvIo.D2.Utilities", "0.1.0"]]),
     });
     const moved020 = provider.getDiff({
       pkg: nugetPkg,
-      resolvedVersions: new Map([["D2.Shared.Utilities", "0.2.0"]]),
+      resolvedVersions: new Map([["DcsvIo.D2.Utilities", "0.2.0"]]),
     });
 
     expect(still010.fingerprintDiff.changed).toBe(false);
@@ -488,11 +488,11 @@ describe("makeRealDiffProvider — npm", () => {
   const srcAbs = "/abs/ts/result/src/index.ts";
 
   const API_MD =
-    '## API Report File for "@d2/result"\n\n```ts\n\n// @public\nexport const X: string;\n\n```\n';
+    '## API Report File for "@dcsv-io/d2-result"\n\n```ts\n\n// @public\nexport const X: string;\n\n```\n';
   const PKG_JSON = JSON.stringify({
-    name: "@d2/result",
+    name: "@dcsv-io/d2-result",
     version: "0.1.0",
-    dependencies: { "@d2/utilities": "workspace:*" },
+    dependencies: { "@dcsv-io/d2-utilities": "workspace:*" },
   });
 
   // The source set (package.json + src/index.ts) is identical across npm tests.
@@ -572,7 +572,7 @@ describe("makeRealDiffProvider — npm", () => {
     expect(diff.baselineMissing).toBe(true);
   });
 
-  it("PROPAGATION (npm): a changed resolved @d2/* dep version flips the fingerprint", () => {
+  it("PROPAGATION (npm): a changed resolved @dcsv-io/d2-* dep version flips the fingerprint", () => {
     const files: Record<string, string> = {
       [apiMdAbs]: API_MD,
       [pkgJsonAbs]: PKG_JSON,
@@ -582,7 +582,7 @@ describe("makeRealDiffProvider — npm", () => {
 
     const committed = composeNpmFpDirect(
       files,
-      new Map([["@d2/utilities", "0.1.0"]]),
+      new Map([["@dcsv-io/d2-utilities", "0.1.0"]]),
     );
 
     const provider = makeRealDiffProvider(repoRoot, {
@@ -594,11 +594,11 @@ describe("makeRealDiffProvider — npm", () => {
 
     const still010 = provider.getDiff({
       pkg: npmPkg,
-      resolvedVersions: new Map([["@d2/utilities", "0.1.0"]]),
+      resolvedVersions: new Map([["@dcsv-io/d2-utilities", "0.1.0"]]),
     });
     const moved020 = provider.getDiff({
       pkg: npmPkg,
-      resolvedVersions: new Map([["@d2/utilities", "0.2.0"]]),
+      resolvedVersions: new Map([["@dcsv-io/d2-utilities", "0.2.0"]]),
     });
 
     expect(still010.fingerprintDiff.changed).toBe(false);
@@ -703,9 +703,9 @@ describe("readPackageJsonFile", () => {
       writeFileSync(
         join(dir, "package.json"),
         JSON.stringify({
-          name: "@d2/x",
+          name: "@dcsv-io/d2-x",
           version: "1.2.3",
-          dependencies: { "@d2/utilities": "workspace:*" },
+          dependencies: { "@dcsv-io/d2-utilities": "workspace:*" },
           private: true,
         }),
         "utf-8",
@@ -713,9 +713,11 @@ describe("readPackageJsonFile", () => {
 
       const meta = readPackageJsonFile(dir);
 
-      expect(meta.name).toBe("@d2/x");
+      expect(meta.name).toBe("@dcsv-io/d2-x");
       expect(meta.version).toBe("1.2.3");
-      expect(meta.dependencies).toEqual({ "@d2/utilities": "workspace:*" });
+      expect(meta.dependencies).toEqual({
+        "@dcsv-io/d2-utilities": "workspace:*",
+      });
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -733,7 +735,7 @@ describe("readPackageJsonFile", () => {
 });
 
 // ---------------------------------------------------------------------------
-// S9 — provider source-dump determinism against the REAL D2.Shared.Utilities tree
+// S9 — provider source-dump determinism against the REAL DcsvIo.D2.Utilities tree
 //
 // This proves the provider's source-dump GLOB + build are deterministic over a
 // real committed tree — NOT the seed↔provider byte-identity of the fingerprint
@@ -745,7 +747,7 @@ describe("readPackageJsonFile", () => {
 // ---------------------------------------------------------------------------
 
 describe("provider source-dump determinism (S9)", () => {
-  it("the provider's nuget source dump over the real D2.Shared.Utilities tree is non-empty + deterministic", () => {
+  it("the provider's nuget source dump over the real DcsvIo.D2.Utilities tree is non-empty + deterministic", () => {
     // listSourceFiles walks the real committed tree; this proves the glob + dump
     // are deterministic against a real package (the seed uses the identical dump
     // algorithm). The COMPOSITION byte-identity is pinned separately; the drift

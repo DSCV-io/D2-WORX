@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecSse;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecSse;
 
 using System.Net;
-using D2.Edge.Tests.TypeSpecSse.Generated;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecSse.Fixtures;
-using D2.Shared.Result;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecSse.Generated;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecSse.Fixtures;
+using DcsvIo.D2.Result;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>

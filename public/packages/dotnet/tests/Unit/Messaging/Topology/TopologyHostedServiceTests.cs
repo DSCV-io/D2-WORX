@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging.Topology;
+namespace DcsvIo.D2.Tests.Unit.Messaging.Topology;
 
 using AwesomeAssertions;
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Messaging.RabbitMq.Topology;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Topology;
 using global::RabbitMQ.Client;
 using Microsoft.Extensions.Logging;
 using Xunit;

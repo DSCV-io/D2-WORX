@@ -2,9 +2,9 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Utilities — Serialization
+# DcsvIo.D2.Utilities — Serialization
 
-> Part of [`D2.Shared.Utilities`](../README.md).
+> Part of [`DcsvIo.D2.Utilities`](../README.md).
 
 Frozen `JsonSerializerOptions` presets shared across the framework. One instance per preset, thread-safe and per-call allocation-free.
 

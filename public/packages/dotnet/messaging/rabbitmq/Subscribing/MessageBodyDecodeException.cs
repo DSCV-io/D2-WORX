@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Subscribing;
+namespace DcsvIo.D2.Messaging.RabbitMq.Subscribing;
 
 /// <summary>
 /// Thrown by <see cref="IHandlerDispatcher.DispatchAsync"/> when the AMQP

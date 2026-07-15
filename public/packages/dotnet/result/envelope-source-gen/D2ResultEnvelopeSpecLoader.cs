@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result.Envelope.SourceGen;
+namespace DcsvIo.D2.Result.Envelope.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>Parses <c>d2result-envelope.spec.json</c>.</summary>
 internal static class D2ResultEnvelopeSpecLoader

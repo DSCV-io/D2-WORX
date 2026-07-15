@@ -41,7 +41,7 @@ import { buildBanner } from "./banner.js";
 import { toSnake } from "./name-transforms.js";
 import type { FieldInfo, NestedModel } from "./model-walk.js";
 import type { EmittedFile } from "./csharp-dto-emitter.js";
-import type { ReservedPayload } from "@d2/typespec-decorators";
+import type { ReservedPayload } from "@dcsv-io/d2-typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Public types

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 using Xunit;
 
 /// <summary>
@@ -34,7 +34,7 @@ public sealed class EncryptionDomainsFixtureEmitter
     {
         // Per-domain mode + consumerService, keyed by wire value, mirroring
         // the emitted EncryptionDomainModes as-const twin in
-        // @d2/encryption-abstractions. Only sealed domains carry a
+        // @dcsv-io/d2-encryption-abstractions. Only sealed domains carry a
         // consumerService.
         var data = new SortedDictionary<string, object?>(StringComparer.Ordinal);
         foreach (var domain in EncryptionDomains.AllDomains)

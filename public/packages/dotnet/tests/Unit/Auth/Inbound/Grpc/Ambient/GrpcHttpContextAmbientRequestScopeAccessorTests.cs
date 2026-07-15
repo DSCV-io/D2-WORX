@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Ambient;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Ambient;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Grpc.Ambient;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Grpc.Ambient;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

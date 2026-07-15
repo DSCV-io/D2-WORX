@@ -31,7 +31,7 @@ import {
   D2_COMMAND_KEY,
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 
 const directUnitOps: Operation[] = [];
 const directUnitEmitted: Array<{ path: string; content: string }> = [];

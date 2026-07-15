@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen;
+namespace DcsvIo.D2.Geo.SourceGen;
 
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Topic-specific factory helpers that produce <see cref="EmitDiagnostic"/>
 /// instances with geo-source-gen descriptor IDs (<c>D2GEO*</c>). The
-/// diagnostic record itself lives in <c>D2.Shared.SourceGen</c> (shared
+/// diagnostic record itself lives in <c>DcsvIo.D2.SourceGen</c> (shared
 /// across every source generator); only the per-topic factory shape lives
 /// here.
 /// </summary>

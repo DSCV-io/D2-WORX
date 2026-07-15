@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.ProblemDetails.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.ProblemDetails.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.ProblemDetails.SourceGen;
+using DcsvIo.D2.ProblemDetails.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -36,7 +36,7 @@ public sealed class ProblemDetailsEmitterTests
         result.GeneratedSource.Should().Contain(
             "public const string TYPE_URI_PREFIX = \"https://problems.d2.dcsv.io/\";");
         result.GeneratedSource.Should().Contain(
-            "namespace D2.Shared.ProblemDetails;");
+            "namespace DcsvIo.D2.ProblemDetails;");
         result.GeneratedSource.Should().Contain(
             "public static class D2ProblemDetailsKeys");
     }

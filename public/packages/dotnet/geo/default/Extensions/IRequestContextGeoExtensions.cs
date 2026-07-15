@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Default.Extensions;
+namespace DcsvIo.D2.Geo.Default.Extensions;
 
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Geo.Abstractions;
-using AbsExt = D2.Shared.Geo.Abstractions.Extensions.IRequestContextGeoExtensions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Geo.Abstractions;
+using AbsExt = DcsvIo.D2.Geo.Abstractions.Extensions.IRequestContextGeoExtensions;
 
 /// <summary>
 /// Default-layer record-returning wrappers over <see cref="IRequestContext"/>
@@ -17,7 +17,7 @@ using AbsExt = D2.Shared.Geo.Abstractions.Extensions.IRequestContextGeoExtension
 /// (<c>request.Country()?.PrimaryLanguage?.DisplayName</c>) without a second
 /// catalog lookup. Consumers wanting only the typed code without catalog
 /// access use the Abstractions-layer extension under
-/// <c>D2.Shared.Geo.Abstractions.Extensions</c>.
+/// <c>DcsvIo.D2.Geo.Abstractions.Extensions</c>.
 /// </summary>
 /// <remarks>
 /// <para>

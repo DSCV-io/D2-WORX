@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation;
+namespace DcsvIo.D2.Tests.Unit.Validation;
 
 using AwesomeAssertions;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Validation.Abstractions;
 using Xunit;
 
 /// <summary>
 /// Runtime-emission pin tests for the codegen-emitted <see cref="FieldConstraints"/>
 /// catalog. Each enumerated bound is asserted against its locked spec value on
-/// the EMITTED <c>D2.Shared.Validation.Abstractions</c> surface (not the emitter
+/// the EMITTED <c>DcsvIo.D2.Validation.Abstractions</c> surface (not the emitter
 /// internals) — a spec edit that changes a value flips exactly the affected row.
 /// </summary>
 public sealed class FieldConstraintsRuntimeEmissionTests

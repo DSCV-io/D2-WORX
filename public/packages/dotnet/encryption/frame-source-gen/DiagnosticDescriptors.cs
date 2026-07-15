@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EncryptionFrame.SourceGen;
+namespace DcsvIo.D2.EncryptionFrame.SourceGen;
 
 using Microsoft.CodeAnalysis;
 
@@ -134,5 +134,5 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    private const string _CATEGORY = "D2.Shared.EncryptionFrame.SourceGen";
+    private const string _CATEGORY = "DcsvIo.D2.EncryptionFrame.SourceGen";
 }

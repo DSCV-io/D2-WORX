@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Messaging.SourceGen
+# DcsvIo.D2.Messaging.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
 **Input contracts:** [`contracts/mq-messages/`](../../../../../contracts/mq-messages/README.md) + [`contracts/mq-subscriptions/`](../../../../../contracts/mq-subscriptions/README.md)
 
-Roslyn incremental source generator that emits the messaging registry types (`MqMessages` + `MqMessagesRegistry` + `MqSubscriptions` + `MqSubscriptionsRegistry`) into [`D2.Shared.Messaging.Abstractions`](../abstractions/README.md) by reading two spec files from `contracts/`:
+Roslyn incremental source generator that emits the messaging registry types (`MqMessages` + `MqMessagesRegistry` + `MqSubscriptions` + `MqSubscriptionsRegistry`) into [`DcsvIo.D2.Messaging.Abstractions`](../abstractions/README.md) by reading two spec files from `contracts/`:
 
 - `mq-messages.spec.json` — every message type the platform publishes (constant name, runtime descriptor, encryption requirements)
 - `mq-subscriptions.spec.json` — every subscription declaration (consumer name, message types, retry policy, prefetch, idempotency)
@@ -26,7 +26,7 @@ The spec files are the single source of truth — adding a new message or subscr
 | `D2MQ001` | Error    | Spec file is malformed JSON or violates the schema                                                                                                                                  |
 | `D2MQ002` | Error    | Spec entry missing a required field (e.g. messages-entry missing `constant`)                                                                                                        |
 | `D2MQ003` | Error    | Two messages or subscriptions declare the same constant name                                                                                                                        |
-| `D2MQ004` | Error    | Encryption domain referenced by a messages-entry isn't in `D2.Shared.Encryption.EncryptionDomains` (catches drift between encryption keyring registration and message declarations) |
+| `D2MQ004` | Error    | Encryption domain referenced by a messages-entry isn't in `DcsvIo.D2.Encryption.EncryptionDomains` (catches drift between encryption keyring registration and message declarations) |
 | `D2MQ005` | Error    | `plaintext`-encryption messages-entry missing the required `encryptionReason` justification                                                                                         |
 | `D2MQ006` | Error    | Subscription `pattern` value isn't in `{CompetingConsumer, FanoutExclusiveAutoDelete, DurableShared}`                                                                               |
 | `D2MQ007` | Error    | Messages-entry `messageType` value isn't in the recognized set                                                                                                                      |
@@ -62,7 +62,7 @@ The spec files are the single source of truth — adding a new message or subscr
 
 - **`constant`**: PascalCase C# identifier; becomes `MqMessages.UserCreated` etc.
 - **`messageType`**: one of the recognized message-type tokens (validated by `D2MQ007`).
-- **`encryption`**: lowercase wire value of an `EncryptionDomain` entry in `D2.Shared.Encryption.EncryptionDomains` (e.g. `audit` / `notifications` / `courier` / `plaintext`) — the closed catalog comes from `contracts/encryption-domains/encryption-domains.spec.json` and a typo surfaces as `D2MQ004`.
+- **`encryption`**: lowercase wire value of an `EncryptionDomain` entry in `DcsvIo.D2.Encryption.EncryptionDomains` (e.g. `audit` / `notifications` / `courier` / `plaintext`) — the closed catalog comes from `contracts/encryption-domains/encryption-domains.spec.json` and a typo surfaces as `D2MQ004`.
 - **`encryptionReason`**: required iff `encryption == "plaintext"`. Documents WHY the payload is intentionally unencrypted (audit trail).
 - **`defaultRoutingKey`**: optional default routing key for publishers.
 
@@ -92,7 +92,7 @@ The spec files are the single source of truth — adding a new message or subscr
 
 ## Emitted output (two `.g.cs` files)
 
-Both files emit into the consuming assembly (`D2.Shared.Messaging.Abstractions`) from the two specs read together:
+Both files emit into the consuming assembly (`DcsvIo.D2.Messaging.Abstractions`) from the two specs read together:
 
 ```csharp
 // MqMessages.g.cs
@@ -113,7 +113,7 @@ public static partial class MqSubscriptions { /* constants */ }
 public static partial class MqSubscriptionsRegistry { /* dict */ }
 ```
 
-`MqMessagesRegistry.ByConstant[name]` returns the full descriptor (`messageType`, `encryptionReason`, `defaultRoutingKey`, etc.) — used by `D2.Shared.Messaging.RabbitMq` at publish time to look up encryption + routing settings without a parallel hand-written table.
+`MqMessagesRegistry.ByConstant[name]` returns the full descriptor (`messageType`, `encryptionReason`, `defaultRoutingKey`, etc.) — used by `DcsvIo.D2.Messaging.RabbitMq` at publish time to look up encryption + routing settings without a parallel hand-written table.
 
 The two-file split lives in one sourcegen because publishers consume `MqMessages*` constants and subscribers consume `MqSubscriptions*` constants — both derive from the same shared encryption-domain validation pass, and keeping them in one generator ensures spec edits re-emit both files together.
 
@@ -145,6 +145,6 @@ careful coordination with deployed consumers:
 - [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/mq-messages/mq-messages.spec.json`](../../../../../contracts/mq-messages/mq-messages.spec.json) — message catalog
 - [`contracts/mq-subscriptions/mq-subscriptions.spec.json`](../../../../../contracts/mq-subscriptions/mq-subscriptions.spec.json) — subscription catalog
-- [`D2.Shared.Messaging.Abstractions`](../abstractions/README.md) — emission target + transport-agnostic contract
-- [`D2.Shared.Messaging.RabbitMq`](../rabbitmq/README.md) — primary consumer (publish + consume) + canonical runtime / wire-format / topology reference
-- [`D2.Shared.Auth.Scopes.SourceGen`](../../auth/scopes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`DcsvIo.D2.Messaging.Abstractions`](../abstractions/README.md) — emission target + transport-agnostic contract
+- [`DcsvIo.D2.Messaging.RabbitMq`](../rabbitmq/README.md) — primary consumer (publish + consume) + canonical runtime / wire-format / topology reference
+- [`DcsvIo.D2.Auth.Scopes.SourceGen`](../../auth/scopes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)

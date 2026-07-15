@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D² messaging — messages spec",
-  "description": "Schema for contracts/mq-messages/mq-messages.spec.json — the source-of-truth catalog of every message type D² publishes. D2.Shared.Mq.SourceGen reads this to emit the MqMessages static class (string constants) + the runtime registry (constant → MqMessageDescriptor) into D2.Shared.Messaging.Abstractions. Each entry pairs one message type with its publisher contract: target exchange, exchange type, encryption domain, default routing key. The producing service owns its entries.",
+  "description": "Schema for contracts/mq-messages/mq-messages.spec.json — the source-of-truth catalog of every message type D² publishes. DcsvIo.D2.Mq.SourceGen reads this to emit the MqMessages static class (string constants) + the runtime registry (constant → MqMessageDescriptor) into DcsvIo.D2.Messaging.Abstractions. Each entry pairs one message type with its publisher contract: target exchange, exchange type, encryption domain, default routing key. The producing service owns its entries.",
   "type": "object",
   "required": ["messages"],
   "additionalProperties": false,

@@ -19,7 +19,7 @@ import type { DeprecationInfo } from "../deprecation-info.js";
 /**
  * `Language` record. Reverse-navs `spokenInCountries` + `locales`
  * populated in the wire-nav step. Mirrors .NET
- * `D2.Shared.Geo.Abstractions.Language` field-for-field.
+ * `DcsvIo.D2.Geo.Abstractions.Language` field-for-field.
  */
 export interface Language {
   readonly iso6391Code: LanguageCode;

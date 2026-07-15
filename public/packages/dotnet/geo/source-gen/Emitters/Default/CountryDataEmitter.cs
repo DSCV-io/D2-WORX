@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Emitters.Default;
+namespace DcsvIo.D2.Geo.SourceGen.Emitters.Default;
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
-using D2.Shared.Geo.SourceGen.Spec;
-using D2.Shared.SourceGen;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.Geo.SourceGen.Spec;
+using DcsvIo.D2.SourceGen;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Emits the per-country DATA — single shape per entity + cycle-resolution
@@ -122,7 +122,7 @@ internal static class CountryDataEmitter
         sb.AppendLine();
         sb.AppendLine("using System.Collections.Frozen;");
         sb.AppendLine("using System.Collections.Generic;");
-        sb.AppendLine("using D2.Shared.Utilities.Extensions;");
+        sb.AppendLine("using DcsvIo.D2.Utilities.Extensions;");
         sb.AppendLine($"using {DefaultEmitterHelpers.AbstractionsNamespace};");
         sb.AppendLine();
         sb.AppendLine($"namespace {_NAMESPACE};");

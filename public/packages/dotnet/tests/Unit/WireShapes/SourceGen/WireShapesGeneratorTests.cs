@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.WireShapes.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.WireShapes.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.WireShapes.SourceGen;
+using DcsvIo.D2.WireShapes.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -20,15 +20,15 @@ using Xunit;
 /// IIncrementalGenerator integration tests for the wire-shapes SrcGen —
 /// drive <see cref="WireShapesGenerator"/> via a synthetic
 /// <see cref="CSharpGeneratorDriver"/> rather than the build pipeline.
-/// Asserts the multi-target dispatch behavior: D2.Shared.I18n.Abstractions
-/// gets TkMessageWireShape from tk-message.spec.json; D2.Shared.Result
+/// Asserts the multi-target dispatch behavior: DcsvIo.D2.I18n.Abstractions
+/// gets TkMessageWireShape from tk-message.spec.json; DcsvIo.D2.Result
 /// gets InputErrorWireShape from input-error.spec.json; anything else
 /// emits nothing.
 /// </summary>
 public sealed class WireShapesGeneratorTests
 {
-    private const string _TK_MESSAGE_ASSEMBLY = "D2.Shared.I18n.Abstractions";
-    private const string _INPUT_ERROR_ASSEMBLY = "D2.Shared.Result";
+    private const string _TK_MESSAGE_ASSEMBLY = "DcsvIo.D2.I18n.Abstractions";
+    private const string _INPUT_ERROR_ASSEMBLY = "DcsvIo.D2.Result";
 
     private const string _TK_MESSAGE_SPEC = """
     {
@@ -60,7 +60,7 @@ public sealed class WireShapesGeneratorTests
         Path.GetFileName(result.GeneratedTrees[0].FilePath)
             .Should().Be("TkMessageWireShape.g.cs");
         result.GeneratedTrees[0].ToString().Should().Contain(
-            "namespace D2.Shared.I18n;");
+            "namespace DcsvIo.D2.I18n;");
         result.GeneratedTrees[0].ToString().Should().Contain(
             "public const string KEY = \"key\";");
     }
@@ -77,7 +77,7 @@ public sealed class WireShapesGeneratorTests
         Path.GetFileName(result.GeneratedTrees[0].FilePath)
             .Should().Be("InputErrorWireShape.g.cs");
         result.GeneratedTrees[0].ToString().Should().Contain(
-            "namespace D2.Shared.Result;");
+            "namespace DcsvIo.D2.Result;");
         result.GeneratedTrees[0].ToString().Should().Contain(
             "public const string FIELD = \"field\";");
     }
@@ -101,7 +101,7 @@ public sealed class WireShapesGeneratorTests
     [Fact]
     public void Generator_TargetAssemblyButWrongSpec_EmitsMissingSpecDiagnostic()
     {
-        // Generator target is D2.Shared.I18n.Abstractions which expects
+        // Generator target is DcsvIo.D2.I18n.Abstractions which expects
         // tk-message.spec.json — but consumer only supplied
         // input-error.spec.json. The filename-match dispatch fails →
         // D2WS005 fires.

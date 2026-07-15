@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.DataGovernance;
+namespace DcsvIo.D2.Tests.Integration.DataGovernance;
 
 using System.ComponentModel.DataAnnotations;
-using D2.Shared.DataGovernance.Abstractions;
-using D2.Shared.DataGovernance.EntityFrameworkCore;
+using DcsvIo.D2.DataGovernance.Abstractions;
+using DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>

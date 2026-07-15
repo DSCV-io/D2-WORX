@@ -3,8 +3,8 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n-keys";
-import { ErrorCategoryWire } from "@d2/error-category";
+import { TK } from "@dcsv-io/d2-i18n-keys";
+import { ErrorCategoryWire } from "@dcsv-io/d2-error-category";
 
 import { D2Result } from "./d2-result.js";
 import { ErrorCodes } from "./error-codes.g.js";

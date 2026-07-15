@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.OtelMessagingTags.SourceGen
+# DcsvIo.D2.OtelMessagingTags.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -12,7 +12,7 @@ Roslyn incremental source generator that emits `MessagingActivityTags` — the c
 
 > **Placement** — lives under `messaging/` for consumer-locality; observability
 > concern by ownership. Its only consumer is
-> [`D2.Shared.Messaging.RabbitMq`](../rabbitmq/README.md), which references
+> [`DcsvIo.D2.Messaging.RabbitMq`](../rabbitmq/README.md), which references
 > `MessagingActivityTags.*` on every publisher / consumer span — so it is
 > co-located with its consumer rather than under `telemetry/`. The telemetry
 > cluster cross-refs back here: see [`telemetry/`](../../telemetry/README.md).
@@ -29,11 +29,11 @@ Spec-driving the catalog forces both sides to reference `MessagingActivityTags.M
 
 ## What this emits
 
-When the consuming assembly is `D2.Shared.Messaging.RabbitMq`, the generator emits `MessagingActivityTags.g.cs` containing constants for every entry in the spec.
+When the consuming assembly is `DcsvIo.D2.Messaging.RabbitMq`, the generator emits `MessagingActivityTags.g.cs` containing constants for every entry in the spec.
 
 ## Cross-language parity
 
-The SAME spec drives `@d2/telemetry` via `tools/ts-codegen/src/otel-messaging-tags-emit.ts` → `otel-messaging-tags.g.ts`, emitting an identical `MessagingActivityTags` catalog on the TS side — the same constants, the same canonical OTel sem-conv attribute names, structurally synchronized from one spec.
+The SAME spec drives `@dcsv-io/d2-telemetry` via `tools/ts-codegen/src/otel-messaging-tags-emit.ts` → `otel-messaging-tags.g.ts`, emitting an identical `MessagingActivityTags` catalog on the TS side — the same constants, the same canonical OTel sem-conv attribute names, structurally synchronized from one spec.
 
 ## Diagnostics
 

@@ -14,7 +14,7 @@ Per-step and final-review journals remain local-only under docs/wip/0030-edge-ho
 ## Goal (honest end state)
 
 1. **Edge process** boots (Compose + test host), healthy, composes KeyCustodian **in-process**.
-2. **Generated** well-known HTTP + **generated** KC gRPC under **`D2.Edge.Api`** (not TestServer-only production path).
+2. **Generated** well-known HTTP + **generated** KC gRPC under **`DcsvIo.D2.Private.Edge.Api`** (not TestServer-only production path).
 3. **TypeSpec emitters** understand **process kind** (`edge-module` vs `standalone`): public HTTP only on Edge; standalone gRPC on service.Api; **typed Edge→service gRPC bridge** generated up front.
 4. **Stub standalone Audit** multiproc path: public HTTP → Edge pipeline → generated bridge → **`https://d2-audit:8443`** gRPC (NIE) with **complete mTLS** rails + establishment on both hosts + honest Redis/tiered (AuthConfigure on).
 5. **Docs/KEEP** tell the truth (`d2-keycustodian`, multiproc honesty, private-CA JWKS, mTLS-only product gRPC).

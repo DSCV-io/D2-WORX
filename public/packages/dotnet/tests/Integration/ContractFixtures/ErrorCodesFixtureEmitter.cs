@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 using Xunit;
 
 /// <summary>
@@ -18,7 +18,7 @@ using Xunit;
 /// the .NET codegen-emitted static class <see cref="ErrorCodes"/>. One
 /// fixture file <c>codes.json</c> maps every constant name to its wire value;
 /// the TS-side parity test asserts byte-equality against the codegen-emitted
-/// TS catalog (<c>@d2/result</c>'s <c>ErrorCodes</c> object).
+/// TS catalog (<c>@dcsv-io/d2-result</c>'s <c>ErrorCodes</c> object).
 /// </summary>
 public sealed class ErrorCodesFixtureEmitter
 {

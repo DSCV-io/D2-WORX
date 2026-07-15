@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Signing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
 
 /// <summary>
 /// The dedicated cluster-signing-root (<c>jwks-signing</c>) capability. Possession IS the

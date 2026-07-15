@@ -46,7 +46,7 @@ export function emitWireIdentityManifest(
     generation: channel.generation,
     stability: channel.stability,
     channel: channel.lowerChannel,
-    "x-d2-generated-by": "@d2/typespec-emitters",
+    "x-d2-generated-by": "@dcsv-io/d2-typespec-emitters",
   };
 
   return {

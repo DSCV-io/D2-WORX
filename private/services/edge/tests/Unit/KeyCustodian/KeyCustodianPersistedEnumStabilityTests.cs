@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
 /// Pins the persisted string names of <see cref="KeyStatus"/>,

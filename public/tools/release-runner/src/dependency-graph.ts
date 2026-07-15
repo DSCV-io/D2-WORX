@@ -23,7 +23,7 @@
 // must declare that via its OWN footer (the author's call). PATCH on a 0.x
 // package is 0.1.0 → 0.1.1, consistent with the direct-fix path.
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import { parseVersionLoose, applyBump } from "./semver.js";
 import type { BumpPlan, PackageDescriptor } from "./types.js";
 

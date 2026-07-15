@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Abstractions;
+namespace DcsvIo.D2.Handler.Abstractions;
 
 using System.Collections.Generic;
 
@@ -58,7 +58,7 @@ public sealed record ScopeRequirement
     {
         ArgumentNullException.ThrowIfNull(scopes);
 
-        // D2.Shared.Utilities is not referenced by handler/abstractions; BCL
+        // DcsvIo.D2.Utilities is not referenced by handler/abstractions; BCL
         // check is the correct approach here.
         if (scopes.Count == 0)
         {

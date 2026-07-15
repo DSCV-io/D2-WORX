@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.EncryptionFrame.SourceGen
+# DcsvIo.D2.EncryptionFrame.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
@@ -14,7 +14,7 @@ Roslyn incremental source generators (two arms in one analyzer project) that emi
 
 ## What this emits
 
-When the consuming assembly is `D2.Shared.Encryption`:
+When the consuming assembly is `DcsvIo.D2.Encryption`:
 
 - `EncryptionFrameGenerator` emits `EncryptionFrameLayout.g.cs` containing a `CURRENT_VERSION` constant, per-field `*_OFFSET` + `*_LENGTH` constants, and frame-level constraint constants (`CONSTRAINT_MIN_KID_LENGTH`, `CONSTRAINT_MAX_KID_LENGTH`, `CONSTRAINT_NONCE_LENGTH`, `CONSTRAINT_TAG_LENGTH`, `CONSTRAINT_MIN_FRAME_SIZE`). The `CONSTRAINT_` prefix disambiguates the frame-level constraint constants from the per-field `*_LENGTH` constants (e.g. `NONCE_LENGTH` is the per-field byte length declared for the `NONCE` field, and `CONSTRAINT_NONCE_LENGTH` is the frame-level AES-GCM-spec value the field MUST equal).
 - `SealedFrameGenerator` emits `SealedFrameLayout.g.cs` — same constants-only shape plus the sealed-only constraints `CONSTRAINT_EPH_PUB_LENGTH_PREFIX_SIZE` (the 2-byte big-endian length-prefix width in front of the ephemeral public key) and `CONSTRAINT_MAX_EPH_PUB_LENGTH` (the allocation cap on the declared key length).
@@ -25,11 +25,11 @@ The sealed schema adds a field kind the symmetric catalog does not need: **`vari
 
 ## Why spec-drive this
 
-The TS-side `@d2/encryption-abstractions` package exposes the same binary frame-layout constants as the .NET codecs. With one spec catalog per frame version driving both sides, any TS reader and the .NET codec reference identical byte offsets and lengths; neither side can maintain a parallel constant catalog that would drift on the next version bump.
+The TS-side `@dcsv-io/d2-encryption-abstractions` package exposes the same binary frame-layout constants as the .NET codecs. With one spec catalog per frame version driving both sides, any TS reader and the .NET codec reference identical byte offsets and lengths; neither side can maintain a parallel constant catalog that would drift on the next version bump.
 
 ## Cross-language parity
 
-The SAME specs drive `@d2/encryption-abstractions` via `tools/ts-codegen/src/encryption-frame-emit.ts` (v1) and `tools/ts-codegen/src/encryption-frame-sealed-emit.ts` (v2 sealed). Both sides reference identical offsets + lengths; cross-language wire drift is structurally impossible.
+The SAME specs drive `@dcsv-io/d2-encryption-abstractions` via `tools/ts-codegen/src/encryption-frame-emit.ts` (v1) and `tools/ts-codegen/src/encryption-frame-sealed-emit.ts` (v2 sealed). Both sides reference identical offsets + lengths; cross-language wire drift is structurally impossible.
 
 ## Diagnostics
 

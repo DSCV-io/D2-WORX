@@ -3,9 +3,9 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { IPayloadCrypto, IPayloadOpener } from "@d2/encryption";
-import { EncryptionDomainModes } from "@d2/encryption-abstractions";
-import { DlqFailureCauses } from "@d2/messaging-abstractions";
+import type { IPayloadCrypto, IPayloadOpener } from "@dcsv-io/d2-encryption";
+import { EncryptionDomainModes } from "@dcsv-io/d2-encryption-abstractions";
+import { DlqFailureCauses } from "@dcsv-io/d2-messaging-abstractions";
 
 import type { BodyOpener } from "./body-opener.js";
 import { MessageBodyDecodeError } from "./message-body-decode-error.js";
@@ -29,7 +29,7 @@ const _modeOf = EncryptionDomainModes as Readonly<
  *   `DECRYPT_FAILURE` → the delivery routes to the DLQ (never a silent
  *   mis-decode); a decrypted-but-non-JSON body surfaces as `DESERIALIZE_FAILURE`.
  *
- * Deps: `@d2/encryption` only. The KC-backed port instance is composed by the
+ * Deps: `@dcsv-io/d2-encryption` only. The KC-backed port instance is composed by the
  * host — this shared lib never depends on a service-owned package.
  */
 export class CryptoBodyOpener implements BodyOpener {

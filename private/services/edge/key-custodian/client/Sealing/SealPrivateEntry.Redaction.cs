@@ -6,7 +6,7 @@
 
 // ReSharper disable once CheckNamespace -- a hand-authored partial for the
 // protobuf-generated SealPrivateEntry MUST declare the proto's own namespace
-// (D2.Services.Protos.KeyCustodian.V2Alpha) to merge with it; see the summary.
+// (global::D2.Services.Protos.KeyCustodian.V2Alpha) to merge with it; see the summary.
 namespace D2.Services.Protos.KeyCustodian.V2Alpha;
 
 /// <summary>
@@ -18,7 +18,7 @@ namespace D2.Services.Protos.KeyCustodian.V2Alpha;
 /// would otherwise render it, including recursively through
 /// <c>GetOrLazyProvisionOwnSealPrivateKeyOutput.Entries</c> and its full gRPC reply body.
 /// Mirrors the <c>[RedactData]</c> the emitted leaf DTO
-/// (<c>D2.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.PrivatePkcs8</c>) already
+/// (<c>DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.SealPrivateEntry.PrivatePkcs8</c>) already
 /// carries, and the sibling <c>KeyringEntry.Redaction.cs</c> partial. Defense-in-depth:
 /// no code path logs this wire proto today; the boundary mapper immediately supersedes it
 /// with the redacted leaf DTO.

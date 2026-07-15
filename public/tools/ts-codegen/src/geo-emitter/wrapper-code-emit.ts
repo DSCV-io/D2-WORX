@@ -31,7 +31,7 @@ import type {
  * expected without an explicit assertion or schema parse.
  *
  * Each emitter writes one file to
- * `@d2/geo-abstractions/src/generated/typed-codes/<name>.g.ts`.
+ * `@dcsv-io/d2-geo-abstractions/src/generated/typed-codes/<name>.g.ts`.
  */
 
 const SPEC_REF_SUBDIVISIONS = "contracts/geo/subdivisions.spec.json";
@@ -58,7 +58,7 @@ export function emitSubdivisionCode(entries: readonly SubdivisionSpec[]): {
       [
         "ISO 3166-2 subdivision code (e.g. `US-CA`, `JP-13`, `GB-LND`). Closed",
         "set — the Zod schema rejects unknown codes (strict deserialization).",
-        "Mirrors .NET `D2.Shared.Geo.Abstractions.SubdivisionCode` wrapper /",
+        "Mirrors .NET `DcsvIo.D2.Geo.Abstractions.SubdivisionCode` wrapper /",
         "JsonConverter byte-for-byte over the wire.",
       ].join("\n"),
     ),
@@ -82,7 +82,7 @@ export function emitLocaleCode(entries: readonly LocaleSpec[]): {
       [
         "IETF BCP-47 locale tag (e.g. `en-US`, `pt-BR`, `zh-Hant-TW`). Closed",
         "set — the Zod schema rejects unknown tags (strict deserialization).",
-        "Mirrors .NET `D2.Shared.Geo.Abstractions.LocaleCode` wrapper /",
+        "Mirrors .NET `DcsvIo.D2.Geo.Abstractions.LocaleCode` wrapper /",
         "JsonConverter byte-for-byte over the wire.",
       ].join("\n"),
     ),
@@ -107,7 +107,7 @@ export function emitTimezoneCode(entries: readonly TimezoneSpec[]): {
         "IANA timezone identifier (e.g. `America/New_York`, `Asia/Tokyo`,",
         "`Europe/London`). Closed set — the Zod schema rejects unknown",
         "identifiers (strict deserialization). Mirrors .NET",
-        "`D2.Shared.Geo.Abstractions.TimezoneCode` wrapper struct /",
+        "`DcsvIo.D2.Geo.Abstractions.TimezoneCode` wrapper struct /",
         "JsonConverter byte-for-byte over the wire.",
       ].join("\n"),
     ),

@@ -1,5 +1,5 @@
 # =============================================================================
-# Dockerfile.audit — D2.Audit.Api (standalone stub host)
+# Dockerfile.audit — DcsvIo.D2.Private.Audit.Api (standalone stub host)
 # Build context: repo root
 # Targets:
 #   prod — published bits on aspnet runtime (no source mount, no watch)
@@ -23,8 +23,8 @@ COPY public/contracts ./public/contracts
 COPY private/contracts ./private/contracts
 COPY public/tools/loggermessage-splitter ./public/tools/loggermessage-splitter
 
-RUN dotnet restore private/services/audit/api/D2.Audit.Api.csproj
-RUN dotnet publish private/services/audit/api/D2.Audit.Api.csproj \
+RUN dotnet restore private/services/audit/api/DcsvIo.D2.Private.Audit.Api.csproj
+RUN dotnet publish private/services/audit/api/DcsvIo.D2.Private.Audit.Api.csproj \
     -c Release -o /app/publish --no-restore
 
 # --- Prod runtime ---
@@ -45,7 +45,7 @@ EXPOSE 8080 8443
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=30s \
   CMD wget -qO- http://127.0.0.1:8080/health || exit 1
 
-ENTRYPOINT ["dotnet", "D2.Audit.Api.dll"]
+ENTRYPOINT ["dotnet", "DcsvIo.D2.Private.Audit.Api.dll"]
 
 # --- Dev: SDK + watch ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dev
@@ -70,11 +70,11 @@ COPY public/contracts ./public/contracts
 COPY private/contracts ./private/contracts
 COPY public/tools/loggermessage-splitter ./public/tools/loggermessage-splitter
 
-RUN dotnet restore private/services/audit/api/D2.Audit.Api.csproj
+RUN dotnet restore private/services/audit/api/DcsvIo.D2.Private.Audit.Api.csproj
 
 EXPOSE 8080 8443
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=60s \
   CMD wget -qO- http://127.0.0.1:8080/health || exit 1
 
-ENTRYPOINT ["dotnet", "watch", "run", "--project", "private/services/audit/api/D2.Audit.Api.csproj", "--no-launch-profile"]
+ENTRYPOINT ["dotnet", "watch", "run", "--project", "private/services/audit/api/DcsvIo.D2.Private.Audit.Api.csproj", "--no-launch-profile"]

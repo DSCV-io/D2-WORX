@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Observability;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability;
 
 using System.Diagnostics.Metrics;
 
@@ -30,7 +30,7 @@ public static class KeyCustodianMetrics
     /// The OpenTelemetry <see cref="Meter"/> name. Hosts add this via
     /// <c>.WithMetrics(m => m.AddMeter(KeyCustodianMetrics.METER_NAME))</c>.
     /// </summary>
-    public const string METER_NAME = "D2.Edge.KeyCustodian";
+    public const string METER_NAME = "DcsvIo.D2.Private.Edge.KeyCustodian";
 
     /// <summary>The shared <see cref="Meter"/> for this domain.</summary>
     public static readonly Meter SR_Meter = new(METER_NAME);

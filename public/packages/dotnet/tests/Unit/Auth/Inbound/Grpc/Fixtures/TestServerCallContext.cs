@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
 
 using global::Grpc.Core;
 using Microsoft.AspNetCore.Http;

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using D2.Shared.ProblemDetails;
+using DcsvIo.D2.ProblemDetails;
 using Xunit;
 
 /// <summary>

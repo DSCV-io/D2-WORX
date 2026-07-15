@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.WireShapes.SourceGen;
+namespace DcsvIo.D2.WireShapes.SourceGen;
 
 /// <summary>
 /// One property-name entry parsed from a wire-shape spec

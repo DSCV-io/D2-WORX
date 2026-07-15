@@ -38,7 +38,7 @@ afterEach(() => {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const SEEDED_CHANGELOG = `# Changelog — @d2/result
+const SEEDED_CHANGELOG = `# Changelog — @dcsv-io/d2-result
 
 All notable changes to this package are documented here.
 
@@ -109,7 +109,7 @@ function makeNugetPkg(name: string, version: string): PackageDescriptor {
 
 describe("buildGraduatedChangelogText — pure transformation", () => {
   it("promotes [Unreleased] to 1.0.0 versioned heading with hyphen-minus separator", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.5.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.5.0");
     const result = buildGraduatedChangelogText(
       SEEDED_CHANGELOG,
       pkg,
@@ -121,7 +121,7 @@ describe("buildGraduatedChangelogText — pure transformation", () => {
   });
 
   it("inserts a fresh empty [Unreleased] block above the 1.0.0 section", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.5.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.5.0");
     const result = buildGraduatedChangelogText(
       SEEDED_CHANGELOG,
       pkg,
@@ -137,7 +137,7 @@ describe("buildGraduatedChangelogText — pure transformation", () => {
   });
 
   it("1.0.0 versioned section has no subsection entries (all empty entries omitted)", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.5.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.5.0");
     const result = buildGraduatedChangelogText(
       SEEDED_CHANGELOG,
       pkg,
@@ -158,7 +158,7 @@ describe("buildGraduatedChangelogText — pure transformation", () => {
   });
 
   it("uses the injected today date", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.1.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.1.0");
     const result = buildGraduatedChangelogText(
       SEEDED_CHANGELOG,
       pkg,
@@ -174,25 +174,25 @@ describe("buildGraduatedChangelogText — pure transformation", () => {
 
 describe("graduatePackage — unknown package", () => {
   it("throws with the unknown package name when the inventory does not contain it", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.1.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.1.0");
 
     expect(() =>
-      graduatePackage("@d2/nonexistent", [pkg], "2026-06-24", true),
-    ).toThrow(/@d2\/nonexistent/);
+      graduatePackage("@dcsv-io/d2-nonexistent", [pkg], "2026-06-24", true),
+    ).toThrow(/@dcsv-io\/d2-nonexistent/);
   });
 
   it("error message lists available packages", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.1.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.1.0");
 
     expect(() =>
-      graduatePackage("@d2/nonexistent", [pkg], "2026-06-24", true),
-    ).toThrow(/@d2\/result/);
+      graduatePackage("@dcsv-io/d2-nonexistent", [pkg], "2026-06-24", true),
+    ).toThrow(/@dcsv-io\/d2-result/);
   });
 
   it("throws when the package inventory is empty", () => {
-    expect(() => graduatePackage("@d2/result", [], "2026-06-24", true)).toThrow(
-      /@d2\/result/,
-    );
+    expect(() =>
+      graduatePackage("@dcsv-io/d2-result", [], "2026-06-24", true),
+    ).toThrow(/@dcsv-io\/d2-result/);
   });
 });
 
@@ -202,27 +202,27 @@ describe("graduatePackage — unknown package", () => {
 
 describe("graduatePackage — already stable", () => {
   it("throws when the package MAJOR is already 1", () => {
-    const pkg = makeNpmPkg("@d2/result", "1.0.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "1.0.0");
 
     expect(() =>
-      graduatePackage("@d2/result", [pkg], "2026-06-24", true),
+      graduatePackage("@dcsv-io/d2-result", [pkg], "2026-06-24", true),
     ).toThrow(/already stable/);
   });
 
   it("throws when the package MAJOR is > 1 (e.g. 2.3.1)", () => {
-    const pkg = makeNpmPkg("@d2/result", "2.3.1");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "2.3.1");
 
     expect(() =>
-      graduatePackage("@d2/result", [pkg], "2026-06-24", true),
+      graduatePackage("@dcsv-io/d2-result", [pkg], "2026-06-24", true),
     ).toThrow(/already stable/);
   });
 
   it("error message includes the package name and current version", () => {
-    const pkg = makeNpmPkg("@d2/result", "1.2.3");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "1.2.3");
 
     expect(() =>
-      graduatePackage("@d2/result", [pkg], "2026-06-24", true),
-    ).toThrow(/@d2\/result/);
+      graduatePackage("@dcsv-io/d2-result", [pkg], "2026-06-24", true),
+    ).toThrow(/@dcsv-io\/d2-result/);
   });
 });
 
@@ -232,35 +232,45 @@ describe("graduatePackage — already stable", () => {
 
 describe("graduatePackage — dry-run", () => {
   it("returns applied=false in dry-run mode", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.5.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.5.0");
 
-    const result = graduatePackage("@d2/result", [pkg], "2026-06-24", true);
+    const result = graduatePackage(
+      "@dcsv-io/d2-result",
+      [pkg],
+      "2026-06-24",
+      true,
+    );
 
     expect(result.applied).toBe(false);
   });
 
   it("reports newVersion as 1.0.0 even in dry-run", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.5.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.5.0");
 
-    const result = graduatePackage("@d2/result", [pkg], "2026-06-24", true);
+    const result = graduatePackage(
+      "@dcsv-io/d2-result",
+      [pkg],
+      "2026-06-24",
+      true,
+    );
 
     expect(result.newVersion).toBe("1.0.0");
   });
 
   it("does not write manifest in dry-run (package.json unchanged)", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.5.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.5.0");
     const originalManifest = readFileSync(pkg.manifestPath, "utf-8");
 
-    graduatePackage("@d2/result", [pkg], "2026-06-24", true);
+    graduatePackage("@dcsv-io/d2-result", [pkg], "2026-06-24", true);
 
     expect(readFileSync(pkg.manifestPath, "utf-8")).toBe(originalManifest);
   });
 
   it("does not write changelog in dry-run (CHANGELOG.md unchanged)", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.5.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.5.0");
     const originalChangelog = readFileSync(pkg.changelogPath, "utf-8");
 
-    graduatePackage("@d2/result", [pkg], "2026-06-24", true);
+    graduatePackage("@dcsv-io/d2-result", [pkg], "2026-06-24", true);
 
     expect(readFileSync(pkg.changelogPath, "utf-8")).toBe(originalChangelog);
   });
@@ -272,9 +282,9 @@ describe("graduatePackage — dry-run", () => {
 
 describe("graduatePackage — npm apply mode", () => {
   it("writes 1.0.0 to package.json version slot", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.5.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.5.0");
 
-    graduatePackage("@d2/result", [pkg], "2026-06-24", false);
+    graduatePackage("@dcsv-io/d2-result", [pkg], "2026-06-24", false);
 
     const updated = JSON.parse(readFileSync(pkg.manifestPath, "utf-8")) as {
       version: string;
@@ -283,18 +293,18 @@ describe("graduatePackage — npm apply mode", () => {
   });
 
   it("promotes CHANGELOG [Unreleased] to ## 1.0.0 - <date>", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.1.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.1.0");
 
-    graduatePackage("@d2/result", [pkg], "2026-06-24", false);
+    graduatePackage("@dcsv-io/d2-result", [pkg], "2026-06-24", false);
 
     const changelog = readFileSync(pkg.changelogPath, "utf-8");
     expect(changelog).toContain("## 1.0.0 - 2026-06-24");
   });
 
   it("re-inserts a fresh [Unreleased] block above the 1.0.0 section", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.3.7");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.3.7");
 
-    graduatePackage("@d2/result", [pkg], "2026-06-24", false);
+    graduatePackage("@dcsv-io/d2-result", [pkg], "2026-06-24", false);
 
     const changelog = readFileSync(pkg.changelogPath, "utf-8");
     expect(changelog).toContain("## [Unreleased]");
@@ -305,26 +315,36 @@ describe("graduatePackage — npm apply mode", () => {
   });
 
   it("returns applied=true when changes are written", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.1.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.1.0");
 
-    const result = graduatePackage("@d2/result", [pkg], "2026-06-24", false);
+    const result = graduatePackage(
+      "@dcsv-io/d2-result",
+      [pkg],
+      "2026-06-24",
+      false,
+    );
 
     expect(result.applied).toBe(true);
   });
 
   it("returns the correct pkg descriptor and newVersion", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.1.0");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.1.0");
 
-    const result = graduatePackage("@d2/result", [pkg], "2026-06-24", false);
+    const result = graduatePackage(
+      "@dcsv-io/d2-result",
+      [pkg],
+      "2026-06-24",
+      false,
+    );
 
-    expect(result.pkg.name).toBe("@d2/result");
+    expect(result.pkg.name).toBe("@dcsv-io/d2-result");
     expect(result.newVersion).toBe("1.0.0");
   });
 
   it("graduates 0.0.1 (minimum valid pre-stable) to 1.0.0", () => {
-    const pkg = makeNpmPkg("@d2/result", "0.0.1");
+    const pkg = makeNpmPkg("@dcsv-io/d2-result", "0.0.1");
 
-    graduatePackage("@d2/result", [pkg], "2026-06-24", false);
+    graduatePackage("@dcsv-io/d2-result", [pkg], "2026-06-24", false);
 
     const updated = JSON.parse(readFileSync(pkg.manifestPath, "utf-8")) as {
       version: string;
@@ -339,18 +359,18 @@ describe("graduatePackage — npm apply mode", () => {
 
 describe("graduatePackage — nuget apply mode", () => {
   it("writes 1.0.0 to <Version> element in .csproj", () => {
-    const pkg = makeNugetPkg("D2.Shared.Result", "0.1.0");
+    const pkg = makeNugetPkg("DcsvIo.D2.Result", "0.1.0");
 
-    graduatePackage("D2.Shared.Result", [pkg], "2026-06-24", false);
+    graduatePackage("DcsvIo.D2.Result", [pkg], "2026-06-24", false);
 
     const updated = readFileSync(pkg.manifestPath, "utf-8");
     expect(updated).toContain("<Version>1.0.0</Version>");
   });
 
   it("promotes NuGet CHANGELOG [Unreleased] to ## 1.0.0 - <date>", () => {
-    const pkg = makeNugetPkg("D2.Shared.Result", "0.1.0");
+    const pkg = makeNugetPkg("DcsvIo.D2.Result", "0.1.0");
 
-    graduatePackage("D2.Shared.Result", [pkg], "2026-06-24", false);
+    graduatePackage("DcsvIo.D2.Result", [pkg], "2026-06-24", false);
 
     const changelog = readFileSync(pkg.changelogPath, "utf-8");
     expect(changelog).toContain("## 1.0.0 - 2026-06-24");
@@ -364,11 +384,11 @@ describe("graduatePackage — nuget apply mode", () => {
 
 describe("graduatePackage — multi-package inventory", () => {
   it("graduates only the named package when multiple packages exist", () => {
-    const pkgA = makeNpmPkg("@d2/a", "0.1.0");
-    const pkgB = makeNpmPkg("@d2/b", "0.2.0");
+    const pkgA = makeNpmPkg("@dcsv-io/d2-a", "0.1.0");
+    const pkgB = makeNpmPkg("@dcsv-io/d2-b", "0.2.0");
     const originalB = readFileSync(pkgB.manifestPath, "utf-8");
 
-    graduatePackage("@d2/a", [pkgA, pkgB], "2026-06-24", false);
+    graduatePackage("@dcsv-io/d2-a", [pkgA, pkgB], "2026-06-24", false);
 
     // Package B must be untouched.
     expect(readFileSync(pkgB.manifestPath, "utf-8")).toBe(originalB);

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ProblemDetails.SourceGen;
+namespace DcsvIo.D2.ProblemDetails.SourceGen;
 
 /// <summary>
 /// One extension-key entry parsed from

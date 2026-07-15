@@ -11,7 +11,7 @@ import {
 
 const spec: ContextSpec = {
   name: "IFakeReqContext",
-  namespace: "D2.Shared.Fake",
+  namespace: "DcsvIo.D2.Fake",
   extends: null,
   sections: [
     {
@@ -65,8 +65,8 @@ describe("emitAuthContext via request-context emit path (extends integration)", 
   // production-shape spec where extends is set.
   const reqSpec: ContextSpec = {
     name: "IFakeReqContextWithExtends",
-    namespace: "D2.Shared.Fake",
-    extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+    namespace: "DcsvIo.D2.Fake",
+    extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
     sections: [
       {
         name: "Tracing",
@@ -85,7 +85,7 @@ describe("emitAuthContext via request-context emit path (extends integration)", 
     const r = emitAuthContext(reqSpec, "package");
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain(
-      'import type { IAuthContext } from "@d2/auth-context-abstractions";',
+      'import type { IAuthContext } from "@dcsv-io/d2-auth-context-abstractions";',
     );
     expect(r.source).toContain(
       "export interface IFakeReqContextWithExtends extends IAuthContext {",
@@ -118,8 +118,8 @@ describe("emitPropagatedSerializer", () => {
 describe("call-path (propagated list-of-records) emission", () => {
   const callPathSpec: ContextSpec = {
     name: "IFakeReqContext",
-    namespace: "D2.Shared.Fake",
-    extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+    namespace: "DcsvIo.D2.Fake",
+    extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
     sections: [
       {
         name: "Tracing",
@@ -153,7 +153,7 @@ describe("call-path (propagated list-of-records) emission", () => {
   it("propagated interface emits callPath as an optional CallPathEntry[] + the import", () => {
     const src = emitPropagatedContextInterface(callPathSpec);
     expect(src).toContain(
-      'import type { CallPathEntry } from "@d2/auth-context-abstractions";',
+      'import type { CallPathEntry } from "@dcsv-io/d2-auth-context-abstractions";',
     );
     expect(src).toContain("readonly callPath?: readonly CallPathEntry[];");
     // Non-propagated establishment fields never enter the propagated subset.
@@ -179,8 +179,8 @@ describe("call-path (propagated list-of-records) emission", () => {
   it("fails loud when a propagated list-of-records field omits entryIdMaxLength (no hard-coded cap)", () => {
     const missingCapSpec: ContextSpec = {
       name: "IFakeReqContext",
-      namespace: "D2.Shared.Fake",
-      extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+      namespace: "DcsvIo.D2.Fake",
+      extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
       sections: [
         {
           name: "Establishment",
@@ -207,7 +207,7 @@ describe("call-path (propagated list-of-records) emission", () => {
     const r = emitAuthContext(callPathSpec, "package");
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain(
-      'import type { CallPathEntry, RequestOrigin } from "@d2/auth-context-abstractions";',
+      'import type { CallPathEntry, RequestOrigin } from "@dcsv-io/d2-auth-context-abstractions";',
     );
     // Non-nullable on the full interface — required (no `?:`), mirroring .NET.
     expect(r.source).toContain("readonly origin: RequestOrigin;");

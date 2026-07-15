@@ -61,12 +61,12 @@ Directory of the core patterns + cross-cutting conventions every D²-WORX shared
 
 ## .NET project layout (`.csproj`)
 
-Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `GenerateDocumentationFile`, `StyleCop.Analyzers`, `stylecop.json` link) live in `Directory.Build.props` and apply to every csproj automatically. Per-project files only declare what's project-specific. Tier-1 global usings (`D2.Shared.Result`, `D2.Shared.Utilities.Extensions`/`.Attributes`/`.Enums`, `D2.Shared.I18n`) are scoped to **service projects** via `private/services/Directory.Build.targets` — shared libs keep explicit usings. Beyond Tier-1, each project carries a `GlobalUsings.cs` with any namespace repeated across roughly ≥3 files in that project — including `Microsoft.EntityFrameworkCore`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Options`, `System.Security.Cryptography`, or any vendor SDK; the dependency law is enforced by `<ProjectReference>` edges, not using-directive visibility. The established `global using IClock = D2.Shared.Time.IClock;` alias appears project-wide wherever both NodaTime and `D2.Shared.Time` are used, resolving the `NodaTime.IClock` vs `D2.Shared.Time.IClock` ambiguity. Never duplicate SDK ImplicitUsings or Tier-1 entries. Reference implementation and full rationale: [ADR-0020](../public/docs/adrs/0020-service-project-structure.md) + rules.md §5.26.
+Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `GenerateDocumentationFile`, `StyleCop.Analyzers`, `stylecop.json` link) live in `Directory.Build.props` and apply to every csproj automatically. Per-project files only declare what's project-specific. Tier-1 global usings (`DcsvIo.D2.Result`, `DcsvIo.D2.Utilities.Extensions`/`.Attributes`/`.Enums`, `DcsvIo.D2.I18n`) are scoped to **service projects** via `private/services/Directory.Build.targets` — shared libs keep explicit usings. Beyond Tier-1, each project carries a `GlobalUsings.cs` with any namespace repeated across roughly ≥3 files in that project — including `Microsoft.EntityFrameworkCore`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Options`, `System.Security.Cryptography`, or any vendor SDK; the dependency law is enforced by `<ProjectReference>` edges, not using-directive visibility. The established `global using IClock = DcsvIo.D2.Time.IClock;` alias appears project-wide wherever both NodaTime and `DcsvIo.D2.Time` are used, resolving the `NodaTime.IClock` vs `DcsvIo.D2.Time.IClock` ambiguity. Never duplicate SDK ImplicitUsings or Tier-1 entries. Reference implementation and full rationale: [ADR-0020](../public/docs/adrs/0020-service-project-structure.md) + rules.md §5.26.
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>D2.Shared.{LibName}</RootNamespace>
+    <RootNamespace>DcsvIo.D2.{LibName}</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SomePackage" />   <!-- no Version="..." — CPM handles it -->
@@ -76,7 +76,7 @@ Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `Impli
 
 **SDKs**: shared libs + services use `Microsoft.NET.Sdk`; HTTP/gRPC service entry projects use `Microsoft.NET.Sdk.Web`; test projects add `<IsPackable>false</IsPackable>` + `<IsTestProject>true</IsTestProject>` + `<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>` + `<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>` (xUnit v3 + MTP).
 
-**`RootNamespace`** is always declared explicitly and follows the **namespace structure**, not the directory path (e.g., `D2.Shared.Caching.Distributed.Redis.csproj` under `caching/distributed-redis/` has `RootNamespace=D2.Shared.Caching.Distributed.Redis` — path noise dropped). **Central Package Management** pins every version in `Directory.Packages.props`; csproj `<PackageReference>` items reference by ID only (CPM rejects `Version="..."`). **`dotnet build` enforces zero warnings** via `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — fix or `.editorconfig`-override with rationale; never suppress.
+**`RootNamespace`** is always declared explicitly and follows the **namespace structure**, not the directory path (e.g., `DcsvIo.D2.Caching.Distributed.Redis.csproj` under `caching/distributed-redis/` has `RootNamespace=DcsvIo.D2.Caching.Distributed.Redis` — path noise dropped). **Central Package Management** pins every version in `Directory.Packages.props`; csproj `<PackageReference>` items reference by ID only (CPM rejects `Version="..."`). **`dotnet build` enforces zero warnings** via `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — fix or `.editorconfig`-override with rationale; never suppress.
 
 Lib inventory + per-csproj READMEs → [`public/packages/dotnet/README.md`](../public/packages/dotnet/README.md).
 
@@ -180,7 +180,7 @@ A service may run two vendors of one capability at once (Stripe AND Square), res
 
 ### Options home + namespaces
 
-Options flow: env `SECTION__PROP` (arrays `SECTION__N`) → `D2Env.Load()` → `IConfiguration` → **binding + `ValidateOnStart` in `infra/Configuration/`** → the POCO declared in `app/Infrastructure/Configuration/` (carrying the `SECTION` const) → handlers consume `IOptions<T>` → the domain receives only adapted VOs/primitives (never `Microsoft.Extensions.Options`). `[Required]` on a non-nullable struct is a no-op — use `[Range(typeof(TimeSpan), …)]` or a custom `.Validate(…)`, plus the domain VO's smart constructor as the second floor. Namespaces are the folder path verbatim, **including** the `.App`/`.Infra` layer segment (`D2.Edge.KeyCustodian.App.Infrastructure.Persistence` vs `D2.Edge.KeyCustodian.Infra.Persistence.Postgres`) — not collapsed via `RootNamespace` tricks; in a service the layer IS semantics.
+Options flow: env `SECTION__PROP` (arrays `SECTION__N`) → `D2Env.Load()` → `IConfiguration` → **binding + `ValidateOnStart` in `infra/Configuration/`** → the POCO declared in `app/Infrastructure/Configuration/` (carrying the `SECTION` const) → handlers consume `IOptions<T>` → the domain receives only adapted VOs/primitives (never `Microsoft.Extensions.Options`). `[Required]` on a non-nullable struct is a no-op — use `[Range(typeof(TimeSpan), …)]` or a custom `.Validate(…)`, plus the domain VO's smart constructor as the second floor. Namespaces are the folder path verbatim, **including** the `.App`/`.Infra` layer segment (`DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Persistence` vs `DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres`) — not collapsed via `RootNamespace` tricks; in a service the layer IS semantics.
 
 ### Verb semantics
 
@@ -261,7 +261,7 @@ Each factory stamps the spec-declared `(code, httpStatus, category, userMessageK
 
 ## Utilities
 
-`D2.Shared.Utilities` ships null-safe extensions (`Truthy()` / `Falsey()` over `string?` / `IEnumerable<T>?` / `Guid` / `Guid?`), boundary normalizers (`ToNullIfEmpty()`, `CleanStr()`, `CleanDisplayStr()`), `D2Result`-returning validators (`TryParseEmail()`, `TryParsePhoneNumber()`), the `[RedactData]` attribute, frozen `JsonSerializerOptions` presets (`SR_IgnoreCycles`, `SR_Web`, `SR_WebIgnoreNull`), `ConnectionStringHelper` for `redis://` / `postgresql://` / `amqp://` URI parsing, and `D2Env.Load(...)` for `.env*` loading in host scenarios. Reach for these at every boundary BEFORE hand-rolling — they prevent a whole class of subtle null-handling and string-shape bugs.
+`DcsvIo.D2.Utilities` ships null-safe extensions (`Truthy()` / `Falsey()` over `string?` / `IEnumerable<T>?` / `Guid` / `Guid?`), boundary normalizers (`ToNullIfEmpty()`, `CleanStr()`, `CleanDisplayStr()`), `D2Result`-returning validators (`TryParseEmail()`, `TryParsePhoneNumber()`), the `[RedactData]` attribute, frozen `JsonSerializerOptions` presets (`SR_IgnoreCycles`, `SR_Web`, `SR_WebIgnoreNull`), `ConnectionStringHelper` for `redis://` / `postgresql://` / `amqp://` URI parsing, and `D2Env.Load(...)` for `.env*` loading in host scenarios. Reach for these at every boundary BEFORE hand-rolling — they prevent a whole class of subtle null-handling and string-shape bugs.
 
 ```csharp
 if (rawEmail.Falsey()) return D2Result<Contact>.ValidationFailed(...);
@@ -277,7 +277,7 @@ Canonical: [`public/packages/dotnet/utilities/README.md`](../public/packages/dot
 
 ## Time / Temporal
 
-`D2.Shared.Time` (.NET) and `@d2/time` (TypeScript) wrap NodaTime (.NET) and the TC39 `Temporal` API (TS, polyfilled via `temporal-polyfill`) to give every service the same temporal vocabulary. BCL `DateTime` / `DateTimeOffset` are forbidden in new code: they silently apply current DST rules to historical wall-clock values (wrong for invoicing / audit), have no DI-friendly clock abstraction, and the Windows-vs-Linux `TimeZoneInfo` name fragility surprises ops migrations. NodaTime + IANA tzdb fix all three; the `Temporal` API mirrors NodaTime's vocabulary on the JS side.
+`DcsvIo.D2.Time` (.NET) and `@dcsv-io/d2-time` (TypeScript) wrap NodaTime (.NET) and the TC39 `Temporal` API (TS, polyfilled via `temporal-polyfill`) to give every service the same temporal vocabulary. BCL `DateTime` / `DateTimeOffset` are forbidden in new code: they silently apply current DST rules to historical wall-clock values (wrong for invoicing / audit), have no DI-friendly clock abstraction, and the Windows-vs-Linux `TimeZoneInfo` name fragility surprises ops migrations. NodaTime + IANA tzdb fix all three; the `Temporal` API mirrors NodaTime's vocabulary on the JS side.
 
 The `IClock` injection seam is the universal mockability primitive — a single-method interface (`Instant GetCurrentInstant()` in .NET, `Temporal.Instant getInstant()` in TS). `SystemClock` is bound to `IClock` in each service's composition root; `TestClock` (mutable, thread-safe, `Advance(Duration)` + `SetTo(Instant)`) is constructed directly in tests for deterministic time. Production code NEVER reads `DateTime.UtcNow` / `Temporal.Now.instant()` directly — it always goes through `IClock`.
 
@@ -307,7 +307,7 @@ Canonical: [`public/packages/dotnet/time/README.md`](../public/packages/dotnet/t
 
 ## Resilience
 
-`D2.Shared.Resilience` ships `CircuitBreaker<T>` (three-state lock-free), `Singleflight<TKey, TValue>` (concurrent-call deduplication; first caller runs the operation, siblings share its `Task<TValue>`), `RetryHelper.RetryAsync<T>` + the `D2Result`-aware `RetryD2ResultAsync<TData>` overload (exponential backoff + jitter + transient classifier), `TimeoutLayer<TKey, TValue>` (wall-clock deadline that cancels the inner op; place at two pipeline positions for independent total-request and per-attempt deadlines), `RateLimiterLayer<TKey, TValue>` (hand-rolled `SemaphoreSlim` concurrency limiter; fail-loud `MaxConcurrency >= 1`; client-side admission control, not the server-side distributed rate-limit middleware), and the `ResilientPipeline<TKey, TValue>` composition surface. Compose via the fluent DSL at the composition root; handlers inject `ResilientPipeline<TKey, TValue>` and call `pipeline.ExecuteAsync(key, op, ct)`. The pipeline returns `D2Result<TValue>` (never throws) and converts CircuitOpen / cancellation / transient / unknown exceptions to the appropriate result code.
+`DcsvIo.D2.Resilience` ships `CircuitBreaker<T>` (three-state lock-free), `Singleflight<TKey, TValue>` (concurrent-call deduplication; first caller runs the operation, siblings share its `Task<TValue>`), `RetryHelper.RetryAsync<T>` + the `D2Result`-aware `RetryD2ResultAsync<TData>` overload (exponential backoff + jitter + transient classifier), `TimeoutLayer<TKey, TValue>` (wall-clock deadline that cancels the inner op; place at two pipeline positions for independent total-request and per-attempt deadlines), `RateLimiterLayer<TKey, TValue>` (hand-rolled `SemaphoreSlim` concurrency limiter; fail-loud `MaxConcurrency >= 1`; client-side admission control, not the server-side distributed rate-limit middleware), and the `ResilientPipeline<TKey, TValue>` composition surface. Compose via the fluent DSL at the composition root; handlers inject `ResilientPipeline<TKey, TValue>` and call `pipeline.ExecuteAsync(key, op, ct)`. The pipeline returns `D2Result<TValue>` (never throws) and converts CircuitOpen / cancellation / transient / unknown exceptions to the appropriate result code.
 
 ```csharp
 // All registrations are keyed — no unkeyed path exists.
@@ -434,11 +434,11 @@ public sealed class GetEntityByIdHandler(ITieredCache cache, IEntityRepo repo) :
 
 Canonical: [`public/packages/dotnet/caching/abstractions/README.md`](../public/packages/dotnet/caching/abstractions/README.md). Default impls: [`caching/local-default/`](../public/packages/dotnet/caching/local-default/README.md), [`caching/distributed-redis/`](../public/packages/dotnet/caching/distributed-redis/README.md), [`caching/tiered/`](../public/packages/dotnet/caching/tiered/README.md). TypeScript cluster: [`caching/README.md`](../public/packages/typescript/caching/README.md).
 
-**TypeScript twin:** full layout + behavioral mirror under [`public/packages/typescript/caching/`](../public/packages/typescript/caching/README.md) — `@d2/caching-abstractions` · `@d2/caching-local-default` · `@d2/caching-distributed-redis` · `@d2/caching-tiered`. Shared invalidation channel default `d2:cache:invalidations` (everyone acts). Cross-language parity: [PARITY.md](PARITY.md) caching stack row — package-local unit + Testcontainers ITs for algorithm behavior; dual-runtime **constants/semantics** suite `@d2/contract-tests` `caching-twin.parity.test.ts` + fixture `fixtures/caching-twin/constants.json` (dual-runtime constants catalog; not a full behavior interop harness).
+**TypeScript twin:** full layout + behavioral mirror under [`public/packages/typescript/caching/`](../public/packages/typescript/caching/README.md) — `@dcsv-io/d2-caching-abstractions` · `@dcsv-io/d2-caching-local-default` · `@dcsv-io/d2-caching-distributed-redis` · `@dcsv-io/d2-caching-tiered`. Shared invalidation channel default `d2:cache:invalidations` (everyone acts). Cross-language parity: [PARITY.md](PARITY.md) caching stack row — package-local unit + Testcontainers ITs for algorithm behavior; dual-runtime **constants/semantics** suite `@dcsv-io/d2-contract-tests` `caching-twin.parity.test.ts` + fixture `fixtures/caching-twin/constants.json` (dual-runtime constants catalog; not a full behavior interop harness).
 
 ### Keyring-backed payload crypto — in-process-only, never a shared cache tier
 
-The KC client package `D2.Edge.KeyCustodian.Client` turns the KeyCustodian keyring surface into a keyed, hot-swappable `IPayloadCrypto` for a payload domain. The key material is held **in-process-memory-only** and refreshed by the `KeyRotatedEvent` rotation event (atomic hot-swap on receipt) — it is NEVER placed in Redis / `IDistributedCache` / `ITieredCache` / any shared cache tier, because the payload keyring is itself the key material that protects cache-bound data (caching it in the tier it protects would be circular). A failed refresh keeps serving the current keyring (bounded — no tight-loop, no dead-letter). Wire it with `AddD2EncryptionFromKeyCustodian(domain, callingModuleId)` (in-process leaf source, in the KC app) or `AddD2EncryptionForViaKeyring(domain)` (cross-process gRPC source, in the client package); consumers resolve `[FromKeyedServices(domain)] IPayloadCrypto` and call `Encrypt` / `Decrypt` — they never see a raw keyring.
+The KC client package `DcsvIo.D2.Private.Edge.KeyCustodian.Client` turns the KeyCustodian keyring surface into a keyed, hot-swappable `IPayloadCrypto` for a payload domain. The key material is held **in-process-memory-only** and refreshed by the `KeyRotatedEvent` rotation event (atomic hot-swap on receipt) — it is NEVER placed in Redis / `IDistributedCache` / `ITieredCache` / any shared cache tier, because the payload keyring is itself the key material that protects cache-bound data (caching it in the tier it protects would be circular). A failed refresh keeps serving the current keyring (bounded — no tight-loop, no dead-letter). Wire it with `AddD2EncryptionFromKeyCustodian(domain, callingModuleId)` (in-process leaf source, in the KC app) or `AddD2EncryptionForViaKeyring(domain)` (cross-process gRPC source, in the client package); consumers resolve `[FromKeyedServices(domain)] IPayloadCrypto` and call `Encrypt` / `Decrypt` — they never see a raw keyring.
 
 Canonical: [`private/services/edge/key-custodian/client/README.md`](../private/services/edge/key-custodian/client/README.md).
 
@@ -446,7 +446,7 @@ Canonical: [`private/services/edge/key-custodian/client/README.md`](../private/s
 
 ## Composition root
 
-Every D² service composes through one ordered call to `D2.Shared.ServiceDefaults`:
+Every D² service composes through one ordered call to `DcsvIo.D2.ServiceDefaults`:
 
 ```csharp
 builder.Services.AddD2ServiceDefaults(builder.Configuration, opts =>
@@ -464,7 +464,7 @@ app.MapD2DefaultEndpoints();
 await app.RunD2ServiceAsync("files");
 ```
 
-`AddD2ServiceDefaults` chains `D2Env.Load` → `AddD2Logging` → `AddD2Telemetry` → `AddD2I18n` → `AddD2Handler` → `AddD2Auth` (+ `.Http` + `.Grpc`) → `AddD2LocalCache` → `AddD2HealthChecks` → `AddD2ProblemDetails` → `AddD2Cors`. The aggregator owns ZERO logic; new options on owning libs flow through via pass-through `Action<TFromOwningLib>?` delegates. `UseD2DefaultPipeline` middleware order is **LOCKED** (no insertion points): security headers → request logging → CORS → routing → infrastructure bypass → authentication → `UseD2Auth` → authorization. Auth wiring is fail-fast (`AuthConfigure` MUST be non-null when `SkipAuthAutoWiring = false`). Resilience is NOT wired by this aggregator — it is caller-side + opt-in via `D2.Shared.Resilience`.
+`AddD2ServiceDefaults` chains `D2Env.Load` → `AddD2Logging` → `AddD2Telemetry` → `AddD2I18n` → `AddD2Handler` → `AddD2Auth` (+ `.Http` + `.Grpc`) → `AddD2LocalCache` → `AddD2HealthChecks` → `AddD2ProblemDetails` → `AddD2Cors`. The aggregator owns ZERO logic; new options on owning libs flow through via pass-through `Action<TFromOwningLib>?` delegates. `UseD2DefaultPipeline` middleware order is **LOCKED** (no insertion points): security headers → request logging → CORS → routing → infrastructure bypass → authentication → `UseD2Auth` → authorization. Auth wiring is fail-fast (`AuthConfigure` MUST be non-null when `SkipAuthAutoWiring = false`). Resilience is NOT wired by this aggregator — it is caller-side + opt-in via `DcsvIo.D2.Resilience`.
 
 > Duplicated from [`public/packages/dotnet/service-defaults/README.md`](../public/packages/dotnet/service-defaults/README.md) for at-a-glance directory access. Full call-order rationale + middleware-order rationale + opt-out matrix (`SkipAuthAutoWiring` / `SkipLocalCacheAutoWiring`) + thin-aggregator convention test live in the lib README — update both in lockstep.
 
@@ -484,7 +484,7 @@ Every codegen'd member that ships across an operator-visible boundary (logs, tra
 
 ## Logging
 
-`D2.Shared.Logging` ships Serilog configuration + `[RedactData]` enforcement via `RedactDataDestructuringPolicy` + the `UseD2RequestLogging` middleware. The destructuring policy reflects over `BindingFlags.Public | Instance` PROPERTIES (not fields) on every `@`-captured object. **Capture mode matters**: Serilog's `@`-prefix invokes destructuring (the policy fires); `{prop}` (no `@`) calls `.ToString()` and bypasses destructuring entirely.
+`DcsvIo.D2.Logging` ships Serilog configuration + `[RedactData]` enforcement via `RedactDataDestructuringPolicy` + the `UseD2RequestLogging` middleware. The destructuring policy reflects over `BindingFlags.Public | Instance` PROPERTIES (not fields) on every `@`-captured object. **Capture mode matters**: Serilog's `@`-prefix invokes destructuring (the policy fires); `{prop}` (no `@`) calls `.ToString()` and bypasses destructuring entirely.
 
 ```csharp
 logger.LogInformation("Processed {@User}", user);   // PII redacted via [RedactData]
@@ -499,7 +499,7 @@ Canonical (full 42 LOG-OK / 8 NOT-LOGGED enumeration + per-source overrides + pr
 
 ## Telemetry
 
-`D2.Shared.Telemetry` ships OpenTelemetry SDK setup (traces + metrics + logs) + per-signal OTLP exporters (env-var-gated truthy) + an IP-restricted Prometheus scraping endpoint (`MapD2PrometheusEndpoint` — 403 for non-loopback / non-RFC-1918) + cross-lib `ActivitySource` / `Meter` aggregation (4 ActivitySources + 6 Meters via `public const string` symbol references). `OTEL_SDK_DISABLED=true` symmetrically short-circuits BOTH `AddD2Telemetry` AND `MapD2PrometheusEndpoint`. Auto-instrumentations: AspNetCore inbound, HttpClient outbound, GrpcNetClient outbound, Process + Runtime metrics. AspNetCore `Filter` excludes infrastructure paths via the canonical `InfrastructurePathMatcher` from `D2.Shared.AspNetCore`.
+`DcsvIo.D2.Telemetry` ships OpenTelemetry SDK setup (traces + metrics + logs) + per-signal OTLP exporters (env-var-gated truthy) + an IP-restricted Prometheus scraping endpoint (`MapD2PrometheusEndpoint` — 403 for non-loopback / non-RFC-1918) + cross-lib `ActivitySource` / `Meter` aggregation (4 ActivitySources + 6 Meters via `public const string` symbol references). `OTEL_SDK_DISABLED=true` symmetrically short-circuits BOTH `AddD2Telemetry` AND `MapD2PrometheusEndpoint`. Auto-instrumentations: AspNetCore inbound, HttpClient outbound, GrpcNetClient outbound, Process + Runtime metrics. AspNetCore `Filter` excludes infrastructure paths via the canonical `InfrastructurePathMatcher` from `DcsvIo.D2.AspNetCore`.
 
 Canonical: [`public/packages/dotnet/telemetry/core/README.md`](../public/packages/dotnet/telemetry/core/README.md).
 
@@ -507,7 +507,7 @@ Canonical: [`public/packages/dotnet/telemetry/core/README.md`](../public/package
 
 ## AspNetCore
 
-`D2.Shared.AspNetCore` ships cross-cutting middleware + endpoint primitives: `UseD2SecurityHeaders` (OWASP defaults; HSTS only on HTTPS, preload opt-in), `AddD2Cors` / `UseD2Cors` (canonical `D2_CORS_ORIGINS__*` indexed env-var; fail-closed via `ValidateOnStart`), `UseD2InfrastructureBypass` (default short-circuit invokes the matched endpoint's `RequestDelegate` directly — heavy middleware does NOT run on `/health` / `/alive` / `/metrics` / `/.well-known`), `AddD2ProblemDetails` (RFC 7807 customizer; `traceId` / `correlationId` / `instance` enrichment), `AddD2HealthChecks` + `MapD2HealthEndpoints` (`/health` full + `/alive` live-tag split), `RunD2ServiceAsync` (PII-safe `Log.Fatal` rendering — type FullName + first stack frame, NEVER `ex.Message`).
+`DcsvIo.D2.AspNetCore` ships cross-cutting middleware + endpoint primitives: `UseD2SecurityHeaders` (OWASP defaults; HSTS only on HTTPS, preload opt-in), `AddD2Cors` / `UseD2Cors` (canonical `D2_CORS_ORIGINS__*` indexed env-var; fail-closed via `ValidateOnStart`), `UseD2InfrastructureBypass` (default short-circuit invokes the matched endpoint's `RequestDelegate` directly — heavy middleware does NOT run on `/health` / `/alive` / `/metrics` / `/.well-known`), `AddD2ProblemDetails` (RFC 7807 customizer; `traceId` / `correlationId` / `instance` enrichment), `AddD2HealthChecks` + `MapD2HealthEndpoints` (`/health` full + `/alive` live-tag split), `RunD2ServiceAsync` (PII-safe `Log.Fatal` rendering — type FullName + first stack frame, NEVER `ex.Message`).
 
 The public static `InfrastructurePathMatcher` is the **single source of truth** for the path set across Logging, Telemetry, and `UseD2InfrastructureBypass`. Canonical: [`public/packages/dotnet/aspnetcore/README.md`](../public/packages/dotnet/aspnetcore/README.md).
 
@@ -515,7 +515,7 @@ The public static `InfrastructurePathMatcher` is the **single source of truth** 
 
 ## JWT inbound auth
 
-RS256 + JWKS-based inbound auth, transport-binding split across three sibling csprojs: **`D2.Shared.Auth`** (runtime — `JwtValidator`, `HttpJwksProvider`, `TieredCacheSessionLivenessTracker`, `AuthFailures`), **`D2.Shared.Auth.Http`** (HTTP middleware — `JwtAuthMiddleware`, RFC 7807 ProblemDetails, `RequireAnyScope` / `RequireAllScopes` fluent metadata + `MarkAsD2HarmlessEndpoint`), **`D2.Shared.Auth.Grpc`** (gRPC interceptor — `JwtAuthInterceptor`, `RpcException(Status, Trailers)` shape with `d2_error_code` / `d2_messages` / `traceid` trailers + `[D2RequireAnyScope]` / `[D2RequireAllScopes]` / `[D2HarmlessEndpoint]` attributes).
+RS256 + JWKS-based inbound auth, transport-binding split across three sibling csprojs: **`DcsvIo.D2.Auth`** (runtime — `JwtValidator`, `HttpJwksProvider`, `TieredCacheSessionLivenessTracker`, `AuthFailures`), **`DcsvIo.D2.Auth.Http`** (HTTP middleware — `JwtAuthMiddleware`, RFC 7807 ProblemDetails, `RequireAnyScope` / `RequireAllScopes` fluent metadata + `MarkAsD2HarmlessEndpoint`), **`DcsvIo.D2.Auth.Grpc`** (gRPC interceptor — `JwtAuthInterceptor`, `RpcException(Status, Trailers)` shape with `d2_error_code` / `d2_messages` / `traceid` trailers + `[D2RequireAnyScope]` / `[D2RequireAllScopes]` / `[D2HarmlessEndpoint]` attributes).
 
 ```csharp
 services.AddD2Auth(opts => { opts.Issuer = ...; opts.Audience = ...; });
@@ -534,7 +534,7 @@ Canonical: [`public/packages/dotnet/auth/core/README.md`](../public/packages/dot
 
 ## Service-to-service auth (outbound)
 
-Internal cross-process calls use three independent outbound factors from `D2.Shared.Auth.Outbound`, each opt-in:
+Internal cross-process calls use three independent outbound factors from `DcsvIo.D2.Auth.Outbound`, each opt-in:
 
 1. **Forwarded transaction-token (the business default).** Edge mints exactly one internal transaction-token at the trust boundary via RFC 8693 token exchange. Every downstream gRPC hop re-attaches that same token unchanged via `ForwardedJwtCallCredentials`. The downstream receiver re-validates the token and reads the user identity and scopes directly from it — no per-hop re-exchange. ([ADR-0022](../public/docs/adrs/0022-service-auth-mint-once-forward.md))
 
@@ -569,18 +569,18 @@ Every trust boundary a request can pass through recomputes two local, non-propag
 Five establishment boundaries populate these fields, one per way a request-scoped context can originate plus the outbound leg that carries the propagated subset forward:
 
 ```csharp
-// Inbound HTTP (D2.Shared.Auth.Http) — sets Origin = EdgeInbound, starts the call-path.
+// Inbound HTTP (DcsvIo.D2.Auth.Http) — sets Origin = EdgeInbound, starts the call-path.
 app.UseD2RequestOriginEdge();
 
-// Inbound gRPC (D2.Shared.Auth.Grpc) — sets Origin = CrossProcessHop, ImmediateCaller
+// Inbound gRPC (DcsvIo.D2.Auth.Grpc) — sets Origin = CrossProcessHop, ImmediateCaller
 // from the validated mTLS client certificate, appends a WorkloadHop entry.
 services.AddD2RequestOriginGrpc();   // registers RequestOriginCrossProcessInterceptor
 
-// In-process module call (D2.Shared.Context.Abstractions) — the generated I<Module>Api
+// In-process module call (DcsvIo.D2.Context.Abstractions) — the generated I<Module>Api
 // leaf calls this before dispatching; sets Origin = InProcessModule.
 requestContext.EstablishInProcessModule(callingModuleId, targetModuleId, clock);
 
-// System worker (D2.Shared.Context.Abstractions) — ONLY sanctioned module entry:
+// System worker (DcsvIo.D2.Context.Abstractions) — ONLY sanctioned module entry:
 // ISystemWorkScopeFactory.BeginAsync (wired by AddD2SystemWorkPlane via
 // AddD2ServiceDefaults). Opens a DI scope, establishes Origin = System, host
 // service id as ImmediateCaller, and a fresh System call-path entry.
@@ -589,7 +589,7 @@ requestContext.EstablishInProcessModule(callingModuleId, targetModuleId, clock);
 await using var work = await systemWork.BeginAsync(ct);
 // resolve handlers from work.Services
 
-// Outbound gRPC (D2.Shared.Auth.Outbound) — writes x-d2-context (operational subset +
+// Outbound gRPC (DcsvIo.D2.Auth.Outbound) — writes x-d2-context (operational subset +
 // accumulated call-path) on every outbound call; auto-chained by the generated client.
 builder.AddD2PropagatedContext();
 ```
@@ -621,7 +621,7 @@ Canonical: [ADR-0025](../public/docs/adrs/0025-request-context-establishment.md)
 
 ## Deny-by-default endpoint boot guard
 
-Every mapped `RouteEndpoint` must declare its auth intent before the service may serve traffic. An endpoint with no declaration silently admits any authenticated caller at runtime — a class of misconfiguration that is impossible to observe from a passing test run. The `AuthEndpointGuardStartupFilter` (in `D2.Shared.Auth.Startup`, wired automatically by `AddD2ServiceDefaults`) converts this silent failure into a fast, deterministic startup failure.
+Every mapped `RouteEndpoint` must declare its auth intent before the service may serve traffic. An endpoint with no declaration silently admits any authenticated caller at runtime — a class of misconfiguration that is impossible to observe from a passing test run. The `AuthEndpointGuardStartupFilter` (in `DcsvIo.D2.Auth.Startup`, wired automatically by `AddD2ServiceDefaults`) converts this silent failure into a fast, deterministic startup failure.
 
 ### What the guard checks
 
@@ -677,7 +677,7 @@ opts.SkipAuthEndpointGuard = true;
 
 ## Translation — none on HTTP path (intentionally)
 
-There is **no** server-side HTTP translation middleware. `D2Result` ships `TKMessage` objects (`{ "key": "...", "params": { ... }? }`) verbatim over the wire; the SvelteKit client translates on receipt via Paraglide. CDN caching benefits, no `Vary: Accept-Language` fragmentation. The runtime `D2.Shared.I18n.Translator` does exist but is consumed only by **outbound notifications** (Courier emails / SMS / push) where the recipient locale comes from the user profile. See [i18n](#i18n).
+There is **no** server-side HTTP translation middleware. `D2Result` ships `TKMessage` objects (`{ "key": "...", "params": { ... }? }`) verbatim over the wire; the SvelteKit client translates on receipt via Paraglide. CDN caching benefits, no `Vary: Accept-Language` fragmentation. The runtime `DcsvIo.D2.I18n.Translator` does exist but is consumed only by **outbound notifications** (Courier emails / SMS / push) where the recipient locale comes from the user profile. See [i18n](#i18n).
 
 ---
 
@@ -685,7 +685,7 @@ There is **no** server-side HTTP translation middleware. `D2Result` ships `TKMes
 
 D² env vars use the **indexed convention** for arrays: `PREFIX__0=value0`, `PREFIX__1=value1`, etc. (NOT comma-separated — that breaks for values containing commas). Matches .NET `IConfiguration` array binding (`__N` index → array element). TS-side `parseEnvArray("PREFIX")` returns the equivalent array.
 
-Connection-string parsers for `postgres://`, `redis://`, `amqp://` are centralized in `D2.Shared.Utilities.ConnectionStringHelper` — never `new Uri(connStr)` ad-hoc. The shared parser handles passwords containing `@`, special characters, and multi-host fallback.
+Connection-string parsers for `postgres://`, `redis://`, `amqp://` are centralized in `DcsvIo.D2.Utilities.ConnectionStringHelper` — never `new Uri(connStr)` ad-hoc. The shared parser handles passwords containing `@`, special characters, and multi-host fallback.
 
 Options pattern (`IOptions<T>` with defaults; configuration section convention) is used everywhere a behavior is tunable per service — batch sizes, cache expirations, retry attempts, lock TTLs, host-specific URIs. Hardcoding what should be in Options is an anti-pattern.
 
@@ -693,7 +693,7 @@ Options pattern (`IOptions<T>` with defaults; configuration section convention) 
 
 ## i18n
 
-The i18n stack splits across three csprojs: **`D2.Shared.I18n.Abstractions`** (zero external deps — `TKMessage` primitive, `ITranslator` interface, SrcGen-emitted `TK.*` constants), **`D2.Shared.I18n.SourceGen`** (Roslyn `IIncrementalGenerator` referenced as Analyzer — emits `TK.*` from `public/contracts/messages/en-US.json`), **`D2.Shared.I18n`** (runtime `Translator` + `SupportedLocales` + `AddD2I18n` DI; consumed only by composition roots + outbound-notification handlers).
+The i18n stack splits across three csprojs: **`DcsvIo.D2.I18n.Abstractions`** (zero external deps — `TKMessage` primitive, `ITranslator` interface, SrcGen-emitted `TK.*` constants), **`DcsvIo.D2.I18n.SourceGen`** (Roslyn `IIncrementalGenerator` referenced as Analyzer — emits `TK.*` from `public/contracts/messages/en-US.json`), **`DcsvIo.D2.I18n`** (runtime `Translator` + `SupportedLocales` + `AddD2I18n` DI; consumed only by composition roots + outbound-notification handlers).
 
 `TKMessage` ships verbatim over the wire — same JSON shape in code and on the wire:
 
@@ -713,7 +713,7 @@ Canonical: [`i18n/abstractions/README.md`](../public/packages/dotnet/i18n/abstra
 
 ## Messaging
 
-Async cross-service messaging uses RabbitMQ. Producers mark message classes with `[MqPub(MqMessages.X)]`; consumers mark handler classes with `[MqSub(MqSubscriptions.Y)]`. Spec files at `public/contracts/mq-messages/` and `public/contracts/mq-subscriptions/` are the source of truth — a Roslyn `IIncrementalGenerator` emits typed constants + a runtime descriptor registry into `D2.Shared.Messaging.Abstractions`. The resolver hard-fails on FQN mismatch / unknown constant; the registrar hard-fails on handler-message-type mismatch.
+Async cross-service messaging uses RabbitMQ. Producers mark message classes with `[MqPub(MqMessages.X)]`; consumers mark handler classes with `[MqSub(MqSubscriptions.Y)]`. Spec files at `public/contracts/mq-messages/` and `public/contracts/mq-subscriptions/` are the source of truth — a Roslyn `IIncrementalGenerator` emits typed constants + a runtime descriptor registry into `DcsvIo.D2.Messaging.Abstractions`. The resolver hard-fails on FQN mismatch / unknown constant; the registrar hard-fails on handler-message-type mismatch.
 
 Wire bodies are either plaintext UTF-8 JSON or AES-256-GCM-encrypted (the descriptor's `encryption` field is the keyring domain or the literal `plaintext`). Every published message carries the canonical AMQP header set (`message-id` UUIDv7, `traceparent`, `tracestate`, `x-d2-context`, optional `x-d2-encryption-kid`). **Headers stay plaintext at-rest — identity (UserId / OrgId / Scopes) is NEVER in headers; it rebuilds from the JWT at every sync hop.**
 
@@ -820,7 +820,7 @@ string? locationHash = ComposeLocationHash.Compose(coords, street, admin);
 // `locationHash` is null only when all three inputs are null (location is absent).
 ```
 
-`WhoIs` follows the same content-addressable pattern with a single aggregate factory. See the per-lib READMEs for the full surface ([D2.Shared.Location](../public/packages/dotnet/location/core/README.md)).
+`WhoIs` follows the same content-addressable pattern with a single aggregate factory. See the per-lib READMEs for the full surface ([DcsvIo.D2.Location](../public/packages/dotnet/location/core/README.md)).
 
 ---
 
@@ -845,7 +845,7 @@ When `[RedactData]` can't be applied (proto-generated DTOs that ts-proto / proto
 
 ## Anonymization — `[Anonymizable]` decoration + tiered reflection engine
 
-At-rest subject-keyed PII overwrite (GDPR right-to-erasure): on user/org deletion the engine overwrites that subject's PII **in place** with faux or tombstone values — never NULL by default, never hard-delete. Faux values are non-i18n developer-supplied literals (tombstone strings, template-computed addresses). This concern is **strictly separate from `[RedactData]`** (Serilog log-masking): the two systems are independently decorated, independently enforced, and do not cross-check each other. Lives in `D2.Shared.DataGovernance` — a pure Abstractions seam library plus an EF Core engine implementation.
+At-rest subject-keyed PII overwrite (GDPR right-to-erasure): on user/org deletion the engine overwrites that subject's PII **in place** with faux or tombstone values — never NULL by default, never hard-delete. Faux values are non-i18n developer-supplied literals (tombstone strings, template-computed addresses). This concern is **strictly separate from `[RedactData]`** (Serilog log-masking): the two systems are independently decorated, independently enforced, and do not cross-check each other. Lives in `DcsvIo.D2.DataGovernance` — a pure Abstractions seam library plus an EF Core engine implementation.
 
 ### Decoration — one annotation, two front-ends
 
@@ -866,7 +866,7 @@ At-rest subject-keyed PII overwrite (GDPR right-to-erasure): on user/org deletio
 | `[Anonymizable("tombstone")]` | `Constant("tombstone")` — fixed developer string |
 | `[Anonymizable(template: "deletedUser{UserId}@deleted.user.dcsv.io")]` | `Template` — `{FieldName}` sibling interpolation; `Guid` values rendered without dashes |
 
-**Fluent path** — `Anonymize*` block-form extensions on `PropertyBuilder<T>`, `OwnedNavigationBuilder<TOwner, TDependent>`, `ComplexPropertyBuilder<T>`, and `ComplexTypePropertyBuilder<T>` (the type returned by `cp.Property(lambda)` inside a `ComplexProperty` callback — the "receiver-is-the-property" form used when you already hold the member builder). This is the **universal** path and the **only** path for foreign VOs — types the consuming service does not own and cannot annotate (e.g., `D2.Shared.Location` types, Contacts VOs).
+**Fluent path** — `Anonymize*` block-form extensions on `PropertyBuilder<T>`, `OwnedNavigationBuilder<TOwner, TDependent>`, `ComplexPropertyBuilder<T>`, and `ComplexTypePropertyBuilder<T>` (the type returned by `cp.Property(lambda)` inside a `ComplexProperty` callback — the "receiver-is-the-property" form used when you already hold the member builder). This is the **universal** path and the **only** path for foreign VOs — types the consuming service does not own and cannot annotate (e.g., `DcsvIo.D2.Location` types, Contacts VOs).
 
 ```csharp
 model.Entity<User>()
@@ -915,7 +915,7 @@ Canonical references: [`data-governance/abstractions/README.md`](../public/packa
 
 ## Contact value objects
 
-`D2.Shared.Contacts` ships six composable, self-redacting PII value objects. Each is constructed through a `Create(...) → D2Result<T>` smart constructor that applies a dumb structural floor (length caps from the `FieldConstraints` catalog, shape / coherence rules) before constructing the record. Email and phone additionally accept an optional caller-injected smart validator (`IEmailValidator` / `IPhoneValidator`); when omitted, the structural floor applies.
+`DcsvIo.D2.Contacts` ships six composable, self-redacting PII value objects. Each is constructed through a `Create(...) → D2Result<T>` smart constructor that applies a dumb structural floor (length caps from the `FieldConstraints` catalog, shape / coherence rules) before constructing the record. Email and phone additionally accept an optional caller-injected smart validator (`IEmailValidator` / `IPhoneValidator`); when omitted, the structural floor applies.
 
 | VO | Key fields | Notes |
 |---|---|---|
@@ -926,7 +926,7 @@ Canonical references: [`data-governance/abstractions/README.md`](../public/packa
 | `EmailAddress` | `Value` | Floor: trim + lowercase + shape check + length cap; validator: bubbled verbatim |
 | `PhoneNumber` | `Value` | Floor: digits only, 7–15 digits, raw-length cap; validator: bubbled (typically E.164) |
 
-All PII properties carry `[RedactData(Reason = RedactReason.PersonalInformation)]` — self-redacting in Serilog logs. `Personal.HashId` is visible (one-way digest, correlation-safe). Address fields reuse the `D2.Shared.Location` VOs directly — no new address VO.
+All PII properties carry `[RedactData(Reason = RedactReason.PersonalInformation)]` — self-redacting in Serilog logs. `Personal.HashId` is visible (one-way digest, correlation-safe). Address fields reuse the `DcsvIo.D2.Location` VOs directly — no new address VO.
 
 Canonical reference: [`contacts/core/README.md`](../public/packages/dotnet/contacts/core/README.md).
 
@@ -944,7 +944,7 @@ The folded owned-component model (ADR-0001) maps contact and location VOs into t
   b.ComplexProperty(p => p.Location, cp => cp.MapAdminLocation());
   ```
 
-  Each helper wires member value converters, applies `HasMaxLength` from `FieldConstraints`, and writes per-field anonymize defaults via the `D2.Shared.DataGovernance.EntityFrameworkCore` fluent API in one call.
+  Each helper wires member value converters, applies `HasMaxLength` from `FieldConstraints`, and writes per-field anonymize defaults via the `DcsvIo.D2.DataGovernance.EntityFrameworkCore` fluent API in one call.
 
 - **Single-value VOs → EF value converters**. One column, native unique index, root-scoped anonymize templates. The helper returns a coupling object:
 
@@ -957,7 +957,7 @@ The folded owned-component model (ADR-0001) maps contact and location VOs into t
 
 - **Same-VO-type-twice** (e.g., legal name + maiden name `Personal`, billing + shipping `AdminLocation`) works natively: call the helper twice via two distinct host-property selectors. EF Core 10 prefixes columns by the owning-property path (`LegalName_FirstName` vs `MaidenName_FirstName`). The helpers never call `HasColumnName`, which preserves this automatic uniquification.
 
-Available helpers — **Contacts** (`D2.Shared.Contacts.EntityFrameworkCore`): `MapPersonal`, `MapNameAffixes`, `MapDemographics`, `MapProfessional` (complex), `MapEmailAddress`, `MapPhoneNumber` (value converter). **Location** (`D2.Shared.Location.EntityFrameworkCore`): `MapStreetAddress`, `MapAdminLocation`, `MapCoordinates` (complex; `SubdivisionCode`/`CountryCode` converters encapsulated in `MapAdminLocation`; Coordinates tombstones on erasure).
+Available helpers — **Contacts** (`DcsvIo.D2.Contacts.EntityFrameworkCore`): `MapPersonal`, `MapNameAffixes`, `MapDemographics`, `MapProfessional` (complex), `MapEmailAddress`, `MapPhoneNumber` (value converter). **Location** (`DcsvIo.D2.Location.EntityFrameworkCore`): `MapStreetAddress`, `MapAdminLocation`, `MapCoordinates` (complex; `SubdivisionCode`/`CountryCode` converters encapsulated in `MapAdminLocation`; Coordinates tombstones on erasure).
 
 Canonical references: [`contacts/entity-framework-core/README.md`](../public/packages/dotnet/contacts/entity-framework-core/README.md) · [`location/entity-framework-core/README.md`](../public/packages/dotnet/location/entity-framework-core/README.md).
 
@@ -975,7 +975,7 @@ Canonical references: [`contacts/entity-framework-core/README.md`](../public/pac
 
 The only EF-10 path is a raw `migrationBuilder.CreateIndex(name, table, "Vo_Member")` line in the host migration — **model-unaware** (the host owns the index lifecycle; EF 10 does not know about it).
 
-**The toolkit workaround — `CreateD2Index`.** `D2.Shared.EntityFrameworkCore` ships a typed `MigrationBuilder` extension:
+**The toolkit workaround — `CreateD2Index`.** `DcsvIo.D2.EntityFrameworkCore` ships a typed `MigrationBuilder` extension:
 
 ```csharp
 // In the host's Up() migration method.
@@ -1005,11 +1005,11 @@ A spec-driven catalog (`public/contracts/validation/field-constraints.spec.json`
 - `FieldConstraints` — `public const int` caps consumed by VO `Create` gates, Location VOs, and frontend Zod schemas (e.g., `FIRST_NAME_MAX`, `EMAIL_MAX`, `POSTAL_CODE_MAX`, `PHONE_MIN_DIGITS`).
 - `NamePrefix` / `NameSuffix` / `BiologicalSex` — `byte`-backed, string-wire taxonomy enums with `[JsonConverter(typeof(JsonStringEnumConverter))]`.
 
-**.NET target** — emitted into `D2.Shared.Validation.Abstractions` by `validation/source-gen/` (Roslyn `IIncrementalGenerator`, `D2FC` diagnostic prefix, single-target dispatch gated on `AssemblyName == "D2.Shared.Validation.Abstractions"`). Files land in `validation/abstractions/Generated/`.
+**.NET target** — emitted into `DcsvIo.D2.Validation.Abstractions` by `validation/source-gen/` (Roslyn `IIncrementalGenerator`, `D2FC` diagnostic prefix, single-target dispatch gated on `AssemblyName == "DcsvIo.D2.Validation.Abstractions"`). Files land in `validation/abstractions/Generated/`.
 
-**TypeScript target** — emitted into `@d2/validation-abstractions` by `public/tools/ts-codegen/src/field-constraints-emit.ts`. Files land in `public/packages/typescript/validation/abstractions/src/generated/`.
+**TypeScript target** — emitted into `@dcsv-io/d2-validation-abstractions` by `public/tools/ts-codegen/src/field-constraints-emit.ts`. Files land in `public/packages/typescript/validation/abstractions/src/generated/`.
 
-**Consumers:** `D2.Shared.Contacts` VO `Create` factories; `D2.Shared.Location` VO `Create` factories; `@d2/validation-abstractions` Zod schemas; frontend form validators.
+**Consumers:** `DcsvIo.D2.Contacts` VO `Create` factories; `DcsvIo.D2.Location` VO `Create` factories; `@dcsv-io/d2-validation-abstractions` Zod schemas; frontend form validators.
 
 Canonical references: [SRC_GEN.md](SRC_GEN.md) · [`validation/abstractions/README.md`](../public/packages/dotnet/validation/abstractions/README.md).
 
@@ -1031,7 +1031,7 @@ This pattern is the structural enforcement behind the [5-layer rename safety net
 
 ## Per-package versioning & releases
 
-Each consumable shared library (`D2.Shared.*` for .NET, `@d2/*` for TypeScript) carries its own `MAJOR.MINOR.PATCH` version and `CHANGELOG.md`. The `public/tools/release-runner` derives per-package bumps from a **build-free artifact diff** — a source fingerprint (SHA-256 over committed source + API report + resolved dep versions + declared toolchain pin) plus a public-API-surface diff. Commit footers (`WIRE-BREAKING:` / `BREAKING CHANGE:`) are **escalation overrides only**: they can raise the diff-derived bump level but never lower it. The footer is also the ONE conscious force-valve act for breaks not detectable by the diff. Wire/contract breaks are auto-detected by `public/tools/contract-gate`; library public-API breaks are author-declared via footer. Registry publishing (npm / NuGet) is never automatic. Deployable services are excluded — they version on the product cadence.
+Each consumable shared library (`DcsvIo.D2.*` for .NET, `@dcsv-io/d2-*` for TypeScript) carries its own `MAJOR.MINOR.PATCH` version and `CHANGELOG.md`. The `public/tools/release-runner` derives per-package bumps from a **build-free artifact diff** — a source fingerprint (SHA-256 over committed source + API report + resolved dep versions + declared toolchain pin) plus a public-API-surface diff. Commit footers (`WIRE-BREAKING:` / `BREAKING CHANGE:`) are **escalation overrides only**: they can raise the diff-derived bump level but never lower it. The footer is also the ONE conscious force-valve act for breaks not detectable by the diff. Wire/contract breaks are auto-detected by `public/tools/contract-gate`; library public-API breaks are author-declared via footer. Registry publishing (npm / NuGet) is never automatic. Deployable services are excluded — they version on the product cadence.
 
 Canonical discipline: `rules.md §26.19`. Operational how-to: `CONTRIBUTING.md` (Per-package versioning) + `docs/COMMANDS.md` (Per-package version + Cutting a library release).
 
@@ -1063,7 +1063,7 @@ public sealed record Contact
 The pattern:
 
 1. **Private constructor** — domain instances cannot be created bypassing validation.
-2. **Static `Create` returning `D2Result<TSelf>`** — primitive-level rules go through the `string?.TryParse*` extensions in `D2.Shared.Utilities`; cross-field rules belong to the `Create` method itself.
+2. **Static `Create` returning `D2Result<TSelf>`** — primitive-level rules go through the `string?.TryParse*` extensions in `DcsvIo.D2.Utilities`; cross-field rules belong to the `Create` method itself.
 3. **`BubbleFail` chains** — each primitive validation result bubbles up; the composite never reports half-validated state.
 4. **`TKMessage` keys** — failure messages are `TK.*` constants; the wire-format response slots them straight into `Messages` / `InputErrors`.
 
@@ -1101,10 +1101,10 @@ Every validator exposes a single `Validate(...)` / `validate(...)` method return
 Cross-language behavior is pinned against `public/contracts/validation/fixtures/{email,phone,postcode}.json` parity fixtures — a value accepted on one runtime is accepted on the other. Postal-code validation fails closed: an unknown or absent country code always returns `ValidationFailed`; there is no permissive global-range fallback on either runtime.
 
 Canonical per-lib READMEs:
-[D2.Shared.Validation.Abstractions](../public/packages/dotnet/validation/abstractions/README.md) ·
-[D2.Shared.Validation](../public/packages/dotnet/validation/default/README.md) ·
-[@d2/validation-abstractions](../public/packages/typescript/validation/abstractions/README.md) ·
-[@d2/validation](../public/packages/typescript/validation/default/README.md).
+[DcsvIo.D2.Validation.Abstractions](../public/packages/dotnet/validation/abstractions/README.md) ·
+[DcsvIo.D2.Validation](../public/packages/dotnet/validation/default/README.md) ·
+[@dcsv-io/d2-validation-abstractions](../public/packages/typescript/validation/abstractions/README.md) ·
+[@dcsv-io/d2-validation](../public/packages/typescript/validation/default/README.md).
 
 ---
 
@@ -1141,7 +1141,7 @@ When an Abstractions-layer extension and a Default-layer extension target the sa
 
 ```csharp
 // Boundary parser — no catalog dependency.
-namespace D2.Shared.Geo.Abstractions.Extensions;
+namespace DcsvIo.D2.Geo.Abstractions.Extensions;
 public static class IRequestContextGeoExtensions
 {
     extension(IRequestContext context)
@@ -1152,7 +1152,7 @@ public static class IRequestContextGeoExtensions
 
 // Record-returning wrapper — catalog dependency lives in the same assembly
 // as the implementation.
-namespace D2.Shared.Geo.Default.Extensions;
+namespace DcsvIo.D2.Geo.Default.Extensions;
 public static class IRequestContextGeoExtensions
 {
     extension(IRequestContext context)
@@ -1164,14 +1164,14 @@ public static class IRequestContextGeoExtensions
 
 This idiom works only when the two extensions return DIFFERENT types (so the disambiguation has semantic meaning). If both extensions returned the same type, the choice would be invisible at the call site and consumers couldn't reason about it.
 
-TypeScript has no equivalent of extension-method namespace shadowing, so the TS mirror in `@d2/geo-default/extensions/` uses distinct free-function names (`countryFor(context)` / `subdivisionFor(context)`) for clarity. Document the parity asymmetry in the affected per-lib READMEs.
+TypeScript has no equivalent of extension-method namespace shadowing, so the TS mirror in `@dcsv-io/d2-geo-default/extensions/` uses distinct free-function names (`countryFor(context)` / `subdivisionFor(context)`) for clarity. Document the parity asymmetry in the affected per-lib READMEs.
 
 ## Reference data
 
 Reference data is static, spec-driven, and versioned. Unlike user-generated entities it is read-only at runtime, ships with the binary, and changes only through a codegen rebuild cycle. D²-WORX manages reference data through three layers:
 
 1. **JSON specs** under `public/contracts/geo/` — the single source of truth for every country, subdivision, currency, language, locale, and timezone.
-2. **Codegen output** in `D2.Shared.Geo.Abstractions` (record shapes, typed enums, wrapper structs, lookup contracts) and `D2.Shared.Geo.Default` (static catalog instances, FrozenDictionary lookup tables, name-resolver warm-up).
+2. **Codegen output** in `DcsvIo.D2.Geo.Abstractions` (record shapes, typed enums, wrapper structs, lookup contracts) and `DcsvIo.D2.Geo.Default` (static catalog instances, FrozenDictionary lookup tables, name-resolver warm-up).
 3. **Deprecation metadata** — the `DeprecationInfo` record on each entity communicates withdrawn or merged entries without deletion (ISO 3166 country changes, superseded subdivision codes, renamed currencies). Consumers check `entry.Deprecated` before use.
 
 ### Endonym discipline
@@ -1202,33 +1202,33 @@ CountryCode? code = "US".TryParseTruthyNull<CountryCode>(ignoreCase: true, out v
     ? c : (CountryCode?)null;
 ```
 
-Canonical lib references: [D2.Shared.Geo.Abstractions](../public/packages/dotnet/geo/abstractions/README.md) · [@d2/geo-abstractions](../public/packages/typescript/geo/abstractions/README.md) · [D2.Shared.Geo.Default](../public/packages/dotnet/geo/default/README.md) · [@d2/geo-default](../public/packages/typescript/geo/default/README.md).
+Canonical lib references: [DcsvIo.D2.Geo.Abstractions](../public/packages/dotnet/geo/abstractions/README.md) · [@dcsv-io/d2-geo-abstractions](../public/packages/typescript/geo/abstractions/README.md) · [DcsvIo.D2.Geo.Default](../public/packages/dotnet/geo/default/README.md) · [@dcsv-io/d2-geo-default](../public/packages/typescript/geo/default/README.md).
 
 ### Typed access on IRequestContext
 
-The raw string fields on `IRequestContext` (`CountryIso31661Alpha2Code`, `SubdivisionIso31662Code`) carry ISO codes as they arrived over the wire. Extension methods in `D2.Shared.Geo.Abstractions` parse these to typed codes; extensions in `D2.Shared.Geo.Default` return the full record:
+The raw string fields on `IRequestContext` (`CountryIso31661Alpha2Code`, `SubdivisionIso31662Code`) carry ISO codes as they arrived over the wire. Extension methods in `DcsvIo.D2.Geo.Abstractions` parse these to typed codes; extensions in `DcsvIo.D2.Geo.Default` return the full record:
 
 ```csharp
 // Abstractions-layer — parse only (no catalog dep).
-using D2.Shared.Geo.Abstractions.Extensions;
+using DcsvIo.D2.Geo.Abstractions.Extensions;
 CountryCode? code = request.Country();            // null if absent / unknown
 SubdivisionCode? sub = request.Subdivision();    // null if absent / unknown
 
 // Default-layer — catalog lookup (returns full record with all nav properties).
-using D2.Shared.Geo.Default.Extensions;
+using DcsvIo.D2.Geo.Default.Extensions;
 Country? country = request.Country();            // null if absent / unknown
 Subdivision? subdivision = request.Subdivision();
 string? lang = request.Country()?.PrimaryLanguage?.DisplayName; // no second lookup needed
 ```
 
-The two extension classes share the method names `Country()` and `Subdivision()` but live in different namespaces — the compiler resolves by which `using` is in scope (CS0121 when both are imported, so consumers pick one). TypeScript uses distinct free-function names (`countryFor(context)` / `subdivisionFor(context)`) in `@d2/geo-default/extensions/` for the same reason the TS language lacks extension-method namespace shadowing.
+The two extension classes share the method names `Country()` and `Subdivision()` but live in different namespaces — the compiler resolves by which `using` is in scope (CS0121 when both are imported, so consumers pick one). TypeScript uses distinct free-function names (`countryFor(context)` / `subdivisionFor(context)`) in `@dcsv-io/d2-geo-default/extensions/` for the same reason the TS language lacks extension-method namespace shadowing.
 
 ### Geo name resolution at the integration boundary
 
 When third-party text data arrives (geolocation APIs, shipping providers, form submissions), country / subdivision names are free strings that may be in any language or spelling variant. The typed catalog layer cannot accept them directly. Use `IGeoNameResolver` at the ingestion boundary:
 
 ```csharp
-// Inject IGeoNameResolver (registered by D2.Shared.Geo.Default DI extension).
+// Inject IGeoNameResolver (registered by DcsvIo.D2.Geo.Default DI extension).
 public sealed class IngestWhoIsHandler(IGeoNameResolver geoNames, ...) : BaseHandler<...>
 {
     protected override async Task<D2Result<WhoIs>> ExecuteAsync(RawWhoIsInput input, ...)
@@ -1265,7 +1265,7 @@ The `LocaleIetfBcp47Tag`, `TimezoneIanaName`, and `CurrencyIso4217Code` fields o
 1. User profile.
 2. Org default.
 3. `X-D2-Timezone` header (BFF-set from `Intl.DateTimeFormat().resolvedOptions().timeZone`).
-4. WhoIs-derived: `CountryIso31661Alpha2Code` + `SubdivisionIso31662Code` → IANA name via `D2.Shared.Geo.Default` lookup.
+4. WhoIs-derived: `CountryIso31661Alpha2Code` + `SubdivisionIso31662Code` → IANA name via `DcsvIo.D2.Geo.Default` lookup.
 5. Fallback: `"UTC"`.
 
 **Currency resolution** (priority high → low):
@@ -1273,7 +1273,7 @@ The `LocaleIetfBcp47Tag`, `TimezoneIanaName`, and `CurrencyIso4217Code` fields o
 1. User profile.
 2. Org default.
 3. `X-D2-Currency` header (explicit UI selection).
-4. `CountryIso31661Alpha2Code`-derived: ISO 3166 → ISO 4217 primary legal-tender mapping via `D2.Shared.Geo.Default`.
+4. `CountryIso31661Alpha2Code`-derived: ISO 3166 → ISO 4217 primary legal-tender mapping via `DcsvIo.D2.Geo.Default`.
 5. Fallback: `NULL` — no sensible universal default. Consumers surface a validation error when `CurrencyIso4217Code` is required and absent.
 
 The `X-D2-Locale`, `X-D2-Timezone`, and `X-D2-Currency` headers are `http`-only constants in `HttpHeaders` (generated from `public/contracts/headers/headers.spec.json`). The Edge auth middleware that reads them is responsible for adding them to `Access-Control-Allow-Headers` in CORS configuration before any cross-origin client starts sending them.
@@ -1305,7 +1305,7 @@ Normalization: string inputs are lower-cased and whitespace-stripped before hash
 
 - **Thin handlers that just call another handler** — if an app-layer handler's body is `return otherHandler.HandleAsync(input)`, delete it; depend on the inner handler directly.
 - **Hand-written DB migrations** — generator-driven only. Per `rules.md §9.10`.
-- **String error codes outside `D2Result` factories** — use `TK.*` constants from `D2.Shared.I18n`.
+- **String error codes outside `D2Result` factories** — use `TK.*` constants from `DcsvIo.D2.I18n`.
 - **Wrapping framework primitives without an opinionated semantic** — use `IDistributedCache` directly only if Microsoft's `Get` / `Set` / `Refresh` / `Remove` is enough. If you need `SetNx` / `Increment` / `AcquireLock` — use D²'s richer abstraction.
 - **Returning `Ok()` after a fallible operation** — a `try/catch` that swallows failure and returns success is almost always a bug. Either `BubbleFail` or explicitly handle. Per `rules.md §9.20`.
 - **Hardcoding what should be in Options** — batch sizes, cache expirations, retry attempts, lock TTLs all go through `IOptions<T>`.

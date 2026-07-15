@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Jwks;
+namespace DcsvIo.D2.Auth.Jwks;
 
 /// <summary>
 /// JWKS-specific knobs on <see cref="AuthOptions"/>. Composed under
@@ -136,7 +136,7 @@ public sealed record JwksProviderOptions
     /// <strong>Cross-service contract.</strong> Edge MUST publish key-rotation
     /// events on this exact channel string for subscribers to react. The
     /// default is the canonical D² channel; only override if Edge's publisher
-    /// (in <c>D2.Shared.KeyCustodian</c>) is configured with the same override.
+    /// (in <c>DcsvIo.D2.KeyCustodian</c>) is configured with the same override.
     /// Mismatch causes silent drop of every rotation event — fall-back to
     /// ConfigurationManager's <c>AutomaticRefreshInterval</c> (default 24h).
     /// </remarks>

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App.CertificateAuthority;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App.CertificateAuthority;
 
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-using D2.Edge.KeyCustodian.App.Application.Observability;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability;
 
 /// <summary>
 /// Tests for <see cref="CaSuccessorFactory"/> — the shared CA-key builder used by

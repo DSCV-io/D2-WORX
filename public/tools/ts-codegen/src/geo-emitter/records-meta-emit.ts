@@ -9,7 +9,7 @@ import { tsPackagePath } from "../lib/paths.js";
 import { appendEslintDisable } from "./emit-helpers.js";
 
 /**
- * Emits `_records-meta.g.ts` to `@d2/geo-default/src/generated/` — the
+ * Emits `_records-meta.g.ts` to `@dcsv-io/d2-geo-default/src/generated/` — the
  * TS-side record-shape catalog consumed by the cross-language records
  * parity test (`geo-records.parity.test.ts`). Mirrors the .NET-side
  * fixture emitted by `GeoRecordsFixtureEmitter` so the parity test can
@@ -83,7 +83,7 @@ interface FieldMeta {
 
 /**
  * Static record-shape catalog. Each entry mirrors the field surface of
- * the `@d2/geo-abstractions` interface of the same name. Field-name
+ * the `@dcsv-io/d2-geo-abstractions` interface of the same name. Field-name
  * casing here is TS-native (camelCase); the parity test compares to
  * the .NET PascalCase names with case-insensitive equality.
  *

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.ProtocolAudiences.SourceGen;
+namespace DcsvIo.D2.Auth.ProtocolAudiences.SourceGen;
 
 /// <summary>
 /// One protocol-audience entry parsed from the spec.

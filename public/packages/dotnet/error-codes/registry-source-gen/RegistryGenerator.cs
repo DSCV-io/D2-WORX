@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.Registry.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.Registry.SourceGen;
 
 using System;
 using System.Collections.Immutable;
 using System.IO;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -17,7 +17,7 @@ using Microsoft.CodeAnalysis.Text;
 /// Roslyn incremental source generator that emits the merged cross-catalog
 /// <c>ErrorCodeRegistry.g.cs</c> (the <c>ErrorCodeInfo</c> record and
 /// <c>ErrorCodeRegistry</c> static class) into
-/// <c>D2.Shared.ErrorCodes.Registry</c>.
+/// <c>DcsvIo.D2.ErrorCodes.Registry</c>.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -26,7 +26,7 @@ using Microsoft.CodeAnalysis.Text;
 /// every <c>*-error-codes.spec.json</c> — aggregates them into a merged
 /// table, runs the cross-catalog collision check (<c>D2ERC004</c> /
 /// <c>D2ERC005</c>), and emits one merged file into the single target
-/// assembly <c>D2.Shared.ErrorCodes.Registry</c>. Anything else →
+/// assembly <c>DcsvIo.D2.ErrorCodes.Registry</c>. Anything else →
 /// emit nothing.
 /// </para>
 /// <para>
@@ -38,7 +38,7 @@ using Microsoft.CodeAnalysis.Text;
 [Generator]
 public sealed class RegistryGenerator : IIncrementalGenerator
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.ErrorCodes.Registry";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.ErrorCodes.Registry";
     private const string _HINT_NAME = "ErrorCodeRegistry.g.cs";
     private const string _CATEGORY_SPEC_NAME = "error-category.spec.json";
 

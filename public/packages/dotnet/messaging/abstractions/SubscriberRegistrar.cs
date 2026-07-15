@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging;
+namespace DcsvIo.D2.Messaging;
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
@@ -98,7 +98,7 @@ internal static class SubscriberRegistrar
         {
             if (t.IsGenericType
                 && t.GetGenericTypeDefinition().FullName
-                    == "D2.Shared.Handler.BaseHandler`3")
+                    == "DcsvIo.D2.Handler.BaseHandler`3")
             {
                 var args = t.GetGenericArguments();
 

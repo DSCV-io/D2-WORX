@@ -4,8 +4,8 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { D2ResultProto } from "@d2/protos";
-import { d2ResultFromProto } from "@d2/grpc-client";
+import { D2ResultProto } from "@dcsv-io/d2-protos";
+import { d2ResultFromProto } from "@dcsv-io/d2-grpc-client";
 import { loadFixture } from "../src/index.js";
 
 // ---------------------------------------------------------------------------
@@ -37,7 +37,7 @@ import { loadFixture } from "../src/index.js";
 //
 // DATA SOURCE:
 //   fixtures/grpc-result-codec/cases.json — emitted by GrpcResultCodecFixtureEmitter
-//   (.NET, D2.Shared.Tests). The protoBase64 field is the actual .NET codec
+//   (.NET, DcsvIo.D2.Tests). The protoBase64 field is the actual .NET codec
 //   output; the expected field is the originating D2Result's field values.
 // ---------------------------------------------------------------------------
 

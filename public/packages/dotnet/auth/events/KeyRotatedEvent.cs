@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Events;
+namespace DcsvIo.D2.Auth.Events;
 
-using D2.Shared.Messaging;
+using DcsvIo.D2.Messaging;
 
 /// <summary>
 /// Message published by KeyCustodian whenever a key changes state during the
@@ -27,7 +27,7 @@ using D2.Shared.Messaging;
 /// the publisher's runtime resolver finds it on the exact CLR type that gets
 /// instantiated and published. The type lives in this dedicated leaf assembly (not
 /// the auth vocabulary slice) because <see cref="MqPubAttribute"/> forces a reference
-/// to <c>D2.Shared.Messaging.Abstractions</c>, which the auth vocabulary slice cannot
+/// to <c>DcsvIo.D2.Messaging.Abstractions</c>, which the auth vocabulary slice cannot
 /// take without closing a dependency cycle.
 /// </para>
 /// </remarks>

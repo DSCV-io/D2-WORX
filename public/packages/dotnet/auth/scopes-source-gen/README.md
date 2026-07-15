@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Auth.Scopes.SourceGen
+# DcsvIo.D2.Auth.Scopes.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -14,8 +14,8 @@ Roslyn incremental source generator that emits scope catalogs from `public/contr
 
 | Consuming assembly | Emitted type | Values |
 | --- | --- | --- |
-| `D2.Shared.Auth.Abstractions` | `Scopes` under `D2.Shared.Auth.Abstractions` | public AdditionalFiles only |
-| `D2.Shared.Auth.Abstractions.Extensions` | `ProductScopes` under `D2.Private.Auth` | public∪private AdditionalFiles |
+| `DcsvIo.D2.Auth.Abstractions` | `Scopes` under `DcsvIo.D2.Auth.Abstractions` | public AdditionalFiles only |
+| `DcsvIo.D2.Private.Auth.Abstractions.Extensions` | `ProductScopes` under `DcsvIo.D2.Private.Auth` | public∪private AdditionalFiles |
 
 Any other assembly → no emit. Private host PackageId is 1:1 with the public twin + `.Extensions` (never a multi-concern bag).
 
@@ -81,7 +81,7 @@ The spec file is the single source of truth for the platform's scope catalog. Ev
 
 ### Wildcard expansion
 
-`*` for org type expands against `D2.Shared.Auth.Abstractions.OrgType` enum members; `*` for role expands against `D2.Shared.Auth.Abstractions.Role` members. Expansion happens at **codegen time**, not runtime — adding a new enum member requires re-running the build to pick it up (the emitted `Scopes.g.cs` carries an `// auto-generated` header listing the enum members it expanded against).
+`*` for org type expands against `DcsvIo.D2.Auth.Abstractions.OrgType` enum members; `*` for role expands against `DcsvIo.D2.Auth.Abstractions.Role` members. Expansion happens at **codegen time**, not runtime — adding a new enum member requires re-running the build to pick it up (the emitted `Scopes.g.cs` carries an `// auto-generated` header listing the enum members it expanded against).
 
 ---
 
@@ -134,5 +134,5 @@ All lookup helpers are O(1) — backed by `HashSet<string>` / `Dictionary<,>`. `
 - [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`public/contracts/auth-scopes/schema.json`](../../../../contracts/auth-scopes/schema.json) — JSON Schema for the spec
 - [`public/contracts/auth-scopes/scopes.spec.json`](../../../../contracts/auth-scopes/scopes.spec.json) — the source-of-truth scope catalog
-- [`D2.Shared.I18n.SourceGen`](../../i18n/source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`DcsvIo.D2.I18n.SourceGen`](../../i18n/source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
 - `ActionSensitivity` (this generator's per-scope classification driving audit verbosity, OTP step-up, and impersonation defaults) is orthogonal to `RateLimitTier`, the rate-limit middleware's per-endpoint throttling classification — a different subsystem entirely, neither value derived from the other.

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Mtls;
+namespace DcsvIo.D2.Tests.Unit.Mtls;
 
 using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;
-using D2.Shared.AspNetCore.Mtls;
+using DcsvIo.D2.AspNetCore.Mtls;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.DependencyInjection;

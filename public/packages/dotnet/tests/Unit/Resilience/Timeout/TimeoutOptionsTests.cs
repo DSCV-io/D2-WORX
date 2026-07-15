@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.Timeout;
+namespace DcsvIo.D2.Tests.Unit.Resilience.Timeout;
 
 using AwesomeAssertions;
-using D2.Shared.Resilience.Timeout;
+using DcsvIo.D2.Resilience.Timeout;
 using Xunit;
 
 public sealed class TimeoutOptionsTests

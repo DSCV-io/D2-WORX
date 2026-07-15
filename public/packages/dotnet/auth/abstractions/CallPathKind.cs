@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions;
+namespace DcsvIo.D2.Auth.Abstractions;
 
 /// <summary>The kind of hop a <see cref="CallPathEntry"/> records.</summary>
 public enum CallPathKind

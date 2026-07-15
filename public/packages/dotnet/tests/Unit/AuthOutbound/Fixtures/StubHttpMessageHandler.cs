@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.Fixtures;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.Fixtures;
 
 /// <summary>
 /// Test-only <see cref="HttpMessageHandler"/> that delegates every outbound

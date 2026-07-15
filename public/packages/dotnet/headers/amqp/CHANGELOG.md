@@ -1,4 +1,4 @@
-# Changelog — D2.Shared.Headers.Amqp
+# Changelog — DcsvIo.D2.Headers.Amqp
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.

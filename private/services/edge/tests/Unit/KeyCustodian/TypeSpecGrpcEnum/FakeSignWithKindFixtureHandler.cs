@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcEnum;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcEnum;
 
-using D2.Edge.Tests.TypeSpecGrpcEnum.Generated;
-using D2.Shared.Handler.Abstractions;
-using D2.Shared.Result;
+using DcsvIo.D2.Handler.Abstractions;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Generated;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// In-process stand-in for <see cref="ISignWithKindFixtureHandler"/> used by

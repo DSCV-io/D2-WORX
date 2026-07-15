@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Channels;
+namespace DcsvIo.D2.Messaging.RabbitMq.Channels;
 
 /// <summary>
 /// Configuration for the bounded shared channel pool used by the publisher

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Subscribing;
+namespace DcsvIo.D2.Messaging.RabbitMq.Subscribing;
 
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Messaging.RabbitMq.Topology;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Topology;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

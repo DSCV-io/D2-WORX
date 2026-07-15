@@ -225,7 +225,7 @@ export function emitConstraints(spec: FieldConstraintsSpec): EmitResult {
     " * objects (contacts + Location), the FE/BFF Zod schemas, and arbitrary",
   );
   sb.appendLine(
-    " * backend modules. Mirrors .NET `D2.Shared.Validation.Abstractions.FieldConstraints`",
+    " * backend modules. Mirrors .NET `DcsvIo.D2.Validation.Abstractions.FieldConstraints`",
   );
   sb.appendLine(
     " * byte-for-byte (single spec source emits both sides; cross-language drift",
@@ -273,7 +273,7 @@ function emitEnum(sb: StringBuilder, entry: EnumEntry): void {
   sb.appendLine("/**");
   sb.appendLine(` * ${escapeJsDoc(entry.doc)}`);
   sb.appendLine(
-    ` * Mirrors .NET \`D2.Shared.Validation.Abstractions.${entry.name}\` byte-for-byte`,
+    ` * Mirrors .NET \`DcsvIo.D2.Validation.Abstractions.${entry.name}\` byte-for-byte`,
   );
   sb.appendLine(
     " * over the wire (string-encoded member name in both runtimes).",

@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Auth.Outbound
+# DcsvIo.D2.Auth.Outbound
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -69,13 +69,13 @@ services
 
 #### The ambient-scope port + adapter (how the credential reaches the request holder)
 
-`ForwardedJwtCallCredentials` depends on the framework-free **`IAmbientRequestScopeAccessor`** port (declared in `D2.Shared.Auth.Abstractions`), which abstracts "get the current ambient request scope's `IServiceProvider`." The port living in abstractions — referenced by BOTH `D2.Shared.Auth.Outbound` and `D2.Shared.Auth.Http` — is what keeps this lib free of any AspNetCore framework reference (no `auth/http → auth/outbound` edge is needed). The concrete `IHttpContextAccessor`-backed adapter lives in whichever inbound transport binding the host uses — `HttpContextAmbientRequestScopeAccessor` in **`D2.Shared.Auth.Http`** (registered by **`AddD2AuthHttp()`**) and the sibling `GrpcHttpContextAmbientRequestScopeAccessor` in **`D2.Shared.Auth.Grpc`** (registered by **`AddD2AuthGrpc()`**), both alongside the request-scoped holder — symmetric: the inbound surface writes the validated bearer into `HttpContext.RequestServices`; the credential reads it back through the same door. Both transports self-wire the read-back door, so a host is covered whether it is HTTP-inbound (Edge: HTTP from the BFF in, gRPC to backends out) or gRPC-inbound (backend→backend), with no host-supplied adapter required. The two adapters are a deliberate tiny duplicate rather than a shared type (the two transport libs have no inter-csproj dep); on a dual-transport host they read the same door, so first-wins `TryAddSingleton` is harmless.
+`ForwardedJwtCallCredentials` depends on the framework-free **`IAmbientRequestScopeAccessor`** port (declared in `DcsvIo.D2.Auth.Abstractions`), which abstracts "get the current ambient request scope's `IServiceProvider`." The port living in abstractions — referenced by BOTH `DcsvIo.D2.Auth.Outbound` and `DcsvIo.D2.Auth.Http` — is what keeps this lib free of any AspNetCore framework reference (no `auth/http → auth/outbound` edge is needed). The concrete `IHttpContextAccessor`-backed adapter lives in whichever inbound transport binding the host uses — `HttpContextAmbientRequestScopeAccessor` in **`DcsvIo.D2.Auth.Http`** (registered by **`AddD2AuthHttp()`**) and the sibling `GrpcHttpContextAmbientRequestScopeAccessor` in **`DcsvIo.D2.Auth.Grpc`** (registered by **`AddD2AuthGrpc()`**), both alongside the request-scoped holder — symmetric: the inbound surface writes the validated bearer into `HttpContext.RequestServices`; the credential reads it back through the same door. Both transports self-wire the read-back door, so a host is covered whether it is HTTP-inbound (Edge: HTTP from the BFF in, gRPC to backends out) or gRPC-inbound (backend→backend), with no host-supplied adapter required. The two adapters are a deliberate tiny duplicate rather than a shared type (the two transport libs have no inter-csproj dep); on a dual-transport host they read the same door, so first-wins `TryAddSingleton` is harmless.
 
 `AddD2ForwardedJwtOutbound()` registers **neither** the holder nor the ambient adapter (the inbound transport owns both); it is the documented one-time host hook that pairs with `AddD2WorkloadCertificateOutbound()`. The credential reads no configuration (the token is ambient), so it adds no `AuthOutboundOptions` fields.
 
 ### Workload certificate — mTLS leaf presentation (the caller half of ADR-0023)
 
-This is the **caller (client) half** of the internal-mTLS workload-identity layer; the callee (server) half — Kestrel require-and-validate — lives in `D2.Shared.AspNetCore` (`AddD2MutualTls`). A workload holds its current leaf certificate in memory and proactively reissues it before expiry on a refresh-ahead loop, then presents it on outbound gRPC channels that opt in.
+This is the **caller (client) half** of the internal-mTLS workload-identity layer; the callee (server) half — Kestrel require-and-validate — lives in `DcsvIo.D2.AspNetCore` (`AddD2MutualTls`). A workload holds its current leaf certificate in memory and proactively reissues it before expiry on a refresh-ahead loop, then presents it on outbound gRPC channels that opt in.
 
 ```csharp
 // Composition root (opt-in, independent of AddD2AuthOutbound):
@@ -162,7 +162,7 @@ Single per-process slot. Atomic reference swap of an immutable snapshot holding 
 
 The `WorkloadLeafRefreshHostedService` polls every 30 s and proactively reissues when `NotAfter - now <= WorkloadLeafRefreshLeadTime`. On reissue failure with a still-valid cached leaf, the warning logs but the existing leaf continues to be presented until it actually expires.
 
-Concurrent first-callers (on-demand + the refresh hosted service) dedup to a single reissue via `Singleflight` from `D2.Shared.Resilience`. Each reissue also passes through a `CircuitBreaker` (5 consecutive transient failures → 30 s open) — after the threshold, callers fast-fail without waiting for an issuer timeout, stopping the hammering of a down issuer.
+Concurrent first-callers (on-demand + the refresh hosted service) dedup to a single reissue via `Singleflight` from `DcsvIo.D2.Resilience`. Each reissue also passes through a `CircuitBreaker` (5 consecutive transient failures → 30 s open) — after the threshold, callers fast-fail without waiting for an issuer timeout, stopping the hammering of a down issuer.
 
 ### TokenExchange cache
 
@@ -194,7 +194,7 @@ The backplane subscription is OPTIONAL. If `ICacheInvalidationBackplane` isn't r
 
 ## Telemetry
 
-Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../../telemetry/tags-source-gen/README.md) into `OutboundTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `OutboundTelemetryTags.TokenExchangeRequests.Outcome.CACHE_HIT` / etc. instead of bare string literals. The emitted file lands in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
+Tag-key + tag-value constants are emitted by [`DcsvIo.D2.Telemetry.Tags.SourceGen`](../../telemetry/tags-source-gen/README.md) into `OutboundTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `OutboundTelemetryTags.TokenExchangeRequests.Outcome.CACHE_HIT` / etc. instead of bare string literals. The emitted file lands in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
 
 | Counter                                                  | Tags                                                                                                                                                                                          | Purpose                                                                                                                                             |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -202,23 +202,23 @@ Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGe
 | `d2.auth.outbound.token_exchange.revoked_purges`         | —                                                                                                                                                                                             | Cache entries purged by session-revoked backplane events; one increment per purged key. Useful for verifying cluster-wide invalidation propagation. |
 | `d2.auth.outbound.workload_leaf.reissue_failures`        | `leaf_expires_at` (ISO-8601 UTC not-after of the stale cached leaf, or `none` when no cached leaf exists)                                                                                    | Workload leaf reissue failures. One increment per failed `WorkloadLeafClient.ReissueAsync` call.                                                    |
 
-`ActivitySource` and `Meter` both named `D2.Shared.Auth.Outbound`. Hosts wire via `.AddSource(OutboundTelemetry.ACTIVITY_SOURCE_NAME)` / `.AddMeter(OutboundTelemetry.METER_NAME)`.
+`ActivitySource` and `Meter` both named `DcsvIo.D2.Auth.Outbound`. Hosts wire via `.AddSource(OutboundTelemetry.ACTIVITY_SOURCE_NAME)` / `.AddMeter(OutboundTelemetry.METER_NAME)`.
 
 ---
 
 ## Bootstrap order
 
-The four outbound factors are independent composition roots — a host wires whichever it needs, in any order relative to each other. Cross-process workload identity is supplied by the mTLS channel (`AddD2WorkloadCertificateOutbound` + the refresh-ahead leaf), so a host's outbound calls to Edge (keyring / JWKS fetches) present a client certificate; the forwarded transaction-token is ambient on each request (no acquire step); propagated context is opportunistic and reads the same ambient scope. None of the four factors imposes a startup-ordering requirement on the inbound `D2.Shared.Auth` lib.
+The four outbound factors are independent composition roots — a host wires whichever it needs, in any order relative to each other. Cross-process workload identity is supplied by the mTLS channel (`AddD2WorkloadCertificateOutbound` + the refresh-ahead leaf), so a host's outbound calls to Edge (keyring / JWKS fetches) present a client certificate; the forwarded transaction-token is ambient on each request (no acquire step); propagated context is opportunistic and reads the same ambient scope. None of the four factors imposes a startup-ordering requirement on the inbound `DcsvIo.D2.Auth` lib.
 
 ---
 
 ## References
 
-- [`D2.Shared.Auth`](../core/README.md) — inbound auth runtime (JWT validator + session liveness + `AddD2Auth` composition root); transport bindings in `D2.Shared.Auth.Http` + `D2.Shared.Auth.Grpc` siblings
-- [`D2.Shared.Auth.Abstractions`](../abstractions/README.md) — `Audiences.*` / `JwtClaimTypes.*` constants + the `IForwardedJwtAccessor` holder + the `IAmbientRequestScopeAccessor` port
-- [`D2.Shared.Context.Abstractions`](../../context/abstractions/README.md) — `IRequestContext.ToPropagatedContext()`, the projection `PropagatedContextClientInterceptor` encodes onto the outbound header
-- [`D2.Shared.Caching.Abstractions`](../../caching/abstractions/README.md) — `ILocalCache` + `ICacheInvalidationBackplane` interfaces
-- [`D2.Shared.Resilience`](../../resilience/README.md) — `Singleflight` for fetch-path deduplication + `CircuitBreaker` to fast-fail during sustained outage
+- [`DcsvIo.D2.Auth`](../core/README.md) — inbound auth runtime (JWT validator + session liveness + `AddD2Auth` composition root); transport bindings in `DcsvIo.D2.Auth.Http` + `DcsvIo.D2.Auth.Grpc` siblings
+- [`DcsvIo.D2.Auth.Abstractions`](../abstractions/README.md) — `Audiences.*` / `JwtClaimTypes.*` constants + the `IForwardedJwtAccessor` holder + the `IAmbientRequestScopeAccessor` port
+- [`DcsvIo.D2.Context.Abstractions`](../../context/abstractions/README.md) — `IRequestContext.ToPropagatedContext()`, the projection `PropagatedContextClientInterceptor` encodes onto the outbound header
+- [`DcsvIo.D2.Caching.Abstractions`](../../caching/abstractions/README.md) — `ILocalCache` + `ICacheInvalidationBackplane` interfaces
+- [`DcsvIo.D2.Resilience`](../../resilience/README.md) — `Singleflight` for fetch-path deduplication + `CircuitBreaker` to fast-fail during sustained outage
 - [ADR-0022](../../../../../public/docs/adrs/0022-service-auth-mint-once-forward.md) — mint-once-at-the-Edge, forward-unchanged service-to-service model; token exchange repurposed to the boundary mint + exceptions
 - [ADR-0023](../../../../../public/docs/adrs/0023-mtls-workload-identity.md) — mTLS workload identity for cross-process hops
 - [ADR-0025](../../../../../public/docs/adrs/0025-request-context-establishment.md) — `Origin` / `ImmediateCaller` / `CallPath` establishment model; `PropagatedContextClientInterceptor` is the outbound half that carries `CallPath` across gRPC hops

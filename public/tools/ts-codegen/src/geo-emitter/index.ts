@@ -35,7 +35,7 @@ import {
   emitTimezoneCode,
 } from "./wrapper-code-emit.js";
 
-// Catalog DATA emitters (write to @d2/geo-default/src/generated/).
+// Catalog DATA emitters (write to @dcsv-io/d2-geo-default/src/generated/).
 import { emitCountryData } from "./default/country-data-emit.js";
 import { emitCurrencyData } from "./default/currency-data-emit.js";
 import { emitGeoDataInitializer } from "./default/geo-data-initializer-emit.js";
@@ -50,9 +50,9 @@ import { emitTimezoneData } from "./default/timezone-data-emit.js";
  * `tools/ts-codegen/src/orchestrator.ts` calls — loads the seven
  * `contracts/geo/*.spec.json` Tier-2 files, validates them (catalog
  * uniqueness, vocabulary discipline), then emits both:
- *   - TYPE files into `@d2/geo-abstractions/src/generated/` (record shapes,
+ *   - TYPE files into `@dcsv-io/d2-geo-abstractions/src/generated/` (record shapes,
  *     branded code types, Zod schemas, closed-set validation tables); and
- *   - DATA files into `@d2/geo-default/src/generated/` (per-catalog
+ *   - DATA files into `@dcsv-io/d2-geo-default/src/generated/` (per-catalog
  *     `Record<Code, Entity>` + nested const-object hierarchies for
  *     Subdivisions / Locales / Timezones).
  *
@@ -195,7 +195,7 @@ export function runGeoEmit(force: boolean): readonly EmitDiagnostic[] {
   // mtime gates the `isOutputUpToDate` short-circuit above.
   outputs.push(emitGeoCatalog(context));
 
-  // Catalog DATA emission into @d2/geo-default/src/generated/. The
+  // Catalog DATA emission into @dcsv-io/d2-geo-default/src/generated/. The
   // Default-target outputs go into a separate package directory, so they
   // don't share the up-to-date mtime gate (the geo-catalog.g.ts in
   // geo-abstractions is what the gate checks). Empty arrays are returned

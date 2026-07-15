@@ -9,11 +9,11 @@ import {
   unauthorized,
   serviceUnavailable,
   unhandledException,
-} from "@d2/result";
-import type { D2ResultProto } from "@d2/protos";
+} from "@dcsv-io/d2-result";
+import type { D2ResultProto } from "@dcsv-io/d2-protos";
 import { Metadata } from "@grpc/grpc-js";
 import type { ServiceError, ClientUnaryCall, CallOptions } from "@grpc/grpc-js";
-import { TK } from "@d2/i18n-keys";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import { d2ResultFromProto } from "./d2-result-from-proto.js";
 
 // gRPC status codes — subset used for transient classification and

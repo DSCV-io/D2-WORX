@@ -111,8 +111,8 @@ shared Redis lock surface.
 > **Deferred mTLS machinery to build here.** The mTLS workload-identity layer shipped
 > dev-first as a standalone deliverable: KeyCustodian is the internal CA (generate /
 > seed / issue / rotate / compromise) and the shared transport plumbing exists
-> (server require+validate in `D2.Shared.AspNetCore`, client leaf-present + refresh-ahead
-> in `D2.Shared.Auth.Outbound`, the `D2.Shared.WorkloadIdentity` SPIFFE grammar), proven
+> (server require+validate in `DcsvIo.D2.AspNetCore`, client leaf-present + refresh-ahead
+> in `DcsvIo.D2.Auth.Outbound`, the `DcsvIo.D2.Spiffe` SPIFFE grammar), proven
 > end-to-end on a local harness. **Four cross-process pieces remain for the Edge build:**
 > (1) ~~expose `IssueWorkloadCertificate` over the gRPC contract~~ — **BUILT + proven in
 > isolation (0026)**: the `IssueWorkloadCertificate` gRPC method (on its own
@@ -213,7 +213,7 @@ Every new Edge service (Phase 3+) verifies the following at registration time:
 - **Encryption** — sensitive payloads on RabbitMQ marked via the spec's
   `encryption` field per
   [messaging-source-gen/README.md](../../public/packages/dotnet/messaging-source-gen/README.md);
-  auto-resolves the keyring via `D2.Shared.Encryption`.
+  auto-resolves the keyring via `DcsvIo.D2.Encryption`.
 
 ---
 

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan.IGetRotationPlanHandler;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan.IGetRotationPlanHandler;
 using I = GetRotationPlanInput;
 using O = GetRotationPlanOutput;
 

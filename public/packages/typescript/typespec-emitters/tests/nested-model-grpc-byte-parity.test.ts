@@ -31,8 +31,8 @@ import {
   parseResultPredicate,
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
-} from "@d2/typespec-decorators";
-import type { PredicateNode } from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
+import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 import {
   walkModel,
   type FieldInfo,
@@ -49,7 +49,8 @@ import {
 import { emitCsharpDtos } from "../src/lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "../src/lib/ts-dto-emitter.js";
 
-const CLIENTS_NS = "D2.Edge.Tests.TypeSpecGrpcPredicate.Generated";
+const CLIENTS_NS =
+  "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated";
 const SPEC = "contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
 
 const V2_PROTO_NS = "D2.Services.Protos.PredicateFixturesV2.V1";
@@ -71,10 +72,10 @@ function readProto(name: string): string {
 }
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -82,7 +83,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
   typespecFileFolder: "lib",
 });
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -344,7 +345,7 @@ describe("byteParity_PlaceOrderV2FixtureClientMappers", () => {
       "internal global::D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderFixtureLine ToProtoPlaceOrderFixtureLine()",
     );
     expect(m).toContain(
-      "internal global::D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureLine ToPlaceOrderFixtureLine()",
+      "internal global::DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureLine ToPlaceOrderFixtureLine()",
     );
     expect(m).toContain("using System.Linq;");
   });

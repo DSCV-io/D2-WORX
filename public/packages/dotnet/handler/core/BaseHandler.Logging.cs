@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler;
+namespace DcsvIo.D2.Handler;
 
 using System;
 using Microsoft.Extensions.Logging;

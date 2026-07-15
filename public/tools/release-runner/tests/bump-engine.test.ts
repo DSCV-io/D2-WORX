@@ -74,7 +74,9 @@ function fixedSignal(signal: BreakingSignal): BreakingSignalProvider {
 
 describe("computeBumpPlans — empty input", () => {
   it("returns empty array for no commits", () => {
-    const pkgs = [makeNpmPkg("@d2/foo", "public/packages/typescript/foo")];
+    const pkgs = [
+      makeNpmPkg("@dcsv-io/d2-foo", "public/packages/typescript/foo"),
+    ];
     expect(computeBumpPlans([], pkgs)).toHaveLength(0);
   });
 
@@ -88,7 +90,9 @@ describe("computeBumpPlans — empty input", () => {
   });
 
   it("returns no plans when no commit touches a consumable package", () => {
-    const pkgs = [makeNpmPkg("@d2/foo", "public/packages/typescript/foo")];
+    const pkgs = [
+      makeNpmPkg("@dcsv-io/d2-foo", "public/packages/typescript/foo"),
+    ];
     const commits = [
       makeCommit("feat: add CI config", ["infra/ci/workflow.yml"]),
     ];
@@ -96,13 +100,17 @@ describe("computeBumpPlans — empty input", () => {
   });
 
   it("returns no plans for commits with unrecognized types (no file match)", () => {
-    const pkgs = [makeNpmPkg("@d2/foo", "public/packages/typescript/foo")];
+    const pkgs = [
+      makeNpmPkg("@dcsv-io/d2-foo", "public/packages/typescript/foo"),
+    ];
     const commits = [makeCommit("chore: cleanup", ["docs/README.md"])];
     expect(computeBumpPlans(commits, pkgs)).toHaveLength(0);
   });
 
   it("returns no plans for commits with unrecognized types even when files touch a package", () => {
-    const pkgs = [makeNpmPkg("@d2/foo", "public/packages/typescript/foo")];
+    const pkgs = [
+      makeNpmPkg("@dcsv-io/d2-foo", "public/packages/typescript/foo"),
+    ];
     const commits = [
       makeCommit("chore: update comments", [
         "public/packages/typescript/foo/src/index.ts",
@@ -118,7 +126,7 @@ describe("computeBumpPlans — empty input", () => {
 
 describe("computeBumpPlans — pre-stable (0.x)", () => {
   const pkg = makeNpmPkg(
-    "@d2/result",
+    "@dcsv-io/d2-result",
     "public/packages/typescript/result",
     "0.1.0",
   );
@@ -232,7 +240,7 @@ describe("computeBumpPlans — pre-stable (0.x)", () => {
 
 describe("computeBumpPlans — stable (≥1.0.0)", () => {
   const stablePkg = makeNpmPkg(
-    "@d2/result",
+    "@dcsv-io/d2-result",
     "public/packages/typescript/result",
     "1.2.3",
   );
@@ -320,7 +328,7 @@ describe("computeBumpPlans — stable (≥1.0.0)", () => {
 
   it("≥1 break WITHOUT valve on PRE-STABLE package → no error (only stable packages throw)", () => {
     const preStablePkg = makeNpmPkg(
-      "@d2/foo",
+      "@dcsv-io/d2-foo",
       "public/packages/typescript/foo",
       "0.5.0",
     );
@@ -350,7 +358,11 @@ describe("computeBumpPlans — stable (≥1.0.0)", () => {
 // ---------------------------------------------------------------------------
 
 describe("computeBumpPlans — aggregation (highest bump wins)", () => {
-  const pkg = makeNpmPkg("@d2/foo", "public/packages/typescript/foo", "0.1.0");
+  const pkg = makeNpmPkg(
+    "@dcsv-io/d2-foo",
+    "public/packages/typescript/foo",
+    "0.1.0",
+  );
   const file = "public/packages/typescript/foo/src/index.ts";
 
   it("feat + fix → MINOR (feat wins over patch)", () => {
@@ -398,7 +410,7 @@ describe("computeBumpPlans — aggregation (highest bump wins)", () => {
 
   it("stable: break + feat → MAJOR (break wins)", () => {
     const stablePkg = makeNpmPkg(
-      "@d2/foo",
+      "@dcsv-io/d2-foo",
       "public/packages/typescript/foo",
       "1.0.0",
     );
@@ -426,8 +438,8 @@ describe("computeBumpPlans — aggregation (highest bump wins)", () => {
 
 describe("computeBumpPlans — path-containment mapping", () => {
   it("file in package subtree maps to that package", () => {
-    const pkgA = makeNpmPkg("@d2/a", "public/packages/typescript/a");
-    const pkgB = makeNpmPkg("@d2/b", "public/packages/typescript/b");
+    const pkgA = makeNpmPkg("@dcsv-io/d2-a", "public/packages/typescript/a");
+    const pkgB = makeNpmPkg("@dcsv-io/d2-b", "public/packages/typescript/b");
     const commits = [
       makeCommit("feat: change in a", [
         "public/packages/typescript/a/src/index.ts",
@@ -436,11 +448,11 @@ describe("computeBumpPlans — path-containment mapping", () => {
 
     const plans = computeBumpPlans(commits, [pkgA, pkgB]);
     expect(plans).toHaveLength(1);
-    expect(plans[0]?.pkg.name).toBe("@d2/a");
+    expect(plans[0]?.pkg.name).toBe("@dcsv-io/d2-a");
   });
 
   it("file in non-consumable path (tooling) maps to nothing — no bump", () => {
-    const pkg = makeNpmPkg("@d2/a", "public/packages/typescript/a");
+    const pkg = makeNpmPkg("@dcsv-io/d2-a", "public/packages/typescript/a");
     const commits = [
       makeCommit("feat: update CI script", ["tools/scripts/deploy.sh"]),
     ];
@@ -449,7 +461,7 @@ describe("computeBumpPlans — path-containment mapping", () => {
   });
 
   it("file under service path (non-consumable) maps to nothing", () => {
-    const pkg = makeNpmPkg("@d2/a", "public/packages/typescript/a");
+    const pkg = makeNpmPkg("@dcsv-io/d2-a", "public/packages/typescript/a");
     const commits = [
       makeCommit("feat: service change", ["private/services/edge/src/main.ts"]),
     ];
@@ -464,7 +476,7 @@ describe("computeBumpPlans — path-containment mapping", () => {
     // the host wins (even if the shell dir would be more specific — but
     // the shell is NOT in the consumable index, so only the host matches).
     const hostPkg = makeNugetPkg(
-      "D2.Shared.Result",
+      "DcsvIo.D2.Result",
       "public/packages/dotnet/result/core",
       "0.1.0",
     );
@@ -480,7 +492,7 @@ describe("computeBumpPlans — path-containment mapping", () => {
 
     const plans = computeBumpPlans(commits, [hostPkg]);
     expect(plans).toHaveLength(1);
-    expect(plans[0]?.pkg.name).toBe("D2.Shared.Result");
+    expect(plans[0]?.pkg.name).toBe("DcsvIo.D2.Result");
   });
 
   it("SourceGen shell in its own sibling directory does NOT map to host if shell dir is a separate subtree", () => {
@@ -490,7 +502,7 @@ describe("computeBumpPlans — path-containment mapping", () => {
     // "result/envelope-source-gen" which is NOT a prefix of the host's
     // "result/core" path).
     const hostPkg = makeNugetPkg(
-      "D2.Shared.Result",
+      "DcsvIo.D2.Result",
       "public/packages/dotnet/result/core",
       "0.1.0",
     );
@@ -511,8 +523,8 @@ describe("computeBumpPlans — path-containment mapping", () => {
   });
 
   it("commit touching multiple packages bumps all of them independently", () => {
-    const pkgA = makeNpmPkg("@d2/a", "public/packages/typescript/a");
-    const pkgB = makeNpmPkg("@d2/b", "public/packages/typescript/b");
+    const pkgA = makeNpmPkg("@dcsv-io/d2-a", "public/packages/typescript/a");
+    const pkgB = makeNpmPkg("@dcsv-io/d2-b", "public/packages/typescript/b");
     const commits = [
       makeCommit("fix: cross-cutting fix", [
         "public/packages/typescript/a/src/index.ts",
@@ -524,12 +536,12 @@ describe("computeBumpPlans — path-containment mapping", () => {
     expect(plans).toHaveLength(2);
 
     const names = plans.map((p) => p.pkg.name).sort();
-    expect(names).toEqual(["@d2/a", "@d2/b"]);
+    expect(names).toEqual(["@dcsv-io/d2-a", "@dcsv-io/d2-b"]);
     expect(plans.every((p) => p.bump === "patch")).toBe(true);
   });
 
   it("Windows-style backslash paths normalize correctly", () => {
-    const pkg = makeNpmPkg("@d2/a", "public/packages/typescript/a");
+    const pkg = makeNpmPkg("@dcsv-io/d2-a", "public/packages/typescript/a");
     // Simulate a commit from a Windows git client reporting backslash paths.
     const commits = [
       makeCommit("feat: change", [
@@ -549,9 +561,13 @@ describe("computeBumpPlans — path-containment mapping", () => {
 
 describe("computeBumpPlans — multi-package run", () => {
   it("returns independent plans for each touched package", () => {
-    const pkgA = makeNpmPkg("@d2/a", "public/packages/typescript/a", "0.1.0");
+    const pkgA = makeNpmPkg(
+      "@dcsv-io/d2-a",
+      "public/packages/typescript/a",
+      "0.1.0",
+    );
     const pkgB = makeNugetPkg(
-      "D2.Shared.B",
+      "DcsvIo.D2.B",
       "public/packages/dotnet/b",
       "0.2.0",
     );
@@ -566,8 +582,8 @@ describe("computeBumpPlans — multi-package run", () => {
     const plans = computeBumpPlans(commits, [pkgA, pkgB]);
     expect(plans).toHaveLength(2);
 
-    const planA = plans.find((p) => p.pkg.name === "@d2/a");
-    const planB = plans.find((p) => p.pkg.name === "D2.Shared.B");
+    const planA = plans.find((p) => p.pkg.name === "@dcsv-io/d2-a");
+    const planB = plans.find((p) => p.pkg.name === "DcsvIo.D2.B");
 
     expect(planA?.bump).toBe("minor");
     expect(planA?.newVersion).toBe("0.2.0");
@@ -577,11 +593,11 @@ describe("computeBumpPlans — multi-package run", () => {
 
   it("packages with no qualifying commits are omitted from results", () => {
     const touched = makeNpmPkg(
-      "@d2/touched",
+      "@dcsv-io/d2-touched",
       "public/packages/typescript/touched",
     );
     const untouched = makeNpmPkg(
-      "@d2/untouched",
+      "@dcsv-io/d2-untouched",
       "public/packages/typescript/untouched",
     );
 
@@ -593,7 +609,7 @@ describe("computeBumpPlans — multi-package run", () => {
 
     const plans = computeBumpPlans(commits, [touched, untouched]);
     expect(plans).toHaveLength(1);
-    expect(plans[0]?.pkg.name).toBe("@d2/touched");
+    expect(plans[0]?.pkg.name).toBe("@dcsv-io/d2-touched");
   });
 });
 
@@ -603,7 +619,7 @@ describe("computeBumpPlans — multi-package run", () => {
 
 describe("computeBumpPlans — single package input", () => {
   it("only produces plans for supplied packages (caller pre-filters)", () => {
-    const pkgA = makeNpmPkg("@d2/a", "public/packages/typescript/a");
+    const pkgA = makeNpmPkg("@dcsv-io/d2-a", "public/packages/typescript/a");
     const commits = [
       makeCommit("feat: change", ["public/packages/typescript/a/src/index.ts"]),
     ];
@@ -611,7 +627,7 @@ describe("computeBumpPlans — single package input", () => {
     // Caller supplies only pkgA (simulating --package filter applied upstream).
     const plans = computeBumpPlans(commits, [pkgA]);
     expect(plans).toHaveLength(1);
-    expect(plans[0]?.pkg.name).toBe("@d2/a");
+    expect(plans[0]?.pkg.name).toBe("@dcsv-io/d2-a");
   });
 });
 
@@ -620,7 +636,7 @@ describe("computeBumpPlans — single package input", () => {
 // ---------------------------------------------------------------------------
 
 describe("computeBumpPlans — adversarial inputs", () => {
-  const pkg = makeNpmPkg("@d2/a", "public/packages/typescript/a");
+  const pkg = makeNpmPkg("@dcsv-io/d2-a", "public/packages/typescript/a");
   const file = "public/packages/typescript/a/src/index.ts";
 
   it("completely blank commit message produces no bump", () => {
@@ -657,7 +673,7 @@ describe("computeBumpPlans — adversarial inputs", () => {
 
   it("malformed version string in package descriptor throws on first touch", () => {
     const badPkg = makeNpmPkg(
-      "@d2/bad",
+      "@dcsv-io/d2-bad",
       "public/packages/typescript/bad",
       "not-a-version",
     );
@@ -676,7 +692,11 @@ describe("computeBumpPlans — adversarial inputs", () => {
 // ---------------------------------------------------------------------------
 
 describe("computeBumpPlans — breaking entry deduplication", () => {
-  const pkg = makeNpmPkg("@d2/a", "public/packages/typescript/a", "0.1.0");
+  const pkg = makeNpmPkg(
+    "@dcsv-io/d2-a",
+    "public/packages/typescript/a",
+    "0.1.0",
+  );
   const file = "public/packages/typescript/a/src/index.ts";
 
   it("duplicate WIRE-BREAKING descriptions across commits are deduplicated", () => {
@@ -788,7 +808,7 @@ describe("computeBumpPlans — prerelease-labelled currentVersion", () => {
   it("feat: commit on a prerelease-labelled package produces a plan without throwing", () => {
     // Regression: parseVersion crashed on "1.0.0-alpha.3" — parseVersionLoose must be used.
     const pkg = makeNpmPkg(
-      "@d2/a",
+      "@dcsv-io/d2-a",
       "public/packages/typescript/a",
       "1.0.0-alpha.3",
     );
@@ -807,7 +827,7 @@ describe("computeBumpPlans — prerelease-labelled currentVersion", () => {
     // A breaking change on a prerelease-labelled 1.0.0-alpha version bumps MINOR, not
     // MAJOR — the package is pre-stable (isPreStable) so break→MINOR, not break→MAJOR.
     const pkg = makeNpmPkg(
-      "@d2/a",
+      "@dcsv-io/d2-a",
       "public/packages/typescript/a",
       "1.0.0-alpha.3",
     );
@@ -830,7 +850,7 @@ describe("computeBumpPlans — prerelease-labelled currentVersion", () => {
     // because it is pre-stable. Before the fix, parseVersion crashed first anyway;
     // after the fix, isPreStable correctly returns true → no throw.
     const pkg = makeNpmPkg(
-      "@d2/a",
+      "@dcsv-io/d2-a",
       "public/packages/typescript/a",
       "1.0.0-alpha.3",
     );
@@ -849,7 +869,7 @@ describe("computeBumpPlans — prerelease-labelled currentVersion", () => {
   it("fix: commit on a 0.x package with prerelease label produces PATCH", () => {
     // Edge: "0.1.0-beta.1" — both MAJOR===0 and label; isPreStable → true; fix → PATCH.
     const pkg = makeNpmPkg(
-      "@d2/a",
+      "@dcsv-io/d2-a",
       "public/packages/typescript/a",
       "0.1.0-beta.1",
     );

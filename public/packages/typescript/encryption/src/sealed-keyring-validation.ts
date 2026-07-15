@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { SealedFrame } from "@d2/encryption-abstractions";
+import { SealedFrame } from "@dcsv-io/d2-encryption-abstractions";
 
 /**
  * Shared constructor-time validation for the sealed recipient keyrings — the

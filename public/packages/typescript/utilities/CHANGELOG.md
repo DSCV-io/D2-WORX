@@ -1,4 +1,4 @@
-# Changelog — @d2/utilities
+# Changelog — @dcsv-io/d2-utilities
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.
@@ -15,6 +15,6 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
   ms-timestamp prefix + 74 random bits, version/variant set), with an optional
   injectable `now: () => number` clock for deterministic tests. Homed here as the
   catalog's UUID helper (alongside `UUID_RE`); relocated out of
-  `@d2/messaging-rabbitmq`, which now consumes it from this package.
+  `@dcsv-io/d2-messaging-rabbitmq`, which now consumes it from this package.
 
 ### Fixed

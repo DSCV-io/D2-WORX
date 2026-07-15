@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.I18n.SourceGen;
+namespace DcsvIo.D2.I18n.SourceGen;
 
 /// <summary>
 /// Result of <see cref="KeyDecomposer.Decompose(string)"/>. Either a valid

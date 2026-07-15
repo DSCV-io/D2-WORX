@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
 
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 /// <summary>

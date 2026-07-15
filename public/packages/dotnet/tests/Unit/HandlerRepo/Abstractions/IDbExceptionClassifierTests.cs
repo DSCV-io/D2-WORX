@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.HandlerRepo.Abstractions;
+namespace DcsvIo.D2.Tests.Unit.HandlerRepo.Abstractions;
 
 using System;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Handler.Repo.Abstractions;
+using DcsvIo.D2.Handler.Repo.Abstractions;
 using Xunit;
 
 /// <summary>

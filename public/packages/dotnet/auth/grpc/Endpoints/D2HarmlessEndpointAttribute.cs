@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Endpoints;
+namespace DcsvIo.D2.Auth.Grpc.Endpoints;
 
 /// <summary>
 /// Declares that a gRPC method (or every method on a service class) is a

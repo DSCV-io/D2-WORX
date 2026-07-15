@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EntityFrameworkCore.Postgres;
+namespace DcsvIo.D2.EntityFrameworkCore.Postgres;
 
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -112,7 +112,7 @@ public sealed partial class AdvisoryLockMigrator<TContext> : IHostedService
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     // =========================================================================
-    // Internal helpers (test seam — InternalsVisibleTo D2.Shared.Tests)
+    // Internal helpers (test seam — InternalsVisibleTo DcsvIo.D2.Tests)
     // =========================================================================
 
     /// <summary>

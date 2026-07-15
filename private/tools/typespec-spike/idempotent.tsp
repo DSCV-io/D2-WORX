@@ -21,7 +21,7 @@
 // completeness of the GATE, not the business logic or the distributed cache.
 // ============================================================================
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 
 using D2;
 

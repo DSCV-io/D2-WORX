@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EntityFrameworkCore.Postgres;
+namespace DcsvIo.D2.EntityFrameworkCore.Postgres;
 
-using D2.Shared.Time.EfCore;
+using DcsvIo.D2.Time.EfCore;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>

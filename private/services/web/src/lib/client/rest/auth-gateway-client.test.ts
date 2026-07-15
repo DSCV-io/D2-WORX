@@ -2,9 +2,9 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n-keys";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { D2Result, ok, fail } from "@d2/result";
+import { D2Result, ok, fail } from "@dcsv-io/d2-result";
 
 vi.mock("$lib/shared/rest/gateway-response.js", () => ({
   executeFetch: vi.fn(),

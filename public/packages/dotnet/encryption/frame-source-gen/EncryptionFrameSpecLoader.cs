@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EncryptionFrame.SourceGen;
+namespace DcsvIo.D2.EncryptionFrame.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>Parses <c>encryption-frame.spec.json</c>.</summary>
 internal static class EncryptionFrameSpecLoader

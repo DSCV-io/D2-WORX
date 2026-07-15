@@ -4,14 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.App.Application.Handlers.Queries.PingAudit;
+namespace DcsvIo.D2.Private.Audit.App.Application.Handlers.Queries.PingAudit;
 
-using D2.Shared.Handler;
-using D2.Shared.Result;
-
-using H = D2.Audit.App.Application.Handlers.Queries.PingAudit.IPingAuditHandler;
-using I = D2.Audit.Client.Ping.PingAuditInput;
-using O = D2.Audit.Client.Ping.PingAuditOutput;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Result;
+using H = DcsvIo.D2.Private.Audit.App.Application.Handlers.Queries.PingAudit.IPingAuditHandler;
+using I = DcsvIo.D2.Private.Audit.Client.Ping.PingAuditInput;
+using O = DcsvIo.D2.Private.Audit.Client.Ping.PingAuditOutput;
 
 /// <summary>
 /// Multiproc stub NIE handler for <c>PingAudit</c>. Transport already

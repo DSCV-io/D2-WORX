@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Jwks;
+namespace DcsvIo.D2.Tests.Unit.Auth.Jwks;
 
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
 using Microsoft.IdentityModel.Tokens;
 using Xunit;
 

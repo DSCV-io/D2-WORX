@@ -27,7 +27,7 @@ import {
 } from "../src/index.js";
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -61,7 +61,7 @@ beforeAll(async () => {
     libraries: [D2DecoratorTestLibrary, HttpTestLibrary],
   });
   runner = createTestWrapper(host, {
-    autoImports: ["@d2/typespec-decorators"],
+    autoImports: ["@dcsv-io/d2-typespec-decorators"],
     autoUsings: ["D2"],
   });
 });
@@ -70,7 +70,7 @@ function diagCodes(): string[] {
   return runner.program.diagnostics.map((d) => d.code);
 }
 
-const Q = (code: string): string => `@d2/typespec-decorators/${code}`;
+const Q = (code: string): string => `@dcsv-io/d2-typespec-decorators/${code}`;
 
 /** Compile an op whose output is PlaceOrderOutput and that carries one predicate. */
 async function compileWithPredicate(predicateArg: string): Promise<void> {

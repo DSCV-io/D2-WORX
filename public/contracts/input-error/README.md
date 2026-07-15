@@ -8,8 +8,8 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/`](../../public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/README.md) (Roslyn source-gen → `InputErrorWireShape` property-name constants in `D2.Shared.Result`)
-- **TypeScript** — [`tools/ts-codegen` › `wire-shape-emit.ts`](../../tools/ts-codegen/README.md) (`runInputErrorEmit` → `InputErrorWireShape` property-name constants in `@d2/result`)
+- **.NET** — [`public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/`](../../public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/README.md) (Roslyn source-gen → `InputErrorWireShape` property-name constants in `DcsvIo.D2.Result`)
+- **TypeScript** — [`tools/ts-codegen` › `wire-shape-emit.ts`](../../tools/ts-codegen/README.md) (`runInputErrorEmit` → `InputErrorWireShape` property-name constants in `@dcsv-io/d2-result`)
 
 ## See also
 

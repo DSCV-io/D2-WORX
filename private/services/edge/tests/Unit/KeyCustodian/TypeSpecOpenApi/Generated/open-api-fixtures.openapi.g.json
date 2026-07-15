@@ -238,7 +238,7 @@
     }
   },
   "x-d2-generated-by": {
-    "emitter": "@d2/typespec-emitters",
+    "emitter": "@dcsv-io/d2-typespec-emitters",
     "note": "x-d2-* policy extensions layered on the stock @typespec/openapi3 document. Manual edits will be lost on rebuild."
   }
 }

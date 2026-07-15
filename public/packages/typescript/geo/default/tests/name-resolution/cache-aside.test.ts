@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { CountryCode } from "@d2/geo-abstractions";
+import { CountryCode } from "@dcsv-io/d2-geo-abstractions";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { CountryLookup } from "../../src/countries.js";

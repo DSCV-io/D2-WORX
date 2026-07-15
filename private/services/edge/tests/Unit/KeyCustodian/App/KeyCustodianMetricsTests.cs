@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Diagnostics.Metrics;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
-using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Edge.KeyCustodian.Client.Jwks;
-using D2.Shared.Handler.Abstractions;
+using DcsvIo.D2.Handler.Abstractions;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks;
 
 /// <summary>
 /// Tests covering domain-level observability and option-validation markers:
@@ -198,7 +198,7 @@ public sealed class KeyCustodianMetricsTests
     public void KeyCustodianMetrics_MeterName_PinsOperationalContract()
     {
         KeyCustodianMetrics.SR_Meter.Name.Should().Be(KeyCustodianMetrics.METER_NAME);
-        KeyCustodianMetrics.METER_NAME.Should().Be("D2.Edge.KeyCustodian");
+        KeyCustodianMetrics.METER_NAME.Should().Be("DcsvIo.D2.Private.Edge.KeyCustodian");
     }
 
     // -----------------------------------------------------------------------

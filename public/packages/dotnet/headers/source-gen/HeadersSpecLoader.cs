@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Headers.SourceGen;
+namespace DcsvIo.D2.Headers.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Pure logic for parsing <c>headers.spec.json</c> into a

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Headers.SourceGen;
+namespace DcsvIo.D2.Headers.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by <see cref="HeadersGenerator"/>.

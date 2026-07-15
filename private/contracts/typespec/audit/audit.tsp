@@ -7,7 +7,7 @@
 // process serves gRPC only. Product Audit store / RMQ consumer is OUT OF SCOPE
 // here (tracked on the product roadmap).
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 import "@typespec/http";
 import "@typespec/versioning";
 
@@ -15,9 +15,9 @@ using D2;
 using Http;
 using TypeSpec.Versioning;
 
-@versioned(D2.Audit.Versions)
-namespace D2.Audit {
-  /** Stability-channel versions for the D2.Audit wire surface. */
+@versioned(DcsvIo.D2.Private.Audit.Versions)
+namespace DcsvIo.D2.Private.Audit {
+  /** Stability-channel versions for the DcsvIo.D2.Private.Audit wire surface. */
   enum Versions {
     v2alpha: "v2alpha",
   }

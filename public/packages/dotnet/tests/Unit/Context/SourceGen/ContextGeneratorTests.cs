@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Context.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Context.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Context.SourceGen;
+using DcsvIo.D2.Context.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -27,7 +27,7 @@ public sealed class ContextGeneratorTests
     private const string _AUTH_SPEC = """
     {
       "name": "IAuthContext",
-      "namespace": "D2.Shared.AuthContext.Abstractions",
+      "namespace": "DcsvIo.D2.AuthContext.Abstractions",
       "extends": null,
       "sections": [
         {
@@ -44,8 +44,8 @@ public sealed class ContextGeneratorTests
     private const string _REQUEST_SPEC = """
     {
       "name": "IRequestContext",
-      "namespace": "D2.Shared.Context.Abstractions",
-      "extends": "D2.Shared.AuthContext.Abstractions.IAuthContext",
+      "namespace": "DcsvIo.D2.Context.Abstractions",
+      "extends": "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
       "sections": [
         {
           "name": "Tracing",
@@ -58,8 +58,8 @@ public sealed class ContextGeneratorTests
     private const string _REQUEST_SPEC_WITH_ESTABLISHMENT = """
     {
       "name": "IRequestContext",
-      "namespace": "D2.Shared.Context.Abstractions",
-      "extends": "D2.Shared.AuthContext.Abstractions.IAuthContext",
+      "namespace": "DcsvIo.D2.Context.Abstractions",
+      "extends": "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
       "sections": [
         {
           "name": "Tracing",
@@ -87,7 +87,7 @@ public sealed class ContextGeneratorTests
     public void Generator_AuthContextAbstractionsAssembly_EmitsIAuthContextOnly()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.AuthContext.Abstractions",
+            assemblyName: "DcsvIo.D2.AuthContext.Abstractions",
             authSpec: _AUTH_SPEC,
             requestSpec: _REQUEST_SPEC);
 
@@ -102,7 +102,7 @@ public sealed class ContextGeneratorTests
     public void Generator_ContextAbstractionsAssembly_EmitsIRequestContextWithExtendsClause()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Context.Abstractions",
+            assemblyName: "DcsvIo.D2.Context.Abstractions",
             authSpec: _AUTH_SPEC,
             requestSpec: _REQUEST_SPEC);
 
@@ -111,7 +111,7 @@ public sealed class ContextGeneratorTests
             t => Path.GetFileName(t.FilePath) == "IRequestContext.g.cs");
         iRequest.ToString().Should().Contain(
             "public interface IRequestContext : " +
-            "global::D2.Shared.AuthContext.Abstractions.IAuthContext");
+            "global::DcsvIo.D2.AuthContext.Abstractions.IAuthContext");
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public sealed class ContextGeneratorTests
         // interface PLUS MutableRequestContext + the PropagatedContext trio
         // (record / extensions / serializer) — five files in total.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Context.Abstractions",
+            assemblyName: "DcsvIo.D2.Context.Abstractions",
             authSpec: _AUTH_SPEC,
             requestSpec: _REQUEST_SPEC);
 
@@ -138,7 +138,7 @@ public sealed class ContextGeneratorTests
     public void Generator_EstablishmentSpec_EmitsThreeFieldsOnInterfaceAndMutable()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Context.Abstractions",
+            assemblyName: "DcsvIo.D2.Context.Abstractions",
             authSpec: _AUTH_SPEC,
             requestSpec: _REQUEST_SPEC_WITH_ESTABLISHMENT);
 
@@ -168,7 +168,7 @@ public sealed class ContextGeneratorTests
         // fields enter PropagatedContext. Origin + ImmediateCaller (non-propagated,
         // authority-grade) must NOT appear; CallPath (telemetry) must.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Context.Abstractions",
+            assemblyName: "DcsvIo.D2.Context.Abstractions",
             authSpec: _AUTH_SPEC,
             requestSpec: _REQUEST_SPEC_WITH_ESTABLISHMENT);
 
@@ -198,7 +198,7 @@ public sealed class ContextGeneratorTests
         // the target is RequestContext. If only request spec is present, fire
         // D2CTX006.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Context.Abstractions",
+            assemblyName: "DcsvIo.D2.Context.Abstractions",
             authSpec: null,
             requestSpec: _REQUEST_SPEC);
 
@@ -210,7 +210,7 @@ public sealed class ContextGeneratorTests
     public void Generator_TargetAssemblyButNoSpecsAtAll_EmitsMissingSpecFileDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.AuthContext.Abstractions",
+            assemblyName: "DcsvIo.D2.AuthContext.Abstractions",
             authSpec: null,
             requestSpec: null);
 
@@ -224,7 +224,7 @@ public sealed class ContextGeneratorTests
         // Cache stability — identical inputs must produce identical generator
         // output (so downstream incremental builds can reuse cached results).
         var firstSrc = RunGenerator(
-                assemblyName: "D2.Shared.Context.Abstractions",
+                assemblyName: "DcsvIo.D2.Context.Abstractions",
                 authSpec: _AUTH_SPEC,
                 requestSpec: _REQUEST_SPEC)
             .GetRunResult().GeneratedTrees
@@ -232,7 +232,7 @@ public sealed class ContextGeneratorTests
             .ToString();
 
         var secondSrc = RunGenerator(
-                assemblyName: "D2.Shared.Context.Abstractions",
+                assemblyName: "DcsvIo.D2.Context.Abstractions",
                 authSpec: _AUTH_SPEC,
                 requestSpec: _REQUEST_SPEC)
             .GetRunResult().GeneratedTrees

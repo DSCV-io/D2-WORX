@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Audiences.SourceGen;
+namespace DcsvIo.D2.Auth.Audiences.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by <see cref="AudiencesGenerator"/>.

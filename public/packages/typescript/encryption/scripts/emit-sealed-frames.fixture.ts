@@ -4,10 +4,10 @@
 // -----------------------------------------------------------------------
 
 // TS → .NET cross-runtime fixture emitter (test/fixture-only, `.fixture.ts`).
-// Produces sealed (v2) frames with @d2/encryption's PayloadSealer so the .NET
+// Produces sealed (v2) frames with @dcsv-io/d2-encryption's PayloadSealer so the .NET
 // TsCryptoInterop suite can open them with the REAL PayloadOpener and prove the
 // TS encoder is byte-compatible with the .NET decoder. Regenerate via
-// `pnpm --filter @d2/encryption emit-crypto-fixtures`.
+// `pnpm --filter @dcsv-io/d2-encryption emit-crypto-fixtures`.
 //
 // The emitted frames are NON-deterministic by design: this script mints a fresh
 // recipient keypair, and the sealer mints a fresh per-message ephemeral keypair
@@ -74,7 +74,7 @@ async function main(): Promise<void> {
       "frames opened by the .NET TsCryptoInterop suite.",
     emittedBy:
       "public/packages/typescript/encryption/scripts/emit-sealed-frames.fixture.ts",
-    regenerate: "pnpm --filter @d2/encryption emit-crypto-fixtures",
+    regenerate: "pnpm --filter @dcsv-io/d2-encryption emit-crypto-fixtures",
     recipientServiceId: RECIPIENT_SERVICE_ID,
     recipientKid: RECIPIENT_KID,
     recipientPrivatePkcs8Base64: Buffer.from(privatePkcs8).toString("base64"),

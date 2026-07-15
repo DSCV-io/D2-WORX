@@ -77,7 +77,7 @@ describe("buildSourceDump", () => {
     const files: Record<string, string> = {
       "src/b.ts": "export const B = 2;\n",
       "src/a.ts": "export const A = 1;\n",
-      "package.json": '{"name":"@d2/x"}\n',
+      "package.json": '{"name":"@dcsv-io/d2-x"}\n',
     };
 
     return files[relPath] ?? "";
@@ -153,7 +153,7 @@ describe("listSourceFiles — glob correctness (S8)", () => {
     const tracked = (): string[] => [
       "Thing.cs",
       "Generated/codes.g.cs",
-      "D2.Shared.Thing.csproj",
+      "DcsvIo.D2.Thing.csproj",
       "PublicAPI.Shipped.txt",
       "PublicAPI.Unshipped.txt",
       ".release-fingerprint",
@@ -164,7 +164,7 @@ describe("listSourceFiles — glob correctness (S8)", () => {
     const found = listSourceFiles("/pkg", "nuget", tracked).sort();
 
     expect(found).toEqual([
-      "D2.Shared.Thing.csproj",
+      "DcsvIo.D2.Thing.csproj",
       "Generated/codes.g.cs",
       "Thing.cs",
     ]);

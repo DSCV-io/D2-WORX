@@ -1,5 +1,5 @@
 {
-  "name": "@d2/encryption",
+  "name": "@dcsv-io/d2-encryption",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,7 +22,7 @@
     "emit-crypto-fixtures": "tsx scripts/emit-sealed-frames.fixture.ts && tsx scripts/emit-symmetric-frames.fixture.ts"
   },
   "dependencies": {
-    "@d2/encryption-abstractions": "workspace:*"
+    "@dcsv-io/d2-encryption-abstractions": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.0.18",

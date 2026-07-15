@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions;
+namespace DcsvIo.D2.Auth.Abstractions;
 
 /// <summary>
 /// Controls how the auth middleware evaluates the endpoint's declared scope

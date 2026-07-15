@@ -24,7 +24,7 @@
 // Both paths read committed text only — the bump runs no build / subprocess.
 
 import { join } from "node:path";
-import { truthy } from "@d2/utilities";
+import { truthy } from "@dcsv-io/d2-utilities";
 import type { ApiDiff } from "./diff-bump.js";
 
 // ---------------------------------------------------------------------------

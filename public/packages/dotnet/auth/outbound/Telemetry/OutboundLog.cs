@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.Telemetry;
+namespace DcsvIo.D2.Auth.Outbound.Telemetry;
 
 using Microsoft.Extensions.Logging;
 

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 encryption domains spec",
-  "description": "Schema for contracts/encryption-domains/encryption-domains.spec.json — the source-of-truth catalog of encryption-domain identifiers. Each domain corresponds to an independently-rotated keyring registered via services.AddD2EncryptionFor(domain, factory). The 'plaintext' sentinel is included as a closed-catalog entry so spec validation on mq-messages.spec's 'encryption' field cleanly enumerates the only acceptable values. D2.Shared.EncryptionDomains.SourceGen reads it to emit EncryptionDomains into D2.Shared.Encryption; tools/ts-codegen/src/encryption-domains-emit.ts reads it to emit encryption-domains.g.ts into @d2/encryption-abstractions.",
+  "description": "Schema for contracts/encryption-domains/encryption-domains.spec.json — the source-of-truth catalog of encryption-domain identifiers. Each domain corresponds to an independently-rotated keyring registered via services.AddD2EncryptionFor(domain, factory). The 'plaintext' sentinel is included as a closed-catalog entry so spec validation on mq-messages.spec's 'encryption' field cleanly enumerates the only acceptable values. DcsvIo.D2.EncryptionDomains.SourceGen reads it to emit EncryptionDomains into DcsvIo.D2.Encryption; tools/ts-codegen/src/encryption-domains-emit.ts reads it to emit encryption-domains.g.ts into @dcsv-io/d2-encryption-abstractions.",
   "type": "object",
   "required": ["domains"],
   "additionalProperties": false,

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore.Mtls;
+namespace DcsvIo.D2.AspNetCore.Mtls;
 
 using System.Security.Cryptography.X509Certificates;
 
@@ -26,7 +26,7 @@ using System.Security.Cryptography.X509Certificates;
 /// <b>The host owns trust-anchor sourcing.</b> <see cref="TrustAnchorsProvider"/>
 /// supplies the PUBLIC internal root certificate(s) the validator chains a
 /// presented certificate to — never private keys. This keeps
-/// <c>D2.Shared.AspNetCore</c> free of any file / secret / KeyCustodian dependency:
+/// <c>DcsvIo.D2.AspNetCore</c> free of any file / secret / KeyCustodian dependency:
 /// the host loads its anchor however it sourced it (the dev harness from a local
 /// CA, a real host from KeyCustodian's certificate-authority provider).
 /// </para>

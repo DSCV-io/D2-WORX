@@ -7,24 +7,24 @@
 extern alias ResultErrorCodesSourceGen;
 extern alias RegistrySourceGen;
 
-namespace D2.Shared.Tests.Unit.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.SourceGen;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.I18n.SourceGen;
+using DcsvIo.D2.I18n.SourceGen;
 using Xunit;
 using BaseFactoriesEmitter =
-    ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.BaseFactoriesEmitter;
-using CatalogConfig = ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.CatalogConfig;
-using ConstantsEmitter = ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.ConstantsEmitter;
-using ErrorCodeEntry = ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.ErrorCodeEntry;
+    ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.BaseFactoriesEmitter;
+using CatalogConfig = ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.CatalogConfig;
+using ConstantsEmitter = ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.ConstantsEmitter;
+using ErrorCodeEntry = ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.ErrorCodeEntry;
 using ErrorCodesGenerator =
-    ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.ErrorCodesGenerator;
-using ErrorCodesSpec = ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.ErrorCodesSpec;
-using RegistryEmitter = RegistrySourceGen::D2.Shared.ErrorCodes.Registry.SourceGen.RegistryEmitter;
+    ResultErrorCodesSourceGen::DcsvIo.D2.ResultErrorCodes.SourceGen.ErrorCodesGenerator;
+using ErrorCodesSpec = ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.ErrorCodesSpec;
+using RegistryEmitter = RegistrySourceGen::DcsvIo.D2.ErrorCodes.Registry.SourceGen.RegistryEmitter;
 using RegistrySpecEntry =
-    RegistrySourceGen::D2.Shared.ErrorCodes.Registry.SourceGen.RegistrySpecEntry;
+    RegistrySourceGen::DcsvIo.D2.ErrorCodes.Registry.SourceGen.RegistrySpecEntry;
 
 /// <summary>
 /// Drift guard for the LF line-ending discipline every D² Roslyn emitter must

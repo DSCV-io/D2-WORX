@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { SealedFrame } from "@d2/encryption-abstractions";
+import { SealedFrame } from "@dcsv-io/d2-encryption-abstractions";
 
 import { importPublicP256 } from "./ecdh-p256.js";
 import { validateKid, validateServiceId } from "./sealed-keyring-validation.js";

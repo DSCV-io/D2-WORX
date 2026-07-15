@@ -8,8 +8,8 @@
 
 /* eslint-disable */
 
-import type { Subdivision, SubdivisionCode } from "@d2/geo-abstractions";
-import { CountryCode } from "@d2/geo-abstractions";
+import type { Subdivision, SubdivisionCode } from "@dcsv-io/d2-geo-abstractions";
+import { CountryCode } from "@dcsv-io/d2-geo-abstractions";
 
 import { CountryLookup } from "./countries.g.js";
 
@@ -62450,7 +62450,7 @@ export const SubdivisionLookup: {
 /**
  * Nested accessor — `Subdivisions.US.NY` returns the typed
  * `SubdivisionCode` branded string `"US-NY"`. Mirrors .NET
- * `D2.Shared.Geo.Default.Subdivisions.US.NY`.
+ * `DcsvIo.D2.Geo.Default.Subdivisions.US.NY`.
  */
 export const Subdivisions = {
   AD: {

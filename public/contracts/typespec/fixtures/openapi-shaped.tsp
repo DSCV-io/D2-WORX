@@ -27,7 +27,7 @@
 // OpenAPI emitter. The fixture-only operation ids carry an `openApi…Fixture`
 // marker (the models already carry the `OpenApi` family marker).
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 import "@typespec/http";
 import "@typespec/versioning";
 

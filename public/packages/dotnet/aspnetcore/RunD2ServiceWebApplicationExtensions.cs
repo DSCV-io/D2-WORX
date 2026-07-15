@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore;
+namespace DcsvIo.D2.AspNetCore;
 
-using D2.Shared.Utilities.Diagnostics;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Serilog;
 

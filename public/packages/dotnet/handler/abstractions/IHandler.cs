@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Abstractions;
+namespace DcsvIo.D2.Handler.Abstractions;
 
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Generic handler contract — every handler-shaped operation in the platform
 /// implements this (CQRS handlers, repo handlers, messaging consumers,
 /// scheduled jobs, etc.). The concrete implementation typically derives from
-/// <c>BaseHandler&lt;TSelf, TInput, TOutput&gt;</c> in <c>D2.Shared.Handler</c>,
+/// <c>BaseHandler&lt;TSelf, TInput, TOutput&gt;</c> in <c>DcsvIo.D2.Handler</c>,
 /// which provides the full observability pipeline (activity + log scope +
 /// stopwatch + universal try/catch + scope/audience pre-check).
 /// </summary>

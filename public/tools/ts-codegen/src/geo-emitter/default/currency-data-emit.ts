@@ -38,10 +38,10 @@ export function emitCurrencyData(context: GeoSpecContext): {
   appendEslintDisable(sb);
   sb.appendLine();
   sb.appendLine(
-    'import type { Country, Currency } from "@d2/geo-abstractions";',
+    'import type { Country, Currency } from "@dcsv-io/d2-geo-abstractions";',
   );
   sb.appendLine(
-    'import { CountryCode, CurrencyCode } from "@d2/geo-abstractions";',
+    'import { CountryCode, CurrencyCode } from "@dcsv-io/d2-geo-abstractions";',
   );
   sb.appendLine();
   sb.appendLine(

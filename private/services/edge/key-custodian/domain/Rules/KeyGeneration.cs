@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.Rules;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules;
 
-using D2.Private.I18n;
+using DcsvIo.D2.Private.I18n;
 
 /// <summary>
 /// Pure rule that generates fresh key material for a <see cref="KeyType"/>.

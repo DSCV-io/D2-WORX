@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Audit
+# DcsvIo.D2.Private.Audit
 
 > Parent: [`private/services/`](../README.md)
 
 **Who / what:** Operators and host integrators of the Audit **standalone multiproc stub** under `private/services/audit/` — composition, dual-process smoke, and Edge bridge wiring. Not the product append-only store (that surface is **OUT OF SCOPE** here).
 
-> **Status:** multiproc **S2S stub** — `D2.Audit.{Api,App,Domain,Infra,Client,Tests}` compile; one TypeSpec op `PingAudit` (NIE `ServiceUnavailable`); Edge typed gRPC bridge live with dual-factor **JWT scope + mTLS**.
+> **Status:** multiproc **S2S stub** — `DcsvIo.D2.Private.Audit.{Api,App,Domain,Infra,Client,Tests}` compile; one TypeSpec op `PingAudit` (NIE `ServiceUnavailable`); Edge typed gRPC bridge live with dual-factor **JWT scope + mTLS**.
 
 ## Purpose
 
@@ -20,12 +20,12 @@ Copyright (c) DCSV. All rights reserved.
 
 ```
 private/services/audit/
-├── api/                 D2.Audit.Api — composition root (gRPC-only public surface)
-├── app/                 D2.Audit.App — NIE PingAuditHandler + AddD2AuditApp
-├── domain/              D2.Audit.Domain — thin shell (product aggregates OUT OF SCOPE)
-├── infra/               D2.Audit.Infra — thin shell (product adapters OUT OF SCOPE)
-├── clients/dotnet/      D2.Audit.Client — DTOs + IAuditGrpcClient (residual path; ADR singular client/ is a separate rename)
-└── tests/               D2.Audit.Tests — unit/DI isolation
+├── api/                 DcsvIo.D2.Private.Audit.Api — composition root (gRPC-only public surface)
+├── app/                 DcsvIo.D2.Private.Audit.App — NIE PingAuditHandler + AddD2AuditApp
+├── domain/              DcsvIo.D2.Private.Audit.Domain — thin shell (product aggregates OUT OF SCOPE)
+├── infra/               DcsvIo.D2.Private.Audit.Infra — thin shell (product adapters OUT OF SCOPE)
+├── clients/dotnet/      DcsvIo.D2.Private.Audit.Client — DTOs + IAuditGrpcClient (residual path; ADR singular client/ is a separate rename)
+└── tests/               DcsvIo.D2.Private.Audit.Tests — unit/DI isolation
 ```
 
 ## Composition
@@ -91,7 +91,7 @@ True watch law: Compose Watch sync + ignore bin/obj + rebuild on csproj. See `in
 ## Regen
 
 ```bash
-pnpm --filter @d2/typespec-emitters regen
+pnpm --filter @dcsv-io/d2-typespec-emitters regen
 # = node tools/scripts/regen-typespec-emitters.mjs
 # N× (compile package + COPY subset): key-custodian then audit
 ```

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.Fixtures;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.Fixtures;
 
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;

@@ -4,10 +4,10 @@
 // -----------------------------------------------------------------------
 
 // TS → .NET cross-runtime fixture emitter (test/fixture-only, `.fixture.ts`).
-// Produces symmetric (v1) frames with @d2/encryption's PayloadCrypto so the
+// Produces symmetric (v1) frames with @dcsv-io/d2-encryption's PayloadCrypto so the
 // .NET TsCryptoInterop suite can decrypt them with the REAL PayloadCrypto and
 // prove the TS encoder is byte-compatible with the .NET decoder. Regenerate via
-// `pnpm --filter @d2/encryption emit-crypto-fixtures`.
+// `pnpm --filter @dcsv-io/d2-encryption emit-crypto-fixtures`.
 //
 // The emitted frames are NON-deterministic by design: this script mints a fresh
 // random key + GCM nonce per emit, so every emit produces a different frameHex.
@@ -64,7 +64,7 @@ async function main(): Promise<void> {
       "frames decrypted by the .NET TsCryptoInterop suite.",
     emittedBy:
       "public/packages/typescript/encryption/scripts/emit-symmetric-frames.fixture.ts",
-    regenerate: "pnpm --filter @d2/encryption emit-crypto-fixtures",
+    regenerate: "pnpm --filter @dcsv-io/d2-encryption emit-crypto-fixtures",
     kid: KID,
     keyBase64: Buffer.from(key).toString("base64"),
     aadContextBase64: Buffer.from(aadContext).toString("base64"),

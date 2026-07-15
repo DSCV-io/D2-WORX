@@ -8,8 +8,8 @@ Validation rule catalog and parity fixtures — `field-constraints.spec.json` de
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/validation/source-gen/`](../../public/packages/dotnet/validation/source-gen/README.md) (Roslyn source-gen → `FieldConstraints` const-object + taxonomy enum types in `D2.Shared.Validation.Abstractions`)
-- **TypeScript** — [`tools/ts-codegen` › `field-constraints-emit.ts`](../../tools/ts-codegen/README.md) (→ `FieldConstraints` const-object + Zod-validated taxonomy types in `@d2/validation-abstractions`)
+- **.NET** — [`public/packages/dotnet/validation/source-gen/`](../../public/packages/dotnet/validation/source-gen/README.md) (Roslyn source-gen → `FieldConstraints` const-object + taxonomy enum types in `DcsvIo.D2.Validation.Abstractions`)
+- **TypeScript** — [`tools/ts-codegen` › `field-constraints-emit.ts`](../../tools/ts-codegen/README.md) (→ `FieldConstraints` const-object + Zod-validated taxonomy types in `@dcsv-io/d2-validation-abstractions`)
 
 ## See also
 

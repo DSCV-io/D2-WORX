@@ -4,7 +4,7 @@
 # Targets: dev (Vite dev server), prod (adapter-node build)
 #
 # Dual package roots:
-#   public/packages/typescript — shared @d2/* workspace packages
+#   public/packages/typescript — shared @dcsv-io/d2-* workspace packages
 #   private/services/web       — SvelteKit BFF app (package name: d2-sveltekit)
 # Dual contracts (Paraglide / i18n message catalogs):
 #   public/contracts + private/contracts
@@ -34,7 +34,7 @@ COPY private/contracts/ private/contracts/
 # Install all dependencies (devDeps needed for Vite build)
 RUN pnpm install --frozen-lockfile
 
-# --- Build: compile @d2/* deps then build SvelteKit with adapter-node ---
+# --- Build: compile @dcsv-io/d2-* deps then build SvelteKit with adapter-node ---
 FROM deps AS build
 WORKDIR /app
 

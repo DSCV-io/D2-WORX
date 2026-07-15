@@ -12,7 +12,7 @@ import {
   Role,
 } from "../src/index.js";
 
-describe("@d2/auth-context-abstractions — emitted shape pin", () => {
+describe("@dcsv-io/d2-auth-context-abstractions — emitted shape pin", () => {
   it("OrgType members match spec vocabulary", () => {
     expect(OrgType.Admin).toBe("Admin");
     expect(OrgType.Support).toBe("Support");

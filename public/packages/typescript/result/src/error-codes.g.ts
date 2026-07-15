@@ -10,7 +10,7 @@
 
 /**
  * Standardized error codes surfaced as `D2Result.errorCode`. Mirrors
- * .NET `D2.Shared.Result.ErrorCodes` byte-for-byte (single spec source
+ * .NET `DcsvIo.D2.Result.ErrorCodes` byte-for-byte (single spec source
  * emits both sides; cross-language drift is structurally impossible).
  */
 export const ErrorCodes = {

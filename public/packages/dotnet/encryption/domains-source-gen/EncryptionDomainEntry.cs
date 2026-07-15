@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EncryptionDomains.SourceGen;
+namespace DcsvIo.D2.EncryptionDomains.SourceGen;
 
 /// <summary>
 /// One encryption-domain entry parsed from

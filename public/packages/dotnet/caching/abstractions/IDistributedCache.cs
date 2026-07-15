@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching;
+namespace DcsvIo.D2.Caching;
 
 /// <summary>
 /// Cluster-scoped cache backed by a remote store (e.g. Redis). Atomic

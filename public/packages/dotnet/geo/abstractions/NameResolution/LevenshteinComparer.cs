@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Abstractions.NameResolution;
+namespace DcsvIo.D2.Geo.Abstractions.NameResolution;
 
 /// <summary>
 /// Pure helper computing the bounded Levenshtein edit distance between two
@@ -15,7 +15,7 @@ namespace D2.Shared.Geo.Abstractions.NameResolution;
 /// <remarks>
 /// <para>
 /// <b>Cross-language parity:</b> the TypeScript mirror in
-/// <c>@d2/geo-abstractions</c>
+/// <c>@dcsv-io/d2-geo-abstractions</c>
 /// (<c>src/name-resolution/levenshtein-comparer.ts</c>) implements the
 /// same DP algorithm with the same early-termination semantics. The two
 /// implementations MUST agree byte-for-byte on <see cref="IsWithin"/>

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
 
 /// <summary>
 /// Immutable value object specifying the timing windows that govern a key's

@@ -66,7 +66,7 @@
       "breaker-standard"
     ],
     "lockedSignature": "@d2Resilience(...profiles: valueof string[]) /* ordered; first-named = innermost */",
-    "profileRegistryShape": "A named map (emitter-owned, exported from @d2/typespec-decorators): { \"<name>\": { kind: \"retry\" | \"breaker\", ...tunables } }. retry => { maxAttempts, backoffMs }; breaker => { failureThreshold, breakMs }. The emitter resolves each @d2Resilience name against it; the generated ResilienceProfiles constants materialize the resolved tunables.",
+    "profileRegistryShape": "A named map (emitter-owned, exported from @dcsv-io/d2-typespec-decorators): { \"<name>\": { kind: \"retry\" | \"breaker\", ...tunables } }. retry => { maxAttempts, backoffMs }; breaker => { failureThreshold, breakMs }. The emitter resolves each @d2Resilience name against it; the generated ResilienceProfiles constants materialize the resolved tunables.",
     "b1_orderedComposition": {
       "status": "GO",
       "composedOrderInnerToOuter": "retry-fast -> breaker-standard",
@@ -80,21 +80,21 @@
     },
     "b3_registryResolution": {
       "status": "GO",
-      "claim": "Every profile resolves from the SINGLE registry — the generated ResilienceProfiles constants are the only source of the tunables (no per-op magic numbers at the call site). An UNKNOWN profile name FAILS THE BUILD: the emitter reports an `error` diagnostic (@d2/spike-emitter/unknown-resilience-profile) so `tsp compile` exits non-zero — NOT a runtime error.",
+      "claim": "Every profile resolves from the SINGLE registry — the generated ResilienceProfiles constants are the only source of the tunables (no per-op magic numbers at the call site). An UNKNOWN profile name FAILS THE BUILD: the emitter reports an `error` diagnostic (@dcsv-io/d2-spike-emitter/unknown-resilience-profile) so `tsp compile` exits non-zero — NOT a runtime error.",
       "knownProfiles": [
         "retry-fast",
         "retry-standard",
         "breaker-standard"
       ],
-      "buildFailureEvidence": "$ npx tsp compile resilience-unknown.tsp --config resilience.tspconfig.yaml  =>  exit 1. error @d2/spike-emitter/unknown-resilience-profile: @d2Resilience on op \"submitPayment\" names unknown profile \"retry-WARP-SPEED\". Known profiles: retry-fast, retry-standard, breaker-standard. Found 1 error. (compile-time failure — no .NET artifacts emitted)",
+      "buildFailureEvidence": "$ npx tsp compile resilience-unknown.tsp --config resilience.tspconfig.yaml  =>  exit 1. error @dcsv-io/d2-spike-emitter/unknown-resilience-profile: @d2Resilience on op \"submitPayment\" names unknown profile \"retry-WARP-SPEED\". Known profiles: retry-fast, retry-standard, breaker-standard. Found 1 error. (compile-time failure — no .NET artifacts emitted)",
       "evidence": "CONFIRMED (registry resolution) — Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)"
     },
     "b4_targetsAbstraction": {
       "status": "GO",
-      "claim": "The generated pipeline composes IAsyncResiliencePolicy instances minted by the injected IResiliencePolicyFactory — it NEVER inlines a raw retry/breaker primitive at the call site. The chassis supplies the concrete primitives (stand-in here; D2.Shared.Resilience in prod). Structural: the pipeline ctor takes (ISubmitPaymentOutbound, IResiliencePolicyFactory) only.",
+      "claim": "The generated pipeline composes IAsyncResiliencePolicy instances minted by the injected IResiliencePolicyFactory — it NEVER inlines a raw retry/breaker primitive at the call site. The chassis supplies the concrete primitives (stand-in here; DcsvIo.D2.Resilience in prod). Structural: the pipeline ctor takes (ISubmitPaymentOutbound, IResiliencePolicyFactory) only.",
       "evidence": "CONFIRMED (compile + injected fakes) — Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)"
     },
-    "d2ResultNote": "Spike isolation: the pipeline returns a minimal generated Outcome<T> stand-in and targets a stand-in IAsyncResiliencePolicy/IResiliencePolicyFactory. The REAL emitter would return D2Result<T> and target D2.Shared.Resilience's policy + builder types — the pipeline shape is identical, only the result + policy types swap (the same swap Spike C notes for Outcome).",
+    "d2ResultNote": "Spike isolation: the pipeline returns a minimal generated Outcome<T> stand-in and targets a stand-in IAsyncResiliencePolicy/IResiliencePolicyFactory. The REAL emitter would return D2Result<T> and target DcsvIo.D2.Resilience's policy + builder types — the pipeline shape is identical, only the result + policy types swap (the same swap Spike C notes for Outcome).",
     "runner": {
       "buildSummary": "Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)",
       "testSummary": "Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9 (Spike.Resilience.Test.dll, net10.0) + order-flip variant (resilience-flip.tsp): ComposedOrder flips to 'breaker-standard -> retry-fast', compiles clean",
@@ -126,7 +126,7 @@
       "claim": "The generated gate ctor takes ISubmitOrderHandler + IIdempotencyStore only — ZERO hardcoded store dependency, and time-agnostic (the store owns ttl expiry, hence the controllable IClock — C2). Test injects the in-memory fake store (+ FakeClock); prod injects the distributed/tiered cache.",
       "evidence": "CONFIRMED (compile + injected fakes) — Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)"
     },
-    "d2ResultNote": "Spike isolation: the gate returns a minimal generated Outcome<T> stand-in. The REAL emitter would return D2Result<T> from D2.Shared (semantic factories) — the gate shape is identical, only the result type swaps.",
+    "d2ResultNote": "Spike isolation: the gate returns a minimal generated Outcome<T> stand-in. The REAL emitter would return D2Result<T> from DcsvIo.D2 (semantic factories) — the gate shape is identical, only the result type swaps.",
     "runner": {
       "buildSummary": "Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)",
       "testSummary": "Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9 (Spike.Idempotency.Test.dll, net10.0) + derived variant: 4 passed",

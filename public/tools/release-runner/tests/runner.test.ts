@@ -139,7 +139,7 @@ const opts = (dryRun: boolean, packageFilter?: string): RunnerOptions => ({
 
 describe("runRelease — dry-run mode", () => {
   it("returns plans without writing any files", () => {
-    const { pkg, dir } = createNpmFixture("@d2/result");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-result");
     const commits = [makeCommit("feat: add helper", [dir])];
     const originalManifest = readFileSync(pkg.manifestPath, "utf-8");
     const originalChangelog = readFileSync(pkg.changelogPath, "utf-8");
@@ -155,7 +155,7 @@ describe("runRelease — dry-run mode", () => {
   });
 
   it("dry-run reports the correct bump and new version", () => {
-    const { pkg, dir } = createNpmFixture("@d2/result", "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-result", "0.1.0");
     const commits = [makeCommit("feat: new feature", [dir])];
 
     const result = runRelease(commits, [pkg], opts(true));
@@ -165,7 +165,7 @@ describe("runRelease — dry-run mode", () => {
   });
 
   it("dry-run with no changed packages returns empty plans and applied=false", () => {
-    const { pkg } = createNpmFixture("@d2/result");
+    const { pkg } = createNpmFixture("@dcsv-io/d2-result");
     const commits = [makeCommit("chore: update deps", ["other/path/file.ts"])];
 
     const result = runRelease(commits, [pkg], opts(true));
@@ -181,7 +181,7 @@ describe("runRelease — dry-run mode", () => {
 
 describe("runRelease — apply mode (npm)", () => {
   it("writes the new version to package.json", () => {
-    const { pkg, dir } = createNpmFixture("@d2/result", "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-result", "0.1.0");
     const commits = [makeCommit("feat: extend API", [dir])];
 
     runRelease(commits, [pkg], opts(false));
@@ -193,7 +193,7 @@ describe("runRelease — apply mode (npm)", () => {
   });
 
   it("promotes CHANGELOG [Unreleased] to versioned section", () => {
-    const { pkg, dir } = createNpmFixture("@d2/result", "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-result", "0.1.0");
     const commits = [makeCommit("feat: new helper", [dir])];
 
     runRelease(commits, [pkg], opts(false));
@@ -204,7 +204,7 @@ describe("runRelease — apply mode (npm)", () => {
   });
 
   it("CHANGELOG added entries appear in ### Added section", () => {
-    const { pkg, dir } = createNpmFixture("@d2/result", "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-result", "0.1.0");
     const commits = [makeCommit("feat: add ok factory", [dir])];
 
     runRelease(commits, [pkg], opts(false));
@@ -214,7 +214,7 @@ describe("runRelease — apply mode (npm)", () => {
   });
 
   it("fix entry appears in ### Fixed section", () => {
-    const { pkg, dir } = createNpmFixture("@d2/result", "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-result", "0.1.0");
     const commits = [makeCommit("fix: correct edge case", [dir])];
 
     runRelease(commits, [pkg], opts(false));
@@ -226,7 +226,7 @@ describe("runRelease — apply mode (npm)", () => {
   });
 
   it("returns applied=true when changes are written", () => {
-    const { pkg, dir } = createNpmFixture("@d2/result", "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-result", "0.1.0");
     const commits = [makeCommit("feat: add helper", [dir])];
 
     const result = runRelease(commits, [pkg], opts(false));
@@ -240,7 +240,7 @@ describe("runRelease — apply mode (npm)", () => {
 
 describe("runRelease — apply mode (nuget)", () => {
   it("writes the new version to .csproj <Version> element", () => {
-    const { pkg, dir } = createNugetFixture("D2.Shared.Result", "0.1.0");
+    const { pkg, dir } = createNugetFixture("DcsvIo.D2.Result", "0.1.0");
     const commits = [makeCommit("feat: add method", [dir])];
 
     runRelease(commits, [pkg], opts(false));
@@ -250,7 +250,7 @@ describe("runRelease — apply mode (nuget)", () => {
   });
 
   it("promotes NuGet package CHANGELOG correctly", () => {
-    const { pkg, dir } = createNugetFixture("D2.Shared.Result", "0.1.0");
+    const { pkg, dir } = createNugetFixture("DcsvIo.D2.Result", "0.1.0");
     const commits = [makeCommit("fix: null ref", [dir])];
 
     runRelease(commits, [pkg], opts(false));
@@ -267,8 +267,8 @@ describe("runRelease — apply mode (nuget)", () => {
 
 describe("runRelease — packageFilter", () => {
   it("only processes the specified package", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB, dir: dirB } = createNpmFixture("@d2/b");
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB, dir: dirB } = createNpmFixture("@dcsv-io/d2-b");
 
     const commits = [
       makeCommit("feat: change in A", [dirA]),
@@ -278,22 +278,22 @@ describe("runRelease — packageFilter", () => {
     const result = runRelease(commits, [pkgA, pkgB], {
       today: "2026-06-24",
       dryRun: true,
-      packageFilter: "@d2/a",
+      packageFilter: "@dcsv-io/d2-a",
       propagate: false,
     });
 
     expect(result.plans).toHaveLength(1);
-    expect(result.plans[0]?.pkg.name).toBe("@d2/a");
+    expect(result.plans[0]?.pkg.name).toBe("@dcsv-io/d2-a");
   });
 
   it("returns empty plans when packageFilter matches no packages", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a");
     const commits = [makeCommit("feat: change", [dir])];
 
     const result = runRelease(commits, [pkg], {
       today: "2026-06-24",
       dryRun: true,
-      packageFilter: "@d2/nonexistent",
+      packageFilter: "@dcsv-io/d2-nonexistent",
       propagate: false,
     });
 
@@ -307,8 +307,8 @@ describe("runRelease — packageFilter", () => {
 
 describe("runRelease — multi-package apply", () => {
   it("independently bumps each touched package", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a", "0.1.0");
-    const { pkg: pkgB, dir: dirB } = createNpmFixture("@d2/b", "0.3.0");
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a", "0.1.0");
+    const { pkg: pkgB, dir: dirB } = createNpmFixture("@dcsv-io/d2-b", "0.3.0");
 
     const commits = [
       makeCommit("feat: A new feature", [dirA]),
@@ -335,7 +335,7 @@ describe("runRelease — multi-package apply", () => {
 
 describe("runRelease — no-op cases", () => {
   it("returns empty plans and applied=false when no commits touch consumable packages", () => {
-    const { pkg } = createNpmFixture("@d2/a");
+    const { pkg } = createNpmFixture("@dcsv-io/d2-a");
     const commits = [
       makeCommit("ci: update workflow", ["infra/ci/workflow.yml"]),
     ];
@@ -346,7 +346,7 @@ describe("runRelease — no-op cases", () => {
   });
 
   it("returns applied=false when plans is empty (no writes)", () => {
-    const { pkg } = createNpmFixture("@d2/a");
+    const { pkg } = createNpmFixture("@dcsv-io/d2-a");
     const result = runRelease([], [pkg], opts(false));
     expect(result.applied).toBe(false);
   });
@@ -360,7 +360,7 @@ describe("runRelease — prerelease-labelled currentVersion", () => {
   it("feat: commit on a prerelease-labelled package produces a plan without throwing", () => {
     // Regression: parseVersion crashed on "1.0.0-alpha.3" inside computeBumpPlans.
     // parseVersionLoose must be used at the newVersion computation site.
-    const { pkg, dir } = createNpmFixture("@d2/a", "1.0.0-alpha.3");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", "1.0.0-alpha.3");
     const commits = [makeCommit("feat: add helper", [dir])];
 
     expect(() => runRelease(commits, [pkg], opts(true))).not.toThrow();
@@ -376,7 +376,7 @@ describe("runRelease — prerelease-labelled currentVersion", () => {
     // A breaking change on a prerelease-labelled 1.0.0-alpha version bumps MINOR, not
     // MAJOR under legacy semantics — isPreStable covers prerelease labels, not just
     // major===0, so the version "1.0.0-alpha.3" correctly yields MINOR.
-    const { pkg, dir } = createNpmFixture("@d2/a", "1.0.0-alpha.3");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", "1.0.0-alpha.3");
     const breakCommit = [
       "feat: drop field",
       "",
@@ -397,7 +397,7 @@ describe("runRelease — prerelease-labelled currentVersion", () => {
 
 describe("runRelease — wire-breaking changelog entry", () => {
   it("wire-breaking entry appears under ### Wire-breaking in versioned block", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", "0.1.0");
 
     const commits = [
       {

@@ -16,7 +16,7 @@ importers:
         version: 24.10.0
       '@vitest/coverage-v8':
         specifier: 4.0.18
-        version: 4.0.18(@vitest/browser@4.0.18(vite@7.3.3(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18))(vitest@4.0.18)
+        version: 4.0.18(@vitest/browser@4.0.18(vite@7.3.1(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18))(vitest@4.0.18)
       eslint:
         specifier: 10.0.2
         version: 10.0.2(jiti@2.7.0)
@@ -47,25 +47,25 @@ importers:
 
   private/services/edge/key-custodian/client-ts:
     dependencies:
-      '@d2/encryption':
+      '@dcsv-io/d2-encryption':
         specifier: workspace:*
         version: link:../../../../../public/packages/typescript/encryption
-      '@d2/encryption-abstractions':
+      '@dcsv-io/d2-encryption-abstractions':
         specifier: workspace:*
         version: link:../../../../../public/packages/typescript/encryption-abstractions
-      '@d2/grpc-client':
+      '@dcsv-io/d2-grpc-client':
         specifier: workspace:*
         version: link:../../../../../public/packages/typescript/grpc-client
-      '@d2/logging':
+      '@dcsv-io/d2-logging':
         specifier: workspace:*
         version: link:../../../../../public/packages/typescript/logging
-      '@d2/resilience':
+      '@dcsv-io/d2-resilience':
         specifier: workspace:*
         version: link:../../../../../public/packages/typescript/resilience
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../../../../public/packages/typescript/result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../../../../public/packages/typescript/utilities
       '@grpc/grpc-js':
@@ -86,7 +86,7 @@ importers:
     devDependencies:
       '@vitest/coverage-v8':
         specifier: 4.0.18
-        version: 4.0.18(@vitest/browser@4.0.18(vite@7.3.1(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18))(vitest@4.0.18)
+        version: 4.0.18(@vitest/browser@4.0.18(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18))(vitest@4.0.18)
       tsx:
         specifier: 4.20.6
         version: 4.20.6
@@ -99,40 +99,40 @@ importers:
 
   private/services/web:
     dependencies:
-      '@d2/error-category':
+      '@dcsv-io/d2-error-category':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/error-category
-      '@d2/geo-abstractions':
+      '@dcsv-io/d2-geo-abstractions':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/geo/abstractions
-      '@d2/geo-default':
+      '@dcsv-io/d2-geo-default':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/geo/default
-      '@d2/headers-http':
+      '@dcsv-io/d2-headers-http':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/headers/http
-      '@d2/i18n':
+      '@dcsv-io/d2-i18n':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/i18n
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/i18n-keys
-      '@d2/logging':
+      '@dcsv-io/d2-logging':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/logging
-      '@d2/problem-details-abstractions':
+      '@dcsv-io/d2-problem-details-abstractions':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/problem-details-abstractions
-      '@d2/protos':
+      '@dcsv-io/d2-protos':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/protos
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/result
-      '@d2/service-defaults':
+      '@dcsv-io/d2-service-defaults':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/service-defaults
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../../public/packages/typescript/utilities
       '@dicebear/core':
@@ -346,16 +346,16 @@ importers:
 
   public/packages/typescript/auth/abstractions:
     dependencies:
-      '@d2/error-category':
+      '@dcsv-io/d2-error-category':
         specifier: workspace:*
         version: link:../../error-category
-      '@d2/i18n-abstractions':
+      '@dcsv-io/d2-i18n-abstractions':
         specifier: workspace:*
         version: link:../../i18n-abstractions
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../../i18n-keys
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
     devDependencies:
@@ -380,10 +380,10 @@ importers:
 
   public/packages/typescript/caching/abstractions:
     dependencies:
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../../i18n-keys
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
     devDependencies:
@@ -399,19 +399,19 @@ importers:
 
   public/packages/typescript/caching/distributed-redis:
     dependencies:
-      '@d2/caching-abstractions':
+      '@dcsv-io/d2-caching-abstractions':
         specifier: workspace:*
         version: link:../abstractions
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../../i18n-keys
-      '@d2/logging':
+      '@dcsv-io/d2-logging':
         specifier: workspace:*
         version: link:../../logging
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../utilities
       '@opentelemetry/api':
@@ -442,20 +442,20 @@ importers:
 
   public/packages/typescript/caching/local-default:
     dependencies:
-      '@d2/caching-abstractions':
+      '@dcsv-io/d2-caching-abstractions':
         specifier: workspace:*
         version: link:../abstractions
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../utilities
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
     devDependencies:
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../../i18n-keys
       '@opentelemetry/sdk-metrics':
@@ -473,20 +473,20 @@ importers:
 
   public/packages/typescript/caching/tiered:
     dependencies:
-      '@d2/caching-abstractions':
+      '@dcsv-io/d2-caching-abstractions':
         specifier: workspace:*
         version: link:../abstractions
-      '@d2/logging':
+      '@dcsv-io/d2-logging':
         specifier: workspace:*
         version: link:../../logging
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
     devDependencies:
-      '@d2/caching-distributed-redis':
+      '@dcsv-io/d2-caching-distributed-redis':
         specifier: workspace:*
         version: link:../distributed-redis
-      '@d2/caching-local-default':
+      '@dcsv-io/d2-caching-local-default':
         specifier: workspace:*
         version: link:../local-default
       '@testcontainers/redis':
@@ -507,82 +507,82 @@ importers:
 
   public/packages/typescript/contract-tests:
     dependencies:
-      '@d2/auth-abstractions':
+      '@dcsv-io/d2-auth-abstractions':
         specifier: workspace:*
         version: link:../auth/abstractions
-      '@d2/auth-context-abstractions':
+      '@dcsv-io/d2-auth-context-abstractions':
         specifier: workspace:*
         version: link:../auth/context-abstractions
-      '@d2/caching-abstractions':
+      '@dcsv-io/d2-caching-abstractions':
         specifier: workspace:*
         version: link:../caching/abstractions
-      '@d2/caching-distributed-redis':
+      '@dcsv-io/d2-caching-distributed-redis':
         specifier: workspace:*
         version: link:../caching/distributed-redis
-      '@d2/caching-local-default':
+      '@dcsv-io/d2-caching-local-default':
         specifier: workspace:*
         version: link:../caching/local-default
-      '@d2/caching-tiered':
+      '@dcsv-io/d2-caching-tiered':
         specifier: workspace:*
         version: link:../caching/tiered
-      '@d2/encryption':
+      '@dcsv-io/d2-encryption':
         specifier: workspace:*
         version: link:../encryption
-      '@d2/encryption-abstractions':
+      '@dcsv-io/d2-encryption-abstractions':
         specifier: workspace:*
         version: link:../encryption-abstractions
-      '@d2/error-category':
+      '@dcsv-io/d2-error-category':
         specifier: workspace:*
         version: link:../error-category
-      '@d2/error-codes-registry':
+      '@dcsv-io/d2-error-codes-registry':
         specifier: workspace:*
         version: link:../error-codes-registry
-      '@d2/geo-abstractions':
+      '@dcsv-io/d2-geo-abstractions':
         specifier: workspace:*
         version: link:../geo/abstractions
-      '@d2/geo-default':
+      '@dcsv-io/d2-geo-default':
         specifier: workspace:*
         version: link:../geo/default
-      '@d2/grpc-client':
+      '@dcsv-io/d2-grpc-client':
         specifier: workspace:*
         version: link:../grpc-client
-      '@d2/headers':
+      '@dcsv-io/d2-headers':
         specifier: workspace:*
         version: link:../headers/core
-      '@d2/headers-amqp':
+      '@dcsv-io/d2-headers-amqp':
         specifier: workspace:*
         version: link:../headers/amqp
-      '@d2/headers-common':
+      '@dcsv-io/d2-headers-common':
         specifier: workspace:*
         version: link:../headers/common
-      '@d2/headers-grpc':
+      '@dcsv-io/d2-headers-grpc':
         specifier: workspace:*
         version: link:../headers/grpc
-      '@d2/headers-http':
+      '@dcsv-io/d2-headers-http':
         specifier: workspace:*
         version: link:../headers/http
-      '@d2/i18n':
+      '@dcsv-io/d2-i18n':
         specifier: workspace:*
         version: link:../i18n
-      '@d2/messaging-abstractions':
+      '@dcsv-io/d2-messaging-abstractions':
         specifier: workspace:*
         version: link:../messaging-abstractions
-      '@d2/protos':
+      '@dcsv-io/d2-protos':
         specifier: workspace:*
         version: link:../protos
-      '@d2/request-context-abstractions':
+      '@dcsv-io/d2-request-context-abstractions':
         specifier: workspace:*
         version: link:../request-context-abstractions
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../result
-      '@d2/telemetry':
+      '@dcsv-io/d2-telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@d2/validation':
+      '@dcsv-io/d2-validation':
         specifier: workspace:*
         version: link:../validation/default
-      '@d2/validation-abstractions':
+      '@dcsv-io/d2-validation-abstractions':
         specifier: workspace:*
         version: link:../validation/abstractions
     devDependencies:
@@ -598,7 +598,7 @@ importers:
 
   public/packages/typescript/encryption:
     dependencies:
-      '@d2/encryption-abstractions':
+      '@dcsv-io/d2-encryption-abstractions':
         specifier: workspace:*
         version: link:../encryption-abstractions
     devDependencies:
@@ -641,13 +641,13 @@ importers:
 
   public/packages/typescript/error-codes-registry:
     dependencies:
-      '@d2/error-category':
+      '@dcsv-io/d2-error-category':
         specifier: workspace:*
         version: link:../error-category
-      '@d2/i18n-abstractions':
+      '@dcsv-io/d2-i18n-abstractions':
         specifier: workspace:*
         version: link:../i18n-abstractions
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../i18n-keys
     devDependencies:
@@ -663,10 +663,10 @@ importers:
 
   public/packages/typescript/geo/abstractions:
     dependencies:
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../utilities
       zod:
@@ -685,19 +685,19 @@ importers:
 
   public/packages/typescript/geo/default:
     dependencies:
-      '@d2/geo-abstractions':
+      '@dcsv-io/d2-geo-abstractions':
         specifier: workspace:*
         version: link:../abstractions
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../../i18n-keys
-      '@d2/request-context-abstractions':
+      '@dcsv-io/d2-request-context-abstractions':
         specifier: workspace:*
         version: link:../../request-context-abstractions
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../utilities
     devDependencies:
@@ -713,40 +713,40 @@ importers:
 
   public/packages/typescript/grpc-client:
     dependencies:
-      '@d2/auth-abstractions':
+      '@dcsv-io/d2-auth-abstractions':
         specifier: workspace:*
         version: link:../auth/abstractions
-      '@d2/error-category':
+      '@dcsv-io/d2-error-category':
         specifier: workspace:*
         version: link:../error-category
-      '@d2/headers-common':
+      '@dcsv-io/d2-headers-common':
         specifier: workspace:*
         version: link:../headers/common
-      '@d2/headers-http':
+      '@dcsv-io/d2-headers-http':
         specifier: workspace:*
         version: link:../headers/http
-      '@d2/i18n-abstractions':
+      '@dcsv-io/d2-i18n-abstractions':
         specifier: workspace:*
         version: link:../i18n-abstractions
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../i18n-keys
-      '@d2/logging':
+      '@dcsv-io/d2-logging':
         specifier: workspace:*
         version: link:../logging
-      '@d2/protos':
+      '@dcsv-io/d2-protos':
         specifier: workspace:*
         version: link:../protos
-      '@d2/request-context-abstractions':
+      '@dcsv-io/d2-request-context-abstractions':
         specifier: workspace:*
         version: link:../request-context-abstractions
-      '@d2/resilience':
+      '@dcsv-io/d2-resilience':
         specifier: workspace:*
         version: link:../resilience
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../utilities
       '@grpc/grpc-js':
@@ -789,25 +789,25 @@ importers:
 
   public/packages/typescript/headers/core:
     dependencies:
-      '@d2/auth-abstractions':
+      '@dcsv-io/d2-auth-abstractions':
         specifier: workspace:*
         version: link:../../auth/abstractions
-      '@d2/auth-context-abstractions':
+      '@dcsv-io/d2-auth-context-abstractions':
         specifier: workspace:*
         version: link:../../auth/context-abstractions
-      '@d2/headers-common':
+      '@dcsv-io/d2-headers-common':
         specifier: workspace:*
         version: link:../common
-      '@d2/problem-details-abstractions':
+      '@dcsv-io/d2-problem-details-abstractions':
         specifier: workspace:*
         version: link:../../problem-details-abstractions
-      '@d2/request-context-abstractions':
+      '@dcsv-io/d2-request-context-abstractions':
         specifier: workspace:*
         version: link:../../request-context-abstractions
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../utilities
     devDependencies:
@@ -847,13 +847,13 @@ importers:
 
   public/packages/typescript/i18n:
     dependencies:
-      '@d2/i18n-abstractions':
+      '@dcsv-io/d2-i18n-abstractions':
         specifier: workspace:*
         version: link:../i18n-abstractions
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../i18n-keys
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../utilities
     devDependencies:
@@ -881,7 +881,7 @@ importers:
 
   public/packages/typescript/i18n-keys:
     dependencies:
-      '@d2/i18n-abstractions':
+      '@dcsv-io/d2-i18n-abstractions':
         specifier: workspace:*
         version: link:../i18n-abstractions
     devDependencies:
@@ -897,10 +897,10 @@ importers:
 
   public/packages/typescript/logging:
     dependencies:
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../utilities
       pino:
@@ -934,31 +934,31 @@ importers:
 
   public/packages/typescript/messaging/rabbitmq:
     dependencies:
-      '@d2/encryption':
+      '@dcsv-io/d2-encryption':
         specifier: workspace:*
         version: link:../../encryption
-      '@d2/encryption-abstractions':
+      '@dcsv-io/d2-encryption-abstractions':
         specifier: workspace:*
         version: link:../../encryption-abstractions
-      '@d2/headers-amqp':
+      '@dcsv-io/d2-headers-amqp':
         specifier: workspace:*
         version: link:../../headers/amqp
-      '@d2/logging':
+      '@dcsv-io/d2-logging':
         specifier: workspace:*
         version: link:../../logging
-      '@d2/messaging-abstractions':
+      '@dcsv-io/d2-messaging-abstractions':
         specifier: workspace:*
         version: link:../../messaging-abstractions
-      '@d2/request-context-abstractions':
+      '@dcsv-io/d2-request-context-abstractions':
         specifier: workspace:*
         version: link:../../request-context-abstractions
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
-      '@d2/telemetry':
+      '@dcsv-io/d2-telemetry':
         specifier: workspace:*
         version: link:../../telemetry
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../utilities
       '@opentelemetry/api':
@@ -1020,7 +1020,7 @@ importers:
 
   public/packages/typescript/request-context-abstractions:
     dependencies:
-      '@d2/auth-context-abstractions':
+      '@dcsv-io/d2-auth-context-abstractions':
         specifier: workspace:*
         version: link:../auth/context-abstractions
     devDependencies:
@@ -1033,13 +1033,13 @@ importers:
 
   public/packages/typescript/resilience:
     dependencies:
-      '@d2/logging':
+      '@dcsv-io/d2-logging':
         specifier: workspace:*
         version: link:../logging
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../utilities
     devDependencies:
@@ -1055,16 +1055,16 @@ importers:
 
   public/packages/typescript/result:
     dependencies:
-      '@d2/error-category':
+      '@dcsv-io/d2-error-category':
         specifier: workspace:*
         version: link:../error-category
-      '@d2/i18n-abstractions':
+      '@dcsv-io/d2-i18n-abstractions':
         specifier: workspace:*
         version: link:../i18n-abstractions
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../i18n-keys
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../utilities
     devDependencies:
@@ -1080,13 +1080,13 @@ importers:
 
   public/packages/typescript/service-defaults:
     dependencies:
-      '@d2/logging':
+      '@dcsv-io/d2-logging':
         specifier: workspace:*
         version: link:../logging
-      '@d2/telemetry':
+      '@dcsv-io/d2-telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../utilities
     devDependencies:
@@ -1102,10 +1102,10 @@ importers:
 
   public/packages/typescript/telemetry:
     dependencies:
-      '@d2/logging':
+      '@dcsv-io/d2-logging':
         specifier: workspace:*
         version: link:../logging
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../utilities
       '@opentelemetry/api':
@@ -1154,10 +1154,10 @@ importers:
 
   public/packages/typescript/time:
     dependencies:
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../i18n-keys
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../result
       temporal-polyfill:
@@ -1194,7 +1194,7 @@ importers:
 
   public/packages/typescript/typespec-emitters:
     dependencies:
-      '@d2/typespec-decorators':
+      '@dcsv-io/d2-typespec-decorators':
         specifier: workspace:*
         version: link:../typespec-decorators
       '@typespec/http':
@@ -1204,16 +1204,16 @@ importers:
       '@bufbuild/buf':
         specifier: 1.65.0
         version: 1.65.0
-      '@d2/grpc-client':
+      '@dcsv-io/d2-grpc-client':
         specifier: workspace:*
         version: link:../grpc-client
-      '@d2/protos':
+      '@dcsv-io/d2-protos':
         specifier: workspace:*
         version: link:../protos
-      '@d2/resilience':
+      '@dcsv-io/d2-resilience':
         specifier: workspace:*
         version: link:../resilience
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../result
       '@grpc/grpc-js':
@@ -1258,17 +1258,17 @@ importers:
 
   public/packages/typescript/validation/abstractions:
     dependencies:
-      '@d2/geo-abstractions':
+      '@dcsv-io/d2-geo-abstractions':
         specifier: workspace:*
         version: link:../../geo/abstractions
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
       zod:
         specifier: 4.3.6
         version: 4.3.6
     devDependencies:
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../utilities
       '@vitest/coverage-v8':
@@ -1283,19 +1283,19 @@ importers:
 
   public/packages/typescript/validation/default:
     dependencies:
-      '@d2/geo-abstractions':
+      '@dcsv-io/d2-geo-abstractions':
         specifier: workspace:*
         version: link:../../geo/abstractions
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../../i18n-keys
-      '@d2/result':
+      '@dcsv-io/d2-result':
         specifier: workspace:*
         version: link:../../result
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../utilities
-      '@d2/validation-abstractions':
+      '@dcsv-io/d2-validation-abstractions':
         specifier: workspace:*
         version: link:../abstractions
       libphonenumber-js:
@@ -1323,10 +1323,10 @@ importers:
 
   public/tools/contract-gate:
     dependencies:
-      '@d2/typespec-emitters':
+      '@dcsv-io/d2-typespec-emitters':
         specifier: workspace:*
         version: link:../../packages/typescript/typespec-emitters
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../packages/typescript/utilities
     devDependencies:
@@ -1378,7 +1378,7 @@ importers:
 
   public/tools/release-runner:
     dependencies:
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../packages/typescript/utilities
       contract-gate:
@@ -1406,11 +1406,11 @@ importers:
 
   public/tools/ts-codegen:
     dependencies:
-      '@d2/utilities':
+      '@dcsv-io/d2-utilities':
         specifier: workspace:*
         version: link:../../packages/typescript/utilities
     devDependencies:
-      '@d2/i18n-keys':
+      '@dcsv-io/d2-i18n-keys':
         specifier: workspace:*
         version: link:../../packages/typescript/i18n-keys
       '@types/node':
@@ -9029,13 +9029,13 @@ snapshots:
       - utf-8-validate
       - vite
 
-  '@vitest/browser-playwright@4.0.18(playwright@1.58.0)(vite@7.3.1(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)':
+  '@vitest/browser-playwright@4.0.18(playwright@1.58.0)(vite@7.3.1(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)':
     dependencies:
-      '@vitest/browser': 4.0.18(vite@7.3.1(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
-      '@vitest/mocker': 4.0.18(vite@7.3.1(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))
+      '@vitest/browser': 4.0.18(vite@7.3.1(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
+      '@vitest/mocker': 4.0.18(vite@7.3.1(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))
       playwright: 1.58.0
       tinyrainbow: 3.1.0
-      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(@vitest/browser-playwright@4.0.18)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0)
+      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(@vitest/browser-playwright@4.0.18)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0)
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -9043,13 +9043,13 @@ snapshots:
       - vite
     optional: true
 
-  '@vitest/browser-playwright@4.0.18(playwright@1.58.0)(vite@7.3.3(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)':
+  '@vitest/browser-playwright@4.0.18(playwright@1.58.0)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)':
     dependencies:
-      '@vitest/browser': 4.0.18(vite@7.3.3(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
-      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))
+      '@vitest/browser': 4.0.18(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
+      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))
       playwright: 1.58.0
       tinyrainbow: 3.1.0
-      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(@vitest/browser-playwright@4.0.18)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0)
+      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(@vitest/browser-playwright@4.0.18)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0)
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -9074,16 +9074,16 @@ snapshots:
       - utf-8-validate
       - vite
 
-  '@vitest/browser@4.0.18(vite@7.3.1(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)':
+  '@vitest/browser@4.0.18(vite@7.3.1(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)':
     dependencies:
-      '@vitest/mocker': 4.0.18(vite@7.3.1(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))
+      '@vitest/mocker': 4.0.18(vite@7.3.1(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))
       '@vitest/utils': 4.0.18
       magic-string: 0.30.21
       pixelmatch: 7.1.0
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.0
-      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(@vitest/browser-playwright@4.0.18)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0)
+      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(@vitest/browser-playwright@4.0.18)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0)
       ws: 8.21.1
     transitivePeerDependencies:
       - bufferutil
@@ -9128,7 +9128,7 @@ snapshots:
       - vite
     optional: true
 
-  '@vitest/coverage-v8@4.0.18(@vitest/browser@4.0.18(vite@7.3.1(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18))(vitest@4.0.18)':
+  '@vitest/coverage-v8@4.0.18(@vitest/browser@4.0.18(vite@7.3.1(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18))(vitest@4.0.18)':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@vitest/utils': 4.0.18
@@ -9140,9 +9140,9 @@ snapshots:
       obug: 2.1.1
       std-env: 3.10.0
       tinyrainbow: 3.1.0
-      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(@vitest/browser-playwright@4.0.18)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0)
+      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.0)(@vitest/browser-playwright@4.0.18)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0)
     optionalDependencies:
-      '@vitest/browser': 4.0.18(vite@7.3.1(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
+      '@vitest/browser': 4.0.18(vite@7.3.1(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
 
   '@vitest/coverage-v8@4.0.18(@vitest/browser@4.0.18(vite@7.3.3(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18))(vitest@4.0.18)':
     dependencies:
@@ -11813,7 +11813,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       '@types/node': 24.10.0
-      '@vitest/browser-playwright': 4.0.18(playwright@1.58.0)(vite@7.3.3(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
+      '@vitest/browser-playwright': 4.0.18(playwright@1.58.0)(vite@7.3.1(@types/node@24.10.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
     transitivePeerDependencies:
       - jiti
       - less
@@ -11852,7 +11852,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       '@types/node': 25.7.0
-      '@vitest/browser-playwright': 4.0.18(playwright@1.58.0)(vite@7.3.1(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
+      '@vitest/browser-playwright': 4.0.18(playwright@1.58.0)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.20.6)(yaml@2.9.0))(vitest@4.0.18)
     transitivePeerDependencies:
       - jiti
       - less

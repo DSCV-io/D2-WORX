@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { type Span, SpanKind } from "@opentelemetry/api";
-import { MessagingActivityTags } from "@d2/telemetry";
+import { MessagingActivityTags } from "@dcsv-io/d2-telemetry";
 
 import { consumerTracer } from "../telemetry.js";
 import { type ConsumedMessage, readHeaderString } from "./consumed-message.js";

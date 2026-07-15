@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { AuthFailures, AuthErrorCodes } from "@d2/auth-abstractions";
+import { AuthFailures, AuthErrorCodes } from "@dcsv-io/d2-auth-abstractions";
 import {
   fail,
   notFound,
@@ -13,7 +13,7 @@ import {
   conflict,
   serviceUnavailable,
   validationFailed,
-} from "@d2/result";
+} from "@dcsv-io/d2-result";
 import {
   PROBLEM_TYPE_URI_PREFIX,
   ProblemDetailsExtensionKeys,

@@ -136,7 +136,7 @@ export function emitTsRestClient(
   lines.push(
     `import { ${substrateImports.join(", ")} } from "$lib/client/rest/gateway-client.js";`,
   );
-  lines.push('import type { D2Result } from "@d2/result";');
+  lines.push('import type { D2Result } from "@dcsv-io/d2-result";');
   lines.push("");
 
   // Module-relative DTO imports the BFF consumer resolves. Deduped by type

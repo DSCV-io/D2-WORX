@@ -1,4 +1,4 @@
-# Changelog — D2.Edge.KeyCustodian.Client
+# Changelog — DcsvIo.D2.Private.Edge.KeyCustodian.Client
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.
@@ -55,10 +55,10 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
 
 ### Renamed
 
-- Package renamed `D2.Edge.KeyCustodian.Clients` → `D2.Edge.KeyCustodian.Client`
+- Package renamed `DcsvIo.D2.Private.Edge.KeyCustodian.Clients` → `DcsvIo.D2.Private.Edge.KeyCustodian.Client`
   (folder `clients/` → `client/`) — the singular client-package convention;
   unpublished, so no consumer-facing break. Generated DTO namespaces regenerated
-  to `D2.Edge.KeyCustodian.Client` via the emitter pipeline (a codegen-input
+  to `DcsvIo.D2.Private.Edge.KeyCustodian.Client` via the emitter pipeline (a codegen-input
   change, never a hand-edit of `.g.cs` output).
 
 ### Fixed

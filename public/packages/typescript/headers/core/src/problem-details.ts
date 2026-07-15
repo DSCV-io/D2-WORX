@@ -3,19 +3,19 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { D2Result } from "@d2/result";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 import {
   defaultTitleForStatus,
   PROBLEM_TYPE_URI_PREFIX,
   ProblemDetailsExtensionKeys,
-} from "@d2/problem-details-abstractions";
+} from "@dcsv-io/d2-problem-details-abstractions";
 
 /**
  * RFC 7807 ProblemDetails body shape as emitted by the BFF on guard
  * rejections. Hand-written — RFC 7807 is an external standard, not a
  * D²-defined catalog. Extension key NAMES are spec-driven (see
- * `@d2/problem-details-abstractions` for the codegen-emitted
+ * `@dcsv-io/d2-problem-details-abstractions` for the codegen-emitted
  * `ProblemDetailsExtensionKeys`).
  */
 export interface ProblemDetailsBody {
@@ -50,7 +50,7 @@ export interface ProblemDetailsOptions {
  * wire-format catalog (`PROBLEM_TYPE_URI_PREFIX`,
  * `ProblemDetailsExtensionKeys`, `defaultTitleForStatus`) is codegen-emitted
  * from `contracts/problem-details/problem-details.spec.json` — the SAME
- * spec drives the .NET-side `D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions`
+ * spec drives the .NET-side `DcsvIo.D2.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions`
  * partial class, so cross-language drift is structurally impossible.
  */
 export function toProblemDetails(

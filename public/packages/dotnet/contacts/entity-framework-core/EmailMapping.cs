@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Contacts.EntityFrameworkCore;
+namespace DcsvIo.D2.Contacts.EntityFrameworkCore;
 
 using System;
-using D2.Shared.Contacts.ValueObjects;
-using D2.Shared.DataGovernance.Abstractions;
-using D2.Shared.DataGovernance.EntityFrameworkCore;
+using DcsvIo.D2.Contacts.ValueObjects;
+using DcsvIo.D2.DataGovernance.Abstractions;
+using DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 /// <summary>

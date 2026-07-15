@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App.Signing;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App.Signing;
 
-using D2.Edge.KeyCustodian.App.Application;
-using D2.Edge.KeyCustodian.App.Application.Facade;
-using D2.Edge.KeyCustodian.App.Application.Signing;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Signing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>

@@ -11,7 +11,7 @@ import {
 } from "../src/index.js";
 
 // The nine closed wire strings — the cross-runtime source of truth. Mirrors
-// the .NET D2.Shared.ErrorCodes.Category.ErrorCategory enum's wire set.
+// the .NET DcsvIo.D2.ErrorCodes.Category.ErrorCategory enum's wire set.
 const EXPECTED_WIRES: readonly ErrorCategory[] = [
   "conflict",
   "infrastructure_unavailable",
@@ -24,7 +24,7 @@ const EXPECTED_WIRES: readonly ErrorCategory[] = [
   "validation_failure",
 ];
 
-describe("@d2/error-category", () => {
+describe("@dcsv-io/d2-error-category", () => {
   it("ALL_ERROR_CATEGORIES has exactly the nine closed wire strings", () => {
     expect([...ALL_ERROR_CATEGORIES].sort()).toEqual(
       [...EXPECTED_WIRES].sort(),

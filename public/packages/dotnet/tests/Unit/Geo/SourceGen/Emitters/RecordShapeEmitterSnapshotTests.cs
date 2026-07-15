@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Geo.SourceGen.Emitters;
+namespace DcsvIo.D2.Tests.Unit.Geo.SourceGen.Emitters;
 
 using System.Collections.Generic;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Geo.SourceGen.Emitters.Default;
-using D2.Shared.Geo.SourceGen.Spec;
+using DcsvIo.D2.Geo.SourceGen.Emitters.Default;
+using DcsvIo.D2.Geo.SourceGen.Spec;
 using Xunit;
 
 /// <summary>
 /// Shape coverage for the per-catalog DATA emitters under
-/// <c>D2.Shared.Geo.SourceGen.Emitters.Default</c>. Each test invokes
+/// <c>DcsvIo.D2.Geo.SourceGen.Emitters.Default</c>. Each test invokes
 /// the emitter against a small synthetic <see cref="GeoSpecContext"/>
 /// and asserts canonical shape markers in the emitted source string
 /// — single source file per catalog, namespace declaration,
@@ -44,7 +44,7 @@ public sealed class RecordShapeEmitterSnapshotTests
 
         results.Should().ContainSingle();
         var src = results[0].GeneratedSource;
-        src.Should().Contain("namespace D2.Shared.Geo.Default");
+        src.Should().Contain("namespace DcsvIo.D2.Geo.Default");
         src.Should().Contain("public static class Countries");
         src.Should().Contain("public static class CountryLookup");
         src.Should().Contain(

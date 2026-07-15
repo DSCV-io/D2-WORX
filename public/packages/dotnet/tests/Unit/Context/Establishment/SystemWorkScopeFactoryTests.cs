@@ -4,24 +4,24 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Context.Establishment;
+namespace DcsvIo.D2.Tests.Unit.Context.Establishment;
 
 using System;
 using System.Threading;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Http;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using Xunit;
-using IClock = D2.Shared.Time.IClock;
-using TestClock = D2.Shared.Time.TestClock;
+using IClock = DcsvIo.D2.Time.IClock;
+using TestClock = DcsvIo.D2.Time.TestClock;
 
 /// <summary>
 /// Unit matrix for the platform System work plane:

@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n-keys";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import { describe, expect, it } from "vitest";
 
 import {

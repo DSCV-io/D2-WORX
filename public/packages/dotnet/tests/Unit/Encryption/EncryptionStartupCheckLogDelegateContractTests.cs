@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption;
+namespace DcsvIo.D2.Tests.Unit.Encryption;
 
 using System;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 using Xunit;
 
 /// <summary>
@@ -20,7 +20,7 @@ using Xunit;
 /// registration path can embed key-adjacent material or configuration detail in
 /// <c>ex.Message</c>; callers pass <c>SanitizedExceptionRender.TypeName(ex)</c> as a
 /// separate string parameter instead (rules.md §3.1). Mirrors the enforcement pattern in
-/// <c>D2.Shared.Tests.Unit.Mtls.MtlsLogDelegateContractTests</c>.
+/// <c>DcsvIo.D2.Tests.Unit.Mtls.MtlsLogDelegateContractTests</c>.
 /// </summary>
 [Trait("Category", "Unit")]
 public sealed class EncryptionStartupCheckLogDelegateContractTests
@@ -33,7 +33,7 @@ public sealed class EncryptionStartupCheckLogDelegateContractTests
         var logType = typeof(PayloadCryptoKeyring).Assembly
             .GetTypes()
             .Single(t => t.Name == logTypeName
-                && t.Namespace == "D2.Shared.Encryption");
+                && t.Namespace == "DcsvIo.D2.Encryption");
 
         var leakProneMethods = logType
             .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic)

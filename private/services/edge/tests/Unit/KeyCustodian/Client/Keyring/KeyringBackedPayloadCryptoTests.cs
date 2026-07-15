@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
 
 using System.Diagnostics.Metrics;
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Edge.KeyCustodian.Client.Sealing;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -90,9 +90,9 @@ public sealed class SealingMetricsTests
     public void MeterAndInstrumentNames_WireLiterals_ArePinned()
     {
         // Per-VALUE pins: a wire-name rename must fail a test, never pass silently. The
-        // sealing counters share the keyring meter (D2.Edge.KeyCustodian.Client).
+        // sealing counters share the keyring meter (DcsvIo.D2.Private.Edge.KeyCustodian.Client).
         SealingMetrics.SR_SealKeyringFetches.Meter.Name
-            .Should().Be("D2.Edge.KeyCustodian.Client");
+            .Should().Be("DcsvIo.D2.Private.Edge.KeyCustodian.Client");
         SealingMetrics.SR_SealKeyringFetches.Meter.Name.Should().Be(KeyringMetrics.METER_NAME);
 
         SealingMetrics.SR_SealKeyringFetches.Name.Should().Be("d2.sealing.fetches");

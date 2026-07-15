@@ -23,7 +23,7 @@ import type { DeprecationInfo } from "../deprecation-info.js";
  * enum scope"). `country` / `countryIso31661Alpha2Code` are `undefined`
  * for language-only tags (no region subtag). Both nav refs populated
  * in the wire-nav step. Mirrors .NET
- * `D2.Shared.Geo.Abstractions.Locale` field-for-field.
+ * `DcsvIo.D2.Geo.Abstractions.Locale` field-for-field.
  */
 export interface Locale {
   readonly ietfBcp47Tag: LocaleCode;

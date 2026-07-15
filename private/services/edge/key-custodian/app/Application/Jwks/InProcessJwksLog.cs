@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Jwks;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Jwks;
 
 using Microsoft.Extensions.Logging;
 

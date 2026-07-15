@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.JwtClaims.SourceGen;
+namespace DcsvIo.D2.Auth.JwtClaims.SourceGen;
 
 using System.Collections.Immutable;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Result of <see cref="JwtClaimsEmitter.Emit"/>. Pure data.

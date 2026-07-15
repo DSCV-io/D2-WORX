@@ -116,7 +116,7 @@ describe("diffShippedLines", () => {
 // ---------------------------------------------------------------------------
 
 describe("baseline path helpers", () => {
-  const csproj = join("/abs", "result", "D2.Shared.Result.csproj");
+  const csproj = join("/abs", "result", "DcsvIo.D2.Result.csproj");
 
   it("fingerprintBaselinePath → .release-fingerprint next to the csproj", () => {
     expect(fingerprintBaselinePath(csproj)).toBe(
@@ -137,10 +137,10 @@ describe("baseline path helpers", () => {
   });
 
   it("handles a Windows-style csproj path", () => {
-    const win = "C:\\repo\\result\\D2.Shared.Result.csproj";
+    const win = "C:\\repo\\result\\DcsvIo.D2.Result.csproj";
     expect(fingerprintBaselinePath(win)).toContain(".release-fingerprint");
     expect(fingerprintBaselinePath(win)).not.toContain(
-      "D2.Shared.Result.csproj",
+      "DcsvIo.D2.Result.csproj",
     );
   });
 });

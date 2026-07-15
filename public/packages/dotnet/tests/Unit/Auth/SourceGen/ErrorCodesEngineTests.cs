@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.Auth.ErrorCodes.SourceGen;
-using D2.Shared.ErrorCodes.SourceGen;
+using DcsvIo.D2.Auth.ErrorCodes.SourceGen;
+using DcsvIo.D2.ErrorCodes.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -24,7 +24,7 @@ using Xunit;
 /// </summary>
 public sealed class ErrorCodesEngineTests
 {
-    private const string _AUTH_ASSEMBLY = "D2.Shared.Auth";
+    private const string _AUTH_ASSEMBLY = "DcsvIo.D2.Auth";
     private const string _AUTH_SPEC_NAME = "auth-error-codes.spec.json";
 
     [Theory]

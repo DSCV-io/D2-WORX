@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { AmqpHeaders } from "@d2/headers-amqp";
+import { AmqpHeaders } from "@dcsv-io/d2-headers-amqp";
 import { describe, expect, it } from "vitest";
 
 import { readValidatedMessageId } from "../src/subscribing/message-id.js";

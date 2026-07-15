@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching.Distributed.Redis;
+namespace DcsvIo.D2.Caching.Distributed.Redis;
 
 using System.Collections.Concurrent;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

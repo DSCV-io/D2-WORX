@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 auth error codes spec",
-  "description": "Domain-specialized copy of contracts/error-codes/error-codes.canonical.schema.json, narrowed to the auth catalog: the AUTH_* code-prefix regex, the [401, 503] httpStatus subset, and the 3 auth categories. Conforms to the canonical 7-field set (including factoryShape) but tightens the value constraints so editors catch a non-AUTH_ code, a non-401/503 status, or a non-auth category at edit time. This is the source-of-truth catalog that D2.Shared.Auth.ErrorCodes.SourceGen reads to emit AuthErrorCodes.g.cs + AuthFailures.g.cs into D2.Shared.Auth. A drift-guard test asserts this copy stays field-aligned with the canonical schema.",
+  "description": "Domain-specialized copy of contracts/error-codes/error-codes.canonical.schema.json, narrowed to the auth catalog: the AUTH_* code-prefix regex, the [401, 503] httpStatus subset, and the 3 auth categories. Conforms to the canonical 7-field set (including factoryShape) but tightens the value constraints so editors catch a non-AUTH_ code, a non-401/503 status, or a non-auth category at edit time. This is the source-of-truth catalog that DcsvIo.D2.Auth.ErrorCodes.SourceGen reads to emit AuthErrorCodes.g.cs + AuthFailures.g.cs into DcsvIo.D2.Auth. A drift-guard test asserts this copy stays field-aligned with the canonical schema.",
   "type": "object",
   "required": ["errorCodes"],
   "additionalProperties": false,

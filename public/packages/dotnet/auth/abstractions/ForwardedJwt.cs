@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions;
+namespace DcsvIo.D2.Auth.Abstractions;
 
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Enums;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Redacting wrapper around the raw internal transaction-token (an RS256 JWT

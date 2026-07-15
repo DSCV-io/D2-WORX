@@ -3,24 +3,15 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-// Tests for the manifest-loader dep-extraction helpers.
+// Tests for the manifest-loader dep-extraction helpers + dual inventory (I12).
 //
 // Regression coverage:
 //
 //   BX-1  extractNugetProjectRefs: Windows backslash Include paths are
 //         normalized before path.resolve so the resolved absolute path and
 //         its basename are correct on POSIX (Linux CI) as well as on Windows.
-//         Without the fix, POSIX path.resolve treats `\` as a literal filename
-//         character, garbling the resolved path → basename returns the whole
-//         Include value, not the filename → dep silently dropped from every
-//         NuGet package that carries a `<ProjectReference>`.
-//
-// OS-independence guarantee: the test exercises the POSIX failure mode
-// explicitly by asserting on the basename of the resolved path.  A backslash
-// Include value like `..\..\result\D2.Shared.Result.csproj` resolves to a
-// path whose POSIX basename MUST end in `.csproj` and MUST equal the package
-// id (without extension) — a condition that fails under the unfixed code on
-// Linux because the whole Include string becomes the filename component.
+//   I12   Public publish lane rejects d2-private- / .Private. / private tree;
+//         private consumable lane still sees KC clients without public leak.
 
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -28,7 +19,13 @@ import { basename, join, posix } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   extractNugetProjectRefs,
+  isOpenPublicNpmName,
+  isOpenPublicNugetName,
+  loadAllPackages,
   loadNpmPackages,
+  loadNugetPackages,
+  loadPrivateConsumableNpmPackages,
+  loadPrivateConsumableNugetPackages,
 } from "../src/manifest-loader.js";
 
 // ---------------------------------------------------------------------------
@@ -36,39 +33,26 @@ import {
 // ---------------------------------------------------------------------------
 
 describe("extractNugetProjectRefs — backslash Include path normalization (BX-1)", () => {
-  // A real .csproj on Windows records Include paths with backslash separators.
-  // Each test below drives the function with that exact shape and asserts that
-  // the resolved path's basename equals the expected package id — the condition
-  // that the drift-check's dep map depends on.
-
   const csprojDir = "/abs/result/core"; // always forward-slash (POSIX root)
 
   it("resolves a Windows-style backslash Include to the correct absolute path", () => {
     const text = `<Project>
   <ItemGroup>
-    <ProjectReference Include="..\\..\\utilities\\D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="..\\..\\utilities\\DcsvIo.D2.Utilities.csproj" />
   </ItemGroup>
 </Project>`;
 
     const refs = extractNugetProjectRefs(text, csprojDir);
 
     expect(refs).toHaveLength(1);
-
-    // The resolved path must end in `D2.Shared.Utilities.csproj`.
-    // Without the fix, on POSIX this would end in
-    // `..\\..\\utilities\\D2.Shared.Utilities.csproj` (the whole Include
-    // value treated as a single filename component).
-    expect(refs[0]).toMatch(/D2\.Shared\.Utilities\.csproj$/);
-
-    // The basename — what loadNugetPackages uses to derive the dep name — must
-    // be exactly `D2.Shared.Utilities.csproj`, not the garbled full string.
-    expect(basename(refs[0]!, ".csproj")).toBe("D2.Shared.Utilities");
+    expect(refs[0]).toMatch(/DcsvIo\.D2\.Utilities\.csproj$/);
+    expect(basename(refs[0]!, ".csproj")).toBe("DcsvIo.D2.Utilities");
   });
 
   it("resolves a deeply-nested Windows backslash Include (three levels up)", () => {
     const text = `<Project>
   <ItemGroup>
-    <ProjectReference Include="..\\..\\..\\caching\\abstractions\\D2.Shared.Caching.Abstractions.csproj" />
+    <ProjectReference Include="..\\..\\..\\caching\\abstractions\\DcsvIo.D2.Caching.Abstractions.csproj" />
   </ItemGroup>
 </Project>`;
 
@@ -76,15 +60,15 @@ describe("extractNugetProjectRefs — backslash Include path normalization (BX-1
 
     expect(refs).toHaveLength(1);
     expect(basename(refs[0]!, ".csproj")).toBe(
-      "D2.Shared.Caching.Abstractions",
+      "DcsvIo.D2.Caching.Abstractions",
     );
   });
 
   it("resolves multiple backslash Includes in one csproj — all basenames correct", () => {
     const text = `<Project>
   <ItemGroup>
-    <ProjectReference Include="..\\..\\utilities\\D2.Shared.Utilities.csproj" />
-    <ProjectReference Include="..\\..\\result\\core\\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\\..\\utilities\\DcsvIo.D2.Utilities.csproj" />
+    <ProjectReference Include="..\\..\\result\\core\\DcsvIo.D2.Result.csproj" />
   </ItemGroup>
 </Project>`;
 
@@ -94,33 +78,33 @@ describe("extractNugetProjectRefs — backslash Include path normalization (BX-1
 
     const names = refs.map((r) => basename(r, ".csproj")).sort();
 
-    expect(names).toEqual(["D2.Shared.Result", "D2.Shared.Utilities"]);
+    expect(names).toEqual(["DcsvIo.D2.Result", "DcsvIo.D2.Utilities"]);
   });
 
   it("forward-slash Include (Unix-style) is also resolved correctly (no regression)", () => {
     const text = `<Project>
   <ItemGroup>
-    <ProjectReference Include="../../utilities/D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="../../utilities/DcsvIo.D2.Utilities.csproj" />
   </ItemGroup>
 </Project>`;
 
     const refs = extractNugetProjectRefs(text, csprojDir);
 
     expect(refs).toHaveLength(1);
-    expect(basename(refs[0]!, ".csproj")).toBe("D2.Shared.Utilities");
+    expect(basename(refs[0]!, ".csproj")).toBe("DcsvIo.D2.Utilities");
   });
 
   it("mixed backslash/forward-slash Include (unusual but possible) resolves correctly", () => {
     const text = `<Project>
   <ItemGroup>
-    <ProjectReference Include="..\\..\\utilities/D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="..\\..\\utilities/DcsvIo.D2.Utilities.csproj" />
   </ItemGroup>
 </Project>`;
 
     const refs = extractNugetProjectRefs(text, csprojDir);
 
     expect(refs).toHaveLength(1);
-    expect(basename(refs[0]!, ".csproj")).toBe("D2.Shared.Utilities");
+    expect(basename(refs[0]!, ".csproj")).toBe("DcsvIo.D2.Utilities");
   });
 
   it("empty csproj text → no refs", () => {
@@ -129,70 +113,105 @@ describe("extractNugetProjectRefs — backslash Include path normalization (BX-1
     );
   });
 
-  // ---------------------------------------------------------------------------
-  // OS-independence proof: simulate the POSIX path-resolution semantics using
-  // path.posix throughout (both resolve AND basename from path.posix) so that
-  // the test exercises POSIX semantics on EVERY OS, including Windows.
-  //
-  // On Linux the production path.resolve IS path.posix.resolve and
-  // path.basename IS path.posix.basename — so this directly mirrors what
-  // POSIX path.resolve does there.  On Windows path.resolve/basename also
-  // recognize `\` natively, which is WHY the Windows-backslash normalization
-  // is needed and WHY the test must drive the POSIX variants explicitly to
-  // stay OS-independent.
-  // ---------------------------------------------------------------------------
-
   it("posix.basename of a posix.resolve with backslash Include is garbled — POSIX path.resolve treats backslash as a literal filename character", () => {
-    // The raw Include value as it appears in a Windows-committed .csproj.
-    const backslashInclude = "..\\..\\utilities\\D2.Shared.Utilities.csproj";
-
-    // On POSIX (Linux): path.resolve treats `\` as a literal filename char,
-    // so the result is just the base dir concatenated with the entire Include
-    // value as a single path segment.
+    const backslashInclude = "..\\..\\utilities\\DcsvIo.D2.Utilities.csproj";
     const garbled = posix.resolve(csprojDir, backslashInclude);
 
-    // posix.basename of the garbled path is the ENTIRE Include value
-    // (because `\` is not a POSIX separator and the whole thing is one segment).
-    // Stripping `.csproj` from this string does NOT yield the package id.
-    expect(posix.basename(garbled, ".csproj")).not.toBe("D2.Shared.Utilities");
-
-    // Confirm the garbled tail ends with the full backslash-separated string
-    // so it is clear why CONSUMABLE_NAMES.has(...) would always return false.
+    expect(posix.basename(garbled, ".csproj")).not.toBe("DcsvIo.D2.Utilities");
     expect(garbled.endsWith(backslashInclude)).toBe(true);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Service-owned client discovery — the KeyCustodian TS client lives beside its
-// service (private/services/edge/key-custodian/client-ts), not under
-// public/packages/typescript, so the npm loader special-cases that root.
+// Open name predicates (T5.4 / T5.1 fence)
 // ---------------------------------------------------------------------------
 
-describe("loadNpmPackages — service-owned KeyCustodian client discovery", () => {
+describe("isOpenPublicNpmName / isOpenPublicNugetName", () => {
+  it("PublicNpmInventory_AcceptsOpenDcsvIoD2AndRejectsD2Private", () => {
+    expect(isOpenPublicNpmName("@dcsv-io/d2-result")).toBe(true);
+    expect(
+      isOpenPublicNpmName("@dcsv-io/d2-private-key-custodian-client"),
+    ).toBe(false);
+    expect(isOpenPublicNpmName("@dcsv-io/d2-private-evil")).toBe(false);
+    expect(isOpenPublicNpmName("@d2/result")).toBe(false);
+    expect(isOpenPublicNpmName("@dcsv-io/d2-typespec-decorators")).toBe(false);
+    expect(isOpenPublicNpmName("@dcsv-io/d2-contract-tests")).toBe(false);
+    expect(isOpenPublicNpmName("")).toBe(false);
+  });
+
+  it("PublicNugetInventory rejects Private and Tests basenames", () => {
+    expect(isOpenPublicNugetName("DcsvIo.D2.Result")).toBe(true);
+    expect(
+      isOpenPublicNugetName("DcsvIo.D2.Private.Encryption.Extensions"),
+    ).toBe(false);
+    expect(isOpenPublicNugetName("DcsvIo.D2.Private.Edge.Api")).toBe(false);
+    expect(isOpenPublicNugetName("DcsvIo.D2.Tests")).toBe(false);
+    expect(isOpenPublicNugetName("DcsvIo.D2.Foo.SourceGen")).toBe(false);
+    expect(isOpenPublicNugetName("D2.Shared.Result")).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Dual inventory — public list never sees private tree / closed markers
+// ---------------------------------------------------------------------------
+
+describe("dual inventory — public vs private consumable lanes", () => {
   let repoRoot: string;
 
   beforeEach(() => {
     repoRoot = mkdtempSync(join(tmpdir(), "d2-manifest-loader-"));
 
-    // A shared package under the primary root.
     writePackage(
       join(repoRoot, "public/packages/typescript/result"),
-      '{ "name": "@d2/result", "version": "1.2.3" }',
+      '{ "name": "@dcsv-io/d2-result", "version": "1.2.3" }',
     );
 
-    // The service-owned KC client under its own root (NOT the shared tree).
+    // Closed name under public tree must be rejected by public lane.
+    writePackage(
+      join(repoRoot, "public/packages/typescript/evil-private"),
+      '{ "name": "@dcsv-io/d2-private-evil", "version": "0.0.1" }',
+    );
+
     writePackage(
       join(repoRoot, "private/services/edge/key-custodian/client-ts"),
-      '{ "name": "@d2/key-custodian-client", "version": "0.1.0" }',
+      '{ "name": "@dcsv-io/d2-private-key-custodian-client", "version": "0.1.0" }',
     );
 
-    // A node_modules copy that MUST be ignored.
     writePackage(
       join(
         repoRoot,
-        "private/services/edge/key-custodian/client-ts/node_modules/@d2/leaked",
+        "private/services/edge/key-custodian/client-ts/node_modules/@dcsv-io/d2-leaked",
       ),
-      '{ "name": "@d2/leaked", "version": "9.9.9" }',
+      '{ "name": "@dcsv-io/d2-leaked", "version": "9.9.9" }',
+    );
+
+    // Open NuGet packable
+    writeCsproj(
+      join(repoRoot, "public/packages/dotnet/result/core"),
+      "DcsvIo.D2.Result.csproj",
+      `<Project><PropertyGroup><Version>1.0.0</Version></PropertyGroup></Project>`,
+    );
+
+    // Private Extensions under private packages — must not appear on public list
+    writeCsproj(
+      join(repoRoot, "private/packages/dotnet/encryption/extensions"),
+      "DcsvIo.D2.Private.Encryption.Extensions.csproj",
+      `<Project><PropertyGroup><Version>1.0.0</Version></PropertyGroup></Project>`,
+    );
+
+    // KC .NET client private consumable
+    writeCsproj(
+      join(repoRoot, "private/services/edge/key-custodian/client"),
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client.csproj",
+      `<Project><PropertyGroup><Version>0.1.0</Version></PropertyGroup></Project>`,
+    );
+
+    // Open-looking product without Private under private tree — public list still
+    // must not see private roots.
+    writeCsproj(
+      join(repoRoot, "private/services/edge/api"),
+      "DcsvIo.D2.Private.Edge.Api.csproj",
+      `<Project><PropertyGroup><Version>0.1.0</Version></PropertyGroup></Project>`,
     );
   });
 
@@ -200,24 +219,63 @@ describe("loadNpmPackages — service-owned KeyCustodian client discovery", () =
     rmSync(repoRoot, { recursive: true, force: true });
   });
 
-  it("discovers the KC client beside its service (not under public/packages/typescript)", () => {
-    const packages = loadNpmPackages(repoRoot);
-    const names = packages.map((p) => p.name);
+  it("PublicList_ExcludesPrivateTreeAndD2PrivateAndTypespecExclusions", () => {
+    const all = loadAllPackages(repoRoot);
+    const names = all.map((p) => p.name);
 
-    expect(names).toContain("@d2/key-custodian-client");
-    expect(names).toContain("@d2/result");
-    // The node_modules copy is never discovered.
-    expect(names).not.toContain("@d2/leaked");
+    expect(names).toContain("@dcsv-io/d2-result");
+    expect(names).toContain("DcsvIo.D2.Result");
+    expect(names).not.toContain("@dcsv-io/d2-private-key-custodian-client");
+    expect(names).not.toContain("@dcsv-io/d2-private-evil");
+    expect(names).not.toContain("DcsvIo.D2.Private.Encryption.Extensions");
+    expect(names).not.toContain("DcsvIo.D2.Private.Edge.KeyCustodian.Client");
+    expect(names).not.toContain("DcsvIo.D2.Private.Edge.Api");
+    expect(names.every((n) => !n.includes("d2-private-"))).toBe(true);
+    expect(names.every((n) => !n.includes(".Private."))).toBe(true);
+    expect(names.every((n) => !n.includes("private/"))).toBe(true);
+    expect(all.every((p) => !p.dir.startsWith("private/"))).toBe(true);
+  });
 
-    const kc = packages.find((p) => p.name === "@d2/key-custodian-client")!;
-    expect(kc.ecosystem).toBe("npm");
-    expect(kc.currentVersion).toBe("0.1.0");
-    // The dir is repo-root-relative with forward slashes.
-    expect(kc.dir).toBe("private/services/edge/key-custodian/client-ts");
+  it("PrivateConsumableLane_CanSeeKcClients_WithoutPublicListLeak", () => {
+    const publicNpm = loadNpmPackages(repoRoot).map((p) => p.name);
+    const privateNpm = loadPrivateConsumableNpmPackages(repoRoot).map(
+      (p) => p.name,
+    );
+    const privateNuget = loadPrivateConsumableNugetPackages(repoRoot).map(
+      (p) => p.name,
+    );
+
+    expect(publicNpm).toContain("@dcsv-io/d2-result");
+    expect(publicNpm).not.toContain("@dcsv-io/d2-private-key-custodian-client");
+    expect(privateNpm).toContain("@dcsv-io/d2-private-key-custodian-client");
+    expect(privateNpm).not.toContain("@dcsv-io/d2-leaked");
+    expect(privateNuget).toContain(
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
+    );
+
+    const publicList = loadAllPackages(repoRoot);
+    expect(
+      publicList.find(
+        (p) => p.name === "@dcsv-io/d2-private-key-custodian-client",
+      ),
+    ).toBeUndefined();
+  });
+
+  it("PublicNugetInventory_IsPublicPackagesTreeOnly_ExcludesPrivateAndProduct", () => {
+    const nuget = loadNugetPackages(repoRoot);
+    expect(nuget.map((p) => p.name)).toEqual(["DcsvIo.D2.Result"]);
+    expect(nuget.every((p) => p.dir.startsWith("public/packages/dotnet"))).toBe(
+      true,
+    );
   });
 
   function writePackage(dir: string, packageJson: string): void {
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, "package.json"), packageJson);
+  }
+
+  function writeCsproj(dir: string, fileName: string, body: string): void {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, fileName), body);
   }
 });

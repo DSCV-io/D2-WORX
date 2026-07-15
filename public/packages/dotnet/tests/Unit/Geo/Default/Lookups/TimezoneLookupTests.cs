@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Geo.Default.Lookups;
+namespace DcsvIo.D2.Tests.Unit.Geo.Default.Lookups;
 
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Geo.Default;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Geo.Default;
 using Xunit;
 
 /// <summary>

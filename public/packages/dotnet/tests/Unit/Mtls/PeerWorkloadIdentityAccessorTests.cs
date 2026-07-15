@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Mtls;
+namespace DcsvIo.D2.Tests.Unit.Mtls;
 
 using AwesomeAssertions;
-using D2.Shared.AspNetCore.Mtls;
-using D2.Shared.Auth.Grpc.Mtls;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+using DcsvIo.D2.AspNetCore.Mtls;
+using DcsvIo.D2.Auth.Grpc.Mtls;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

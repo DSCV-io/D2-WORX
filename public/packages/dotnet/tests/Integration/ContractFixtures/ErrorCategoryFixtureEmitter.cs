@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
-using D2.Shared.ErrorCodes.Category;
+using DcsvIo.D2.ErrorCodes.Category;
 using Xunit;
 
 /// <summary>

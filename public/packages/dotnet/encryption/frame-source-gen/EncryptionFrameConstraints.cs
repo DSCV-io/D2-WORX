@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EncryptionFrame.SourceGen;
+namespace DcsvIo.D2.EncryptionFrame.SourceGen;
 
 /// <summary>
 /// Frame-level numeric constraints parsed from the <c>constraints</c> block

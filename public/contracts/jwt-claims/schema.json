@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 JWT claim names spec",
-  "description": "Single source of truth for every JWT claim name D2 reads or writes across the runtime. Includes standard OAuth/OIDC claims (sub, aud, iat, ...) AND D2-specific claims (d2_session_id, d2_org_id, ...) AND inside-act claims (d2_kind nested under the act object). Codegen emits matching JwtClaimTypes catalogs on .NET (D2.Shared.Auth.Abstractions.JwtClaimTypes) and TS (@d2/auth-abstractions JwtClaimTypes). A separate parity test asserts every IAuthContext claim: annotation references an entry here.",
+  "description": "Single source of truth for every JWT claim name D2 reads or writes across the runtime. Includes standard OAuth/OIDC claims (sub, aud, iat, ...) AND D2-specific claims (d2_session_id, d2_org_id, ...) AND inside-act claims (d2_kind nested under the act object). Codegen emits matching JwtClaimTypes catalogs on .NET (DcsvIo.D2.Auth.Abstractions.JwtClaimTypes) and TS (@dcsv-io/d2-auth-abstractions JwtClaimTypes). A separate parity test asserts every IAuthContext claim: annotation references an entry here.",
   "type": "object",
   "required": ["claims"],
   "additionalProperties": false,

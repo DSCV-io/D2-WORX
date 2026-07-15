@@ -10,7 +10,7 @@
 
 /**
  * D2 wire-protocol headers applicable to the common catalog.
- * Generated from headers.spec.json. Mirrors .NET D2.Shared.Headers.Common.CommonHeaders.
+ * Generated from headers.spec.json. Mirrors .NET DcsvIo.D2.Headers.Common.CommonHeaders.
  */
 export const CommonHeaders = {
   /**

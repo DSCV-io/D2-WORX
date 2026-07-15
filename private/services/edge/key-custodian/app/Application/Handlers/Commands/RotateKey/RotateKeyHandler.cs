@@ -4,11 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey.IRotateKeyHandler;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey.IRotateKeyHandler;
 using I = RotateKeyInput;
 using O = RotateKeyOutput;
 

@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// In-memory <see cref="ISessionLivenessTracker"/> stand-in. The default outcome
 /// is alive (<c>Ok(true)</c>); tests configure <see cref="OutcomeForSession"/> to
 /// return canned results per session id, or set <see cref="ThrowOnInvocation"/> to
 /// simulate a tracker fault.
-/// Local copy — originals in <c>D2.Shared.Tests</c> are <c>internal sealed</c>
+/// Local copy — originals in <c>DcsvIo.D2.Tests</c> are <c>internal sealed</c>
 /// and cannot be referenced from a different assembly.
 /// </summary>
 internal sealed class FakeSessionLivenessTracker : ISessionLivenessTracker

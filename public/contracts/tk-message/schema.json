@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 TKMessage wire-shape spec",
-  "description": "Schema for contracts/tk-message/tk-message.spec.json — the source-of-truth catalog of JSON property-name constants that govern the cross-language TKMessage wire shape ({key, params?}). D2.Shared.WireShapes.SourceGen reads it to emit TkMessageWireShape into D2.Shared.I18n.Abstractions; tools/ts-codegen/src/tk-message-emit.ts reads it to emit tk-message.g.ts into @d2/result. The .NET TKMessageJsonConverter and the TS-side parser reference the spec-derived constants for JSON property names — wire-format drift on 'key'/'params' is structurally impossible.",
+  "description": "Schema for contracts/tk-message/tk-message.spec.json — the source-of-truth catalog of JSON property-name constants that govern the cross-language TKMessage wire shape ({key, params?}). DcsvIo.D2.WireShapes.SourceGen reads it to emit TkMessageWireShape into DcsvIo.D2.I18n.Abstractions; tools/ts-codegen/src/tk-message-emit.ts reads it to emit tk-message.g.ts into @dcsv-io/d2-result. The .NET TKMessageJsonConverter and the TS-side parser reference the spec-derived constants for JSON property names — wire-format drift on 'key'/'params' is structurally impossible.",
   "type": "object",
   "required": ["properties"],
   "additionalProperties": false,

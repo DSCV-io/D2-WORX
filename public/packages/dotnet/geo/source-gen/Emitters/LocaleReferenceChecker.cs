@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Emitters;
+namespace DcsvIo.D2.Geo.SourceGen.Emitters;
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using D2.Shared.Geo.SourceGen.Spec;
-using D2.Shared.SourceGen;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.Geo.SourceGen.Spec;
+using DcsvIo.D2.SourceGen;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Build-time safety gate that ensures every country's

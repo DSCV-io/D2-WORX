@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Publishing;
+namespace DcsvIo.D2.Messaging.RabbitMq.Publishing;
 
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Resilience.Retry;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Resilience.Retry;
 using global::RabbitMQ.Client.Exceptions;
 
 /// <summary>

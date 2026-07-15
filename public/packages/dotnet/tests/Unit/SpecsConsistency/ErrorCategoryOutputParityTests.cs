@@ -6,15 +6,15 @@
 
 extern alias CategorySourceGen;
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using CategorySourceGen::D2.Shared.ErrorCodes.Category.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using CategorySourceGen::DcsvIo.D2.ErrorCodes.Category.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -30,7 +30,7 @@ using Xunit;
 /// </summary>
 public sealed class ErrorCategoryOutputParityTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.ErrorCodes.Category";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.ErrorCodes.Category";
 
     private static readonly string sr_generatedBase =
         Path.Combine(
@@ -41,8 +41,8 @@ public sealed class ErrorCategoryOutputParityTests
             "error-codes",
             "category",
             "Generated",
-            "D2.Shared.ErrorCodes.Category.SourceGen",
-            "D2.Shared.ErrorCodes.Category.SourceGen.ErrorCategoryGenerator");
+            "DcsvIo.D2.ErrorCodes.Category.SourceGen",
+            "DcsvIo.D2.ErrorCodes.Category.SourceGen.ErrorCategoryGenerator");
 
     [Fact]
     public void ErrorCategory_RegeneratedOutput_MatchesCommittedFile()

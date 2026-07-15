@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AdvisoryLocks.SourceGen;
+namespace DcsvIo.D2.AdvisoryLocks.SourceGen;
 
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>Factory helpers producing per-topic <see cref="EmitDiagnostic"/>.</summary>
 internal static class EmitDiagnostics

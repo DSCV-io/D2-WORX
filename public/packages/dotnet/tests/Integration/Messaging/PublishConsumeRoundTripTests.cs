@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
 using System.Diagnostics;
 using AwesomeAssertions;
-using D2.Shared.Handler;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
@@ -245,7 +245,7 @@ public sealed class PublishConsumeRoundTripTests
         var collected = new List<Activity>();
         using var listener = new ActivityListener();
         listener.ShouldListenTo = src =>
-            src.Name is "D2.Shared.Messaging.RabbitMq" or "D2.Tests.TraceParentPropagation";
+            src.Name is "DcsvIo.D2.Messaging.RabbitMq" or "D2.Tests.TraceParentPropagation";
         listener.Sample = (ref _) => ActivitySamplingResult.AllDataAndRecorded;
         listener.ActivityStopped = a =>
         {
@@ -320,7 +320,7 @@ public sealed class PublishConsumeRoundTripTests
         var collected = new List<Activity>();
         using var listener = new ActivityListener();
         listener.ShouldListenTo = src =>
-            src.Name is "D2.Shared.Messaging.RabbitMq";
+            src.Name is "DcsvIo.D2.Messaging.RabbitMq";
         listener.Sample = (ref _) => ActivitySamplingResult.AllDataAndRecorded;
         listener.ActivityStopped = a =>
         {

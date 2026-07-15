@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures;
 
 /// <summary>
 /// Minimal output DTO for bridge Map* compile/run validation (fixture-only).

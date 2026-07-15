@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Time;
+namespace DcsvIo.D2.Time;
 
 using NodaTime;
 

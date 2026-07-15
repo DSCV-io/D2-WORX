@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Interceptors;
+namespace DcsvIo.D2.Auth.Grpc.Interceptors;
 
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
 using global::Grpc.Core;
 
 /// <summary>

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Encryption;
+namespace DcsvIo.D2.Private.Encryption;
 
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 
 /// <summary>
 /// Registers product sealed encryption domains into the public

@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Forwarding;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Forwarding;
 
 using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Logging.Destructuring;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Enums;
 using Serilog.Core;
 using Serilog.Events;
 using Xunit;

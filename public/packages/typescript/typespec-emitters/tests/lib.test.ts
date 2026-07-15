@@ -36,8 +36,8 @@ describe("lib_UnmappedScalarPresent", () => {
     expect(typeof descriptor.messages.default).toBe("function");
   });
 
-  it("$lib name is '@d2/typespec-emitters'", () => {
-    expect($lib.name).toBe("@d2/typespec-emitters");
+  it("$lib name is '@dcsv-io/d2-typespec-emitters'", () => {
+    expect($lib.name).toBe("@dcsv-io/d2-typespec-emitters");
   });
 });
 

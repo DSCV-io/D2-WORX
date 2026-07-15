@@ -215,7 +215,7 @@ export async function buildCurrenciesSpec(): Promise<CurrenciesSpec> {
     $schema: "./currencies.schema.json",
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
-      "codegen / D2.Shared.Geo.Default. A clean/transform pass to the sibling " +
+      "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
       "contracts/geo/currencies.spec.json (one level up) is a separate step. Sources: " +
       "datasets/currency-codes (PDDL — ISO 4217 alpha3/numeric/decimals, active+retired) + " +
       "CLDR cldr-core/supplemental/currencyData.json (Unicode-3.0 — temporal per-country " +

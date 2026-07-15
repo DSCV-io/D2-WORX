@@ -3,12 +3,12 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { EncryptionFrame } from "@d2/encryption-abstractions";
+import { EncryptionFrame } from "@dcsv-io/d2-encryption-abstractions";
 
 /**
  * Immutable JWKS-style keyring holding the active key plus any retiring keys
  * for a single symmetric encryption purpose (one domain, the root key, etc.).
- * The twin of .NET `D2.Shared.Encryption.PayloadCryptoKeyring`.
+ * The twin of .NET `DcsvIo.D2.Encryption.PayloadCryptoKeyring`.
  *
  * Holds raw key bytes — never log, serialize, or otherwise expose a keyring
  * instance through any I/O path. The constructor copies all key bytes into

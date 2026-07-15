@@ -17,7 +17,7 @@
 // this shim only resolves the repo root, wires the real DiffProvider + the
 // inventory loader (both real-IO seams), and maps the result to an exit code.
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import { checkBaselineDrift, formatDriftReport } from "./drift-check.js";
 import { loadAllPackages } from "./manifest-loader.js";
 import { makeRealDiffProvider } from "./real-diff-provider.js";

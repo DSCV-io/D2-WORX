@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { AuthErrorCodes } from "@d2/auth-abstractions";
+import { AuthErrorCodes } from "@dcsv-io/d2-auth-abstractions";
 import {
   ActorKind,
   ImpersonationKind,
@@ -12,8 +12,8 @@ import {
   PropagatedContextSerializer,
   Role,
   type IPropagatedContext,
-} from "@d2/request-context-abstractions";
-import { CommonHeaders } from "@d2/headers-common";
+} from "@dcsv-io/d2-request-context-abstractions";
+import { CommonHeaders } from "@dcsv-io/d2-headers-common";
 import { parseRequestContextFromHeaders } from "../src/parse-request-context.js";
 
 function buildJwt(claims: Record<string, unknown>): string {

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.ProtocolAudiences.SourceGen;
+using DcsvIo.D2.Auth.ProtocolAudiences.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -39,7 +39,7 @@ public sealed class ProtocolAudiencesGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsWellKnownAudiencesGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -58,7 +58,7 @@ public sealed class ProtocolAudiencesGeneratorTests
     public void Generator_EmitsConstantsInDeterministicNameOrder()
     {
         var src = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Abstractions",
+                assemblyName: "DcsvIo.D2.Auth.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees.Single().ToString();
 
@@ -86,7 +86,7 @@ public sealed class ProtocolAudiencesGeneratorTests
     public void Generator_TargetAssemblyButNoSpec_EmitsMissingSpecFileDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -102,7 +102,7 @@ public sealed class ProtocolAudiencesGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnosticAndStillProducesEmptyShell()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -117,12 +117,12 @@ public sealed class ProtocolAudiencesGeneratorTests
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Abstractions",
+                assemblyName: "DcsvIo.D2.Auth.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees.Single().ToString();
 
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Abstractions",
+                assemblyName: "DcsvIo.D2.Auth.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees.Single().ToString();
 

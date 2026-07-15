@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.DataGovernance.EntityFrameworkCore
+# DcsvIo.D2.DataGovernance.EntityFrameworkCore
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 >
@@ -258,8 +258,8 @@ services.AddScoped<DbContext>(sp => sp.GetRequiredService<MyContext>());
 
 | Dependency | Role |
 |---|---|
-| `D2.Shared.DataGovernance.Abstractions` | `AnonymizationRule`, `AnonymizableAttribute`, `AnonymizeKind`, `IAnonymizationEngine`, `IUserOwned`, `IOrgOwned`, `IExemptFromAnonymization`, `IAnonymizationTrackable` |
-| `D2.Shared.Utilities` | `.Falsey()` / `.Truthy()` / `.ThrowIfFalsey()` / `SanitizedExceptionRender` |
+| `DcsvIo.D2.DataGovernance.Abstractions` | `AnonymizationRule`, `AnonymizableAttribute`, `AnonymizeKind`, `IAnonymizationEngine`, `IUserOwned`, `IOrgOwned`, `IExemptFromAnonymization`, `IAnonymizationTrackable` |
+| `DcsvIo.D2.Utilities` | `.Falsey()` / `.Truthy()` / `.ThrowIfFalsey()` / `SanitizedExceptionRender` |
 | `Microsoft.EntityFrameworkCore.Relational` | `GetColumnName()`, `IsMappedToJson()`, `GetTableName()`, `ExecuteUpdateAsync` (Relational API surface) |
 | `Microsoft.Extensions.Logging.Abstractions` | `ILogger<T>` / `[LoggerMessage]` |
 | `Microsoft.Extensions.Options` | `IOptions<AnonymizationEngineOptions>` |

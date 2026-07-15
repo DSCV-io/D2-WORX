@@ -3,13 +3,13 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { SealedFrame } from "@d2/encryption-abstractions";
+import { SealedFrame } from "@dcsv-io/d2-encryption-abstractions";
 
 import { FrameMalformedError, FrameVersionMismatchError } from "./errors.js";
 
 /**
  * Codec for the on-wire SEALED (version-2, asymmetric) encryption frame — the
- * twin of .NET `D2.Shared.Encryption.SealedFrame`. Layout:
+ * twin of .NET `DcsvIo.D2.Encryption.SealedFrame`. Layout:
  * `[version=2:1][recipient_kid_len:1][recipient_kid:UTF-8 N][eph_pub_len:2 BE]`
  * `[eph_pub:SPKI M][nonce:12][ciphertext+tag:K]`.
  *

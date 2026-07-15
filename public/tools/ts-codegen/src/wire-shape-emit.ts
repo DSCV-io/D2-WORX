@@ -134,7 +134,7 @@ export function emitWireShape(
   sb.appendLine(" *");
   sb.appendLine(
     ` * Cross-language parity: the SAME spec drives the .NET-side catalog via ` +
-      `D2.Shared.WireShapes.SourceGen. Both sides emit the same property names ` +
+      `DcsvIo.D2.WireShapes.SourceGen. Both sides emit the same property names ` +
       `byte-for-byte; cross-language wire drift is impossible.`,
   );
   sb.appendLine(" */");

@@ -4,21 +4,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry;
+namespace DcsvIo.D2.Telemetry;
 
-using D2.Shared.AspNetCore;
+using DcsvIo.D2.AspNetCore;
 
 /// <summary>
-/// Public constants exposed by <see cref="D2.Shared.Telemetry"/> — config-key
+/// Public constants exposed by <see cref="DcsvIo.D2.Telemetry"/> — config-key
 /// strings, env-var names, and infrastructure endpoint paths consumers may
 /// want to reference by symbol rather than by literal.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <see cref="OTEL_SERVICE_NAME_CONFIG_KEY"/> carries the same value as
-/// <c>D2.Shared.Logging.D2LoggingConstants.OTEL_SERVICE_NAME_CONFIG_KEY</c>
+/// <c>DcsvIo.D2.Logging.D2LoggingConstants.OTEL_SERVICE_NAME_CONFIG_KEY</c>
 /// — both reference the same OpenTelemetry-canonical env var. Re-declared
-/// here rather than depending on <c>D2.Shared.Logging</c> for the constant
+/// here rather than depending on <c>DcsvIo.D2.Logging</c> for the constant
 /// because Telemetry is intentionally independent of Logging (consumers may
 /// wire one without the other).
 /// </para>
@@ -30,7 +30,7 @@ using D2.Shared.AspNetCore;
 /// from <see cref="D2AspNetCoreConstants"/>. Telemetry now ProjectReferences
 /// AspNetCore for the shared <c>InfrastructurePathMatcher</c>; the constant
 /// re-export keeps any consumer that imports
-/// <c>D2.Shared.Telemetry.D2TelemetryConstants.HEALTH_ENDPOINT_PATH</c>
+/// <c>DcsvIo.D2.Telemetry.D2TelemetryConstants.HEALTH_ENDPOINT_PATH</c>
 /// working without code change while removing per-lib literal duplication.
 /// </para>
 /// </remarks>
@@ -66,7 +66,7 @@ public static class D2TelemetryConstants
     /// Configuration key for the OTLP logs endpoint. Falsey value
     /// suppresses logs OTLP exporter registration; logs still flow through
     /// MEL providers (e.g. console sink wired by
-    /// <c>D2.Shared.Logging</c>).
+    /// <c>DcsvIo.D2.Logging</c>).
     /// </summary>
     public const string OTLP_LOGS_ENDPOINT_CONFIG_KEY =
         "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT";
@@ -96,7 +96,7 @@ public static class D2TelemetryConstants
     /// <summary>
     /// Health-probe infrastructure endpoint — by convention excluded from
     /// AspNetCore instrumentation auto-spans + downgraded to verbose by
-    /// <c>D2.Shared.Logging</c>'s request-logging middleware. Re-exports
+    /// <c>DcsvIo.D2.Logging</c>'s request-logging middleware. Re-exports
     /// <see cref="D2AspNetCoreConstants.HEALTH_ENDPOINT_PATH"/>.
     /// </summary>
     public const string HEALTH_ENDPOINT_PATH =

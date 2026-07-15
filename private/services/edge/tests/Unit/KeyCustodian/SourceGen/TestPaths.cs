@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.SourceGen;
 
 /// <summary>
 /// Locates dual-home contract specs + committed generated output at runtime
@@ -110,6 +110,6 @@ internal static class TestPaths
             "key-custodian",
             "domain",
             "Generated",
-            "D2.Edge.KeyCustodian.ErrorCodes.SourceGen",
-            "D2.Edge.KeyCustodian.ErrorCodes.SourceGen.ErrorCodesGenerator");
+            "DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen",
+            "DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen.ErrorCodesGenerator");
 }

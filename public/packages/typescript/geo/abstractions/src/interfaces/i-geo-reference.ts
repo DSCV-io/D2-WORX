@@ -19,14 +19,14 @@ import type { SubdivisionCode } from "../generated/typed-codes/subdivision-code.
 import type { TimezoneCode } from "../generated/typed-codes/timezone-code.g.js";
 
 /**
- * Mirror of .NET `D2.Shared.Geo.Abstractions.IGeoReference` —
+ * Mirror of .NET `DcsvIo.D2.Geo.Abstractions.IGeoReference` —
  * strongly-typed lookup contract for the seven reference-data catalogs.
  * Every method takes a typed identifier (`*Code` real enum or wrapper
  * struct) and returns the single record shape — the type system enforces
  * the absence of a NotFound branch because the typed identifier IS the
  * catalog.
  *
- * Implementations live in `@d2/geo-default` backed by the codegen-emitted
+ * Implementations live in `@dcsv-io/d2-geo-default` backed by the codegen-emitted
  * static data; tests can supply ad-hoc fixtures by implementing this
  * interface directly.
  *

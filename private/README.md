@@ -10,7 +10,7 @@ Copyright (c) DCSV. All rights reserved.
 
 | Path | Role |
 | --- | --- |
-| [`packages/`](packages/README.md) | Private `D2.Shared.*.Extensions` dual-target hosts (see packages/README.md) |
+| [`packages/`](packages/README.md) | Private `DcsvIo.D2.*.Extensions` dual-target hosts (see packages/README.md) |
 | [`services/`](services/README.md) | Product services and BFF hosts |
 | [`contracts/`](contracts/README.md) | Product values, private-only schemas, private halves of dual-values catalogs |
 | [`tools/`](tools/README.md) | Secrets-touching scripts and monorepo-only tooling |

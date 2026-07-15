@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian;
 
 using System.Security.Cryptography;
-using D2.Edge.Tests.Unit.KeyCustodian;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 

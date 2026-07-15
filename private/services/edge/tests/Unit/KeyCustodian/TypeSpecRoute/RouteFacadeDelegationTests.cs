@@ -4,22 +4,22 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute;
 
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using D2.Edge.Tests.TypeSpecDto.Generated;
-using D2.Edge.Tests.TypeSpecRoute.Generated;
-using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Http;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+using DcsvIo.D2.Result;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -270,8 +270,8 @@ public sealed class RouteFacadeDelegationTests
                         services.AddSingleton<IJwksProvider>(
                             new FakeJwksProvider(jwtBuilder.PublicKey));
 
-                        services.RemoveAll<D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker>();
-                        services.AddSingleton<D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker>(
+                        services.RemoveAll<DcsvIo.D2.Auth.Abstractions.Sessions.ISessionLivenessTracker>();
+                        services.AddSingleton<DcsvIo.D2.Auth.Abstractions.Sessions.ISessionLivenessTracker>(
                             new FakeSessionLivenessTracker());
 
                         services.AddSingleton<ISignFixtureSignerFacade>(fake);

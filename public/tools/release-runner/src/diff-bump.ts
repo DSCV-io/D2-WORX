@@ -30,7 +30,7 @@
 // module implements its own minimal pre-stability detector that accepts the
 // full range of version strings the engine may encounter.
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import type { BumpKind } from "./types.js";
 
 // ---------------------------------------------------------------------------

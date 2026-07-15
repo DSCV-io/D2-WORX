@@ -26,7 +26,7 @@ import { parseTkKey } from "./lib/tk-key-transform.js";
 // Unified spec-driven error-code emitter. ONE shared engine runs per
 // `*-error-codes.spec.json`, deriving the emitted symbol names + the enforced
 // domain prefix + the `factoryShape`-driven failure-factory shape from each
-// catalog's CatalogConfig. Mirrors the .NET D2.Shared.ErrorCodes.SourceGen
+// catalog's CatalogConfig. Mirrors the .NET DcsvIo.D2.ErrorCodes.SourceGen
 // engine SEMANTICS (httpStatus -> base factory map; factoryShape branch;
 // D2ERC001 prefix + D2ERC002 TK-existence + D2ERC003 unsupported-shape
 // diagnostics). The precedent is `wire-shape-emit.ts` — one shared helper,
@@ -494,11 +494,15 @@ export function emitFailuresCatalog(
   sb.appendLine("/* eslint-disable */");
   sb.appendLine();
   sb.appendLine(
-    `import { D2Result, ${usedFactories.join(", ")} } from "@d2/result";`,
+    `import { D2Result, ${usedFactories.join(", ")} } from "@dcsv-io/d2-result";`,
   );
-  sb.appendLine('import { ErrorCategoryWire } from "@d2/error-category";');
-  sb.appendLine('import { type TKMessage } from "@d2/i18n-abstractions";');
-  sb.appendLine('import { TK } from "@d2/i18n-keys";');
+  sb.appendLine(
+    'import { ErrorCategoryWire } from "@dcsv-io/d2-error-category";',
+  );
+  sb.appendLine(
+    'import { type TKMessage } from "@dcsv-io/d2-i18n-abstractions";',
+  );
+  sb.appendLine('import { TK } from "@dcsv-io/d2-i18n-keys";');
   sb.appendLine(
     `import { ${failures.constObjectName} } from "${failures.constantsImportPath}";`,
   );
@@ -568,10 +572,10 @@ export function emitFailuresCatalog(
  * cases — the same collapse the .NET two-overload set delivers.
  *
  * The `userMessageKey` is emitted as a REFERENCE to the generated TS TK
- * constant (`TK.common.errors.NOT_FOUND` from `@d2/i18n-keys`) — itself a
+ * constant (`TK.common.errors.NOT_FOUND` from `@dcsv-io/d2-i18n-keys`) — itself a
  * `TKMessage` instance, never a raw key/path string literal. A literal
  * silently bypasses the TK catalog and rides the wire un-renderable.
- * `@d2/i18n-keys` is a zero-dependency leaf package so `@d2/result` may
+ * `@dcsv-io/d2-i18n-keys` is a zero-dependency leaf package so `@dcsv-io/d2-result` may
  * reference the constant without a dependency cycle.
  */
 export function emitBaseFactoriesCatalog(
@@ -603,10 +607,12 @@ export function emitBaseFactoriesCatalog(
   sb.appendLine('import { HttpStatusCode } from "./http-status-codes.js";');
   sb.appendLine('import type { InputError } from "./input-error.js";');
   sb.appendLine(
-    'import { type ErrorCategory, ErrorCategoryWire } from "@d2/error-category";',
+    'import { type ErrorCategory, ErrorCategoryWire } from "@dcsv-io/d2-error-category";',
   );
-  sb.appendLine('import { type TKMessage } from "@d2/i18n-abstractions";');
-  sb.appendLine('import { TK } from "@d2/i18n-keys";');
+  sb.appendLine(
+    'import { type TKMessage } from "@dcsv-io/d2-i18n-abstractions";',
+  );
+  sb.appendLine('import { TK } from "@dcsv-io/d2-i18n-keys";');
   sb.appendLine();
 
   // The one universal error-factory opts interface (the `standard` shape).
@@ -829,7 +835,7 @@ export const GENERIC_CONFIG: CatalogConfig = {
   httpStatusFnName: "getErrorHttpStatus",
   classDocLines: [
     " * Standardized error codes surfaced as `D2Result.errorCode`. Mirrors",
-    " * .NET `D2.Shared.Result.ErrorCodes` byte-for-byte (single spec source",
+    " * .NET `DcsvIo.D2.Result.ErrorCodes` byte-for-byte (single spec source",
     " * emits both sides; cross-language drift is structurally impossible).",
   ],
   httpStatusFnDocLines: [
@@ -861,7 +867,7 @@ export const AUTH_CONFIG: CatalogConfig = {
   httpStatusFnName: "getAuthErrorHttpStatus",
   classDocLines: [
     " * Machine-readable error codes for auth runtime failures. Mirrors .NET",
-    " * D2.Shared.Auth.Errors.AuthErrorCodes (same string values).",
+    " * DcsvIo.D2.Auth.Errors.AuthErrorCodes (same string values).",
   ],
   httpStatusFnDocLines: [
     " * HTTP status declared in the spec for an AUTH_* code.",
@@ -896,7 +902,7 @@ export const AUTH_FAILURES_CONFIG: FailuresConfig = {
   classDocLines: [
     " * Pre-built D2Result failures for inbound auth runtime — JWT validation",
     " * rejections, session liveness outages, JWKS upstream failures.",
-    " * Mirrors .NET D2.Shared.Auth.Errors.AuthFailures factory shape.",
+    " * Mirrors .NET DcsvIo.D2.Auth.Errors.AuthFailures factory shape.",
   ],
   constantsImportPath: "./auth-error-codes.g.js",
   constObjectName: "AuthErrorCodes",

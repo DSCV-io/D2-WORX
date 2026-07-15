@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.Fixtures;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.Fixtures;
 
 using System.Collections.Concurrent;
-using D2.Shared.Caching;
-using D2.Shared.Result;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// In-process <see cref="ICacheInvalidationBackplane"/> stub. Subscribers

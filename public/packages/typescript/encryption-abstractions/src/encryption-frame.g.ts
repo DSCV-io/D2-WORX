@@ -10,10 +10,10 @@
 
 /**
  * Spec-derived binary-layout constants for the D2 on-wire encryption frame.
- * Mirrors .NET D2.Shared.Encryption.EncryptionFrameLayout (same offsets
+ * Mirrors .NET DcsvIo.D2.Encryption.EncryptionFrameLayout (same offsets
  * and lengths byte-for-byte).
  *
- * Consumed by @d2/encryption-abstractions for on-wire encryption-frame decoding.
+ * Consumed by @dcsv-io/d2-encryption-abstractions for on-wire encryption-frame decoding.
  */
 export const EncryptionFrame = {
   CURRENT_VERSION: 1,

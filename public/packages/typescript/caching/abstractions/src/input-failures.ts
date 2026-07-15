@@ -3,8 +3,12 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n-keys";
-import { inputError, validationFailed, type D2Result } from "@d2/result";
+import { TK } from "@dcsv-io/d2-i18n-keys";
+import {
+  inputError,
+  validationFailed,
+  type D2Result,
+} from "@dcsv-io/d2-result";
 
 /**
  * Pre-built `D2Result` input-failure responses for cache impls.
@@ -14,7 +18,7 @@ import { inputError, validationFailed, type D2Result } from "@d2/result";
  * Constructors / DI registration still throw — that is a different
  * lifecycle concern from per-call input validation.
  *
- * Twin of .NET `D2.Shared.Caching.InputFailures`.
+ * Twin of .NET `DcsvIo.D2.Caching.InputFailures`.
  */
 function requiredImpl<T = void>(paramName: string): D2Result<T> {
   return validationFailed<T>({

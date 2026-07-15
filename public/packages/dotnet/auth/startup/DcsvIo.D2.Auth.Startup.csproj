@@ -1,0 +1,91 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Auth.Startup</RootNamespace>
+    <!--
+      Sdk.Web defaults OutputType to Exe (intended for runnable web apps);
+      explicit Library override since this is a shared library, NOT an app
+      entry point. Sdk.Web is preferred over plain Sdk because it brings the
+      AspNetCore framework reference automatically — the guard uses
+      EndpointDataSource and RouteEndpoint from Microsoft.AspNetCore.Routing,
+      which ships in the AspNetCore framework bundle.
+    -->
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <!--
+    Boot-time guard that fails host startup when any mapped RouteEndpoint
+    lacks a declared auth intent (EndpointScopeMetadata, MethodScopeMetadata,
+    or one of the D2Require*/D2HarmlessEndpoint attributes). Deny-by-default
+    enforcement: an endpoint with NO auth declaration is a configuration error
+    that must surface at boot, not at runtime when the undeclared endpoint
+    receives a real request.
+
+    Thin csproj: one internal IStartupFilter + one public DI extension.
+    Zero logic beyond the startup walk — the check is a one-shot pass over
+    EndpointDataSource.Endpoints in StartAsync; StopAsync is a no-op.
+
+    References auth/http (EndpointScopeMetadata), auth/grpc
+    (MethodScopeMetadata + D2Require*/D2HarmlessEndpoint attributes), and
+    aspnetcore (InfrastructurePathMatcher + D2AspNetCoreConstants) — all
+    three are required to assemble the declared-intent predicate without
+    NU1510. No circular deps: this lib is a one-way consumer of auth/http +
+    auth/grpc + aspnetcore; those libs do not reference auth/startup.
+
+    Not included in service-defaults' LOCKED pipeline list (that list
+    describes middleware-pipeline aggregation, not DI composition). The
+    service-defaults aggregator wires this guard via AddD2AuthEndpointGuard
+    alongside the existing auth stack registration.
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+    <!--
+      Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions
+      packages are NOT listed here — Microsoft.NET.Sdk.Web's framework reference
+      (Microsoft.AspNetCore.App) ships them, and adding explicit PackageReferences
+      triggers NU1510 ("will not be pruned").
+    -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      auth/http — EndpointScopeMetadata (the HTTP-transport declared-intent
+      record) and RequireD2ScopeExtensions (fluent builder). The guard reads
+      EndpointScopeMetadata from each RouteEndpoint's metadata collection.
+    -->
+    <ProjectReference Include="..\http\DcsvIo.D2.Auth.Http.csproj" />
+    <!--
+      auth/grpc — MethodScopeMetadata + D2RequireAnyScopeAttribute +
+      D2RequireAllScopesAttribute + D2HarmlessEndpointAttribute. The guard
+      reads all four from each RouteEndpoint's metadata collection.
+    -->
+    <ProjectReference Include="..\grpc\DcsvIo.D2.Auth.Grpc.csproj" />
+    <!--
+      aspnetcore — InfrastructurePathMatcher.IsInfrastructurePath +
+      D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS. The guard uses
+      these to skip infra endpoints (/health, /alive, /metrics, /.well-known)
+      from the declared-intent walk.
+    -->
+    <ProjectReference Include="..\..\aspnetcore\DcsvIo.D2.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Auth.Startup</PackageId>
+    <Description>Deny-by-default auth endpoint boot guard for D2-WORX — fails host startup when any mapped endpoint lacks a declared auth intent.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

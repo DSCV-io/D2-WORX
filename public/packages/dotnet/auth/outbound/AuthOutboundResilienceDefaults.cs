@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound;
+namespace DcsvIo.D2.Auth.Outbound;
 
 /// <summary>
 /// Circuit-breaker defaults for the outbound token client

@@ -5,11 +5,11 @@
 
 import { describe, expect, it } from "vitest";
 import { Metadata, type InterceptorOptions } from "@grpc/grpc-js";
-import { CommonHeaders } from "@d2/headers-common";
+import { CommonHeaders } from "@dcsv-io/d2-headers-common";
 import {
   PropagatedContextSerializer,
   type IPropagatedContext,
-} from "@d2/request-context-abstractions";
+} from "@dcsv-io/d2-request-context-abstractions";
 import { createContextPropagationInterceptor } from "../../src/interceptors/context-propagation.js";
 
 interface CapturedCall {

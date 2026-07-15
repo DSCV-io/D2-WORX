@@ -9,7 +9,7 @@ import {
   LOCALE_CODE_SET,
   SUBDIVISION_CODE_SET,
   TIMEZONE_CODE_SET,
-} from "@d2/geo-abstractions";
+} from "@dcsv-io/d2-geo-abstractions";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

@@ -3,11 +3,16 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { CountryCode } from "@d2/geo-abstractions";
-import { TK } from "@d2/i18n-keys";
-import { inputError, ok, validationFailed, type D2Result } from "@d2/result";
-import { falsey } from "@d2/utilities";
-import type { IPhoneValidator } from "@d2/validation-abstractions";
+import type { CountryCode } from "@dcsv-io/d2-geo-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
+import {
+  inputError,
+  ok,
+  validationFailed,
+  type D2Result,
+} from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
+import type { IPhoneValidator } from "@dcsv-io/d2-validation-abstractions";
 import {
   parsePhoneNumberFromString,
   type CountryCode as LibCountryCode,
@@ -15,7 +20,7 @@ import {
 
 /**
  * Default `IPhoneValidator` implementation. Mirrors the .NET
- * `D2.Shared.Validation.DefaultPhoneValidator` — both delegate to a
+ * `DcsvIo.D2.Validation.DefaultPhoneValidator` — both delegate to a
  * libphonenumber port (libphonenumber-js here, libphonenumber-csharp on the
  * .NET side), validate, and normalize to E.164. Same per-field `D2Result`
  * contract on both runtimes.

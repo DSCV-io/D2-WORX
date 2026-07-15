@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 
 /// <summary>
 /// The <c>seal:&lt;serviceId&gt;</c> domain-name family for a per-service sealing

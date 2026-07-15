@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http;
+namespace DcsvIo.D2.Auth.Http;
 
-using D2.Shared.Auth.Http.Middleware;
+using DcsvIo.D2.Auth.Http.Middleware;
 using Microsoft.AspNetCore.Builder;
 
 /// <summary>

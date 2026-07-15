@@ -18,7 +18,7 @@
 //   domain VO. This is intentional and expected — the generated DTO does not
 //   replace the domain VO.
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 import "@typespec/http";
 import "@typespec/versioning";
 

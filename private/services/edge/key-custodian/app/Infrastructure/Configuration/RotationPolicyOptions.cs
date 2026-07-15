@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Configuration;
 
 using System.ComponentModel.DataAnnotations;
 

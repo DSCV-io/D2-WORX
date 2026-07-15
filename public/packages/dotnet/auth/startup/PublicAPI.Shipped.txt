@@ -1,5 +1,5 @@
 #nullable enable
-D2.Shared.Auth.Startup.AuthEndpointGuardServiceCollectionExtensions
-D2.Shared.Auth.Startup.AuthEndpointGuardServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
-D2.Shared.Auth.Startup.AuthEndpointGuardServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2AuthEndpointGuard() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static D2.Shared.Auth.Startup.AuthEndpointGuardServiceCollectionExtensions.AddD2AuthEndpointGuard(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Auth.Startup.AuthEndpointGuardServiceCollectionExtensions
+DcsvIo.D2.Auth.Startup.AuthEndpointGuardServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Auth.Startup.AuthEndpointGuardServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2AuthEndpointGuard() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Auth.Startup.AuthEndpointGuardServiceCollectionExtensions.AddD2AuthEndpointGuard(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

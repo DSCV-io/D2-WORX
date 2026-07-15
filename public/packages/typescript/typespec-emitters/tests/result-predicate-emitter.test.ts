@@ -20,8 +20,8 @@ import {
   findTestPackageRoot,
 } from "@typespec/compiler/testing";
 import type { Model, Program } from "@typespec/compiler";
-import { parseResultPredicate } from "@d2/typespec-decorators";
-import type { PredicateNode } from "@d2/typespec-decorators";
+import { parseResultPredicate } from "@dcsv-io/d2-typespec-decorators";
+import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 import {
   emitResultPredicates,
   emitBusinessRetrySignal,
@@ -29,10 +29,10 @@ import {
 import { resolveSegment } from "../src/lib/predicate-emit-walk.js";
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -41,7 +41,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 });
 
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -63,7 +63,7 @@ async function compileModel(
   host.addTypeSpecFile(
     "main.tsp",
     `
-    import "@d2/typespec-decorators";
+    import "@dcsv-io/d2-typespec-decorators";
     using D2;
     namespace D2.Test;
     ${body}

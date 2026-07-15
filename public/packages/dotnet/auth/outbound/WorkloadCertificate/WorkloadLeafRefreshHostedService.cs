@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
+namespace DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
 
-using D2.Shared.Auth.Outbound.Telemetry;
+using DcsvIo.D2.Auth.Outbound.Telemetry;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

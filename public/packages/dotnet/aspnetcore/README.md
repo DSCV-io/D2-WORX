@@ -2,19 +2,19 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.AspNetCore
+# DcsvIo.D2.AspNetCore
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
-Cross-cutting ASP.NET Core middleware + endpoint primitives every D² service composition root needs but that don't belong on a single domain lib. Seven public surfaces — `UseD2SecurityHeaders`, `UseD2Cors`, `UseD2InfrastructureBypass`, `AddD2ProblemDetails`, `MapD2HealthEndpoints`, `RunD2ServiceAsync`, `AddD2MutualTls` — plus the canonical `InfrastructurePathMatcher` consumed by `D2.Shared.Logging`'s request-logging middleware and `D2.Shared.Telemetry`'s AspNetCore-instrumentation `Filter` callback so all three libs share one source of truth for `/health`, `/alive`, `/metrics`, `/.well-known` matching.
+Cross-cutting ASP.NET Core middleware + endpoint primitives every D² service composition root needs but that don't belong on a single domain lib. Seven public surfaces — `UseD2SecurityHeaders`, `UseD2Cors`, `UseD2InfrastructureBypass`, `AddD2ProblemDetails`, `MapD2HealthEndpoints`, `RunD2ServiceAsync`, `AddD2MutualTls` — plus the canonical `InfrastructurePathMatcher` consumed by `DcsvIo.D2.Logging`'s request-logging middleware and `DcsvIo.D2.Telemetry`'s AspNetCore-instrumentation `Filter` callback so all three libs share one source of truth for `/health`, `/alive`, `/metrics`, `/.well-known` matching.
 
-Foundation tier — depends on `D2.Shared.Utilities` (for `Falsey()` / `Truthy()` / `ToNullIfEmpty()`), `D2.Shared.Result` (the mTLS peer validator returns a `D2Result`), `D2.Shared.WorkloadIdentity` (the SPIFFE grammar the mTLS validator parses a presented SAN with), `D2.Shared.ProblemDetails.Abstractions` + `D2.Shared.Headers.Http` (the ProblemDetails customizer), and `Serilog.AspNetCore` (for the `RunD2ServiceAsync` startup wrapper's `Log.Fatal` + `CloseAndFlushAsync`). `D2.Shared.Logging` and `D2.Shared.Telemetry` depend on this lib, not the other way around.
+Foundation tier — depends on `DcsvIo.D2.Utilities` (for `Falsey()` / `Truthy()` / `ToNullIfEmpty()`), `DcsvIo.D2.Result` (the mTLS peer validator returns a `D2Result`), `DcsvIo.D2.Spiffe` (the SPIFFE grammar the mTLS validator parses a presented SAN with), `DcsvIo.D2.ProblemDetails.Abstractions` + `DcsvIo.D2.Headers.Http` (the ProblemDetails customizer), and `Serilog.AspNetCore` (for the `RunD2ServiceAsync` startup wrapper's `Log.Fatal` + `CloseAndFlushAsync`). `DcsvIo.D2.Logging` and `DcsvIo.D2.Telemetry` depend on this lib, not the other way around.
 
 The lib does NOT own:
 
-- Authentication / authorization — `D2.Shared.Auth.Http` owns JWT validation, scope checks, identity extraction.
-- OpenTelemetry SDK setup — `D2.Shared.Telemetry` owns it.
-- Serilog configuration / sinks — `D2.Shared.Logging` owns them.
+- Authentication / authorization — `DcsvIo.D2.Auth.Http` owns JWT validation, scope checks, identity extraction.
+- OpenTelemetry SDK setup — `DcsvIo.D2.Telemetry` owns it.
+- Serilog configuration / sinks — `DcsvIo.D2.Logging` owns them.
 
 The request-pipeline middleware in this lib (security-headers, infrastructure-bypass, ProblemDetails) deliberately logs via the host's standard `ILogger<T>` rather than `[LoggerMessage]` delegates, and the startup wrapper uses Serilog static `Log.*` calls (host startup runs outside the request pipeline). The one exception is the mutual-TLS peer validator (`MtlsLog`): a peer-certificate rejection at the TLS handshake is a security event worth a structured, allocation-free `[LoggerMessage]` record — no delegate accepts an `Exception` (the exception type name is rendered PII-safely via `SanitizedExceptionRender.TypeName`).
 
@@ -94,7 +94,7 @@ Pipeline placement: install AFTER `app.UseRouting()` (which resolves the matched
 
 ### `AddD2ProblemDetails(Action<D2ProblemDetailsOptions>?)`
 
-Registers ASP.NET Core's `IProblemDetailsService` with the D² customizer applied as the `CustomizeProblemDetails` callback. The customizer is FULL D2Result-aware (path B of the RFC 7807 emit stack — sibling to `D2.Shared.Auth.Http`'s path A `D2ProblemDetailsExtensions.ToProblemDetails`).
+Registers ASP.NET Core's `IProblemDetailsService` with the D² customizer applied as the `CustomizeProblemDetails` callback. The customizer is FULL D2Result-aware (path B of the RFC 7807 emit stack — sibling to `DcsvIo.D2.Auth.Http`'s path A `D2ProblemDetailsExtensions.ToProblemDetails`).
 
 When the request pipeline has stashed a `D2Result` on `HttpContext.Items[D2ProblemDetailsContextItems.D2_RESULT]` (via the `SetD2Result` typed extension), the customizer populates the RFC 7807 Shape A body from spec-driven constants in `D2ProblemDetailsKeys` ([`problem-details/abstractions/`](../problem-details/abstractions/README.md)):
 
@@ -143,7 +143,7 @@ Async form captures both synchronously-faulted (host build / hosted-service `Sta
 
 Wires mutual-TLS client-certificate require-and-validate into the host's Kestrel HTTPS endpoint. When `D2MutualTlsOptions.Enabled`, Kestrel is configured with `ClientCertificateMode.RequireCertificate` and a `ClientCertificateValidation` callback that delegates to the default-deny `SpiffeSanPeerValidator`. When disabled (the default), no Kestrel client-certificate configuration is added — an un-wired host never starts requiring client certificates and locking itself out. Off by default; the dev harness and a real cross-process host opt in.
 
-This is the server (callee) half of the internal-mTLS workload-identity layer. The client (caller) half — per-channel leaf presentation + refresh-ahead — lives in `D2.Shared.Auth.Outbound` (opt-in). The Kestrel-config LOGIC lives here; the `D2.Shared.ServiceDefaults` aggregator COMPOSES it via a gated `AddD2MutualTls` call + a `MutualTlsConfigure` pass-through.
+This is the server (callee) half of the internal-mTLS workload-identity layer. The client (caller) half — per-channel leaf presentation + refresh-ahead — lives in `DcsvIo.D2.Auth.Outbound` (opt-in). The Kestrel-config LOGIC lives here; the `DcsvIo.D2.ServiceDefaults` aggregator COMPOSES it via a gated `AddD2MutualTls` call + a `MutualTlsConfigure` pass-through.
 
 `SpiffeSanPeerValidator` is a default-deny check with three conjuncts, ALL of which must hold for a certificate to be accepted:
 
@@ -197,7 +197,7 @@ HttpContext.Items slot keys consumed by the path-B Customizer to source the orig
 
 ### `InfrastructurePathMatcher` (public static)
 
-Single source of truth for infrastructure-path matching across the D² shared-lib stack. Consumed by `D2.Shared.Logging.WebApplicationLoggingExtensions.UseD2RequestLogging` to down-rank request-completion log lines for infrastructure endpoints to `Verbose`, by `D2.Shared.Telemetry.TelemetryServiceCollectionExtensions.AddD2Telemetry` in the AspNetCore-instrumentation `Filter` callback to suppress auto-spans, and by `UseD2InfrastructureBypass` (this lib).
+Single source of truth for infrastructure-path matching across the D² shared-lib stack. Consumed by `DcsvIo.D2.Logging.WebApplicationLoggingExtensions.UseD2RequestLogging` to down-rank request-completion log lines for infrastructure endpoints to `Verbose`, by `DcsvIo.D2.Telemetry.TelemetryServiceCollectionExtensions.AddD2Telemetry` in the AspNetCore-instrumentation `Filter` callback to suppress auto-spans, and by `UseD2InfrastructureBypass` (this lib).
 
 ```csharp
 bool IsInfrastructurePath(PathString path, IReadOnlyList<string>? infrastructurePaths);
@@ -209,7 +209,7 @@ Uses the AspNetCore-canonical `PathString.StartsWithSegments(PathString)` overlo
 
 | File                                                  | Role                                                                                                          |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.AspNetCore.csproj`                         | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. Project reference to `utilities/`.                   |
+| `DcsvIo.D2.AspNetCore.csproj`                         | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. Project reference to `utilities/`.                   |
 | `D2AspNetCoreConstants.cs`                            | Public constants (endpoint paths, header names, config keys, default infrastructure-path list).               |
 | `InfrastructurePathMatcher.cs`                        | Public static helper — canonical path-matcher consumed by Logging + Telemetry + this lib's bypass middleware. |
 | `D2SecurityHeadersOptions.cs`                         | Sealed record — per-header override Options-pattern config.                                                   |
@@ -236,16 +236,16 @@ Uses the AspNetCore-canonical `PathString.StartsWithSegments(PathString)` overlo
 
 | Package                 | Why                                                                                                               |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `Serilog.AspNetCore`    | Static `Log.*` facade used by `RunD2ServiceAsync`. Already pinned (consumed transitively by `D2.Shared.Logging`). |
+| `Serilog.AspNetCore`    | Static `Log.*` facade used by `RunD2ServiceAsync`. Already pinned (consumed transitively by `DcsvIo.D2.Logging`). |
 | `JetBrains.Annotations` | `[MustDisposeResource]` annotations on disposable factory paths (none currently; consumed transitively).          |
 
 | Project reference              | Why                                                                                                                                                                                |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Utilities`          | `Falsey()` / `Truthy()` / `ToNullIfEmpty()` extensions consumed throughout (options validation, env-var resolution, header-override tri-state, per-entry path / origin filtering). |
-| `D2.Shared.Result`             | `D2Result` returned by the mTLS peer validator + consumed by the ProblemDetails customizer.                                                                                        |
-| `D2.Shared.ProblemDetails.Abstractions` | Spec-emitted `D2ProblemDetailsKeys` consumed by the ProblemDetails customizer.                                                                                            |
-| `D2.Shared.Headers.Http`       | `HttpHeaders.IDEMPOTENCY_KEY` / `CORRELATION_ID` consumed by the CORS allowlist + ProblemDetails customizer.                                                                       |
-| `D2.Shared.WorkloadIdentity`   | The shared `SpiffeWorkloadIdentity` SPIFFE grammar the mTLS peer validator parses a presented certificate's URI SAN with.                                                          |
+| `DcsvIo.D2.Utilities`          | `Falsey()` / `Truthy()` / `ToNullIfEmpty()` extensions consumed throughout (options validation, env-var resolution, header-override tri-state, per-entry path / origin filtering). |
+| `DcsvIo.D2.Result`             | `D2Result` returned by the mTLS peer validator + consumed by the ProblemDetails customizer.                                                                                        |
+| `DcsvIo.D2.ProblemDetails.Abstractions` | Spec-emitted `D2ProblemDetailsKeys` consumed by the ProblemDetails customizer.                                                                                            |
+| `DcsvIo.D2.Headers.Http`       | `HttpHeaders.IDEMPOTENCY_KEY` / `CORRELATION_ID` consumed by the CORS allowlist + ProblemDetails customizer.                                                                       |
+| `DcsvIo.D2.Spiffe`   | The shared `SpiffeWorkloadIdentity` SPIFFE grammar the mTLS peer validator parses a presented certificate's URI SAN with.                                                          |
 
 The `Microsoft.AspNetCore.App` framework reference (via `Microsoft.NET.Sdk.Web`) provides `IApplicationBuilder`, `IEndpointRouteBuilder`, `WebApplication`, `HttpContext`, `PathString`, `ProblemDetails`, `ProblemDetailsContext`, `IProblemDetailsService`, `HealthCheckResult`, `HealthCheckOptions`, the CORS `CorsPolicyBuilder` + middleware, and the `Microsoft.Extensions.{DependencyInjection,Options,Configuration,Logging,Hosting}.Abstractions` packages.
 
@@ -258,5 +258,5 @@ The `Microsoft.AspNetCore.App` framework reference (via `Microsoft.NET.Sdk.Web`)
 - **`AddD2HealthChecks` is idempotent; `MapD2HealthEndpoints` is NOT.** Calling `MapD2HealthEndpoints` twice raises a duplicate-route exception per the underlying ASP.NET Core endpoint-routing convention; per-pipeline registration SHOULD happen exactly once.
 - **`RunD2ServiceAsync` uses PII-safe exception rendering.** `Log.Fatal` on the catch path captures only the exception type FullName + first stack frame — NEVER `ex.Message`, since exception messages at host startup can carry connection strings, configured secrets, and host-environment specifics. Operators triage deeper via the host's process logs.
 - **`X-Correlation-Id` length-cap.** The ProblemDetails customizer caps the inbound `X-Correlation-Id` header value at 128 chars; over-cap values are treated as absent and a fresh GUID is generated. Prevents an arbitrary-length user header from inflating the response body.
-- **`InfrastructurePathMatcher` is public — single source of truth for `D2.Shared.Logging`, `D2.Shared.Telemetry`, and this lib's bypass middleware.** Earlier per-lib `internal` duplicates were collapsed into this canonical public matcher in the same change that introduced `D2.Shared.AspNetCore` so all consumers stay aligned on the path set.
-- **`RunD2ServiceAsync` consumes `D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender`** for the `Log.Fatal` PII-safe exception rendering. The helper is the canonical foundation-lib copy shared with `D2.Shared.Auth`, `D2.Shared.Auth.Outbound`, and `D2.Shared.Messaging.RabbitMq` — `D2.Shared.Utilities` is the natural home (already a `ProjectReference` for `Falsey()` / `Truthy()` / `ToNullIfEmpty()`).
+- **`InfrastructurePathMatcher` is public — single source of truth for `DcsvIo.D2.Logging`, `DcsvIo.D2.Telemetry`, and this lib's bypass middleware.** Earlier per-lib `internal` duplicates were collapsed into this canonical public matcher in the same change that introduced `DcsvIo.D2.AspNetCore` so all consumers stay aligned on the path set.
+- **`RunD2ServiceAsync` consumes `DcsvIo.D2.Utilities.Diagnostics.SanitizedExceptionRender`** for the `Log.Fatal` PII-safe exception rendering. The helper is the canonical foundation-lib copy shared with `DcsvIo.D2.Auth`, `DcsvIo.D2.Auth.Outbound`, and `DcsvIo.D2.Messaging.RabbitMq` — `DcsvIo.D2.Utilities` is the natural home (already a `ProjectReference` for `Falsey()` / `Truthy()` / `ToNullIfEmpty()`).

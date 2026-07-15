@@ -10,7 +10,7 @@ import {
   isProtoGateExempt,
   PROTO_PACKAGE_GRAMMAR,
 } from "../src/proto-exemption.js";
-import { WIRE_CHANNEL_GRAMMAR } from "@d2/typespec-emitters";
+import { WIRE_CHANNEL_GRAMMAR } from "@dcsv-io/d2-typespec-emitters";
 
 // ---------------------------------------------------------------------------
 // Parity: local PROTO_PACKAGE_GRAMMAR vs upstream WIRE_CHANNEL_GRAMMAR

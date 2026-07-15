@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location;
+namespace DcsvIo.D2.Location;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 /// <summary>
-/// DI registration entry point for <c>D2.Shared.Location</c>.
+/// DI registration entry point for <c>DcsvIo.D2.Location</c>.
 /// </summary>
 public static class DependencyInjection
 {

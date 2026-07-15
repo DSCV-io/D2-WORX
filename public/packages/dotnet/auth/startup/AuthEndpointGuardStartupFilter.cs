@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Startup;
+namespace DcsvIo.D2.Auth.Startup;
 
-using D2.Shared.AspNetCore;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Http.Endpoints;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Http.Endpoints;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;

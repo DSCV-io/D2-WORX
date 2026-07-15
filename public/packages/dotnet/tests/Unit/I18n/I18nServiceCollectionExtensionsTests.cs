@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.I18n;
+namespace DcsvIo.D2.Tests.Unit.I18n;
 
 using System.Collections.Generic;
 using System.IO;
 using AwesomeAssertions;
-using D2.Shared.I18n;
+using DcsvIo.D2.I18n;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

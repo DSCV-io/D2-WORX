@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 
 using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;

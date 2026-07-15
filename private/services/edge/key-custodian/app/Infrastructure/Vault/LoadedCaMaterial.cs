@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Infrastructure.Vault;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
 
 /// <summary>
 /// Short-lived carrier for the loaded + chain-validated dev certificate-authority

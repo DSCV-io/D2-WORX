@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Unit.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
-using D2.Shared.Auth.Startup;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
-using D2.Shared.Logging;
-using D2.Shared.ServiceDefaults;
-using D2.Shared.Telemetry;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Auth.Startup;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Logging;
+using DcsvIo.D2.ServiceDefaults;
+using DcsvIo.D2.Telemetry;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -213,9 +213,9 @@ public sealed class ServiceDefaultsServiceCollectionExtensionsTests
         // verify presence at the IServiceCollection level (resolution needs
         // a real messages directory + locale env vars, covered in
         // integration tests).
-        services.Any(d => d.ServiceType == typeof(D2.Shared.I18n.SupportedLocales))
+        services.Any(d => d.ServiceType == typeof(DcsvIo.D2.I18n.SupportedLocales))
             .Should().BeTrue();
-        services.Any(d => d.ServiceType == typeof(D2.Shared.I18n.ITranslator))
+        services.Any(d => d.ServiceType == typeof(DcsvIo.D2.I18n.ITranslator))
             .Should().BeTrue();
     }
 

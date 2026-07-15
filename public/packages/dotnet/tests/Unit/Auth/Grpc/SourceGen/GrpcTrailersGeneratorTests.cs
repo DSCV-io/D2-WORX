@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Grpc.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.Grpc.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Grpc.Trailers.SourceGen;
+using DcsvIo.D2.Grpc.Trailers.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -39,7 +39,7 @@ public sealed class GrpcTrailersGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsTrailersGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Grpc",
+            assemblyName: "DcsvIo.D2.Auth.Grpc",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -64,7 +64,7 @@ public sealed class GrpcTrailersGeneratorTests
     public void Generator_TargetAssemblyButNoSpec_EmitsNothing()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Grpc",
+            assemblyName: "DcsvIo.D2.Auth.Grpc",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -76,7 +76,7 @@ public sealed class GrpcTrailersGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Grpc",
+            assemblyName: "DcsvIo.D2.Auth.Grpc",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -89,14 +89,14 @@ public sealed class GrpcTrailersGeneratorTests
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Grpc",
+                assemblyName: "DcsvIo.D2.Auth.Grpc",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)
             .Select(t => t.ToString())
             .ToList();
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Grpc",
+                assemblyName: "DcsvIo.D2.Auth.Grpc",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)

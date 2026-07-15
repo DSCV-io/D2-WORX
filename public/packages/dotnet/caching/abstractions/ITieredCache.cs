@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching;
+namespace DcsvIo.D2.Caching;
 
 /// <summary>
 /// Composed L1 (in-process) + L2 (remote) cache. Reads check L1 first,

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
-using D2.Edge.KeyCustodian.Client.Jwks;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks;
 
 /// <summary>
 /// Tests for <see cref="GetJwksHandler"/>: includes active + retiring signing keys

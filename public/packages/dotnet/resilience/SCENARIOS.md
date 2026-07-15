@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Resilience — Pipeline Scenarios
+# DcsvIo.D2.Resilience — Pipeline Scenarios
 
 > Parent: [`README.md`](README.md)
 
@@ -161,7 +161,7 @@ The keyed-services discipline makes this trivial — register one pipeline per c
 
 ```csharp
 // app layer — single source of truth for the audit module's keys.
-namespace D2.Audit.App;
+namespace DcsvIo.D2.Private.Audit.App;
 
 public static class AuditServiceKeys
 {
@@ -215,7 +215,7 @@ public sealed class AuditClient(
 
 Three keyed pipelines share one broker-level CB (`SHARED_BROKER`) but differ in retry budget — critical retries forever, routine has a small budget, diagnostic drops on first failure. Grep `AuditServiceKeys.SHARED_BROKER` to find every consumer of the shared CB; grep `AuditServiceKeys.CRITICAL` to find each tier's wiring. No router/wrapper type — DI carries the dispatch.
 
-**Real-world:** D2.Audit client chooses by event severity. Critical security events (sign-in, key rotation, admin actions) get the unbounded-retry treatment so they MUST land. Routine business events get the backend-friendly composition. Diagnostic / verbose events fire-and-forget with no retry to protect the audit pipeline from being overwhelmed during an incident — exactly when audit volume spikes.
+**Real-world:** DcsvIo.D2.Private.Audit client chooses by event severity. Critical security events (sign-in, key rotation, admin actions) get the unbounded-retry treatment so they MUST land. Routine business events get the backend-friendly composition. Diagnostic / verbose events fire-and-forget with no retry to protect the audit pipeline from being overwhelmed during an incident — exactly when audit volume spikes.
 
 The pattern generalizes to any domain client where one operation has multiple criticality tiers: D2.Notifications by user-facing-importance, D2.Courier by transactional-vs-marketing, file uploads by user-tier, etc.
 

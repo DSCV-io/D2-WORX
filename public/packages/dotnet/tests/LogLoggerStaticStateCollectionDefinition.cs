@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests;
+namespace DcsvIo.D2.Tests;
 
 using Xunit;
 

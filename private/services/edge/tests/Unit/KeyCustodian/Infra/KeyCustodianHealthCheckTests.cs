@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Infra.Observability;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Observability;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;

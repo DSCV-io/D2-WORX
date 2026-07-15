@@ -12,5 +12,5 @@ Auth-related vocabulary for TS consumers — the codegen-emitted scope / error-c
 
 | Package                                                   | Description                                                                                                                          |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| [`abstractions/`](abstractions/README.md)                 | Codegen-emitted `Scopes` / `AuthErrorCodes` / `AuthFailures` / `JwtClaimTypes` catalogs. Mirrors `D2.Shared.Auth.Abstractions`.      |
-| [`context-abstractions/`](context-abstractions/README.md) | The `IAuthContext` interface, codegen from `contracts/auth-context/IAuthContext.spec.json`. Mirrors `D2.Shared.AuthContext.Abstractions`. |
+| [`abstractions/`](abstractions/README.md)                 | Codegen-emitted `Scopes` / `AuthErrorCodes` / `AuthFailures` / `JwtClaimTypes` catalogs. Mirrors `DcsvIo.D2.Auth.Abstractions`.      |
+| [`context-abstractions/`](context-abstractions/README.md) | The `IAuthContext` interface, codegen from `contracts/auth-context/IAuthContext.spec.json`. Mirrors `DcsvIo.D2.AuthContext.Abstractions`. |

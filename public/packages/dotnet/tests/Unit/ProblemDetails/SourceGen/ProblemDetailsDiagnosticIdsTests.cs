@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.ProblemDetails.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.ProblemDetails.SourceGen;
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.ProblemDetails.SourceGen;
+using DcsvIo.D2.ProblemDetails.SourceGen;
 using Xunit;
 
 /// <summary>

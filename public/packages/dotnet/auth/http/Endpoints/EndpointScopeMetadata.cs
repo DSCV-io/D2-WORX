@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http.Endpoints;
+namespace DcsvIo.D2.Auth.Http.Endpoints;
 
 using System.Collections.Frozen;
 using System.Collections.Generic;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 
 /// <summary>
 /// Endpoint metadata that declares the scope requirements (or

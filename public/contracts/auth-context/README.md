@@ -8,8 +8,8 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/context/source-gen/`](../../public/packages/dotnet/context/source-gen/README.md) (Roslyn source-gen → `PropagatedContext` + serializer in `D2.Shared.Context.Abstractions`; the same generator also emits the request-context layer)
-- **TypeScript** — [`tools/ts-codegen` › `auth-context-emit.ts`](../../tools/ts-codegen/README.md) (→ `IAuthContext` interface + 4 enums + `ActorEntry` in `@d2/auth-context-abstractions`)
+- **.NET** — [`public/packages/dotnet/context/source-gen/`](../../public/packages/dotnet/context/source-gen/README.md) (Roslyn source-gen → `PropagatedContext` + serializer in `DcsvIo.D2.Context.Abstractions`; the same generator also emits the request-context layer)
+- **TypeScript** — [`tools/ts-codegen` › `auth-context-emit.ts`](../../tools/ts-codegen/README.md) (→ `IAuthContext` interface + 4 enums + `ActorEntry` in `@dcsv-io/d2-auth-context-abstractions`)
 
 ## See also
 

@@ -117,7 +117,7 @@ export function emitD2ResultEnvelope(spec: D2ResultEnvelopeSpec): EmitResult {
     " * wire envelope (the BFF gateway response shape that every frontend",
   );
   sb.appendLine(
-    " * reads). Mirrors .NET D2.Shared.Result.D2ResultEnvelopeFieldNames",
+    " * reads). Mirrors .NET DcsvIo.D2.Result.D2ResultEnvelopeFieldNames",
   );
   sb.appendLine(
     " * (same wire values). Every JSON serializer / deserializer references",

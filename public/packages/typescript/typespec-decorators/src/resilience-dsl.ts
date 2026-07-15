@@ -22,7 +22,7 @@
 // Nesting rule: each policy wraps at most one inner policy call (linear stack).
 // Positional args must precede named args. singleflight accepts no tunables.
 //
-// Tunable provenance: values mirror D2.Shared.Resilience (RetryDefaults,
+// Tunable provenance: values mirror DcsvIo.D2.Resilience (RetryDefaults,
 // CircuitBreakerOptions, Singleflight) in public/packages/dotnet/resilience/.
 // The emitter maps cooldownSeconds → TimeSpan.FromSeconds(value).
 
@@ -76,7 +76,7 @@ export interface ResilienceParseError {
 }
 
 // ----------------------------------------------------------------
-// Per-policy tunable schemas (mirrors D2.Shared.Resilience)
+// Per-policy tunable schemas (mirrors DcsvIo.D2.Resilience)
 // ----------------------------------------------------------------
 
 type TunableKind = "int" | "duration-ms" | "duration-s" | "bool";

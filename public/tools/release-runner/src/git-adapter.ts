@@ -12,7 +12,7 @@
 // Integration-tested via the dry-run CLI path against the real repository.
 
 import { spawnSync } from "node:child_process";
-import { falsey, truthy } from "@d2/utilities";
+import { falsey, truthy } from "@dcsv-io/d2-utilities";
 import { validateGitRef } from "contract-gate";
 import type { CommitRecord } from "./types.js";
 

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Telemetry.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Telemetry.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.Telemetry.Tags.SourceGen;
+using DcsvIo.D2.Telemetry.Tags.SourceGen;
 using Xunit;
 
 /// <summary>

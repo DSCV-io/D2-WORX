@@ -13,7 +13,7 @@
 // satisfy `noUnusedLocals`. Expressions are kept on one line so Prettier cannot
 // move the error off the directive's next line.
 
-import type { IPayloadCrypto, IPayloadSealer } from "@d2/encryption";
+import type { IPayloadCrypto, IPayloadSealer } from "@dcsv-io/d2-encryption";
 
 import type {
   DomainCryptoMap,

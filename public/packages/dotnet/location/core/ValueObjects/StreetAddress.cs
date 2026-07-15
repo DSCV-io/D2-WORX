@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location.ValueObjects;
+namespace DcsvIo.D2.Location.ValueObjects;
 
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
-using D2.Shared.Utilities.Extensions;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Enums;
+using DcsvIo.D2.Utilities.Extensions;
+using DcsvIo.D2.Validation.Abstractions;
 
 /// <summary>
 /// Immutable 5-line postal address value object. Line1 is required;
@@ -168,8 +168,8 @@ public sealed record StreetAddress
 
     /// <summary>
     /// Two-stage normalization stage 2 — thin forwarder to the shared
-    /// <see cref="D2.Shared.Utilities.Extensions.StringExtensions.NormalizeForHash(string?)"/>
-    /// extension in <c>D2.Shared.Utilities</c>. The algorithm is byte-identical
+    /// <see cref="DcsvIo.D2.Utilities.Extensions.StringExtensions.NormalizeForHash(string?)"/>
+    /// extension in <c>DcsvIo.D2.Utilities</c>. The algorithm is byte-identical
     /// to the original inline implementation (UPPERCASE + NFD-strip combining
     /// marks + Unicode-category filter: Letter / Decimal-digit / ASCII space).
     /// Kept as an internal method so existing test call-sites and

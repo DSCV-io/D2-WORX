@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Auth.Outbound.TokenExchange;
-using D2.Shared.Caching.Local.Default;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Auth.Outbound.TokenExchange;
+using DcsvIo.D2.Caching.Local.Default;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

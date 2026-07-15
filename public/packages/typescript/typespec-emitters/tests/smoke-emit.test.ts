@@ -42,7 +42,7 @@ import {
   D2_QUERY_KEY,
   D2_INTERNAL_KEY,
   D2_FIELD_KEY,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 import type { OperationsManifest } from "../src/emitter.js";
 
 // ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ describe("$onEmit_directUnit_SmokeMockContext", () => {
     expect(written.path).toContain("operations-manifest.json");
 
     const manifest = JSON.parse(written.content) as OperationsManifest;
-    expect(manifest.emitter).toBe("@d2/typespec-emitters");
+    expect(manifest.emitter).toBe("@dcsv-io/d2-typespec-emitters");
     expect(manifest.operationCount).toBe(3);
 
     // Bare op — no decorators applied.
@@ -1085,9 +1085,10 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+        "csharp-clients-namespace":
+          "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
         "csharp-app-namespace-base":
-          "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1101,7 +1102,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.Client.Jwks;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks;",
     );
   });
 
@@ -1152,9 +1153,10 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+        "csharp-clients-namespace":
+          "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
         "csharp-app-namespace-base":
-          "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1167,7 +1169,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.ListKeys;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.ListKeys;",
     );
   });
 
@@ -1226,7 +1228,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       options: {
         "csharp-namespace": "D2.Test.Fixture",
         "csharp-app-namespace-base":
-          "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1294,7 +1296,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
         "csharp-namespace": "D2.Test.Fixture",
         // csharp-clients-namespace intentionally absent.
         "csharp-app-namespace-base":
-          "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1358,7 +1360,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       options: {
         "csharp-namespace": "D2.Test.Fixture",
         "csharp-app-namespace-base":
-          "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1371,7 +1373,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CreateKey;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.CreateKey;",
     );
   });
 
@@ -1435,7 +1437,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       options: {
         "csharp-namespace": "D2.Test.Fixture",
         "csharp-app-namespace-base":
-          "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1527,9 +1529,10 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+        "csharp-clients-namespace":
+          "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
         "csharp-app-namespace-base":
-          "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
       },
     } as unknown as EmitContext;
 
@@ -1554,7 +1557,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     );
     expect(ifaceFile).toBeDefined();
     expect(ifaceFile!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.Client.Facade;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;",
     );
     expect(ifaceFile!.content).toContain("GetJwksAsync(");
 
@@ -1564,7 +1567,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     );
     expect(implFile).toBeDefined();
     expect(implFile!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.App.Application.Facade;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Facade;",
     );
   });
 
@@ -1624,9 +1627,10 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+        "csharp-clients-namespace":
+          "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
         "csharp-app-namespace-base":
-          "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1639,7 +1643,7 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain(
-      "namespace D2.Edge.KeyCustodian.Client;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client;",
     );
 
     // Handler interface emitted — namespace falls back to grpcServiceNs because category=undefined.
@@ -1967,12 +1971,12 @@ describe("$onEmit_directUnit_TryGetSpecPath_AbsolutePath", () => {
 // The host captures emitted files in an in-memory FS; we assert the manifest.
 // ---------------------------------------------------------------------------
 
-// Mount the decorators library (the .tsp fixture needs @d2/typespec-decorators).
+// Mount the decorators library (the .tsp fixture needs @dcsv-io/d2-typespec-decorators).
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -1982,7 +1986,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 
 // Mount this emitter package so the host can call its $onEmit.
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -2001,7 +2005,7 @@ describe("$onEmit_integration_SmokeManifest", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
 
       namespace TestNs;
@@ -2024,7 +2028,7 @@ describe("$onEmit_integration_SmokeManifest", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       outputDir: "testing:/out",
     });
 
@@ -2049,7 +2053,7 @@ describe("$onEmit_integration_SmokeManifest", () => {
 
     const manifestContent = (stored as Map<string, string>).get(manifestKey!)!;
     const manifest = JSON.parse(manifestContent) as OperationsManifest;
-    expect(manifest.emitter).toBe("@d2/typespec-emitters");
+    expect(manifest.emitter).toBe("@dcsv-io/d2-typespec-emitters");
     expect(manifest.operationCount).toBe(3);
 
     // Op with @d2ServedBy("Edge") + @d2InProcess.

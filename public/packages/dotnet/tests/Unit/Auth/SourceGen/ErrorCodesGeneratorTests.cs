@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.ErrorCodes.SourceGen;
+using DcsvIo.D2.Auth.ErrorCodes.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -42,7 +42,7 @@ public sealed class ErrorCodesGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsConstantsAndBothFailuresClasses()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth",
+            assemblyName: "DcsvIo.D2.Auth",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -82,7 +82,7 @@ public sealed class ErrorCodesGeneratorTests
     {
         // No AdditionalText supplied — generator silently no-ops (no spec).
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth",
+            assemblyName: "DcsvIo.D2.Auth",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -94,7 +94,7 @@ public sealed class ErrorCodesGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth",
+            assemblyName: "DcsvIo.D2.Auth",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -107,14 +107,14 @@ public sealed class ErrorCodesGeneratorTests
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Auth",
+                assemblyName: "DcsvIo.D2.Auth",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)
             .Select(t => t.ToString())
             .ToList();
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Auth",
+                assemblyName: "DcsvIo.D2.Auth",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)

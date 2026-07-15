@@ -3,13 +3,13 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { CountryCode } from "@d2/geo-abstractions";
+import type { CountryCode } from "@dcsv-io/d2-geo-abstractions";
 import {
   DefaultEmailValidator,
   DefaultPhoneValidator,
   DefaultPostalCodeValidator,
   EMAIL_PATTERN,
-} from "@d2/validation";
+} from "@dcsv-io/d2-validation";
 import { describe, expect, it } from "vitest";
 
 import { loadContractFixture } from "../src/index.js";

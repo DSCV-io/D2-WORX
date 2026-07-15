@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Encryption;
+namespace DcsvIo.D2.Encryption;
 
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Records the provenance (<see cref="EncryptionKeyringSource"/>) of one

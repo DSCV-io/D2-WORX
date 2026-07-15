@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen;
 
 /// <summary>
 /// String identifiers for the keycustodian catalog's per-catalog validation

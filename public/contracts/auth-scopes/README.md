@@ -14,8 +14,8 @@ OAuth scope catalog — the closed set of permission scopes with their action-se
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/auth/scopes-source-gen/`](../../packages/dotnet/auth/scopes-source-gen/README.md) (Roslyn source-gen → `Scopes` scope-tree constants in `D2.Shared.Auth.Abstractions`, consumed by per-handler `RequiredScopes` options)
-- **TypeScript** — [`public/tools/ts-codegen` › `auth-scopes-emit.ts`](../../tools/ts-codegen/README.md) (→ `Scopes` const-object tree in `@d2/auth-abstractions`)
+- **.NET** — [`public/packages/dotnet/auth/scopes-source-gen/`](../../packages/dotnet/auth/scopes-source-gen/README.md) (Roslyn source-gen → `Scopes` scope-tree constants in `DcsvIo.D2.Auth.Abstractions`, consumed by per-handler `RequiredScopes` options)
+- **TypeScript** — [`public/tools/ts-codegen` › `auth-scopes-emit.ts`](../../tools/ts-codegen/README.md) (→ `Scopes` const-object tree in `@dcsv-io/d2-auth-abstractions`)
 - **TypeSpec** — [`public/packages/typescript/typespec-decorators/`](../../packages/typescript/typespec-decorators/README.md) reads `scopes.spec.json` to validate scope-referencing decorator arguments at compile time
 
 ## See also

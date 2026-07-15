@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 
 using System.Net;
 using System.Text;
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using global::D2.Services.Protos.KeyCustodian.V2Alpha;
 using global::Grpc.Core;
 using Google.Protobuf;
 using Xunit;
-using ProtoGetKeyringOutput = D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput;
-using ProtoKeyringEntry = D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry;
+using ProtoGetKeyringOutput = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput;
+using ProtoKeyringEntry = global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry;
 
 /// <summary>
 /// Unit coverage for <see cref="GrpcKeyringClient"/> — the cross-process fetch source —

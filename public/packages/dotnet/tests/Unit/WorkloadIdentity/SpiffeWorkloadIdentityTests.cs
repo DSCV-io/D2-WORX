@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.WorkloadIdentity;
+namespace DcsvIo.D2.Tests.Unit.WorkloadIdentity;
 
 using AwesomeAssertions;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.WorkloadIdentity;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.Spiffe;
 using Xunit;
 
 /// <summary>

@@ -32,7 +32,7 @@
 // This module NEVER writes a committed baseline — it is a read-only compare. The
 // baselines are regenerated only by the seed script (the generator), never here.
 
-import { falsey, truthy } from "@d2/utilities";
+import { falsey, truthy } from "@dcsv-io/d2-utilities";
 import type { DiffProvider } from "./diff-runner.js";
 import type { PackageDescriptor } from "./types.js";
 

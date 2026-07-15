@@ -12,8 +12,8 @@
  * Protocol-audience constants emitted from
  * contracts/auth-protocol-audiences/protocol-audiences.spec.json. These are the
  * bare-token aud values (d2.internal, d2-edge) — NOT the URL-shaped
- * token-exchange targets in @d2/auth-abstractions' Audiences catalog. Mirrors
- * the .NET D2.Shared.Auth.Abstractions.WellKnownAudiences constants.
+ * token-exchange targets in @dcsv-io/d2-auth-abstractions' Audiences catalog. Mirrors
+ * the .NET DcsvIo.D2.Auth.Abstractions.WellKnownAudiences constants.
  */
 export const ProtocolAudiences = {
   /** The Edge self-audience for the Edge's own operations — the aud the Edge accepts on tokens minted for itself. */

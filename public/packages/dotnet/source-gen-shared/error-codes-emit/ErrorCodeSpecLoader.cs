@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Shared logic for parsing a <c>*-error-codes.spec.json</c> catalog into an

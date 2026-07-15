@@ -111,7 +111,7 @@ export function emitSseEmitSinkSeam(
   lines.push("");
   lines.push(`namespace ${registrationNamespace};`);
   lines.push("");
-  lines.push("using D2.Shared.Result;");
+  lines.push("using DcsvIo.D2.Result;");
   lines.push("");
   lines.push(
     "/// <summary>The channel class a server-push event is addressed to.</summary>",
@@ -313,7 +313,7 @@ function emitDispatcherInterface(
   lines.push("");
   lines.push(`namespace ${dtoNamespace};`);
   lines.push("");
-  lines.push("using D2.Shared.Result;");
+  lines.push("using DcsvIo.D2.Result;");
   lines.push("");
   lines.push(
     `/// <summary>Generated server-push dispatcher for the <c>${pascalOp}</c> operation.</summary>`,
@@ -351,7 +351,7 @@ function emitDispatcherImpl(
   lines.push("");
   lines.push(`namespace ${dtoNamespace};`);
   lines.push("");
-  lines.push("using D2.Shared.Result;");
+  lines.push("using DcsvIo.D2.Result;");
   lines.push("");
   lines.push("/// <summary>");
   lines.push(

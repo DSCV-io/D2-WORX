@@ -37,7 +37,7 @@ import type { FieldInfo } from "../src/lib/model-walk.js";
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-const NS = "D2.Edge.Tests.TypeSpecSse.Generated";
+const NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecSse.Generated";
 const SOURCE = "contracts/typespec/fixtures/server-push-shaped.tsp";
 
 const genDir = join(
@@ -180,9 +180,9 @@ describe("emitSseEmitSinkSeam — file shape", () => {
     expect(file.content).toContain("CancellationToken ct = default);");
   });
 
-  it("emits using D2.Shared.Result", () => {
+  it("emits using DcsvIo.D2.Result", () => {
     expect(emitSseEmitSinkSeam(NS, SOURCE).content).toContain(
-      "using D2.Shared.Result;",
+      "using DcsvIo.D2.Result;",
     );
   });
 

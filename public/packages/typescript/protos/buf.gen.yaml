@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------
 # Copyright (c) DCSV. All rights reserved.
 # -----------------------------------------------------------------------
-# Buf generation config for the @d2/protos TS package.
+# Buf generation config for the @dcsv-io/d2-protos TS package.
 # Output is committed to git so consumer packages can import without
 # triggering a separate generation step on first build.
 

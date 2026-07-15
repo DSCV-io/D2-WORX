@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
 using AwesomeAssertions;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

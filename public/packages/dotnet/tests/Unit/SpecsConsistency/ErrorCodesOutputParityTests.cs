@@ -6,21 +6,21 @@
 
 extern alias ResultErrorCodesSourceGen;
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.ErrorCodes.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Auth.ErrorCodes.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Xunit;
 using ResultErrorCodesGenerator =
-    ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.ErrorCodesGenerator;
+    ResultErrorCodesSourceGen::DcsvIo.D2.ResultErrorCodes.SourceGen.ErrorCodesGenerator;
 
 /// <summary>
 /// CI-enforced byte-parity gate: regenerates the committed
@@ -38,9 +38,9 @@ using ResultErrorCodesGenerator =
 /// </remarks>
 public sealed class ErrorCodesOutputParityTests
 {
-    private const string _AUTH_ASSEMBLY = "D2.Shared.Auth";
+    private const string _AUTH_ASSEMBLY = "DcsvIo.D2.Auth";
     private const string _AUTH_SPEC_NAME = "auth-error-codes.spec.json";
-    private const string _RESULT_ASSEMBLY = "D2.Shared.Result";
+    private const string _RESULT_ASSEMBLY = "DcsvIo.D2.Result";
     private const string _RESULT_SPEC_NAME = "error-codes.spec.json";
     private const string _CATEGORY_SPEC_NAME = "error-category.spec.json";
 
@@ -53,8 +53,8 @@ public sealed class ErrorCodesOutputParityTests
             "auth",
             "core",
             "Generated",
-            "D2.Shared.Auth.ErrorCodes.SourceGen",
-            "D2.Shared.Auth.ErrorCodes.SourceGen.ErrorCodesGenerator");
+            "DcsvIo.D2.Auth.ErrorCodes.SourceGen",
+            "DcsvIo.D2.Auth.ErrorCodes.SourceGen.ErrorCodesGenerator");
 
     private static readonly string sr_generatedResultBase =
         Path.Combine(
@@ -65,8 +65,8 @@ public sealed class ErrorCodesOutputParityTests
             "result",
             "core",
             "Generated",
-            "D2.Shared.Result.ErrorCodes.SourceGen",
-            "D2.Shared.ResultErrorCodes.SourceGen.ErrorCodesGenerator");
+            "DcsvIo.D2.Result.ErrorCodes.SourceGen",
+            "DcsvIo.D2.ResultErrorCodes.SourceGen.ErrorCodesGenerator");
 
     [Fact]
     public void AuthErrorCodes_RegeneratedOutput_MatchesCommittedFile()

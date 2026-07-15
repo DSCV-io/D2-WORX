@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.SourceGen;
+namespace DcsvIo.D2.Messaging.SourceGen;
 
 /// <summary>
 /// One entry parsed from <c>mq-subscriptions.spec.json</c>. Pairs a

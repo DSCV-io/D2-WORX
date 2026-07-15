@@ -3,13 +3,13 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { D2Result } from "@d2/result";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 /**
  * Pluggable serialization seam for distributed caches. Local caches
  * store objects directly and do not need this. This package owns the
  * port only; a default JSON implementation is part of the
- * `@d2/caching-distributed-redis` package surface. Provider-specific
+ * `@dcsv-io/d2-caching-distributed-redis` package surface. Provider-specific
  * impls may swap in MessagePack, Protobuf, etc., for size or perf wins.
  *
  * Impl failure codes (not defined here — reuse existing catalogs when

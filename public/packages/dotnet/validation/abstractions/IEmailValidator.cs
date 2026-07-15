@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation.Abstractions;
+namespace DcsvIo.D2.Validation.Abstractions;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Validates an email address and returns a normalized form on success.
@@ -20,7 +20,7 @@ public interface IEmailValidator
     /// <returns>
     /// <c>Ok</c> wrapping the normalized (trimmed and lowercased) email address on success;
     /// <see cref="D2Result{TData}.ValidationFailed"/> with a per-field
-    /// <see cref="D2.Shared.Result.InputError"/> on null, empty, whitespace, or
+    /// <see cref="DcsvIo.D2.Result.InputError"/> on null, empty, whitespace, or
     /// structurally invalid input.
     /// </returns>
     D2Result<string> Validate(string? email);

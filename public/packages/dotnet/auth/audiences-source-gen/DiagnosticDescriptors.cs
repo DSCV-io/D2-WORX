@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Audiences.SourceGen;
+namespace DcsvIo.D2.Auth.Audiences.SourceGen;
 
 using Microsoft.CodeAnalysis;
 
@@ -78,5 +78,5 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    private const string _CATEGORY = "D2.Shared.Auth.Audiences.SourceGen";
+    private const string _CATEGORY = "DcsvIo.D2.Auth.Audiences.SourceGen";
 }

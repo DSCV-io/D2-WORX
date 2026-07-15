@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
 /// Verifies that the PII/secret traps in the KeyCustodian domain are properly
@@ -12,7 +12,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian;
 ///
 /// The test project references Domain, App, and Infra via project references,
 /// but none of those transitively pull in
-/// <c>D2.Shared.Logging.Destructuring</c> (which lives in a logging lib not
+/// <c>DcsvIo.D2.Logging.Destructuring</c> (which lives in a logging lib not
 /// referenced by the key-custodian stack). The policy-based redaction test
 /// is therefore not possible here without adding an out-of-scope reference.
 /// Instead, this file uses:

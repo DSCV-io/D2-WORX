@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Validation.SourceGen;
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Validation.SourceGen;
+using DcsvIo.D2.Validation.SourceGen;
 using Xunit;
 
 /// <summary>

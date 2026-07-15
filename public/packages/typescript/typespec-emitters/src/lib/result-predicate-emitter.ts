@@ -5,7 +5,7 @@
 
 // Result-predicate emitter for the @d2Resilience `retryWhen` / `failWhen`
 // custom predicates. Walks the parsed predicate AST (the shared
-// `PredicateNode` family from @d2/typespec-decorators) PLUS the emitter-local
+// `PredicateNode` family from @dcsv-io/d2-typespec-decorators) PLUS the emitter-local
 // gen-time model crawl (`predicate-emit-walk.ts`) to emit TWO behaviorally
 // identical predicate functions per op — one C#, one TypeScript — over the
 // op's reconstructed business `D2Result<<Op>Output?>`, plus the emitter-owned
@@ -26,7 +26,7 @@
 //   3. D2GeneratedBusinessRetrySignal.g.cs — the emitter-owned sentinel
 //      exception the client throws when `retryWhen && !failWhen`; the generated
 //      DI-ext's `IsTransient` lambda recognizes it so the REAL keyed pipeline
-//      retries. ZERO D2.Shared.Resilience change — the sentinel rides the
+//      retries. ZERO DcsvIo.D2.Resilience change — the sentinel rides the
 //      EXISTING RetryOptions.IsTransient extension point.
 //
 // Null-propagation: `r.Data` is always nullable (D2Result<T?>.Data is T?), so
@@ -49,7 +49,7 @@ import type {
   EnvelopeAccessNode,
   LiteralNode,
   PredicateNode,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -197,11 +197,11 @@ function emitCsharpPredicates(
     );
   }
 
-  // ErrorCategory.ToWire() (for result.category) lives in D2.Shared.ErrorCodes.Category;
-  // D2Result lives in D2.Shared.Result. Both imported unconditionally — the class
+  // ErrorCategory.ToWire() (for result.category) lives in DcsvIo.D2.ErrorCodes.Category;
+  // D2Result lives in DcsvIo.D2.Result. Both imported unconditionally — the class
   // signature always references D2Result, and category is a common predicate field.
-  lines.push("using D2.Shared.ErrorCodes.Category;");
-  lines.push("using D2.Shared.Result;");
+  lines.push("using DcsvIo.D2.ErrorCodes.Category;");
+  lines.push("using DcsvIo.D2.Result;");
   lines.push("");
 
   lines.push("/// <summary>");

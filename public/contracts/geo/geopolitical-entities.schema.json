@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://d2-worx.dev/contracts/geo/geopolitical-entities.schema.json",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/geopolitical-entities.schema.json",
   "title": "GeopoliticalEntity catalog (hand-rolled)",
   "description": "Hand-rolled catalog of supranational groupings (continents, sub-continents, regions, economic / political / military unions and agreements). No upstream source — humans maintain. Lives alongside the pipeline-generated Tier 2 spec files at contracts/geo/ root and is consumed identically by codegen. Distinguished only by $generated: false / $source: manual.",
   "type": "object",

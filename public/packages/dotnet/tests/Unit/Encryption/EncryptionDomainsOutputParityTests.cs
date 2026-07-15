@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption;
+namespace DcsvIo.D2.Tests.Unit.Encryption;
 
 using System;
 using System.Collections.Generic;
@@ -13,8 +13,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using AwesomeAssertions;
-using D2.Shared.EncryptionDomains.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.EncryptionDomains.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -22,13 +22,13 @@ using Xunit;
 
 /// <summary>
 /// CI-enforced byte-parity gate for committed public
-/// <c>EncryptionDomains.g.cs</c> under <c>D2.Shared.Encryption</c>:
+/// <c>EncryptionDomains.g.cs</c> under <c>DcsvIo.D2.Encryption</c>:
 /// regenerates from the public-only encryption-domains spec via the same
 /// generator path and asserts LF-normalized equality with the committed file.
 /// </summary>
 public sealed class EncryptionDomainsOutputParityTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.Encryption";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.Encryption";
     private const string _FILE_NAME = "EncryptionDomains.g.cs";
 
     [Fact]
@@ -42,7 +42,7 @@ public sealed class EncryptionDomainsOutputParityTests
             because:
                 "committed EncryptionDomains.g.cs must match a fresh generation from "
                 + "public/contracts/encryption-domains; run dotnet build on "
-                + "D2.Shared.Encryption to regenerate");
+                + "DcsvIo.D2.Encryption to regenerate");
     }
 
     [Fact]
@@ -76,8 +76,8 @@ public sealed class EncryptionDomainsOutputParityTests
             "encryption",
             "core",
             "Generated",
-            "D2.Shared.EncryptionDomains.SourceGen",
-            "D2.Shared.EncryptionDomains.SourceGen.EncryptionDomainsGenerator",
+            "DcsvIo.D2.EncryptionDomains.SourceGen",
+            "DcsvIo.D2.EncryptionDomains.SourceGen.EncryptionDomainsGenerator",
             _FILE_NAME);
 
     private static string PublicSpecPath() =>

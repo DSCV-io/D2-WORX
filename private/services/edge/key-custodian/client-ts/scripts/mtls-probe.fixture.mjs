@@ -4,7 +4,7 @@
 
 // mTLS loopback probe — the Node half of the live-handshake harness
 // (the .NET NodeLeafClientMutualTlsHarnessTests spawns this). Runs against the
-// BUILT @d2/key-custodian-client dist (`pnpm --filter @d2/key-custodian-client
+// BUILT @dcsv-io/d2-private-key-custodian-client dist (`pnpm --filter @dcsv-io/d2-private-key-custodian-client
 // build` first), so the exact production runtime is what dials the wire.
 //
 // Modes:
@@ -20,7 +20,7 @@
 //                  mTLS-REQUIRED KeyCustodian keyring endpoint, run the shipped
 //                  GrpcKeyringClient (over the emitted gRPC facade) to fetch the
 //                  domain's keyring, then decrypt a .NET-produced frame with the
-//                  shipped @d2/encryption PayloadCrypto (cross-runtime pin).
+//                  shipped @dcsv-io/d2-encryption PayloadCrypto (cross-runtime pin).
 //
 // The probe TRUSTS the harness's self-signed loopback server certificate via the
 // explicitly-passed PEM (never rejectUnauthorized:false). It writes a JSON result
@@ -40,7 +40,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import grpc from "@grpc/grpc-js";
 import protoLoader from "@grpc/proto-loader";
-import { PayloadCrypto } from "@d2/encryption";
+import { PayloadCrypto } from "@dcsv-io/d2-encryption";
 import {
   WorkloadLeafClient,
   GrpcWorkloadCertificateIssuer,

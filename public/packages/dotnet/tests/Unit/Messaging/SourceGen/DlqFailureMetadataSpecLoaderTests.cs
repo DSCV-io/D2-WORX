@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Messaging.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.Messaging.DlqMetadata.SourceGen;
+using DcsvIo.D2.Messaging.DlqMetadata.SourceGen;
 using Xunit;
 
 /// <summary>

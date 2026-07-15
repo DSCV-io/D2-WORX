@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Repo.Abstractions;
+namespace DcsvIo.D2.Handler.Repo.Abstractions;
 
 using System.Collections.Generic;
 using System.Net;
-using D2.Shared.I18n;
-using D2.Shared.Result;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Generic-typed counterparts to <see cref="D2ResultDbFactories"/>. Each

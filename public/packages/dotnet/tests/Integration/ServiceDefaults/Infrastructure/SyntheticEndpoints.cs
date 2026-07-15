@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using D2.Shared.Auth.Telemetry;
+using DcsvIo.D2.Auth.Telemetry;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -31,16 +31,16 @@ using Serilog;
 ///   <see cref="InvalidOperationException"/> to drive the
 ///   ProblemDetails / unhandled-exception path.</item>
 ///  <item><c>GET /emit-activity</c> — starts an
-///   <see cref="Activity"/> from the <c>D2.Shared.Auth</c> aggregated
+///   <see cref="Activity"/> from the <c>DcsvIo.D2.Auth</c> aggregated
 ///   <see cref="ActivitySource"/> so tests can verify aggregated sources
 ///   flow through the OTel SDK inside the composed pipeline.</item>
 ///  <item><c>GET /emit-counter</c> — increments a
 ///   <see cref="Counter{T}"/> on a <see cref="Meter"/> whose name matches
-///   the <c>D2.Shared.Auth</c> aggregated meter.</item>
+///   the <c>DcsvIo.D2.Auth</c> aggregated meter.</item>
 ///  <item><c>GET /log-redacted</c> — captures + logs a
 ///   <see cref="RedactedTestObject"/> via the static
 ///   <see cref="Serilog.Log"/> facade (so the
-///   <see cref="D2.Shared.Logging.Destructuring.RedactDataDestructuringPolicy"/>
+///   <see cref="DcsvIo.D2.Logging.Destructuring.RedactDataDestructuringPolicy"/>
 ///   safety-net runs against the destructured payload).</item>
 ///  <item><c>GET /log-mel-info</c> — emits an
 ///   <see cref="LogLevel.Information"/> log line via the low-level

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.OtelMessagingTags.SourceGen;
+namespace DcsvIo.D2.OtelMessagingTags.SourceGen;
 
 using System.Collections.Immutable;
 

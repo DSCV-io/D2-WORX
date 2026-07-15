@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location.ValueObjects;
+namespace DcsvIo.D2.Location.ValueObjects;
 
 using System.Security.Cryptography;
 using System.Text;
-using D2.Shared.I18n;
-using D2.Shared.Location.Encoding;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Location.Encoding;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Enums;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Immutable geographic point with three universal representations

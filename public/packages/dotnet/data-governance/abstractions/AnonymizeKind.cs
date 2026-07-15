@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.Abstractions;
+namespace DcsvIo.D2.DataGovernance.Abstractions;
 
 /// <summary>
 /// Specifies the overwrite strategy the anonymization engine uses when erasing a

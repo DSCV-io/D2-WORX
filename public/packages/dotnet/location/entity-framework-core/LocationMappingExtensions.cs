@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location.EntityFrameworkCore;
+namespace DcsvIo.D2.Location.EntityFrameworkCore;
 
-using D2.Shared.Location.ValueObjects;
+using DcsvIo.D2.Location.ValueObjects;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 /// <summary>
-/// Per-VO complex-type mapping helpers for the D2.Shared.Location value objects
+/// Per-VO complex-type mapping helpers for the DcsvIo.D2.Location value objects
 /// (<c>StreetAddress</c>, <c>AdminLocation</c>, <c>Coordinates</c>). Called from the
 /// host's <c>IEntityTypeConfiguration&lt;T&gt;</c> inside a <c>b.ComplexProperty</c>
 /// callback. Each helper: wires <c>HasMaxLength</c> from <c>FieldConstraints.*</c> (plus

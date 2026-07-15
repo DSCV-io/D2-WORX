@@ -26,7 +26,7 @@ import {
   D2_HARMLESS_KEY,
   D2_FIELD_KEY,
   D2_IDEMPOTENT_KEY,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 import {
   resolveProcessKindByModule,
   resolveStringMapOption,
@@ -322,7 +322,7 @@ describe("Emitter_UnknownProcessKind_FailLoud", () => {
 // ---------------------------------------------------------------------------
 
 describe("Emitter_RoutesNamespaceOption_EmitsD2EdgeApiRoutes", () => {
-  it("key hit → namespace D2.Edge.Api.Routes.KeyCustodian", async () => {
+  it("key hit → namespace DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian", async () => {
     const str = makeStringScalar();
     const inputModel = makeModel("JwksInput", {});
     const outputModel = makeModel("JwksOutput", { kid: str });
@@ -348,10 +348,11 @@ describe("Emitter_RoutesNamespaceOption_EmitsD2EdgeApiRoutes", () => {
     await $onEmit(
       makeBaseContext(program, {
         ...REAL_BASE,
-        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+        "csharp-clients-namespace":
+          "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
         "process-kind-by-module": { KeyCustodian: "edge-module" },
         "csharp-routes-namespace": {
-          KeyCustodian: "D2.Edge.Api.Routes.KeyCustodian",
+          KeyCustodian: "DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian",
         },
       }),
     );
@@ -361,7 +362,7 @@ describe("Emitter_RoutesNamespaceOption_EmitsD2EdgeApiRoutes", () => {
     );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain(
-      "namespace D2.Edge.Api.Routes.KeyCustodian;",
+      "namespace DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian;",
     );
     expect(routeFile!.content).not.toContain("App.Application.Routes");
     // Bridge file must NOT be emitted for edge-module.
@@ -450,7 +451,7 @@ describe("Emitter_InternalOnly_GrpcWithoutRoute_NoPublicHttp", () => {
         "csharp-clients-namespace": "D2.Services.Audit.Client",
         "process-kind-by-module": { Audit: "standalone" },
         "csharp-bridge-namespace": {
-          Audit: "D2.Edge.Api.Bridges.Audit",
+          Audit: "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
         },
       }),
     );
@@ -499,7 +500,7 @@ describe("Emitter_InternalOnly_GrpcWithoutRoute_NoPublicHttp", () => {
         ...REAL_BASE,
         "process-kind-by-module": { KeyCustodian: "edge-module" },
         "csharp-routes-namespace": {
-          KeyCustodian: "D2.Edge.Api.Routes.KeyCustodian",
+          KeyCustodian: "DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian",
         },
       }),
     );
@@ -557,7 +558,7 @@ describe("Emitter_Standalone_EmitsBridgeAndServiceServer_NotPublicRestOnService"
         "csharp-clients-namespace": "D2.Services.Audit.Client",
         "process-kind-by-module": { Audit: "standalone" },
         "csharp-bridge-namespace": {
-          Audit: "D2.Edge.Api.Bridges.Audit",
+          Audit: "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
         },
       }),
     );
@@ -566,7 +567,9 @@ describe("Emitter_Standalone_EmitsBridgeAndServiceServer_NotPublicRestOnService"
       e.path.includes("PingAuditBridgeRegistration.g.cs"),
     );
     expect(bridge).toBeDefined();
-    expect(bridge!.content).toContain("namespace D2.Edge.Api.Bridges.Audit;");
+    expect(bridge!.content).toContain(
+      "namespace DcsvIo.D2.Private.Edge.Api.Bridges.Audit;",
+    );
     expect(bridge!.content).toContain("IAuditGrpcClient");
     expect(bridge!.content).toContain("PingAuditAsync");
     expect(bridge!.content).not.toContain("TransportMappers");
@@ -661,7 +664,7 @@ describe("Emitter_Standalone_RouteWithoutGrpc_FailLoud", () => {
           ...REAL_BASE,
           "process-kind-by-module": { Audit: "standalone" },
           "csharp-bridge-namespace": {
-            Audit: "D2.Edge.Api.Bridges.Audit",
+            Audit: "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
           },
         }),
       );
@@ -731,7 +734,7 @@ describe("Emitter_Standalone_Idempotent_WeavesGateAndSeam", () => {
         "csharp-clients-namespace": "D2.Services.Audit.Client",
         "process-kind-by-module": { Audit: "standalone" },
         "csharp-bridge-namespace": {
-          Audit: "D2.Edge.Api.Bridges.Audit",
+          Audit: "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
         },
       }),
     );
@@ -748,7 +751,9 @@ describe("Emitter_Standalone_Idempotent_WeavesGateAndSeam", () => {
       e.path.includes("D2GeneratedIdempotencyStore.g.cs"),
     );
     expect(seam).toBeDefined();
-    expect(seam!.content).toContain("namespace D2.Edge.Api.Bridges.Audit;");
+    expect(seam!.content).toContain(
+      "namespace DcsvIo.D2.Private.Edge.Api.Bridges.Audit;",
+    );
   });
 });
 

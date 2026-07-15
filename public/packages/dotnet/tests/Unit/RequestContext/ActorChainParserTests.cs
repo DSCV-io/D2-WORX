@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.RequestContext;
+namespace DcsvIo.D2.Tests.Unit.RequestContext;
 
 using System;
 using System.Text;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
 using Xunit;
 
 /// <summary>
@@ -111,7 +111,7 @@ public sealed class ActorChainParserTests
         var entry = result[0];
         entry.Kind.Should().Be(ActorKind.Impersonation);
         entry.Subject.Should().Be(_USER_SUB_GUID);
-        entry.ImpersonationKind.Should().Be(D2.Shared.Auth.Abstractions.ImpersonationKind.Consent);
+        entry.ImpersonationKind.Should().Be(DcsvIo.D2.Auth.Abstractions.ImpersonationKind.Consent);
         entry.SessionId.Should().Be(Guid.Parse(_SESSION_GUID));
         entry.OrgId.Should().Be(Guid.Parse(_ORG_GUID));
         entry.OrgType.Should().Be(OrgType.Support);
@@ -136,7 +136,7 @@ public sealed class ActorChainParserTests
         var result = ActorChainParser.ParseFromJsonString(input);
 
         result[0].ImpersonationKind.Should().Be(
-            D2.Shared.Auth.Abstractions.ImpersonationKind.Force);
+            DcsvIo.D2.Auth.Abstractions.ImpersonationKind.Force);
     }
 
     // ------------------------------------------------------------------
@@ -338,7 +338,7 @@ public sealed class ActorChainParserTests
 
         result.Should().HaveCount(1);
         result[0].ImpersonationKind.Should()
-            .Be(D2.Shared.Auth.Abstractions.ImpersonationKind.Consent);
+            .Be(DcsvIo.D2.Auth.Abstractions.ImpersonationKind.Consent);
     }
 
     [Fact]

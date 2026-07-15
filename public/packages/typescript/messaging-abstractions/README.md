@@ -2,20 +2,20 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/messaging-abstractions
+# @dcsv-io/d2-messaging-abstractions
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
-D2 messaging-protocol wire identifiers. Today: the DLQ failure-metadata wire shape (`DlqFailureMetadataFields` for JSON property names + `DlqFailureCauses` for the closed-enum cause-string catalog). Mirrors .NET `D2.Shared.Messaging.DlqFailureMetadataFields` (in `D2.Shared.Messaging.Abstractions`) and `D2.Shared.Messaging.RabbitMq.Subscribing.DlqFailureCauses` (in `D2.Shared.Messaging.RabbitMq`).
+D2 messaging-protocol wire identifiers. Today: the DLQ failure-metadata wire shape (`DlqFailureMetadataFields` for JSON property names + `DlqFailureCauses` for the closed-enum cause-string catalog). Mirrors .NET `DcsvIo.D2.Messaging.DlqFailureMetadataFields` (in `DcsvIo.D2.Messaging.Abstractions`) and `DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses` (in `DcsvIo.D2.Messaging.RabbitMq`).
 
 ## Public API
 
 | Export                            | Source                      | Mirror                                                      |
 | --------------------------------- | --------------------------- | ----------------------------------------------------------- |
-| `DlqFailureMetadataFields`        | `dlq-failure-metadata.g.ts` | `D2.Shared.Messaging.DlqFailureMetadataFields`              |
+| `DlqFailureMetadataFields`        | `dlq-failure-metadata.g.ts` | `DcsvIo.D2.Messaging.DlqFailureMetadataFields`              |
 | `DlqFailureMetadataField`         | `dlq-failure-metadata.g.ts` | n/a (TS-only union type)                                    |
 | `ALL_DLQ_FAILURE_METADATA_FIELDS` | `dlq-failure-metadata.g.ts` | `DlqFailureMetadataFields.AllFields`                        |
-| `DlqFailureCauses`                | `dlq-failure-metadata.g.ts` | `D2.Shared.Messaging.RabbitMq.Subscribing.DlqFailureCauses` |
+| `DlqFailureCauses`                | `dlq-failure-metadata.g.ts` | `DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses` |
 | `DlqFailureCause`                 | `dlq-failure-metadata.g.ts` | n/a (TS-only union type)                                    |
 | `ALL_DLQ_FAILURE_CAUSES`          | `dlq-failure-metadata.g.ts` | `DlqFailureCauses.AllCauses`                                |
 
@@ -30,7 +30,7 @@ D2 messaging-protocol wire identifiers. Today: the DLQ failure-metadata wire sha
 
 ## Spec contract
 
-`contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json` is the single source of truth. Two sub-catalogs: `fields[]` (property names) + `causes[]` (closed-enum cause strings). The .NET side dispatches the fields-half to `D2.Shared.Messaging.Abstractions` and the causes-half to `D2.Shared.Messaging.RabbitMq`.
+`contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json` is the single source of truth. Two sub-catalogs: `fields[]` (property names) + `causes[]` (closed-enum cause strings). The .NET side dispatches the fields-half to `DcsvIo.D2.Messaging.Abstractions` and the causes-half to `DcsvIo.D2.Messaging.RabbitMq`.
 
 ## Dependencies
 

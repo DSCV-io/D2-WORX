@@ -1,42 +1,42 @@
 #nullable enable
-D2.Shared.ServiceDefaults.D2ServiceDefaultsConstants
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.AuthConfigure.get -> System.Action<D2.Shared.Auth.AuthOptions!>?
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.AuthConfigure.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.CorsConfigure.get -> System.Action<D2.Shared.AspNetCore.D2CorsOptions!>?
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.CorsConfigure.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.D2ServiceDefaultsOptions() -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.InfrastructureBypassConfigure.get -> System.Action<D2.Shared.AspNetCore.D2InfrastructureBypassOptions!>?
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.InfrastructureBypassConfigure.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.LocalCacheConfigure.get -> System.Action<D2.Shared.Caching.LocalCacheOptions!>?
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.LocalCacheConfigure.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.LoggingConfigure.get -> System.Action<D2.Shared.Logging.D2LoggingOptions!>?
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.LoggingConfigure.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.MutualTlsConfigure.get -> System.Action<D2.Shared.AspNetCore.Mtls.D2MutualTlsOptions!>?
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.MutualTlsConfigure.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.ProblemDetailsConfigure.get -> System.Action<D2.Shared.AspNetCore.D2ProblemDetailsOptions!>?
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.ProblemDetailsConfigure.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.SecurityHeadersConfigure.get -> System.Action<D2.Shared.AspNetCore.D2SecurityHeadersOptions!>?
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.SecurityHeadersConfigure.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.SkipAuthAutoWiring.get -> bool
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.SkipAuthAutoWiring.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.SkipAuthEndpointGuard.get -> bool
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.SkipAuthEndpointGuard.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.SkipLocalCacheAutoWiring.get -> bool
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.SkipLocalCacheAutoWiring.set -> void
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.TelemetryConfigure.get -> System.Action<D2.Shared.Telemetry.D2TelemetryOptions!>?
-D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions.TelemetryConfigure.set -> void
-D2.Shared.ServiceDefaults.ServiceDefaultsServiceCollectionExtensions
-D2.Shared.ServiceDefaults.ServiceDefaultsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
-D2.Shared.ServiceDefaults.ServiceDefaultsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2ServiceDefaults(Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions
-D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
-D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2DefaultPipeline() -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
-D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Builder.WebApplication!)
-D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Builder.WebApplication!).RunD2ServiceAsync(string? serviceName = null) -> System.Threading.Tasks.Task!
-D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!)
-D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!).MapD2DefaultEndpoints() -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
-static D2.Shared.ServiceDefaults.ServiceDefaultsServiceCollectionExtensions.AddD2ServiceDefaults(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<D2.Shared.ServiceDefaults.D2ServiceDefaultsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions.MapD2DefaultEndpoints(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
-static D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions.RunD2ServiceAsync(this Microsoft.AspNetCore.Builder.WebApplication! app, string? serviceName = null) -> System.Threading.Tasks.Task!
-static D2.Shared.ServiceDefaults.WebApplicationServiceDefaultsExtensions.UseD2DefaultPipeline(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsConstants
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.AuthConfigure.get -> System.Action<DcsvIo.D2.Auth.AuthOptions!>?
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.AuthConfigure.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.CorsConfigure.get -> System.Action<DcsvIo.D2.AspNetCore.D2CorsOptions!>?
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.CorsConfigure.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.D2ServiceDefaultsOptions() -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.InfrastructureBypassConfigure.get -> System.Action<DcsvIo.D2.AspNetCore.D2InfrastructureBypassOptions!>?
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.InfrastructureBypassConfigure.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.LocalCacheConfigure.get -> System.Action<DcsvIo.D2.Caching.LocalCacheOptions!>?
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.LocalCacheConfigure.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.LoggingConfigure.get -> System.Action<DcsvIo.D2.Logging.D2LoggingOptions!>?
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.LoggingConfigure.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.MutualTlsConfigure.get -> System.Action<DcsvIo.D2.AspNetCore.Mtls.D2MutualTlsOptions!>?
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.MutualTlsConfigure.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.ProblemDetailsConfigure.get -> System.Action<DcsvIo.D2.AspNetCore.D2ProblemDetailsOptions!>?
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.ProblemDetailsConfigure.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.SecurityHeadersConfigure.get -> System.Action<DcsvIo.D2.AspNetCore.D2SecurityHeadersOptions!>?
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.SecurityHeadersConfigure.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.SkipAuthAutoWiring.get -> bool
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.SkipAuthAutoWiring.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.SkipAuthEndpointGuard.get -> bool
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.SkipAuthEndpointGuard.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.SkipLocalCacheAutoWiring.get -> bool
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.SkipLocalCacheAutoWiring.set -> void
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.TelemetryConfigure.get -> System.Action<DcsvIo.D2.Telemetry.D2TelemetryOptions!>?
+DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions.TelemetryConfigure.set -> void
+DcsvIo.D2.ServiceDefaults.ServiceDefaultsServiceCollectionExtensions
+DcsvIo.D2.ServiceDefaults.ServiceDefaultsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.ServiceDefaults.ServiceDefaultsServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2ServiceDefaults(Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions
+DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!)
+DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Builder.IApplicationBuilder!).UseD2DefaultPipeline() -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Builder.WebApplication!)
+DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Builder.WebApplication!).RunD2ServiceAsync(string? serviceName = null) -> System.Threading.Tasks.Task!
+DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!)
+DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions.extension(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!).MapD2DefaultEndpoints() -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static DcsvIo.D2.ServiceDefaults.ServiceDefaultsServiceCollectionExtensions.AddD2ServiceDefaults(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.ServiceDefaults.D2ServiceDefaultsOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions.MapD2DefaultEndpoints(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions.RunD2ServiceAsync(this Microsoft.AspNetCore.Builder.WebApplication! app, string? serviceName = null) -> System.Threading.Tasks.Task!
+static DcsvIo.D2.ServiceDefaults.WebApplicationServiceDefaultsExtensions.UseD2DefaultPipeline(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!

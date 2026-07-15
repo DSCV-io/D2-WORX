@@ -8,7 +8,7 @@ In-process key registry — the closed set of named keys used to stash per-reque
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/encryption/in-process-keys-source-gen/`](../../public/packages/dotnet/encryption/in-process-keys-source-gen/README.md) (Roslyn source-gen → `D2HttpContextItems` in `D2.Shared.Auth.Abstractions` for `http`-bound entries + `D2GrpcUserStateKeys` in `D2.Shared.Auth.Grpc` for `grpc`-bound entries)
+- **.NET** — [`public/packages/dotnet/encryption/in-process-keys-source-gen/`](../../public/packages/dotnet/encryption/in-process-keys-source-gen/README.md) (Roslyn source-gen → `D2HttpContextItems` in `DcsvIo.D2.Auth.Abstractions` for `http`-bound entries + `D2GrpcUserStateKeys` in `DcsvIo.D2.Auth.Grpc` for `grpc`-bound entries)
 
 No `tools/ts-codegen` emitter consumes this catalog — the keys are an in-process .NET concern with no wire representation.
 

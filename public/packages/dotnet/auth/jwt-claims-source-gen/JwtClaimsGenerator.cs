@@ -4,28 +4,28 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.JwtClaims.SourceGen;
+namespace DcsvIo.D2.Auth.JwtClaims.SourceGen;
 
 using System;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits the <c>JwtClaimTypes</c>
-/// constants class into <c>D2.Shared.Auth.Abstractions</c> by reading
+/// constants class into <c>DcsvIo.D2.Auth.Abstractions</c> by reading
 /// <c>contracts/jwt-claims/jwt-claims.spec.json</c> via <c>AdditionalFiles</c>.
 /// Single-target — only emits when the consuming assembly is
-/// <c>D2.Shared.Auth.Abstractions</c>.
+/// <c>DcsvIo.D2.Auth.Abstractions</c>.
 /// </summary>
 [Generator]
 public sealed class JwtClaimsGenerator : IIncrementalGenerator
 {
     private const string _SOURCE_NAME = "JwtClaimTypes.g.cs";
     private const string _SPEC_FILE_NAME = "jwt-claims.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.Auth.Abstractions";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Auth.Abstractions";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

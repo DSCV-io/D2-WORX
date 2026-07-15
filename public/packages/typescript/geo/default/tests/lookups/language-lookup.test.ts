@@ -7,7 +7,7 @@ import {
   CountryCode,
   LanguageCode,
   WritingDirection,
-} from "@d2/geo-abstractions";
+} from "@dcsv-io/d2-geo-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { Languages, LanguageLookup } from "../../src/languages.js";

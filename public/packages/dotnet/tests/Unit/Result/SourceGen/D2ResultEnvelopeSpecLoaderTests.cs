@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Result.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Result.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.Result.Envelope.SourceGen;
+using DcsvIo.D2.Result.Envelope.SourceGen;
 using Xunit;
 
 /// <summary>

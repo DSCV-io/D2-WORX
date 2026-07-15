@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Validation;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Validation;
 
 using System;
 using System.Collections.Generic;
@@ -12,13 +12,13 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;

@@ -3,9 +3,9 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { LocalCacheOptions } from "@d2/caching-abstractions";
-import { TK } from "@d2/i18n-keys";
-import { ErrorCodes, HttpStatusCode, type D2Result } from "@d2/result";
+import type { LocalCacheOptions } from "@dcsv-io/d2-caching-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
+import { ErrorCodes, HttpStatusCode, type D2Result } from "@dcsv-io/d2-result";
 import { describe, expect, it } from "vitest";
 
 import { DefaultLocalCache } from "../src/index.js";

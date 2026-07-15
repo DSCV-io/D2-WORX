@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge.KeyCustodian.Client
+# DcsvIo.D2.Private.Edge.KeyCustodian.Client
 
 > Parent: [`key-custodian/`](../README.md)
 
@@ -32,11 +32,11 @@ service-agnostic abstractions).
 
 ### Transport DTOs (generated)
 
-The files below are emitted by the `@d2/typespec-emitters` TypeSpec emitter
+The files below are emitted by the `@dcsv-io/d2-typespec-emitters` TypeSpec emitter
 from `contracts/typespec/key-custodian/key-custodian.tsp`. Do not edit by hand
 — changes will be overwritten on the next `tsp compile` run.
 
-Each op's DTOs live in a **concern folder** (folder = namespace `D2.Edge.KeyCustodian.Client.<Concern>`), co-located with the hand-written runtime that serves that concern. The concern is driven by the `@d2Concern("<Segment>")` decorator on the op in the `.tsp` (see [SRC_GEN.md](../../../../../docs/SRC_GEN.md)); a codegen-input change regenerates every `.g.cs` + consumer using.
+Each op's DTOs live in a **concern folder** (folder = namespace `DcsvIo.D2.Private.Edge.KeyCustodian.Client.<Concern>`), co-located with the hand-written runtime that serves that concern. The concern is driven by the `@d2Concern("<Segment>")` decorator on the op in the `.tsp` (see [SRC_GEN.md](../../../../../docs/SRC_GEN.md)); a codegen-input change regenerates every `.g.cs` + consumer using.
 
 | Generated file      | C# type(s)                                  | Operation |
 | ------------------- | ------------------------------------------- | --------- |
@@ -53,14 +53,14 @@ Each op's DTOs live in a **concern folder** (folder = namespace `D2.Edge.KeyCust
 | `CaCertificate/GetCaCertificateInput.g.cs` | `GetCaCertificateInput` (parameterless record) | `getCaCertificate` |
 | `CaCertificate/GetCaCertificateOutput.g.cs`| `GetCaCertificateOutput(byte[] RootCertificateDer, byte[] IntermediateCertificateDer)` — public trust anchor / chain material (presented on the wire in every TLS handshake), deliberately NOT redacted | `getCaCertificate` |
 
-The generated module façade interface `IKeyCustodianApi` lives in `Facade/IKeyCustodianApi.g.cs` (`namespace D2.Edge.KeyCustodian.Client.Facade`), importing each op's concern namespace.
+The generated module façade interface `IKeyCustodianApi` lives in `Facade/IKeyCustodianApi.g.cs` (`namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade`), importing each op's concern namespace.
 
 #### Jwk transport DTO vs domain VO
 
-The domain `D2.Edge.KeyCustodian.Domain.ValueObjects.Jwk` uses 3 positional
+The domain `DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects.Jwk` uses 3 positional
 constructor parameters (`Kid`, `N`, `E`) + 3 init-only properties with constant
 defaults (`Kty = "RSA"`, `Use = "sig"`, `Alg = "RS256"`). The transport
-`D2.Edge.KeyCustodian.Client.Jwks.Jwk` is a 6-field positional record:
+`DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks.Jwk` is a 6-field positional record:
 
 ```csharp
 public sealed record Jwk(
@@ -228,7 +228,7 @@ throws (no in-process unwrap exists).
 
 ### Telemetry
 
-The keyring runtime publishes an OpenTelemetry meter `D2.Edge.KeyCustodian.Client`
+The keyring runtime publishes an OpenTelemetry meter `DcsvIo.D2.Private.Edge.KeyCustodian.Client`
 (`KeyringMetrics.METER_NAME`); a host adds it via
 `.WithMetrics(m => m.AddMeter(KeyringMetrics.METER_NAME))`. Counters carry closed-set,
 named-constant tag keys/values — never key material:
@@ -253,14 +253,14 @@ key material and never an `Exception` parameter.
 
 | Reference                | Why                                                                                       |
 | ------------------------ | ----------------------------------------------------------------------------------------- |
-| `D2.Shared.Result`       | `D2Result<T>` is the return type of all module façade methods                             |
-| `D2.Shared.Utilities`    | Required to satisfy Tier-1 global usings injected by `private/services/Directory.Build.targets` into every service-tree `net10.0` project |
-| `D2.Shared.Result.Grpc`  | The `D2ResultProto` envelope + `AsyncUnaryCall.HandleAsync()` decode the keyring gRPC reply rides |
-| `D2.Shared.Encryption`   | `IPayloadCrypto` / `PayloadCryptoKeyring` (the hot-swapped primitive) + the source-provenance marker API |
-| `D2.Shared.Messaging.Abstractions` | `[MqSub]` / `AddD2Subscriber` for the rotation refresh subscriber                |
-| `D2.Shared.Handler`      | `BaseHandler` / `HandlerContext` for the refresh subscriber                                |
-| `D2.Shared.Auth.Events`  | `KeyRotatedEvent`, the fanout the refresh subscriber consumes                              |
-| `D2.Shared.Resilience`   | `RetryHelper.RetryD2ResultAsync` — the bounded, transient-classified rotation-refresh retry |
+| `DcsvIo.D2.Result`       | `D2Result<T>` is the return type of all module façade methods                             |
+| `DcsvIo.D2.Utilities`    | Required to satisfy Tier-1 global usings injected by `private/services/Directory.Build.targets` into every service-tree `net10.0` project |
+| `DcsvIo.D2.Result.Grpc`  | The `D2ResultProto` envelope + `AsyncUnaryCall.HandleAsync()` decode the keyring gRPC reply rides |
+| `DcsvIo.D2.Encryption`   | `IPayloadCrypto` / `PayloadCryptoKeyring` (the hot-swapped primitive) + the source-provenance marker API |
+| `DcsvIo.D2.Messaging.Abstractions` | `[MqSub]` / `AddD2Subscriber` for the rotation refresh subscriber                |
+| `DcsvIo.D2.Handler`      | `BaseHandler` / `HandlerContext` for the refresh subscriber                                |
+| `DcsvIo.D2.Auth.Events`  | `KeyRotatedEvent`, the fanout the refresh subscriber consumes                              |
+| `DcsvIo.D2.Resilience`   | `RetryHelper.RetryD2ResultAsync` — the bounded, transient-classified rotation-refresh retry |
 
 No `Domain`, `App`, or `Infra` references — by design. The dependency law is
 enforced structurally.
@@ -282,5 +282,5 @@ changes in a way that alters the generated DTO shape:
 4. Run `pnpm run test:coverage` in the typespec-emitters package to confirm
    byte-parity tests still pass.
 5. Run `dotnet build D2.slnx` + `dotnet test` (scoped to
-   `D2.Edge.Tests`) to confirm structural validation tests pass.
+   `DcsvIo.D2.Private.Edge.Tests`) to confirm structural validation tests pass.
 6. Commit the updated fixture files and updated test constants together.

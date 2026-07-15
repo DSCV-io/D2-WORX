@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Contacts.EntityFrameworkCore;
+namespace DcsvIo.D2.Contacts.EntityFrameworkCore;
 
 using System;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
-using D2.Shared.Contacts.ValueObjects;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Contacts.ValueObjects;
+using DcsvIo.D2.Validation.Abstractions;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 /// <summary>

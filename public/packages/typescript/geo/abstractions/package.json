@@ -1,5 +1,5 @@
 {
-  "name": "@d2/geo-abstractions",
+  "name": "@dcsv-io/d2-geo-abstractions",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -24,8 +24,8 @@
     "zod": "4.3.6"
   },
   "dependencies": {
-    "@d2/result": "workspace:*",
-    "@d2/utilities": "workspace:*"
+    "@dcsv-io/d2-result": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.0.18",

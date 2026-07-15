@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging;
+namespace DcsvIo.D2.Tests.Unit.Messaging;
 
 /// <summary>Test fixture: a message type with no encryption attribute.</summary>
 public sealed partial class SamplePlainEvent;

@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { PayloadCrypto, PayloadCryptoKeyring } from "@d2/encryption";
+import { PayloadCrypto, PayloadCryptoKeyring } from "@dcsv-io/d2-encryption";
 // Internal codec — see the sealed KAT parity suite for the rationale on
 // reaching package internals from a cross-runtime KAT harness.
 import { encodeFrame } from "../../encryption/dist/frame.js";
@@ -27,7 +27,7 @@ const fromB64 = (b64: string): Uint8Array =>
 const fromHex = (h: string): Uint8Array =>
   new Uint8Array(Buffer.from(h, "hex"));
 
-describe("symmetric-crypto-kat parity (.NET PayloadCrypto ↔ TS @d2/encryption)", () => {
+describe("symmetric-crypto-kat parity (.NET PayloadCrypto ↔ TS @dcsv-io/d2-encryption)", () => {
   const kat = loadFixture<SymmetricKat>(
     "symmetric-crypto-kat",
     "known-answer",

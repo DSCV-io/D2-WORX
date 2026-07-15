@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
 
 using Microsoft.Extensions.Logging;
 

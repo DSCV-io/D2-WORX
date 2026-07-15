@@ -39,7 +39,7 @@ export interface CountryCurrencyAcceptance {
  * FKs) AND nav record list. Nav refs (`primaryLanguage`,
  * `subdivisions`, `territories`, ...) populated in the wire-nav step
  * via one-time cast. Mirrors .NET
- * `D2.Shared.Geo.Abstractions.Country` field-for-field (modulo TS
+ * `DcsvIo.D2.Geo.Abstractions.Country` field-for-field (modulo TS
  * casing).
  */
 export interface Country {

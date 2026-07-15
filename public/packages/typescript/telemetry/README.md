@@ -2,12 +2,12 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/telemetry
+# @dcsv-io/d2-telemetry
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
 One-call OTel SDK bootstrap for Node services. Wires traces, metrics, logs
-OTLP exporters + W3C propagator stack. Mirrors `D2.Shared.Telemetry` (.NET).
+OTLP exporters + W3C propagator stack. Mirrors `DcsvIo.D2.Telemetry` (.NET).
 
 ## Public API
 
@@ -20,9 +20,9 @@ OTLP exporters + W3C propagator stack. Mirrors `D2.Shared.Telemetry` (.NET).
 
 ## Dependencies
 
-- `@d2/utilities` (boundary helpers — dependency boundary for env-var
+- `@dcsv-io/d2-utilities` (boundary helpers — dependency boundary for env-var
   configuration helpers)
-- `@d2/logging` (dependency boundary for telemetry-side log enrichment;
+- `@dcsv-io/d2-logging` (dependency boundary for telemetry-side log enrichment;
   the integration itself is out of scope for this package)
 - `@opentelemetry/api`, `@opentelemetry/sdk-node`, OTLP exporters
   (traces / metrics / logs over HTTP), `@opentelemetry/resources`,
@@ -31,7 +31,7 @@ OTLP exporters + W3C propagator stack. Mirrors `D2.Shared.Telemetry` (.NET).
 ## Usage example
 
 ```ts
-import { setupTelemetry } from "@d2/telemetry";
+import { setupTelemetry } from "@dcsv-io/d2-telemetry";
 
 const handle = setupTelemetry({
   serviceName: "my-svc",
@@ -47,7 +47,7 @@ process.on("SIGTERM", async () => {
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.Telemetry`:
+Mirrors `DcsvIo.D2.Telemetry`:
 
 - `setupTelemetry` ↔ `services.AddD2Telemetry(options)`.
 - `buildPropagators` ↔ `Propagators.SetDefault(...)`.

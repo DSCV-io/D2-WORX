@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Abstractions;
+namespace DcsvIo.D2.Handler.Abstractions;
 
 /// <summary>
 /// Controls how <c>BaseHandler</c> evaluates the per-handler scope requirement
 /// declared via <see cref="ScopeRequirement"/> against the caller's
 /// <c>IRequestContext.Scopes</c>. Mirrors the transport-layer
-/// <c>D2.Shared.Auth.Abstractions.ScopeMatch</c> enum but lives in the handler
+/// <c>DcsvIo.D2.Auth.Abstractions.ScopeMatch</c> enum but lives in the handler
 /// layer so that handler code never takes a compile-time dependency on the auth
 /// layer (layer-hygiene invariant).
 /// </summary>

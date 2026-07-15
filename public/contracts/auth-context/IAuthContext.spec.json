@@ -1,7 +1,7 @@
 {
   "$schema": "./schema.json",
   "name": "IAuthContext",
-  "namespace": "D2.Shared.AuthContext.Abstractions",
+  "namespace": "DcsvIo.D2.AuthContext.Abstractions",
   "description": "Identity and authorization context derived from the bearer token (JWT) on the current request or message. Read-only contract consumed by handlers, repos, and any code that needs to reason about who is acting and what they're allowed to do. Populated by transport-specific middleware via MutableRequestContext (which implements IRequestContext, transitively IAuthContext). Cross-user access is granted via impersonation (Consent or Force flavor — see ImpersonationKind).",
   "extends": null,
   "sections": [

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Handler;
+namespace DcsvIo.D2.Tests.Unit.Handler;
 
 using System;
 using System.Collections.Concurrent;
@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Linq;
-using D2.Shared.Handler;
+using DcsvIo.D2.Handler;
 
 /// <summary>
 /// Captures every measurement on every instrument on the

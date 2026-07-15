@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Establishment;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Establishment;
 
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Grpc;
-using D2.Shared.Auth.Grpc.Interceptors;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Grpc;
+using DcsvIo.D2.Auth.Grpc.Interceptors;
 using global::Grpc.AspNetCore.Server;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

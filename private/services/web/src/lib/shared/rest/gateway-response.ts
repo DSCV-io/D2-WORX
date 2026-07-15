@@ -27,12 +27,12 @@
  *
  * Isomorphic — works in both server (Node.js) and browser environments.
  */
-import { ALL_ERROR_CATEGORIES, type ErrorCategory } from "@d2/error-category";
-import { TK } from "@d2/i18n-keys";
+import { ALL_ERROR_CATEGORIES, type ErrorCategory } from "@dcsv-io/d2-error-category";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import {
   PROBLEM_DETAILS_CONTENT_TYPE,
   ProblemDetailsExtensionKeys,
-} from "@d2/problem-details-abstractions";
+} from "@dcsv-io/d2-problem-details-abstractions";
 import {
   D2Result,
   D2ResultEnvelopeFieldNames,
@@ -41,7 +41,7 @@ import {
   type HttpStatusCode,
   type InputError,
   type TKMessage,
-} from "@d2/result";
+} from "@dcsv-io/d2-result";
 
 /**
  * Shape of a gateway D2Result body after camelCase normalization.
@@ -58,7 +58,7 @@ import {
  * via `TKMessageJsonConverter` as `[{key, params?}, ...]`). Runtime
  * values arrive as TKMessage objects from the gateway, so the static type
  * matches the wire shape exactly. Consumers needing rendered strings call
- * `renderMessages` from `@d2/result` at the BFF/browser boundary.
+ * `renderMessages` from `@dcsv-io/d2-result` at the BFF/browser boundary.
  */
 interface NormalizedBody {
   success?: boolean;

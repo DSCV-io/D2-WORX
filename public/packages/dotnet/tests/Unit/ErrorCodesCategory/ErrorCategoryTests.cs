@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.ErrorCodesCategory;
+namespace DcsvIo.D2.Tests.Unit.ErrorCodesCategory;
 
 using AwesomeAssertions;
-using D2.Shared.ErrorCodes.Category;
+using DcsvIo.D2.ErrorCodes.Category;
 using Xunit;
 
 /// <summary>
 /// Unit tests for the relocated <see cref="ErrorCategory"/> enum and its
 /// <see cref="ErrorCategoryWire"/> wire-mapping + <see cref="ErrorCategoryJsonConverter"/>,
-/// generated into <c>D2.Shared.ErrorCodes.Category</c> from
+/// generated into <c>DcsvIo.D2.ErrorCodes.Category</c> from
 /// <c>contracts/error-category/error-category.spec.json</c>. Covers all nine
 /// closed members, the ToWire / TryFromWire round-trip, and the strict JSON
 /// converter (unknown wire → <see cref="System.Text.Json.JsonException"/>).

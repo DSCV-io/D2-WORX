@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
-using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -88,7 +88,7 @@ public sealed class KeyCustodianDbContextFactoryTests
                 .GetRequiredService<IMigrationsAssembly>();
 
             migrationsAssembly.Assembly.GetName().Name
-                .Should().Be("D2.Edge.KeyCustodian.Infra");
+                .Should().Be("DcsvIo.D2.Private.Edge.KeyCustodian.Infra");
         }
         finally
         {

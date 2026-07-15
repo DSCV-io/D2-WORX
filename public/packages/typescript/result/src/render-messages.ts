@@ -3,9 +3,9 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import type { InputError } from "./input-error.js";
-import type { TKMessage } from "@d2/i18n-abstractions";
+import type { TKMessage } from "@dcsv-io/d2-i18n-abstractions";
 
 /**
  * Locale-aware translator function. Implementations bind `key + params`
@@ -16,7 +16,7 @@ import type { TKMessage } from "@d2/i18n-abstractions";
  *
  * @example
  * ```ts
- * import { m } from "@d2/i18n";
+ * import { m } from "@dcsv-io/d2-i18n";
  *
  * const translate: TranslateFn = (key, params) => {
  *   const fn = (m as Record<string, (p?: Record<string, unknown>) => string>)[key];

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
 
 /// <summary>
 /// A single RFC 7517 JSON Web Key for an RS256 public signing key. All fields

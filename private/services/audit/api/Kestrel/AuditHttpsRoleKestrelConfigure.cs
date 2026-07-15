@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Api.Kestrel;
+namespace DcsvIo.D2.Private.Audit.Api.Kestrel;
 
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;

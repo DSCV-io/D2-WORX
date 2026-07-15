@@ -9,7 +9,7 @@
  * SvelteKit's /api/account/* proxy to the Auth service.
  * Same pattern as auth-gateway-client.ts.
  */
-import { D2Result } from "@d2/result";
+import { D2Result } from "@dcsv-io/d2-result";
 import { executeFetch } from "$lib/shared/rest/gateway-response.js";
 
 const DEFAULT_TIMEOUT_MS = 10_000;

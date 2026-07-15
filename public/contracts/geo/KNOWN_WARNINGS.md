@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # Known warnings — `contracts/geo/`
 
-Build-time + pipeline-time warnings emitted by the geo source-gens (`D2.Shared.Geo.SourceGen` and `tools/ts-codegen/src/geo-emitter/`) and by the Tier-1 (geo data pipeline stage 1 — raw transform) transformer (`tools/geo-data-pipeline/src/transformers/subdivisions.ts`) that are EXPECTED and intentionally accepted. Cross-reference any new warning against this doc:
+Build-time + pipeline-time warnings emitted by the geo source-gens (`DcsvIo.D2.Geo.SourceGen` and `tools/ts-codegen/src/geo-emitter/`) and by the Tier-1 (geo data pipeline stage 1 — raw transform) transformer (`tools/geo-data-pipeline/src/transformers/subdivisions.ts`) that are EXPECTED and intentionally accepted. Cross-reference any new warning against this doc:
 
 - **In the list, with matching parameters** → expected; no action needed
 - **In the list, with DIFFERENT parameters** (different entity ids, different normalized name) → escalate, may be new bug
@@ -133,7 +133,7 @@ There is NO scheduled refresh job. `pnpm geo:refresh` is OPERATOR-INTENTIONAL �
 
 ## Language enum scope: ISO 639-1 only (current limitation)
 
-The `LanguageCode` enum in `D2.Shared.Geo.Abstractions` covers only ISO 639-1 (2-letter codes, ~184 entries). Some Tier-2 spec data references languages with 3-letter codes that exist in ISO 639-2 / 639-3 but not 639-1:
+The `LanguageCode` enum in `DcsvIo.D2.Geo.Abstractions` covers only ISO 639-1 (2-letter codes, ~184 entries). Some Tier-2 spec data references languages with 3-letter codes that exist in ISO 639-2 / 639-3 but not 639-1:
 
 - **~162 locales** reference 3-letter language codes — e.g. `tzm-Tfng-MA` (Standard Moroccan Tamazight), `vai-Vaii-LR` (Vai), `agq-CM` (Aghem). The raw language string is preserved on the spec; the typed `Locale.Language` nav is `null` / `undefined` for those entries.
 - **8 countries** carry a primary language outside 639-1: `MP/fil` (Filipino), `NU/niu` (Niuean), `PW/pau` (Palauan), `SG/cmn` (Mandarin), `TK/tkl` (Tokelauan), `TL/tet` (Tetum), `TV/tvl` (Tuvaluan), `WF/wls` (Wallisian). The typed `Country.PrimaryLanguage` nav is `null` / `undefined` for those entries.
@@ -150,6 +150,6 @@ When the count of legitimate duplicates evolves (new countries added, ISO renumb
 
 ## Geo name-resolver cache — ambiguity-sentinel behavior
 
-`DefaultGeoNameResolver` (`.NET`) and `tryResolveCountryByName` / `tryResolveSubdivisionByName` (TS `@d2/geo-default`) build their normalized-name → record cache on first lookup (cache-aside discipline). When two or more records normalize to the same name, the cache stores a single AMBIGUOUS sentinel at that key rather than picking one record arbitrarily. Pass-1 lookups hitting the sentinel return `D2Result.NotFound` (with the `TK.Geo.Errors.NAME_RESOLUTION_AMBIGUOUS` translation key). Pass-2 / 3 / 4 walks exclude ambiguous entries from the candidate pool — they cannot become a fuzzy-match winner.
+`DefaultGeoNameResolver` (`.NET`) and `tryResolveCountryByName` / `tryResolveSubdivisionByName` (TS `@dcsv-io/d2-geo-default`) build their normalized-name → record cache on first lookup (cache-aside discipline). When two or more records normalize to the same name, the cache stores a single AMBIGUOUS sentinel at that key rather than picking one record arbitrarily. Pass-1 lookups hitting the sentinel return `D2Result.NotFound` (with the `TK.Geo.Errors.NAME_RESOLUTION_AMBIGUOUS` translation key). Pass-2 / 3 / 4 walks exclude ambiguous entries from the candidate pool — they cannot become a fuzzy-match winner.
 
 This is the runtime defense-in-depth that pairs with the codegen-time `D2GEO010` warning (catalog-uniqueness duplicates listed above). The duplicates are accepted at codegen time and resolved fail-closed at runtime — consumers passing an ambiguous name (e.g. `"Papua"` for the ID-PA / ID-PP pair) get `NotFound`, never a wrong-record answer. The cache build orders catalog entries deterministically (by ISO code, `StringComparer.Ordinal`) so two processes building the cache independently mark the same set of keys as ambiguous.

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using D2.Shared.Geo.Abstractions;
+using DcsvIo.D2.Geo.Abstractions;
 using Xunit;
 
 /// <summary>

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.Fixtures;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.Fixtures;
 
 using System.Text;
 using System.Text.Json;

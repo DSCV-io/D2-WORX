@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
-using D2.Shared.Handler.Repo.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Handler.Repo.Abstractions;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -19,7 +19,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 /// <see cref="PayloadCrypto"/> over a throwaway keyring, the pure key-generation
 /// rule, a null DB-exception classifier, and a handler-context builder. The
 /// recording announcer fake lives in
-/// <see cref="D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures.RecordingAnnouncer"/>.
+/// <see cref="DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App.Fixtures.RecordingAnnouncer"/>.
 /// </summary>
 internal static class KcAppTestKit
 {

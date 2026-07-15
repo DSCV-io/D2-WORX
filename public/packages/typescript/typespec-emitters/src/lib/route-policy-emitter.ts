@@ -374,9 +374,9 @@ function buildUsings(
   extraUsings: readonly string[] = [],
 ): readonly string[] {
   const set = new Set<string>([
-    "D2.Shared.Auth.Http.Endpoints",
-    "D2.Shared.Auth.Http.ProblemDetails",
-    "D2.Shared.Result",
+    "DcsvIo.D2.Auth.Http.Endpoints",
+    "DcsvIo.D2.Auth.Http.ProblemDetails",
+    "DcsvIo.D2.Result",
     "Microsoft.AspNetCore.Builder",
     "Microsoft.AspNetCore.Http",
     "Microsoft.AspNetCore.Routing",

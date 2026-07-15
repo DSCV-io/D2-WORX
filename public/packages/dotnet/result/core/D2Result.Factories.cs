@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result;
+namespace DcsvIo.D2.Result;
 
 using System.Net;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.I18n;
 
 /// <summary>
 /// Hand-rolled factory methods on <see cref="D2Result"/> that are NOT derived

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Encryption;
+namespace DcsvIo.D2.Messaging.RabbitMq.Encryption;
 
-using D2.Shared.Encryption;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

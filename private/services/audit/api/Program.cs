@@ -4,8 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using D2.Audit.Api.Composition;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.Private.Audit.Api.Composition;
+using DcsvIo.D2.ServiceDefaults;
 
 // Audit composition root. Dual-bind exclusive Listen* owns 8080/8443 —
 // clear inherited multi-URL binds so ASPNETCORE_URLS does not double-bind.

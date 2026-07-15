@@ -2,11 +2,11 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Handler.Repo.Postgres
+# DcsvIo.D2.Handler.Repo.Postgres
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
-PostgreSQL implementation of `IDbExceptionClassifier` from `D2.Shared.Handler.Repo.Abstractions`. Plugs into `BaseRepoHandler` via DI — composition roots call `services.AddD2Postgres()` once.
+PostgreSQL implementation of `IDbExceptionClassifier` from `DcsvIo.D2.Handler.Repo.Abstractions`. Plugs into `BaseRepoHandler` via DI — composition roots call `services.AddD2Postgres()` once.
 
 Provider-specific knowledge lives behind `IDbExceptionClassifier`; alternate-provider implementations (where they exist) follow the same shape: one `IDbExceptionClassifier` impl + one `services.AddD2X()` extension. `BaseRepoHandler` itself stays provider-agnostic.
 
@@ -16,7 +16,7 @@ Provider-specific knowledge lives behind `IDbExceptionClassifier`; alternate-pro
 
 | Path                                     | Contents                                                                 |
 | ---------------------------------------- | ------------------------------------------------------------------------ |
-| `D2.Shared.Handler.Repo.Postgres.csproj` | csproj — depends on `handler/repo-abstractions` + EF Core + Npgsql       |
+| `DcsvIo.D2.Handler.Repo.Postgres.csproj` | csproj — depends on `handler/repo-abstractions` + EF Core + Npgsql       |
 | `PgErrorCodes.cs`                        | SQLSTATE string constants + `TryGetPgException(Exception)` unwrap helper |
 | `PostgresDbExceptionClassifier.cs`       | Maps PG exceptions → `DbFailureKind`                                     |
 | `PostgresServiceCollectionExtensions.cs` | `services.AddD2Postgres()`                                               |
@@ -97,7 +97,7 @@ Keyed services are .NET 8+ — the codebase targets .NET 10, so the API is avail
 
 Project references:
 
-- `D2.Shared.Handler.Repo.Abstractions` — `IDbExceptionClassifier` + `DbFailureKind`
+- `DcsvIo.D2.Handler.Repo.Abstractions` — `IDbExceptionClassifier` + `DbFailureKind`
 
 NuGet packages:
 
@@ -109,6 +109,6 @@ NuGet packages:
 
 ## Reference
 
-- [`D2.Shared.Handler.Repo.Abstractions`](../repo-abstractions/README.md) — interface + `DbFailureKind` enum + extension factories
-- [`D2.Shared.Handler.Repo`](../repo/README.md) — `BaseRepoHandler` consumes the classifier
+- [`DcsvIo.D2.Handler.Repo.Abstractions`](../repo-abstractions/README.md) — interface + `DbFailureKind` enum + extension factories
+- [`DcsvIo.D2.Handler.Repo`](../repo/README.md) — `BaseRepoHandler` consumes the classifier
 - [PostgreSQL error codes](https://www.postgresql.org/docs/current/errcodes-appendix.html)

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Distributed.Redis;
-using D2.Shared.Caching.Local.Default;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Distributed.Redis;
+using DcsvIo.D2.Caching.Local.Default;
 using Xunit;
 
 /// <summary>

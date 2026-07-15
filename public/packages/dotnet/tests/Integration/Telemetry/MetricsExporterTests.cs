@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Telemetry;
+namespace DcsvIo.D2.Tests.Integration.Telemetry;
 
 using System.Diagnostics.Metrics;
 using AwesomeAssertions;
-using D2.Shared.Telemetry.Internal;
-using D2.Shared.Tests.Integration.Telemetry.Infrastructure;
+using DcsvIo.D2.Telemetry.Internal;
+using DcsvIo.D2.Tests.Integration.Telemetry.Infrastructure;
 using OpenTelemetry.Metrics;
 using Xunit;
 

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
 /// State-machine legal/illegal/guard test matrix for the <see cref="EncryptionKey"/>
@@ -558,7 +558,7 @@ public sealed class EncryptionKeyTransitionTests
     // -----------------------------------------------------------------------
 
     private static void AssertPreconditionViolated<T>(
-        D2.Shared.Result.D2Result<T> result)
+        DcsvIo.D2.Result.D2Result<T> result)
     {
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);

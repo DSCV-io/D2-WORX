@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Api.Composition;
+namespace DcsvIo.D2.Private.Audit.Api.Composition;
 
 /// <summary>
 /// Audit host identity constants — ServiceId for establishment + SPIFFE.

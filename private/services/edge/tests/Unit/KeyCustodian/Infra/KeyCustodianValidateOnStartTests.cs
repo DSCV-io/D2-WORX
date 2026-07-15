@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.Infra.Configuration;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

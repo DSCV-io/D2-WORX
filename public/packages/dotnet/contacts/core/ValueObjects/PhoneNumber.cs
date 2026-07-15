@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Contacts.ValueObjects;
+namespace DcsvIo.D2.Contacts.ValueObjects;
 
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
-using D2.Shared.Utilities.Extensions;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Enums;
+using DcsvIo.D2.Utilities.Extensions;
+using DcsvIo.D2.Validation.Abstractions;
 
 /// <summary>
 /// Immutable phone-number value object wrapping a single normalized value.

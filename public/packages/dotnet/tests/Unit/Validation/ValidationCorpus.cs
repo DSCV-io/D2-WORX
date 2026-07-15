@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation;
+namespace DcsvIo.D2.Tests.Unit.Validation;
 
 /// <summary>A parsed validation parity corpus.</summary>
 internal sealed class ValidationCorpus

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.SourceGen;
 
 using System;
 
 /// <summary>
-/// Pure inverse of <c>D2.Shared.I18n.SourceGen.KeyDecomposer.Decompose</c>:
+/// Pure inverse of <c>DcsvIo.D2.I18n.SourceGen.KeyDecomposer.Decompose</c>:
 /// converts a <c>TK</c> symbol-path reference back to the snake_case key it
 /// was decomposed from, so a <c>userMessageKey</c> can be cross-checked
 /// against <c>contracts/messages/en-US.json</c> (the message source — NOT the

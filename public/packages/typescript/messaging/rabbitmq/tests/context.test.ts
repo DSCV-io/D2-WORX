@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { trace } from "@opentelemetry/api";
-import { type IPropagatedContext } from "@d2/request-context-abstractions";
+import { type IPropagatedContext } from "@dcsv-io/d2-request-context-abstractions";
 import { describe, expect, it } from "vitest";
 
 import {

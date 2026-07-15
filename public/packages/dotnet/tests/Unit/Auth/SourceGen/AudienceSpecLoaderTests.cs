@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Audiences.SourceGen;
+using DcsvIo.D2.Auth.Audiences.SourceGen;
 using Xunit;
 
 /// <summary>

@@ -15,14 +15,14 @@
 #
 # This file remains only as a fail-loud pointer so accidental
 # `tsp compile contracts/typespec` is obvious. Prefer:
-#   pnpm --filter @d2/typespec-emitters regen
+#   pnpm --filter @dcsv-io/d2-typespec-emitters regen
 #   node tools/scripts/regen-typespec-emitters.mjs
 
 emit:
-  - "@d2/typespec-emitters"
+  - "@dcsv-io/d2-typespec-emitters"
 
 options:
-  "@d2/typespec-emitters":
+  "@dcsv-io/d2-typespec-emitters":
     # Intentionally broken relative to historical root so misuse fails loud
     # rather than silently emitting under KeyCustodian namespaces.
     emitter-output-dir: "{project-root}/__RETIRED_USE_PER_MODULE_TSPCONFIG__/dist"

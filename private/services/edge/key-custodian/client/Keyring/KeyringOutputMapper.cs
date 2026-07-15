@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
 using System.Linq;
-using D2.Shared.Encryption;
-using ProtoGetKeyringOutput = D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput;
+using DcsvIo.D2.Encryption;
+using ProtoGetKeyringOutput = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput;
 
 /// <summary>
 /// The single boundary mapper where the KeyCustodian keyring wire shape becomes the

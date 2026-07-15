@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Telemetry;
+namespace DcsvIo.D2.Auth.Grpc.Telemetry;
 
 using Microsoft.Extensions.Logging;
 

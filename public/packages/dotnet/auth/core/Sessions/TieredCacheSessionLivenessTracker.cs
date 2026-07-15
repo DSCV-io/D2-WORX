@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Sessions;
+namespace DcsvIo.D2.Auth.Sessions;
 
 using System.Diagnostics;
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.Caching;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -24,7 +24,7 @@ using Microsoft.Extensions.Options;
 /// </summary>
 /// <remarks>
 /// L1 invalidation happens automatically via
-/// <see cref="D2.Shared.Caching.Tiered.DefaultTieredCache"/>'s built-in
+/// <see cref="DcsvIo.D2.Caching.Tiered.DefaultTieredCache"/>'s built-in
 /// backplane subscription — when Edge revokes a session and publishes
 /// the invalidation, every instance's tiered cache drops the L1 entry.
 /// The separate <see cref="SessionRevokedBackplaneSubscriber"/> exists

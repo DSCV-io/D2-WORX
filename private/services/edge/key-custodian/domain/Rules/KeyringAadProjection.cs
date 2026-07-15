@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.Rules;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules;
 
 /// <summary>
 /// The single KC-side computation of a payload domain's AEAD additional-authenticated-data

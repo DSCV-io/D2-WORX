@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.Auth.ErrorCodes.SourceGen;
 
 /// <summary>
 /// String identifiers for the auth catalog's per-catalog validation

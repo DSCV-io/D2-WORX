@@ -3,12 +3,12 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { AmqpHeaders } from "@d2/headers-amqp";
+import { AmqpHeaders } from "@dcsv-io/d2-headers-amqp";
 import {
   DlqFailureCauses,
   DlqFailureMetadataFields,
-} from "@d2/messaging-abstractions";
-import { fail, ok } from "@d2/result";
+} from "@dcsv-io/d2-messaging-abstractions";
+import { fail, ok } from "@dcsv-io/d2-result";
 import { describe, expect, it, vi } from "vitest";
 
 import { type BodyOpener } from "../src/subscribing/body-opener.js";

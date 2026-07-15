@@ -4,30 +4,30 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
-using D2.Edge.Api.Composition;
-using D2.Edge.Api.Kestrel;
-using D2.Edge.Api.Outbound;
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Edge.KeyCustodian.Client.Facade;
-using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Edge.KeyCustodian.Infra.Configuration;
-using D2.Shared.AspNetCore.Mtls;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Auth.Outbound.WorkloadCertificate;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Distributed.Redis;
-using D2.Shared.Caching.Tiered;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Utilities.Configuration;
-using D2.Shared.WorkloadIdentity;
+using DcsvIo.D2.AspNetCore.Mtls;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Distributed.Redis;
+using DcsvIo.D2.Caching.Tiered;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Private.Edge.Api.Composition;
+using DcsvIo.D2.Private.Edge.Api.Kestrel;
+using DcsvIo.D2.Private.Edge.Api.Outbound;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Configuration;
+using DcsvIo.D2.Spiffe;
+using DcsvIo.D2.Utilities.Configuration;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -172,7 +172,7 @@ public sealed class AddD2EdgeHostDiIsolationTests : IDisposable
         descriptors.Any(d => d.ServiceType == typeof(IJwksProvider))
             .Should().BeTrue("AuthConfigure ON registers JWKS provider");
 
-        // JwtValidator is internal to D2.Shared.Auth — pin by type name (not public).
+        // JwtValidator is internal to DcsvIo.D2.Auth — pin by type name (not public).
         descriptors.Any(d =>
                 d.ServiceType.Name is "JwtValidator" or "ClaimsToContextMapper"
                 || d.ImplementationType?.Name is "JwtValidator" or "ClaimsToContextMapper")

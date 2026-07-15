@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { Channel, ChannelCredentials } from "@grpc/grpc-js";
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 /**
  * Options accepted by `getChannel`. Production callers pass nothing and
@@ -64,7 +64,7 @@ async function _initChannel(opts: GetChannelOptions): Promise<Channel> {
   if (falsey(endpoint)) {
     _channelInit = undefined;
     throw new Error(
-      "@d2/grpc-client: D2_EDGE_GRPC_ENDPOINT env var (or opts.endpoint) required",
+      "@dcsv-io/d2-grpc-client: D2_EDGE_GRPC_ENDPOINT env var (or opts.endpoint) required",
     );
   }
   const credentials =

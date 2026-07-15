@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Abstractions.Http;
 using Xunit;
 
 /// <summary>

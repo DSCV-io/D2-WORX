@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.EntityFrameworkCore;
+namespace DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,10 +15,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Shared.DataGovernance.Abstractions;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Diagnostics;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.DataGovernance.Abstractions;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;

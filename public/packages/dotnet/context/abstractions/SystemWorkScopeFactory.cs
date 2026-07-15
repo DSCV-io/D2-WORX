@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.Abstractions;
+namespace DcsvIo.D2.Context.Abstractions;
 
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Time;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Time;
+using DcsvIo.D2.Utilities.Extensions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

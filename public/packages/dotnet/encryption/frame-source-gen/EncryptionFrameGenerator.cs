@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EncryptionFrame.SourceGen;
+namespace DcsvIo.D2.EncryptionFrame.SourceGen;
 
 using System;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits the
-/// <c>EncryptionFrameLayout</c> static class into <c>D2.Shared.Encryption</c>.
+/// <c>EncryptionFrameLayout</c> static class into <c>DcsvIo.D2.Encryption</c>.
 /// Single-target.
 /// </summary>
 [Generator]
@@ -23,7 +23,7 @@ public sealed class EncryptionFrameGenerator : IIncrementalGenerator
 {
     private const string _SOURCE_NAME = "EncryptionFrameLayout.g.cs";
     private const string _SPEC_FILE_NAME = "encryption-frame.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.Encryption";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Encryption";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

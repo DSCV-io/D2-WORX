@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.Rules;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules;
 
 using System.Formats.Asn1;
 

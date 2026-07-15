@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App.Jwks;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App.Jwks;
 
 using System.Reflection;
-using D2.Edge.KeyCustodian.App.Application.Jwks;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Jwks;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

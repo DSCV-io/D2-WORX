@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
 using System.Collections.Concurrent;
 using System.Linq;
-using D2.Shared.Encryption;
-using D2.Shared.Resilience.Retry;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Resilience.Retry;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

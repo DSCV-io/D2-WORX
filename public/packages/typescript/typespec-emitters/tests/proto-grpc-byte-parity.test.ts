@@ -200,7 +200,8 @@ const SIGN_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "ISignFixtureSignerFacade",
   methodName: "SignFixtureAsync",
-  targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
+  targetNamespace:
+    "DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade",
 };
 
 describe("byteParity_SignFixtureSignerService_FacadeDelegation_CommittedFixtureIdentical", () => {
@@ -210,8 +211,8 @@ describe("byteParity_SignFixtureSignerService_FacadeDelegation_CommittedFixtureI
       "SignFixtureSigner",
       "SignFixture",
       "D2.Services.Protos.SignFixtures.V2Alpha",
-      "D2.Edge.Tests.TypeSpecGrpc.Generated",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
       "SignFixtureRequest",
       "SignFixtureResponse",
@@ -236,8 +237,8 @@ describe("byteParity_SignFixtureSignerService_FacadeDelegation_CommittedFixtureI
       "SignFixtureSigner",
       "SignFixture",
       "D2.Services.Protos.SignFixtures.V2Alpha",
-      "D2.Edge.Tests.TypeSpecGrpc.Generated",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
       "SignFixtureRequest",
       "SignFixtureResponse",
@@ -262,8 +263,8 @@ describe("byteParity_SignFixtureTransportMappers_CommittedFixtureIdentical", () 
       "SignFixtureSigner",
       "SignFixture",
       "D2.Services.Protos.SignFixtures.V2Alpha",
-      "D2.Edge.Tests.TypeSpecGrpc.Generated",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
       "SignFixtureRequest",
       "SignFixtureResponse",
@@ -289,8 +290,8 @@ describe("byteParity_SignFixtureTransportMappers_CommittedFixtureIdentical", () 
       "SignFixtureSigner",
       "SignFixture",
       "D2.Services.Protos.SignFixtures.V2Alpha",
-      "D2.Edge.Tests.TypeSpecGrpc.Generated",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       SOURCE,
       "SignFixtureRequest",
       "SignFixtureResponse",
@@ -308,12 +309,12 @@ describe("byteParity_SignFixtureTransportMappers_CommittedFixtureIdentical", () 
 // ---------------------------------------------------------------------------
 
 // The committed client fixtures live in the test project's gRPC namespace
-// (D2.Edge.Tests.TypeSpecGrpc.Generated) and reuse the existing test-project DTOs
-// (D2.Edge.Tests.TypeSpecDto.Generated) — the same layout as the service fixtures above.
+// (DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated) and reuse the existing test-project DTOs
+// (DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated) — the same layout as the service fixtures above.
 // The DTO namespace differs from the client namespace, so the emitter aliases the DTO
 // types (global:: rooted) to disambiguate <Op>Output from the same-named proto data message.
-const CLIENTS_NS = "D2.Edge.Tests.TypeSpecGrpc.Generated";
-const CLIENT_DTO_NS = "D2.Edge.Tests.TypeSpecDto.Generated";
+const CLIENTS_NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated";
+const CLIENT_DTO_NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated";
 
 function buildClientSignOp(): GrpcClientOp {
   return {
@@ -531,19 +532,19 @@ describe("byteParity_WireIdentityManifest_CommittedFixtureIdentical", () => {
 // server-side artifacts (proto + service + transport mappers + wire identity) are
 // committed + byte-pinned here (proto package d2.keycustodian.v2alpha; the service
 // delegates to IKeyCustodianApi.SignAsync). The cross-process gRPC CLIENT is
-// deferred (it lives in the production D2.Edge.KeyCustodian.Client namespace and
+// deferred (it lives in the production DcsvIo.D2.Private.Edge.KeyCustodian.Client namespace and
 // needs the host composition + the clients project to become gRPC-aware).
 // ---------------------------------------------------------------------------
 
 const KC_SOURCE = "contracts/typespec/key-custodian/key-custodian.tsp";
 const KC_PROTO_CS_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
 /** Production thin-service + mapper namespace (tspconfig grpc-service-namespace). */
-const KC_GRPC_NS = "D2.Edge.Api.Grpc.KeyCustodian";
-const KC_SIGNING_NS = "D2.Edge.KeyCustodian.Client.Signing";
-const KC_KEYRING_NS = "D2.Edge.KeyCustodian.Client.Keyring";
-const KC_ISSUANCE_NS = "D2.Edge.KeyCustodian.Client.Issuance";
-const KC_CACERT_NS = "D2.Edge.KeyCustodian.Client.CaCertificate";
-const KC_SEALING_NS = "D2.Edge.KeyCustodian.Client.Sealing";
+const KC_GRPC_NS = "DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian";
+const KC_SIGNING_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing";
+const KC_KEYRING_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring";
+const KC_ISSUANCE_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance";
+const KC_CACERT_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate";
+const KC_SEALING_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing";
 /** WireVersion / wire-identity stay test parity homes (S3-8). */
 const KC_WIRE_HOME = join(GRPC_HOME, "KeyCustodian");
 
@@ -610,7 +611,7 @@ const KC_SIGN_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "SignAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
+  targetNamespace: "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcSignProto_CommittedFixtureIdentical", () => {
@@ -860,7 +861,7 @@ const KC_KEYRING_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "GetKeyringAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
+  targetNamespace: "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcKeyringProto_CommittedFixtureIdentical", () => {
@@ -1117,7 +1118,7 @@ const KC_ISSUE_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "IssueLeafAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
+  targetNamespace: "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcIssueLeafProto_CommittedFixtureIdentical", () => {
@@ -1289,7 +1290,7 @@ const KC_CACERT_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "GetCaCertificateAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
+  targetNamespace: "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcCaCertificateProto_CommittedFixtureIdentical", () => {
@@ -1508,7 +1509,7 @@ const KC_SEAL_PUBLIC_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "GetOrLazyProvisionSealPublicKeyAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
+  targetNamespace: "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcSealPublicKeyProto_CommittedFixtureIdentical", () => {
@@ -1719,7 +1720,7 @@ const KC_OWN_SEAL_FACADE_TARGET: GrpcDelegationTarget = {
   kind: "facade",
   typeName: "IKeyCustodianApi",
   methodName: "GetOrLazyProvisionOwnSealPrivateKeyAsync",
-  targetNamespace: "D2.Edge.KeyCustodian.Client.Facade",
+  targetNamespace: "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade",
 };
 
 describe("byteParity_KcOwnSealPrivateKeyProto_CommittedFixtureIdentical", () => {

@@ -17,8 +17,8 @@ Both emitters fail the build on an inconsistent `mode` / `consumerService` pair.
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/encryption/domains-source-gen/`](../../public/packages/dotnet/encryption/domains-source-gen/README.md) (Roslyn source-gen → `EncryptionDomains` constants in `D2.Shared.Encryption`)
-- **TypeScript** — [`public/tools/ts-codegen` › `encryption-domains-emit.ts`](../../tools/ts-codegen/README.md) (→ matching `EncryptionDomains` const-object in `@d2/encryption-abstractions`)
+- **.NET** — [`public/packages/dotnet/encryption/domains-source-gen/`](../../public/packages/dotnet/encryption/domains-source-gen/README.md) (Roslyn source-gen → `EncryptionDomains` constants in `DcsvIo.D2.Encryption`)
+- **TypeScript** — [`public/tools/ts-codegen` › `encryption-domains-emit.ts`](../../tools/ts-codegen/README.md) (→ matching `EncryptionDomains` const-object in `@dcsv-io/d2-encryption-abstractions`)
 
 ## See also
 

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.HandlerRepo.Postgres;
+namespace DcsvIo.D2.Tests.Unit.HandlerRepo.Postgres;
 
 using System;
 using AwesomeAssertions;
-using D2.Shared.Handler.Repo.Postgres;
+using DcsvIo.D2.Handler.Repo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 

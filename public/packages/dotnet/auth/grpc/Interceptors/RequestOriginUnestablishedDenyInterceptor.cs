@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Interceptors;
+namespace DcsvIo.D2.Auth.Grpc.Interceptors;
 
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Grpc.Status;
-using D2.Shared.Auth.Grpc.Telemetry;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Grpc.Status;
+using DcsvIo.D2.Auth.Grpc.Telemetry;
+using DcsvIo.D2.Context.Abstractions;
 using global::Grpc.Core;
 using global::Grpc.Core.Interceptors;
 using Microsoft.Extensions.Logging;

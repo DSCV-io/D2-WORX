@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Caching.Abstractions
+# DcsvIo.D2.Caching.Abstractions
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -216,8 +216,8 @@ L1 is never authoritative for atomic state. L2 is. L1 just reflects (or invalida
 
 ## Dependencies
 
-- `D2.Shared.Result` — every op returns `D2Result<T>`
-- `D2.Shared.I18n.Abstractions` — `TKMessage` for typed default error messages
+- `DcsvIo.D2.Result` — every op returns `D2Result<T>`
+- `DcsvIo.D2.I18n.Abstractions` — `TKMessage` for typed default error messages
 
 No runtime deps beyond those (no DI, no logging, no provider libs). This abstraction stays
 domain-safe so any handler / repo / domain code can declare a cache dependency without dragging in

@@ -8,8 +8,8 @@ Error-category catalog — the closed set of semantic failure categories (`valid
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/error-codes/category-source-gen/`](../../public/packages/dotnet/error-codes/category-source-gen/) (Roslyn source-gen → `ErrorCategory` enum + `ErrorCategoryJsonConverter` in `D2.Shared.ErrorCodes.Category`; no README). The shared error-code engine ([`source-gen-shared/error-codes-source-gen/`](../../public/packages/dotnet/source-gen-shared/error-codes-source-gen/README.md)) reads the same category wire strings when emitting per-domain factories.
-- **TypeScript** — [`tools/ts-codegen` › `error-category-emit.ts`](../../tools/ts-codegen/README.md) (→ `ErrorCategory` closed string-union in `@d2/error-category`)
+- **.NET** — [`public/packages/dotnet/error-codes/category-source-gen/`](../../public/packages/dotnet/error-codes/category-source-gen/) (Roslyn source-gen → `ErrorCategory` enum + `ErrorCategoryJsonConverter` in `DcsvIo.D2.ErrorCodes.Category`; no README). The shared error-code engine ([`source-gen-shared/error-codes-source-gen/`](../../public/packages/dotnet/source-gen-shared/error-codes-source-gen/README.md)) reads the same category wire strings when emitting per-domain factories.
+- **TypeScript** — [`tools/ts-codegen` › `error-category-emit.ts`](../../tools/ts-codegen/README.md) (→ `ErrorCategory` closed string-union in `@dcsv-io/d2-error-category`)
 - **TypeSpec** — [`public/packages/typescript/typespec-decorators/`](../../public/packages/typescript/typespec-decorators/README.md) reads `error-category.spec.json` to validate decorator arguments at compile time
 
 ## See also

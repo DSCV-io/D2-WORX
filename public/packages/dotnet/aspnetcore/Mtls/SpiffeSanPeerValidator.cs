@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore.Mtls;
+namespace DcsvIo.D2.AspNetCore.Mtls;
 
 using System.Formats.Asn1;
 using System.Security.Cryptography.X509Certificates;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Diagnostics;
-using D2.Shared.Utilities.Extensions;
-using D2.Shared.WorkloadIdentity;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Spiffe;
+using DcsvIo.D2.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

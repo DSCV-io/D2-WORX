@@ -303,7 +303,7 @@ export async function buildLocalesSpec(): Promise<LocalesSpec> {
     $schema: "./locales.schema.json",
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
-      "codegen / D2.Shared.Geo.Default. A clean/transform pass to the sibling " +
+      "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
       "contracts/geo/locales.spec.json (one level up) is a separate step. Sources: " +
       "CLDR cldr-core/availableLocales.json (Unicode-3.0 — `full` set) + CLDR " +
       "supplemental/likelySubtags.json (Unicode-3.0 — used to derive default-region tags " +

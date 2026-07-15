@@ -407,12 +407,12 @@ function scanAll(backupRoot) {
   // --- tests (csproj under backup excluding node_modules/old) ---
   {
     const testIds = [
-      "server/shared/dotnet/tests/D2.Shared.Tests.csproj",
-      "server/services/edge/tests/D2.Edge.Tests.csproj",
-      "server/services/audit/tests/D2.Audit.Tests.csproj",
+      "server/shared/dotnet/tests/DcsvIo.D2.Tests.csproj",
+      "server/services/edge/tests/DcsvIo.D2.Private.Edge.Tests.csproj",
+      "server/services/audit/tests/DcsvIo.D2.Private.Audit.Tests.csproj",
     ];
     runArea("tests", testIds, "test csproj mapped homes", [
-      "private/packages/dotnet/tests/D2.Private.Packages.Tests.csproj",
+      "private/packages/dotnet/tests/DcsvIo.D2.Private.Packages.Tests.csproj",
     ]);
   }
 

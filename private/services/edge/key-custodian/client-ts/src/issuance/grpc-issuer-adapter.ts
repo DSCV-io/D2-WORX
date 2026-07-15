@@ -2,7 +2,12 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { type D2Result, ok, bubbleFail, serviceUnavailable } from "@d2/result";
+import {
+  type D2Result,
+  ok,
+  bubbleFail,
+  serviceUnavailable,
+} from "@dcsv-io/d2-result";
 import { Temporal } from "temporal-polyfill";
 import type { WorkloadCertificateIssuer } from "./workload-certificate-issuer.js";
 import type {

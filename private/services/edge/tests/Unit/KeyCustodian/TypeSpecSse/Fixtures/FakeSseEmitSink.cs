@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecSse.Fixtures;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecSse.Fixtures;
 
-using D2.Edge.Tests.TypeSpecSse.Generated;
-using D2.Shared.Result;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecSse.Generated;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// In-memory faithful double of <see cref="D2GeneratedSseEmitSink"/> for

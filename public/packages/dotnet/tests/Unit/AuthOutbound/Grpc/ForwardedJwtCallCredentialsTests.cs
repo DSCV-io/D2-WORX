@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.Grpc;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.Grpc;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound.Grpc;
-using D2.Shared.Headers.Grpc;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound.Grpc;
+using DcsvIo.D2.Headers.Grpc;
 using global::Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

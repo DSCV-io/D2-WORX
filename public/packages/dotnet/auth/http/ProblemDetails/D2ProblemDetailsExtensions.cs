@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http.ProblemDetails;
+namespace DcsvIo.D2.Auth.Http.ProblemDetails;
 
 using System.Diagnostics;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
-using D2.Shared.ProblemDetails;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.ProblemDetails;
+using DcsvIo.D2.Result;
 using Microsoft.AspNetCore.Http;
 using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 
@@ -27,10 +27,10 @@ using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 /// The wire-format catalog (<c>TYPE_URI_PREFIX</c>, <c>CONTENT_TYPE</c>,
 /// <c>EXTENSION_*</c>, <c>TITLE_*</c>, + <see cref="D2ProblemDetailsKeys.TitleFor"/>
 /// switch) lives in <see cref="D2ProblemDetailsKeys"/> (codegen-emitted into
-/// <c>D2.Shared.ProblemDetails.Abstractions</c> from
+/// <c>DcsvIo.D2.ProblemDetails.Abstractions</c> from
 /// <c>contracts/problem-details/problem-details.spec.json</c>). The same spec
-/// drives the TS-side <c>@d2/problem-details-abstractions</c> catalog (re-exported from <c>@d2/headers</c>) AND the path-B
-/// emitter (<c>D2ProblemDetailsCustomizer</c> in <c>D2.Shared.AspNetCore</c>),
+/// drives the TS-side <c>@dcsv-io/d2-problem-details-abstractions</c> catalog (re-exported from <c>@dcsv-io/d2-headers</c>) AND the path-B
+/// emitter (<c>D2ProblemDetailsCustomizer</c> in <c>DcsvIo.D2.AspNetCore</c>),
 /// so the three emitters produce byte-identical Shape A bodies for identical
 /// inputs.
 /// </para>

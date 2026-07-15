@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.SharedEntityFrameworkCorePostgres;
+namespace DcsvIo.D2.Tests.Integration.SharedEntityFrameworkCorePostgres;
 
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.EntityFrameworkCore.Postgres;
-using D2.Shared.Tests.Integration.DataGovernance;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Tests.Integration.DataGovernance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;

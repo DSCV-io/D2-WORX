@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Contacts.ValueObjects;
+namespace DcsvIo.D2.Contacts.ValueObjects;
 
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Time;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Time;
+using DcsvIo.D2.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Enums;
+using DcsvIo.D2.Validation.Abstractions;
 using NodaTime;
 
 // NodaTime also exposes IClock and SystemClock; alias the D2 seams to prevent CS0104.
-using IClock = D2.Shared.Time.IClock;
-using SystemClock = D2.Shared.Time.SystemClock;
+using IClock = DcsvIo.D2.Time.IClock;
+using SystemClock = DcsvIo.D2.Time.SystemClock;
 
 /// <summary>
 /// Immutable demographic value object: an optional date of birth and an optional

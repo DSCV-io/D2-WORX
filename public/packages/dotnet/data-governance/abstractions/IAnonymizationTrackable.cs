@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.Abstractions;
+namespace DcsvIo.D2.DataGovernance.Abstractions;
 
 /// <summary>
 /// Provable-anonymization marker. The engine sets the backing field for
@@ -15,7 +15,7 @@ namespace D2.Shared.DataGovernance.Abstractions;
 /// <para>
 /// This interface is mandatory on any ownership-marked entity (<see cref="IUserOwned"/>
 /// or <see cref="IOrgOwned"/>) that carries at least one <see cref="AnonymizableAttribute"/>-
-/// decorated property. The startup guard in <c>D2.Shared.DataGovernance.EntityFrameworkCore</c>
+/// decorated property. The startup guard in <c>DcsvIo.D2.DataGovernance.EntityFrameworkCore</c>
 /// enforces this at host-build time.
 /// </para>
 /// <para>

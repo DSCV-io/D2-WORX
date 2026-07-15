@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Telemetry;
+namespace DcsvIo.D2.Tests.Unit.Telemetry;
 
 using AwesomeAssertions;
-using D2.Shared.Telemetry;
+using DcsvIo.D2.Telemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -357,7 +357,7 @@ public sealed class TelemetryServiceCollectionExtensionsTests
                 var t = opts.GetType();
                 var prop = t.GetProperty(
                     nameof(D2TelemetryOptions.AdditionalActivitySources))!;
-                prop.SetValue(opts, new[] { "D2.Edge", "  " });
+                prop.SetValue(opts, new[] { "DcsvIo.D2.Private.Edge", "  " });
             });
 
             var act = () =>
@@ -385,7 +385,7 @@ public sealed class TelemetryServiceCollectionExtensionsTests
                 var t = opts.GetType();
                 var prop = t.GetProperty(
                     nameof(D2TelemetryOptions.AdditionalMeters))!;
-                prop.SetValue(opts, new[] { "D2.Edge", string.Empty });
+                prop.SetValue(opts, new[] { "DcsvIo.D2.Private.Edge", string.Empty });
             });
 
             var act = () =>

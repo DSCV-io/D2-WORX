@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Buffers.Text;
 
@@ -75,7 +75,7 @@ public sealed class JwkProjectionTests
             nameof(System.Security.Cryptography.RSAParameters.InverseQ),
         ];
 
-        var jwkProperties = typeof(D2.Edge.KeyCustodian.Domain.ValueObjects.Jwk)
+        var jwkProperties = typeof(DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects.Jwk)
             .GetProperties(
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 

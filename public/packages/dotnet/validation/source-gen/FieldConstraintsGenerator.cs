@@ -4,28 +4,28 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation.SourceGen;
+namespace DcsvIo.D2.Validation.SourceGen;
 
 using System;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits the <c>FieldConstraints</c>
 /// const-int catalog (<c>FieldConstraints.g.cs</c>) and the closed-list taxonomy
-/// enums (<c>Taxonomy.g.cs</c>) into <c>D2.Shared.Validation.Abstractions</c>
+/// enums (<c>Taxonomy.g.cs</c>) into <c>DcsvIo.D2.Validation.Abstractions</c>
 /// by reading <c>contracts/validation/field-constraints.spec.json</c> via
 /// <c>AdditionalFiles</c>. Single-target — only emits when the consuming
-/// assembly is <c>D2.Shared.Validation.Abstractions</c>.
+/// assembly is <c>DcsvIo.D2.Validation.Abstractions</c>.
 /// </summary>
 [Generator]
 public sealed class FieldConstraintsGenerator : IIncrementalGenerator
 {
     private const string _SPEC_FILE_NAME = "field-constraints.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.Validation.Abstractions";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Validation.Abstractions";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

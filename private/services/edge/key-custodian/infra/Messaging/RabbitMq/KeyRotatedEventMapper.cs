@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
 
-using D2.Shared.Auth.Events;
+using DcsvIo.D2.Auth.Events;
 
 /// <summary>
 /// Pure mapper between the domain-shaped announce arguments and the

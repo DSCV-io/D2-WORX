@@ -11,7 +11,7 @@ export const protobufPackage = "d2.common.v1";
 
 /**
  * A translatable message: a translation key plus an optional dictionary of
- * substitution parameters. Mirrors TKMessage (D2.Shared.I18n / @d2/result).
+ * substitution parameters. Mirrors TKMessage (DcsvIo.D2.I18n / @dcsv-io/d2-result).
  * params values are always strings on both runtimes.
  */
 export interface TKMessageProto {

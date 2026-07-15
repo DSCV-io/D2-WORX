@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption.Sealed;
+namespace DcsvIo.D2.Tests.Unit.Encryption.Sealed;
 
 using System.Security.Cryptography;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 
 /// <summary>
 /// Test helpers for the sealed encryption mode. Keypairs are real P-256

@@ -1,5 +1,5 @@
 {
-  "name": "@d2/protos",
+  "name": "@dcsv-io/d2-protos",
   "version": "0.1.0",
   "private": true,
   "type": "module",

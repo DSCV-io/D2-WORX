@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.AspNetCore.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.AspNetCore.Infrastructure;
 
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.Hosting;

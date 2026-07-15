@@ -8,8 +8,8 @@
 
 /* eslint-disable */
 
-import type { Country, CountryCurrencyAcceptance, GeopoliticalEntity, Locale, LocaleCode, Subdivision, SubdivisionCode } from "@d2/geo-abstractions";
-import { CountryCode, CurrencyCode, GeopoliticalEntityCode, LanguageCode } from "@d2/geo-abstractions";
+import type { Country, CountryCurrencyAcceptance, GeopoliticalEntity, Locale, LocaleCode, Subdivision, SubdivisionCode } from "@dcsv-io/d2-geo-abstractions";
+import { CountryCode, CurrencyCode, GeopoliticalEntityCode, LanguageCode } from "@dcsv-io/d2-geo-abstractions";
 
 // Sibling-lookup imports — referenced inside wireCountryNav;
 // the coordinator guarantees every first pass has completed before any

@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey, truthy } from "@d2/utilities";
+import { falsey, truthy } from "@dcsv-io/d2-utilities";
 
 import { buildHeader } from "../../lib/file-emit.js";
 import { StringBuilder } from "../../lib/string-builder.js";
@@ -52,9 +52,9 @@ export function emitTimezoneData(context: GeoSpecContext): {
   appendEslintDisable(sb);
   sb.appendLine();
   sb.appendLine(
-    'import type { Country, Timezone, TimezoneCode } from "@d2/geo-abstractions";',
+    'import type { Country, Timezone, TimezoneCode } from "@dcsv-io/d2-geo-abstractions";',
   );
-  sb.appendLine('import { CountryCode } from "@d2/geo-abstractions";');
+  sb.appendLine('import { CountryCode } from "@dcsv-io/d2-geo-abstractions";');
   sb.appendLine();
   sb.appendLine('import { CountryLookup } from "./countries.g.js";');
   sb.appendLine();
@@ -276,7 +276,7 @@ function emitTrieNode(sb: StringBuilder, node: TrieNode): void {
   if (node.children.size === 0 && node.leafIana !== undefined) {
     sb.appendLine(
       `${safeKey(seg)}: "${escapeStringLiteral(node.leafIana)}"` +
-        ` as import("@d2/geo-abstractions").TimezoneCode,`,
+        ` as import("@dcsv-io/d2-geo-abstractions").TimezoneCode,`,
     );
     return;
   }

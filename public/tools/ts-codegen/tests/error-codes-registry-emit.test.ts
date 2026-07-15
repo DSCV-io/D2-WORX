@@ -327,9 +327,11 @@ describe("emitErrorCodeRegistry — source output", () => {
     expect(result.source).toContain("/* eslint-disable */");
   });
 
-  it("imports TK from @d2/i18n-keys", () => {
+  it("imports TK from @dcsv-io/d2-i18n-keys", () => {
     const result = emitErrorCodeRegistry([genericCatalog]);
-    expect(result.source).toContain('import { TK } from "@d2/i18n-keys";');
+    expect(result.source).toContain(
+      'import { TK } from "@dcsv-io/d2-i18n-keys";',
+    );
   });
 
   it("imports buildRegistry from the sibling source file", () => {

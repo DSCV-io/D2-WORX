@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { MqMessagesRegistry } from "@d2/messaging-abstractions";
+import { MqMessagesRegistry } from "@dcsv-io/d2-messaging-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { canonicalize, loadFixture } from "../src/index.js";

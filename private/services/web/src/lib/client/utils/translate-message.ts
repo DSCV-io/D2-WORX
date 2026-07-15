@@ -17,7 +17,7 @@
  * raw key in hand (no params binding needed); this overload keeps the
  * call shape unchanged at those sites.
  */
-import type { TKMessage } from "@d2/result";
+import type { TKMessage } from "@dcsv-io/d2-result";
 
 import * as m from "$lib/paraglide/messages.js";
 

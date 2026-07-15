@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Result;
 using Xunit;
 
 /// <summary>
@@ -21,7 +21,7 @@ using Xunit;
 /// every constant name to its wire value; a second fixture
 /// (<c>http-statuses.json</c>) maps every code to its declared HTTP
 /// status. The TS-side parity test asserts byte-equality against the
-/// codegen-emitted TS catalog (<c>@d2/auth-abstractions</c>'s
+/// codegen-emitted TS catalog (<c>@dcsv-io/d2-auth-abstractions</c>'s
 /// <c>AuthErrorCodes</c> object + <c>getAuthErrorHttpStatus</c>).
 /// </summary>
 public sealed class AuthErrorCodesFixtureEmitter

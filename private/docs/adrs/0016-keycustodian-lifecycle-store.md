@@ -53,9 +53,9 @@ KeyCustodian persists to its own PostgreSQL database (`d2-keycustodian`). This i
 
 Rotation coordination uses **PostgreSQL advisory locks** (`pg_try_advisory_lock`) instead of Redis. Rationale: (a) advisory locks are transactional — the lock is held for the duration of the rotation transaction, preventing a second rotation from interleaving; (b) PG is already provisioned for this service; (c) Redis is a hot-path dependency whose failure would block key rotation unnecessarily; (d) key rotation is a rare operation that does not require Redis's sub-millisecond locking overhead.
 
-### 4. Crypto reuses `D2.Shared.Encryption`
+### 4. Crypto reuses `DcsvIo.D2.Encryption`
 
-Key material is wrapped by the root key using `D2.Shared.Encryption`'s `IPayloadCrypto.Encrypt`. The root key is a 32-byte AES key managed by KeyCustodian itself (bootstrapped once, stored at `secrets/keycustodian/root.key` (file-backed, loaded at startup via `FileRootKeyProvider`)). The Domain receives and holds already-encrypted bytes in `KeyMaterialEncrypted` — it never touches plaintext key bytes.
+Key material is wrapped by the root key using `DcsvIo.D2.Encryption`'s `IPayloadCrypto.Encrypt`. The root key is a 32-byte AES key managed by KeyCustodian itself (bootstrapped once, stored at `secrets/keycustodian/root.key` (file-backed, loaded at startup via `FileRootKeyProvider`)). The Domain receives and holds already-encrypted bytes in `KeyMaterialEncrypted` — it never touches plaintext key bytes.
 
 ### 5. Material retention through all states
 
@@ -120,7 +120,7 @@ Because the `KeyRecord` CLR type never changes, every transition is an ordinary 
 - **Anemic enum + nullable timestamps as the DOMAIN model** (early anemic-enum sketch): rejected because nullable timestamps in the *domain* make illegal states representable (an "Active" key with null `ActivatedAt`), and the only enforcement is tests — not the type system. Drift between the enum and the lifecycle invariants is inevitable. (Note: the flat `KeyRecord` *persistence* row in §7 deliberately uses a `status` value column + nullable per-state columns — but it is NOT the domain; the pure mapper rehydrates the sealed state and the domain types remain the single source of lifecycle truth. The anti-pattern is an anemic *domain*, not a flat *row*.)
 - **Aggregate-as-TPH-entity with delete+insert transitions** (the original TPH-entity plan): rejected as unsound on EF Core 10 — the morph wall makes a same-PK delete+insert silently merge into a stale-column UPDATE, and a get-only-`Status` discriminator fails model-build. Falsified by the persistence-strategy spike; superseded by the flat `KeyRecord` + pure mapper in §7. Full rejection rationale + EF issue citations in [ADR-0017](0017-ef-as-ddd-persistence.md).
 - **Redis-coordinated rotation**: rejected because Redis is a hot-path dependency and advisory locks are already available in the PostgreSQL database owned by this service. Redis locking adds operational coupling for a rare operation.
-- **Storing key material outside the key record / external KMS**: out of scope. `D2.Shared.Encryption` root-wrap is the established mechanism for all service encryption.
+- **Storing key material outside the key record / external KMS**: out of scope. `DcsvIo.D2.Encryption` root-wrap is the established mechanism for all service encryption.
 - **Dropping material on retire/compromise**: rejected — breaks overlap decryption, grace-window JWKS, and forensics. See §5 above.
 
 ## References

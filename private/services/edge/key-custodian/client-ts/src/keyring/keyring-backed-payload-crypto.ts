@@ -6,10 +6,10 @@ import {
   type IPayloadCrypto,
   PayloadCrypto,
   type PayloadCryptoKeyring,
-} from "@d2/encryption";
-import type { ILogger } from "@d2/logging";
-import { RetryHelper } from "@d2/resilience";
-import { type D2Result, HttpStatusCode } from "@d2/result";
+} from "@dcsv-io/d2-encryption";
+import type { ILogger } from "@dcsv-io/d2-logging";
+import { RetryHelper } from "@dcsv-io/d2-resilience";
+import { type D2Result, HttpStatusCode } from "@dcsv-io/d2-result";
 
 import type { KeyringClient } from "./keyring-client.js";
 

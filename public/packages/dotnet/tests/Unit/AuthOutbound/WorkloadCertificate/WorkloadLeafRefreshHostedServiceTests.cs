@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.WorkloadCertificate;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.WorkloadCertificate;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Auth.Outbound.WorkloadCertificate;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;

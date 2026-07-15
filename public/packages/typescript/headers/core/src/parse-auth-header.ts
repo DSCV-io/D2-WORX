@@ -7,10 +7,10 @@ import {
   AuthFailures,
   JwtClaimTypes,
   type JwtPayload,
-} from "@d2/auth-abstractions";
-import type { D2Result } from "@d2/result";
-import { ok } from "@d2/result";
-import { falsey } from "@d2/utilities";
+} from "@dcsv-io/d2-auth-abstractions";
+import type { D2Result } from "@dcsv-io/d2-result";
+import { ok } from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 /**
  * Maximum total Authorization header length accepted by the parser.

@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Caching.Distributed.Redis
+# DcsvIo.D2.Caching.Distributed.Redis
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -80,7 +80,7 @@ Defaults that matter:
 
 ## Observability
 
-Static `Meter` (`D2.Shared.Caching.Distributed.Redis`) emits aggregate counters:
+Static `Meter` (`DcsvIo.D2.Caching.Distributed.Redis`) emits aggregate counters:
 `d2.cache.redis.{hits, misses, sets, removes, broadcasts, errors}`. No per-call spans — Redis ops
 are network-bound (1-5ms) and a per-call ActivitySource span would dominate at typical cache rates
 without adding signal worth the noise. The aggregate counters are what tells you "is the cache

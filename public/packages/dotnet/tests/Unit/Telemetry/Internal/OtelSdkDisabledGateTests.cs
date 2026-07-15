@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Telemetry.Internal;
+namespace DcsvIo.D2.Tests.Unit.Telemetry.Internal;
 
 using AwesomeAssertions;
-using D2.Shared.Telemetry;
-using D2.Shared.Telemetry.Internal;
+using DcsvIo.D2.Telemetry;
+using DcsvIo.D2.Telemetry.Internal;
 using Xunit;
 
 /// <summary>

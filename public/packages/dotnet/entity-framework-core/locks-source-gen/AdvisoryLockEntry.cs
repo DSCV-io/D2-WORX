@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AdvisoryLocks.SourceGen;
+namespace DcsvIo.D2.AdvisoryLocks.SourceGen;
 
 /// <summary>
 /// One advisory-lock entry parsed from

@@ -2,9 +2,9 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Utilities — Configuration
+# DcsvIo.D2.Utilities — Configuration
 
-> Part of [`D2.Shared.Utilities`](../README.md).
+> Part of [`DcsvIo.D2.Utilities`](../README.md).
 
 Host-side configuration plumbing — env-var ↔ wire-format conversion and `.env*` file loading. Used by every service composition root.
 

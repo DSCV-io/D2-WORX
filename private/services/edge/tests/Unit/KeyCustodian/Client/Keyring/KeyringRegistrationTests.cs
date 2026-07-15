@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Application.Keyring;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Encryption;
-using D2.Shared.Handler;
-using D2.Shared.Logging.Destructuring;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -22,7 +22,7 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Xunit;
-using KeyringStub = D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient;
+using KeyringStub = global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient;
 
 /// <summary>
 /// DI-resolvability (§1.3), least-privilege visibility, provenance-marking, and
@@ -179,14 +179,14 @@ public sealed class KeyringRegistrationTests
             secretBytes[i] = 0x7A;
         var secretBase64 = Convert.ToBase64String(secretBytes);
 
-        var protoEntry = new D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry
+        var protoEntry = new global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry
         {
             Kid = "fixture-kid-1",
             KeyBytes = Google.Protobuf.ByteString.CopyFrom(secretBytes),
         };
 
         // Type-level attribute pin (the hand-authored partial in the Client assembly).
-        typeof(D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry)
+        typeof(global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry)
             .GetCustomAttribute<RedactDataAttribute>().Should().NotBeNull();
 
         // A destructured capture masks the ENTIRE entry — no key bytes render.
@@ -203,7 +203,7 @@ public sealed class KeyringRegistrationTests
         // own, so a real Serilog pipeline default-destructures it and recurses into Entries,
         // where each KeyringEntry's type-level attribute masks the raw key bytes. Pin that the
         // WHOLE reply — not just a bare entry — renders no key material through Entries.
-        var fullOutput = new D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput
+        var fullOutput = new global::D2.Services.Protos.KeyCustodian.V2Alpha.GetKeyringOutput
         {
             ActiveKid = "fixture-kid-1",
             AadContext = Google.Protobuf.ByteString.CopyFrom("d2/audit"u8.ToArray()),
@@ -227,7 +227,7 @@ public sealed class KeyringRegistrationTests
 
         // The plain-{Reply} (no @) render path is OUT OF SCOPE here: it bypasses the
         // destructuring policy by design (a logging-call-site discipline concern, not an
-        // attribute gap), pinned generically by D2.Shared's SerilogPipelineRedactionTests.
+        // attribute gap), pinned generically by DcsvIo.D2's SerilogPipelineRedactionTests.
     }
 
     [Fact]

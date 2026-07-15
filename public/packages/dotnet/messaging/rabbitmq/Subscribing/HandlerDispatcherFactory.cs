@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Subscribing;
+namespace DcsvIo.D2.Messaging.RabbitMq.Subscribing;
 
 using System.Collections.Concurrent;
 

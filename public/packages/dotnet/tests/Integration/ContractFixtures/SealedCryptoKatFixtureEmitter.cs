@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 using Xunit;
 
 /// <summary>

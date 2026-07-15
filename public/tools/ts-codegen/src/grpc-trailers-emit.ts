@@ -118,14 +118,14 @@ export function emitGrpcTrailers(spec: GrpcTrailersSpec): EmitResult {
   sb.appendLine("/**");
   sb.appendLine(" * Spec-derived gRPC trailer-key constants. Mirrors .NET");
   sb.appendLine(
-    " * D2.Shared.Auth.Grpc.Status.D2GrpcTrailers (same wire values).",
+    " * DcsvIo.D2.Auth.Grpc.Status.D2GrpcTrailers (same wire values).",
   );
   sb.appendLine(" *");
   sb.appendLine(
     " * Cross-language parity: the SAME spec drives the .NET-side catalog",
   );
   sb.appendLine(
-    " * via D2.Shared.Grpc.Trailers.SourceGen. Both sides emit identical",
+    " * via DcsvIo.D2.Grpc.Trailers.SourceGen. Both sides emit identical",
   );
   sb.appendLine(
     " * trailer keys byte-for-byte; cross-language wire drift is impossible.",

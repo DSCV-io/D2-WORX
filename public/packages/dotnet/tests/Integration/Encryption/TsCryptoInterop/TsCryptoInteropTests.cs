@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Encryption.TsCryptoInterop;
+namespace DcsvIo.D2.Tests.Integration.Encryption.TsCryptoInterop;
 
 using System;
 using System.Collections.Generic;
@@ -13,19 +13,19 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Encryption;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Xunit;
 
 /// <summary>
 /// TS → .NET cross-runtime interop gate: opens/decrypts frames PRODUCED by the
-/// TypeScript <c>@d2/encryption</c> emitters (committed under
+/// TypeScript <c>@dcsv-io/d2-encryption</c> emitters (committed under
 /// <c>fixtures/</c>) with the REAL .NET <see cref="PayloadOpener"/> /
 /// <see cref="PayloadCrypto"/>, proving the TS encoder is byte-compatible with
 /// the .NET decoder. Paired with the .NET → TS
 /// <c>sealed-crypto-kat</c>/<c>symmetric-crypto-kat</c> parity suites, this
 /// closes the two-way crypto agreement. Regenerate the fixtures via
-/// <c>pnpm --filter @d2/encryption emit-crypto-fixtures</c>.
+/// <c>pnpm --filter @dcsv-io/d2-encryption emit-crypto-fixtures</c>.
 /// </summary>
 public sealed class TsCryptoInteropTests
 {

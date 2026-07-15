@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.EntityFrameworkCore;
+namespace DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 
 /// <summary>
 /// Describes how an annotated property is mapped in the EF Core relational model,

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Observability;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Observability;
 
 using Microsoft.Extensions.Logging;
 

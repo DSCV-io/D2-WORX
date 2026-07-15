@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
 using System.Security.Cryptography;
 using System.Text;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Infra.Configuration;
-using D2.Edge.KeyCustodian.Infra.Vault.File;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Vault.File;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 

@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging.Subscribing;
+namespace DcsvIo.D2.Tests.Unit.Messaging.Subscribing;
 
 using AwesomeAssertions;
-using D2.Shared.Handler;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Messaging.RabbitMq.Encryption;
-using D2.Shared.Messaging.RabbitMq.Subscribing;
-using D2.Shared.Messaging.RabbitMq.Topology;
-using D2.Shared.Result;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Encryption;
+using DcsvIo.D2.Messaging.RabbitMq.Subscribing;
+using DcsvIo.D2.Messaging.RabbitMq.Topology;
+using DcsvIo.D2.Result;
 using global::RabbitMQ.Client;
 using global::RabbitMQ.Client.Events;
 using Microsoft.Extensions.DependencyInjection;

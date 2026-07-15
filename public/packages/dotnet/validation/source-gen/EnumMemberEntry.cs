@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation.SourceGen;
+namespace DcsvIo.D2.Validation.SourceGen;
 
 /// <summary>
 /// One member of a closed-list taxonomy enum parsed from

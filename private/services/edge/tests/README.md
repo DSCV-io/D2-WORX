@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge.Tests
+# DcsvIo.D2.Private.Edge.Tests
 
 > Parent: [`../README.md`](../README.md)
 
@@ -19,7 +19,7 @@ Copyright (c) DCSV. All rights reserved.
 ## Run
 
 ```text
-dotnet test private/services/edge/tests/D2.Edge.Tests.csproj -- --filter-trait "Category=Unit"
+dotnet test private/services/edge/tests/DcsvIo.D2.Private.Edge.Tests.csproj -- --filter-trait "Category=Unit"
 ```
 
 Host isolation tests do not start hosted services (outbound leaf refresh issues at host start). Integration suites may require Docker for Testcontainers.

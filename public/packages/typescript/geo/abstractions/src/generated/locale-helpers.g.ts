@@ -10,11 +10,11 @@
 
 /**
  * Locale helper-API shape stubs — actual implementation lands in
- * `@d2/geo-default` once the selectable-locale list + cascade data is
+ * `@dcsv-io/d2-geo-default` once the selectable-locale list + cascade data is
  * emitted. Re-exported here purely to pin the public-facing function
- * signatures so consumers can import them via `@d2/geo-abstractions`
+ * signatures so consumers can import them via `@dcsv-io/d2-geo-abstractions`
  * regardless of which package supplies the impl.
  */
 
-// (no exports yet — populated when `@d2/geo-default` ships.)
+// (no exports yet — populated when `@dcsv-io/d2-geo-default` ships.)
 export {};

@@ -2,9 +2,9 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Utilities — Enums
+# DcsvIo.D2.Utilities — Enums
 
-> Part of [`D2.Shared.Utilities`](../README.md).
+> Part of [`DcsvIo.D2.Utilities`](../README.md).
 
 Standard enum vocabulary shared across the framework. Lives here (rather than per-consumer) so reasons / isolation taxonomies stay aligned across every lib that surfaces them.
 

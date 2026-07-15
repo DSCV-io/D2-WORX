@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App.Jwks;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App.Jwks;
 
-using D2.Edge.KeyCustodian.App.Application.Jwks;
-using D2.Edge.Tests.Unit.KeyCustodian.App;
-using D2.Shared.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Jwks;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.Telemetry;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.Telemetry;
 
 using System;
 using System.Linq;
@@ -21,7 +21,7 @@ using Xunit;
 /// as separate strings instead.
 /// </summary>
 /// <remarks>
-/// Mirrors <c>D2.Shared.Tests.Unit.Auth.Inbound.Telemetry.AuthLogDelegateContractTests</c>.
+/// Mirrors <c>DcsvIo.D2.Tests.Unit.Auth.Inbound.Telemetry.AuthLogDelegateContractTests</c>.
 /// Same enforcement pattern across every log surface in the codebase.
 /// </remarks>
 public sealed class OutboundLogDelegateContractTests
@@ -29,10 +29,10 @@ public sealed class OutboundLogDelegateContractTests
     [Fact]
     public void OutboundLog_NoDelegateAcceptsExceptionParameter()
     {
-        var outboundLogType = typeof(D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetry).Assembly
+        var outboundLogType = typeof(DcsvIo.D2.Auth.Outbound.Telemetry.OutboundTelemetry).Assembly
             .GetTypes()
             .Single(t => t.Name == "OutboundLog"
-                && t.Namespace == "D2.Shared.Auth.Outbound.Telemetry");
+                && t.Namespace == "DcsvIo.D2.Auth.Outbound.Telemetry");
 
         var leakProneMethods = outboundLogType
             .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic)

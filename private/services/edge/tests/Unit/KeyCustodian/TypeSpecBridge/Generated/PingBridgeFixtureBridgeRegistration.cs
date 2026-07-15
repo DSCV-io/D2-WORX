@@ -10,11 +10,11 @@
 // per §26.18; replace-trigger when a real standalone module client package
 // lands and regen commits a true *BridgeRegistration.g.cs.
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Generated;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Generated;
 
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures;
-using D2.Shared.Auth.Http.Endpoints;
-using D2.Shared.Auth.Http.ProblemDetails;
+using DcsvIo.D2.Auth.Http.Endpoints;
+using DcsvIo.D2.Auth.Http.ProblemDetails;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;

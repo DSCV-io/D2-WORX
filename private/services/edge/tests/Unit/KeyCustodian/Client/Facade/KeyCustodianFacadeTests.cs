@@ -4,25 +4,25 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Facade;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Facade;
 
-using D2.Edge.KeyCustodian.App.Application;
-using D2.Edge.KeyCustodian.App.Application.Facade;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
-using D2.Edge.KeyCustodian.Client.CaCertificate;
-using D2.Edge.KeyCustodian.Client.Facade;
-using D2.Edge.KeyCustodian.Client.Issuance;
-using D2.Edge.KeyCustodian.Client.Jwks;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Edge.KeyCustodian.Client.OidcConfiguration;
-using D2.Edge.KeyCustodian.Client.Sealing;
-using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Shared.Handler.Abstractions;
+using DcsvIo.D2.Handler.Abstractions;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.OidcConfiguration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -291,14 +291,14 @@ public sealed class KeyCustodianFacadeTests
     public void IKeyCustodianApi_IsInClientFacadeNamespace()
     {
         typeof(IKeyCustodianApi).Namespace
-            .Should().Be("D2.Edge.KeyCustodian.Client.Facade");
+            .Should().Be("DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade");
     }
 
     [Fact]
     public void KeyCustodianApi_IsInAppFacadeNamespace()
     {
         typeof(KeyCustodianApi).Namespace
-            .Should().Be("D2.Edge.KeyCustodian.App.Application.Facade");
+            .Should().Be("DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Facade");
     }
 
     [Fact]

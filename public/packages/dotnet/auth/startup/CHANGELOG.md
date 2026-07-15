@@ -1,4 +1,4 @@
-# Changelog — D2.Shared.Auth.Startup
+# Changelog — DcsvIo.D2.Auth.Startup
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.

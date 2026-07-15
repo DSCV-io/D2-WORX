@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Status;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Status;
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Net;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Grpc.Status;
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.I18n;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Grpc.Status;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
 using global::Grpc.Core;
 using Xunit;
 using GrpcStatusCode = global::Grpc.Core.StatusCode;

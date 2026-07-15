@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
-using D2.Shared.Handler;
-using D2.Shared.Result;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Result;
 
 /// <summary>Handler that returns a non-Ok result — drives DLQ-on-result scenarios.</summary>
 public sealed class AlwaysFailsHandler

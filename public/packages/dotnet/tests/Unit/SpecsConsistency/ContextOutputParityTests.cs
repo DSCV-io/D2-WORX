@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Context.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Context.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -31,7 +31,7 @@ using Xunit;
 /// </summary>
 public sealed class ContextOutputParityTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.Context.Abstractions";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.Context.Abstractions";
 
     private static readonly string sr_generatedBase =
         Path.Combine(
@@ -42,12 +42,12 @@ public sealed class ContextOutputParityTests
             "context",
             "abstractions",
             "Generated",
-            "D2.Shared.Context.SourceGen",
-            "D2.Shared.Context.SourceGen.ContextGenerator");
+            "DcsvIo.D2.Context.SourceGen",
+            "DcsvIo.D2.Context.SourceGen.ContextGenerator");
 
     /// <summary>
     /// Determinism pin for every file the combined context emitter produces for the
-    /// <c>D2.Shared.Context.Abstractions</c> target. Each regenerated file must be
+    /// <c>DcsvIo.D2.Context.Abstractions</c> target. Each regenerated file must be
     /// byte-identical to its committed counterpart.
     /// </summary>
     /// <param name="fileName">The generated <c>.g.cs</c> file name to compare.</param>

@@ -4,23 +4,23 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Scopes.SourceGen;
+namespace DcsvIo.D2.Auth.Scopes.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits scope catalogs from
 /// <c>contracts/auth-scopes/scopes.spec.json</c> via <c>AdditionalFiles</c>.
-/// Dual-target: public assembly <c>D2.Shared.Auth.Abstractions</c> → <c>Scopes</c>
+/// Dual-target: public assembly <c>DcsvIo.D2.Auth.Abstractions</c> → <c>Scopes</c>
 /// (public values only); private Extensions assembly
-/// <c>D2.Shared.Auth.Abstractions.Extensions</c> → <c>ProductScopes</c>
-/// (public∪private values, distinct FQN under <c>D2.Private.Auth</c>).
+/// <c>DcsvIo.D2.Private.Auth.Abstractions.Extensions</c> → <c>ProductScopes</c>
+/// (public∪private values, distinct FQN under <c>DcsvIo.D2.Private.Auth</c>).
 /// </summary>
 [Generator]
 public sealed class ScopesGenerator : IIncrementalGenerator
@@ -28,14 +28,14 @@ public sealed class ScopesGenerator : IIncrementalGenerator
     private const string _GENERATED_SOURCE_NAME = "Scopes.g.cs";
     private const string _PRIVATE_GENERATED_SOURCE_NAME = "ProductScopes.g.cs";
     private const string _SPEC_FILE_NAME = "scopes.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.Auth.Abstractions";
-    private const string _PRIVATE_TARGET_ASSEMBLY_NAME = "D2.Shared.Auth.Abstractions.Extensions";
-    private const string _PUBLIC_ROOT_NAMESPACE = "D2.Shared.Auth.Abstractions";
-    private const string _PRIVATE_ROOT_NAMESPACE = "D2.Private.Auth";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Auth.Abstractions";
+    private const string _PRIVATE_TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Private.Auth.Abstractions.Extensions";
+    private const string _PUBLIC_ROOT_NAMESPACE = "DcsvIo.D2.Auth.Abstractions";
+    private const string _PRIVATE_ROOT_NAMESPACE = "DcsvIo.D2.Private.Auth";
     private const string _PUBLIC_CLASS_NAME = "Scopes";
     private const string _PRIVATE_CLASS_NAME = "ProductScopes";
-    private const string _ORG_TYPE_FQN = "D2.Shared.Auth.Abstractions.OrgType";
-    private const string _ROLE_FQN = "D2.Shared.Auth.Abstractions.Role";
+    private const string _ORG_TYPE_FQN = "DcsvIo.D2.Auth.Abstractions.OrgType";
+    private const string _ROLE_FQN = "DcsvIo.D2.Auth.Abstractions.Role";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

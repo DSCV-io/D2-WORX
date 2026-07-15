@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 
-using D2.Shared.Tests.Integration.Logging.Infrastructure;
-using D2.Shared.Tests.Integration.Telemetry.Infrastructure;
+using DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
+using DcsvIo.D2.Tests.Integration.Telemetry.Infrastructure;
 using Microsoft.Extensions.Hosting;
 
 /// <summary>

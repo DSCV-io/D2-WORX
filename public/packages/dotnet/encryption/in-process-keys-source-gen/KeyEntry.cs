@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.InProcessKeys.SourceGen;
+namespace DcsvIo.D2.InProcessKeys.SourceGen;
 
 using System.Collections.Immutable;
 

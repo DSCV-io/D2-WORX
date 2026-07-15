@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Errors;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Errors;
 
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth.Errors;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.I18n;
 using Xunit;
 
 /// <summary>
@@ -59,7 +59,7 @@ public sealed class AuthFailuresTests
             .Single(m => m.Name == methodName
                 && !m.IsGenericMethodDefinition
                 && m.GetParameters().Length == 1);
-        var result = (D2.Shared.Result.D2Result)method.Invoke(null, [null])!;
+        var result = (DcsvIo.D2.Result.D2Result)method.Invoke(null, [null])!;
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -88,7 +88,7 @@ public sealed class AuthFailuresTests
             .Single(m => m.Name == methodName
                 && !m.IsGenericMethodDefinition
                 && m.GetParameters().Length == 1);
-        var result = (D2.Shared.Result.D2Result)method.Invoke(null, [null])!;
+        var result = (DcsvIo.D2.Result.D2Result)method.Invoke(null, [null])!;
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -132,7 +132,7 @@ public sealed class AuthFailuresTests
             .Single(m => m.Name == methodName
                 && !m.IsGenericMethodDefinition
                 && m.GetParameters().Length == 1);
-        var result = (D2.Shared.Result.D2Result)method.Invoke(null, [null])!;
+        var result = (DcsvIo.D2.Result.D2Result)method.Invoke(null, [null])!;
 
         result.Category.Should().Be(expectedCategory);
     }

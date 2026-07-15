@@ -22,7 +22,7 @@
 // (ZonedInstantWire / LocalAnchoredEventWire) are real canonical wire models the
 // fixture merely consumes, so they keep their real names.
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 import "../common/temporal.tsp";
 
 using D2;

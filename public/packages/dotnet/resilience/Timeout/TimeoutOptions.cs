@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Timeout;
+namespace DcsvIo.D2.Resilience.Timeout;
 
 /// <summary>
 /// Configuration for <see cref="Pipeline.TimeoutLayer{TKey, TValue}"/>. Use the

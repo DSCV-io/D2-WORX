@@ -2,17 +2,17 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Auth
+# DcsvIo.D2.Auth
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
 Inbound auth runtime — JWT validation primitives, JWKS snapshot management, session liveness checking, and the DI composition root that wires it all into a service. Consumed by every backend service that validates inbound bearer tokens.
 
-The vocabulary slice (enums, `ActorEntry`, `IJwksProvider`, `ISessionLivenessTracker`, codegen-emitted `Scopes` / `Audiences` / `JwtClaimTypes` / `D2HttpContextItems`) lives in the sibling [`D2.Shared.Auth.Abstractions`](../abstractions/README.md) project. Wire-protocol header constants live in the per-transport `D2.Shared.Headers.{Common,Http,Amqp,Grpc}` catalogs. Domain code references those, never this runtime lib.
+The vocabulary slice (enums, `ActorEntry`, `IJwksProvider`, `ISessionLivenessTracker`, codegen-emitted `Scopes` / `Audiences` / `JwtClaimTypes` / `D2HttpContextItems`) lives in the sibling [`DcsvIo.D2.Auth.Abstractions`](../abstractions/README.md) project. Wire-protocol header constants live in the per-transport `DcsvIo.D2.Headers.{Common,Http,Amqp,Grpc}` catalogs. Domain code references those, never this runtime lib.
 
-The transport bindings live in two sibling csprojs: [`D2.Shared.Auth.Http`](../http/README.md) (HTTP middleware + RFC 7807 ProblemDetails + per-endpoint scope metadata) and [`D2.Shared.Auth.Grpc`](../grpc/README.md) (server-side gRPC interceptor + RpcException trailers + per-method scope metadata / attributes). Either or both can be wired into a host independently — see [Composing with siblings](#composing-with-siblings) below.
+The transport bindings live in two sibling csprojs: [`DcsvIo.D2.Auth.Http`](../http/README.md) (HTTP middleware + RFC 7807 ProblemDetails + per-endpoint scope metadata) and [`DcsvIo.D2.Auth.Grpc`](../grpc/README.md) (server-side gRPC interceptor + RpcException trailers + per-method scope metadata / attributes). Either or both can be wired into a host independently — see [Composing with siblings](#composing-with-siblings) below.
 
-The token-acquisition complement lives in [`D2.Shared.Auth.Outbound`](../outbound/README.md) — the RFC 8693 token-exchange client for the Edge boundary mint and the deliberate exception cases. Under the forward-unchanged service-to-service model ([ADR-0022](../../../../../public/docs/adrs/0022-service-auth-mint-once-forward.md)) a normal internal hop does not acquire a fresh token at all: the single token minted at the Edge boundary is forwarded unchanged and this lib re-validates it on receipt. Cross-process workload identity is supplied by mTLS ([ADR-0023](../../../../../public/docs/adrs/0023-mtls-workload-identity.md)), not by a service-identity bearer.
+The token-acquisition complement lives in [`DcsvIo.D2.Auth.Outbound`](../outbound/README.md) — the RFC 8693 token-exchange client for the Edge boundary mint and the deliberate exception cases. Under the forward-unchanged service-to-service model ([ADR-0022](../../../../../public/docs/adrs/0022-service-auth-mint-once-forward.md)) a normal internal hop does not acquire a fresh token at all: the single token minted at the Edge boundary is forwarded unchanged and this lib re-validates it on receipt. Cross-process workload identity is supplied by mTLS ([ADR-0023](../../../../../public/docs/adrs/0023-mtls-workload-identity.md)), not by a service-identity bearer.
 
 ## Public API surface
 
@@ -38,7 +38,7 @@ The named HTTP client is identified by `AuthServiceCollectionExtensions.OIDC_DIS
 | Property    | Type                     | Default  | Notes                                                                                                                           |
 | ----------- | ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `Issuer`    | `Uri`                    | required | OIDC issuer URL whose `/.well-known/openid-configuration` publishes `jwks_uri`. HTTPS-only — HTTP rejected at composition time. |
-| `Audience`  | `string`                 | required | Expected `aud` claim. Use a `D2.Shared.Auth.Abstractions.Audiences` codegen constant.                                           |
+| `Audience`  | `string`                 | required | Expected `aud` claim. Use a `DcsvIo.D2.Auth.Abstractions.Audiences` codegen constant.                                           |
 | `ClockSkew` | `TimeSpan`               | 30s      | Tolerance applied to JWT `exp` / `nbf` checks. Matches `Microsoft.IdentityModel` default; accommodates typical NTP drift.       |
 | `Jwks`      | `JwksProviderOptions`    | `new()`  | Sub-options for the JWKS provider — see table below.                                                                            |
 | `Sessions`  | `SessionLivenessOptions` | `new()`  | Sub-options for the session liveness tracker — see table below.                                                                 |
@@ -52,7 +52,7 @@ The named HTTP client is identified by `AuthServiceCollectionExtensions.OIDC_DIS
 | `HttpRequestTimeout`             | `TimeSpan` | 5s                               | Per-request timeout on the named OIDC discovery `HttpClient`. Without this override, the BCL default of 100s applies — a hung Edge would tie up the calling thread for the full window.                                               |
 | `CircuitBreakerFailureThreshold` | `int`      | 5                                | Consecutive failures before the JWKS-fetch circuit breaker opens. While open, calls fail fast with `AuthFailures.JwksUnavailable` — avoids per-call HTTP roundtrip during sustained Edge outage.                                      |
 | `CircuitBreakerCooldown`         | `TimeSpan` | 30s                              | Duration the circuit breaker stays open before allowing a half-open probe.                                                                                                                                                            |
-| `BackplaneChannelKey`            | `string`   | `"d2.security.key-rotated:jwks"` | Cache backplane channel pattern for cluster-wide JWKS rotation events. **Cross-service contract** — Edge's `D2.Shared.KeyCustodian` MUST publish on the same string. Empty / whitespace rejected at host build via `ValidateOnStart`. |
+| `BackplaneChannelKey`            | `string`   | `"d2.security.key-rotated:jwks"` | Cache backplane channel pattern for cluster-wide JWKS rotation events. **Cross-service contract** — Edge's `DcsvIo.D2.KeyCustodian` MUST publish on the same string. Empty / whitespace rejected at host build via `ValidateOnStart`. |
 | `TrustedRootCertificatePath`     | `string?`  | `null`                           | Optional path to a PUBLIC CA root (PEM/DER) for private-PKI OIDC/JWKS TLS trust. Empty = system store only. When set, must exist at host build (`ValidateOnStart`). Same PEM class as mTLS TrustAnchors; Auth stays path-string only. |
 
 #### `SessionLivenessOptions` — session liveness sub-options
@@ -78,7 +78,7 @@ Pre-built `D2Result` failures. Caller code (middleware, validator, interceptor) 
 - **User-facing message** — coarse on purpose. Two TK keys total (`auth_errors_UNAUTHORIZED`, `auth_errors_TEMPORARILY_UNAVAILABLE`) so we don't tell attackers which validation step failed.
 - **Machine-readable code** — granular. One `AuthErrorCodes.AUTH_*` constant per failure mode, surfaced as the `d2_error_code` on RFC 7807 ProblemDetails.
 
-`AuthErrorCodes` and `AuthFailures` are emitted by [`D2.Shared.Auth.ErrorCodes.SourceGen`](../error-codes-source-gen/README.md) from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — single source of truth. Adding a new error code = editing the JSON spec; the constant + the factory + the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` all materialize automatically. The emitted `*.g.cs` files land in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
+`AuthErrorCodes` and `AuthFailures` are emitted by [`DcsvIo.D2.Auth.ErrorCodes.SourceGen`](../error-codes-source-gen/README.md) from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — single source of truth. Adding a new error code = editing the JSON spec; the constant + the factory + the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` all materialize automatically. The emitted `*.g.cs` files land in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
 
 > **Duplicated from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — update both in lockstep.** The 15-row failure surface table below is a per-row at-a-glance projection of the spec. The spec is the single source of truth; the `auth/error-codes-source-gen` analyzer emits the constants + factories. Adding a row here without a corresponding spec entry will fail at codegen time; adding a spec entry without updating this table will drift the docs.
 
@@ -102,7 +102,7 @@ Pre-built `D2Result` failures. Caller code (middleware, validator, interceptor) 
 
 ### Telemetry
 
-ActivitySource: `D2.Shared.Auth`. Meter: `D2.Shared.Auth`. Hosts add both via standard `OpenTelemetryBuilder` registration:
+ActivitySource: `DcsvIo.D2.Auth`. Meter: `DcsvIo.D2.Auth`. Hosts add both via standard `OpenTelemetryBuilder` registration:
 
 ```csharp
 builder.Services.AddOpenTelemetry()
@@ -110,7 +110,7 @@ builder.Services.AddOpenTelemetry()
     .WithMetrics(m => m.AddMeter(AuthTelemetry.METER_NAME));
 ```
 
-Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../../telemetry/tags-source-gen/README.md) into `AuthTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `AuthTelemetryTags.JwtValidations.Outcome.SUCCESS` / `AuthTelemetryTags.JwksFetches.Trigger.REACTIVE` / etc. instead of bare string literals — drift between the spec and the runtime tag values is impossible.
+Tag-key + tag-value constants are emitted by [`DcsvIo.D2.Telemetry.Tags.SourceGen`](../../telemetry/tags-source-gen/README.md) into `AuthTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `AuthTelemetryTags.JwtValidations.Outcome.SUCCESS` / `AuthTelemetryTags.JwksFetches.Trigger.REACTIVE` / etc. instead of bare string literals — drift between the spec and the runtime tag values is impossible.
 
 | Counter                           | Tags                                                                            | Description                                                                                                                                                                                                           |
 | --------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -157,7 +157,7 @@ The granular `AUTH_*` code (see [Failure helpers — `AuthFailures`](#failure-he
 
 ### PII discipline — `SanitizedExceptionRender`
 
-`AuthLog` `[LoggerMessage]` delegates never accept `Exception` — exception messages can interpolate JWT bytes, request URIs, response bodies, or other runtime data that must not reach the log pipeline. Callers pass `SanitizedExceptionRender.TypeName(ex)` and `SanitizedExceptionRender.FirstFrame(ex)` as separate strings instead. The helper itself is the canonical `D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender` (consumed by every lib whose log delegates carry exception-derived strings). The no-`Exception`-parameter shape is enforced locally by `AuthLogDelegateContractTests` via reflection across the entire `AuthLog` class.
+`AuthLog` `[LoggerMessage]` delegates never accept `Exception` — exception messages can interpolate JWT bytes, request URIs, response bodies, or other runtime data that must not reach the log pipeline. Callers pass `SanitizedExceptionRender.TypeName(ex)` and `SanitizedExceptionRender.FirstFrame(ex)` as separate strings instead. The helper itself is the canonical `DcsvIo.D2.Utilities.Diagnostics.SanitizedExceptionRender` (consumed by every lib whose log delegates carry exception-derived strings). The no-`Exception`-parameter shape is enforced locally by `AuthLogDelegateContractTests` via reflection across the entire `AuthLog` class.
 
 Bearer bytes, claim values, and scope strings NEVER reach logs / span tags / metric tags / ProblemDetails fields / gRPC trailer fields / exception interpolations. Both transport bindings reuse this lib's `AuthLog` delegates and emit only outcome categories:
 
@@ -171,15 +171,15 @@ The HTTP ProblemDetails `Detail` field and the gRPC `Status.Detail` field are DE
 
 | Package                                                                           | Why                                                                                     |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `D2.Shared.Auth.Abstractions`                                                     | `IJwksProvider`, `ISessionLivenessTracker`, `Audiences`, `JwtClaimTypes`, `Scopes`.     |
-| `D2.Shared.AuthContext.Abstractions`                                              | `IAuthContext` shape (consumed when claims-to-context mapping lands).                   |
-| `D2.Shared.Context.Abstractions`                                                  | `IRequestContext` extension.                                                            |
-| `D2.Shared.Caching.Abstractions`                                                  | `ICacheInvalidationBackplane` for cluster-wide rotation / revoke event delivery.        |
-| `D2.Shared.Caching.Tiered`                                                        | `ITieredCache` for sentinel-only session liveness lookups.                              |
-| `D2.Shared.Resilience`                                                            | `Singleflight` to dedupe concurrent JWKS force-refreshes.                               |
-| `D2.Shared.Result`                                                                | `D2Result` typed factories.                                                             |
-| `D2.Shared.I18n.Abstractions`                                                     | `TK.Auth.Errors` translation keys.                                                      |
-| `D2.Shared.Utilities`                                                             | `Falsey()` / `Truthy()` extensions.                                                     |
+| `DcsvIo.D2.Auth.Abstractions`                                                     | `IJwksProvider`, `ISessionLivenessTracker`, `Audiences`, `JwtClaimTypes`, `Scopes`.     |
+| `DcsvIo.D2.AuthContext.Abstractions`                                              | `IAuthContext` shape (consumed when claims-to-context mapping lands).                   |
+| `DcsvIo.D2.Context.Abstractions`                                                  | `IRequestContext` extension.                                                            |
+| `DcsvIo.D2.Caching.Abstractions`                                                  | `ICacheInvalidationBackplane` for cluster-wide rotation / revoke event delivery.        |
+| `DcsvIo.D2.Caching.Tiered`                                                        | `ITieredCache` for sentinel-only session liveness lookups.                              |
+| `DcsvIo.D2.Resilience`                                                            | `Singleflight` to dedupe concurrent JWKS force-refreshes.                               |
+| `DcsvIo.D2.Result`                                                                | `D2Result` typed factories.                                                             |
+| `DcsvIo.D2.I18n.Abstractions`                                                     | `TK.Auth.Errors` translation keys.                                                      |
+| `DcsvIo.D2.Utilities`                                                             | `Falsey()` / `Truthy()` extensions.                                                     |
 | `Microsoft.IdentityModel.Tokens`                                                  | `SecurityKey` + JWT validation primitives.                                              |
 | `Microsoft.IdentityModel.Protocols.OpenIdConnect`                                 | `ConfigurationManager<OpenIdConnectConfiguration>` for OIDC discovery + JWKS retrieval. |
 | `Microsoft.Extensions.Http`                                                       | `IHttpClientFactory` for the named OIDC discovery client.                               |

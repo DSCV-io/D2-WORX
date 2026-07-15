@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 
 using System.Linq;
 using System.Security.Cryptography;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 using ProtoPrivateOutput =
-    D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput;
+    global::D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionOwnSealPrivateKeyOutput;
 using ProtoPublicOutput =
-    D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput;
+    global::D2.Services.Protos.KeyCustodian.V2Alpha.GetOrLazyProvisionSealPublicKeyOutput;
 
 /// <summary>
 /// The single boundary mapper where the KeyCustodian seal-keyring wire shape becomes

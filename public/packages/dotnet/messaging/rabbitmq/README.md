@@ -2,16 +2,16 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Messaging.RabbitMq
+# DcsvIo.D2.Messaging.RabbitMq
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
 Default `RabbitMQ.Client 7.x` implementation of the
-[`D2.Shared.Messaging.Abstractions`](../abstractions/README.md)
+[`DcsvIo.D2.Messaging.Abstractions`](../abstractions/README.md)
 contract. Owns connection lifecycle, channel pooling with idle-eviction,
 topology declaration (exchanges + DLX + DLQ + optional retry tiers),
 publishing with publisher-confirms + built-in transient retry, payload
-encryption via `D2.Shared.Encryption`, full W3C trace-context propagation,
+encryption via `DcsvIo.D2.Encryption`, full W3C trace-context propagation,
 DLQ republish-with-failure-header, and the cross-hop operational-context
 propagation (`x-d2-context`).
 
@@ -55,7 +55,7 @@ exchange, and default routing key.
   `PropagatedContext`; same shape on every transport — AMQP is not
   special-cased). The call-path also rides every synchronous gRPC hop
   via a dedicated outbound client interceptor + inbound establishment
-  interceptor (`D2.Shared.Auth.Outbound` / `D2.Shared.Auth.Grpc`) — see
+  interceptor (`DcsvIo.D2.Auth.Outbound` / `DcsvIo.D2.Auth.Grpc`) — see
   [ADR-0025](../../../../../public/docs/adrs/0025-request-context-establishment.md).
   `PropagatedContextSerializer.TryDecode` enforces both a wire-level cap
   (`MAX_HEADER_LENGTH = 2 KiB`) AND per-field length caps (RequestPath ≤
@@ -152,9 +152,9 @@ Consumer service
 - Two JSON spec files in `contracts/`:
   - `mq-messages/mq-messages.spec.json` — every publishable message type
   - `mq-subscriptions/mq-subscriptions.spec.json` — every subscription contract
-- The `D2.Shared.Messaging.SourceGen` Roslyn analyzer reads both at build time
+- The `DcsvIo.D2.Messaging.SourceGen` Roslyn analyzer reads both at build time
   and emits constants + immutable runtime registries into the
-  `D2.Shared.Messaging.Abstractions` assembly:
+  `DcsvIo.D2.Messaging.Abstractions` assembly:
   - `MqMessages.AuthKeyRotated` (string constant) +
     `MqMessagesRegistry.ByConstant`
     (`Dictionary<string, MqMessageDescriptor>`)
@@ -216,7 +216,7 @@ There is no envelope wrapper. The wire body is one of:
 - **Plaintext path** — raw `System.Text.Json` serialization of the message
   value (UTF-8 bytes).
 - **Encrypted path** — a single AES-256-GCM frame produced by
-  `D2.Shared.Encryption.IPayloadCrypto.Encrypt`:
+  `DcsvIo.D2.Encryption.IPayloadCrypto.Encrypt`:
   ```
   [version=1 byte][kid_len=1 byte][kid:UTF-8 bytes][nonce:12 bytes][ciphertext+tag]
   ```
@@ -255,9 +255,9 @@ any consumer channel opens — when a subscriber consumes a sealed domain but no
 matching `IPayloadOpener` is registered, so a forgotten
 `AddD2SealedEncryptionViaKeyCustodian` fails loud rather than DLQ'ing every
 delivery. The KeyCustodian-backed sealer/opener runtime lives in
-`D2.Edge.KeyCustodian.Client` (`Sealing/`); the shared lib composes whatever
+`DcsvIo.D2.Private.Edge.KeyCustodian.Client` (`Sealing/`); the shared lib composes whatever
 keyed sealer/opener the host registered (shared → shared dependency only). The
-TypeScript twin (`@d2/messaging-rabbitmq`) enforces the same fusion structurally.
+TypeScript twin (`@dcsv-io/d2-messaging-rabbitmq`) enforces the same fusion structurally.
 
 ### Why JSON not binary protobuf
 
@@ -377,7 +377,7 @@ For each `PublishAsync<TMessage>`:
 A `publish {exchange}/{routingKey}` Producer-kind activity wraps the whole
 call. Its tags are spec-driven via
 `contracts/otel-messaging-tags/otel-messaging-tags.spec.json` — emitted by
-`D2.Shared.OtelMessagingTags.SourceGen` into `MessagingActivityTags` consumed
+`DcsvIo.D2.OtelMessagingTags.SourceGen` into `MessagingActivityTags` consumed
 by the publisher AND consumer. The publisher emits:
 
 - `MessagingActivityTags.MESSAGING_SYSTEM` (`messaging.system` = `"rabbitmq"`)
@@ -573,13 +573,13 @@ routes a header-less copy — better than losing the message).
 
 The wire shape is spec-driven via
 `contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json`. The
-`D2.Shared.Messaging.DlqMetadata.SourceGen` multi-target source-gen emits
+`DcsvIo.D2.Messaging.DlqMetadata.SourceGen` multi-target source-gen emits
 `DlqFailureMetadataFields` (property names) into
-`D2.Shared.Messaging.Abstractions` and `DlqFailureCauses` (closed-enum cause
-strings) into `D2.Shared.Messaging.RabbitMq`. The `DlqFailureMetadata` record
+`DcsvIo.D2.Messaging.Abstractions` and `DlqFailureCauses` (closed-enum cause
+strings) into `DcsvIo.D2.Messaging.RabbitMq`. The `DlqFailureMetadata` record
 applies `[JsonPropertyName(DlqFailureMetadataFields.*)]` attributes
 referencing the codegen-emitted constants — drift between the wire shape and
-the spec is structurally impossible. The TS sibling `@d2/messaging-abstractions`
+the spec is structurally impossible. The TS sibling `@dcsv-io/d2-messaging-abstractions`
 emits identical constants, so any TS reader (DLQ ops tooling, RabbitMQ
 subscribers) shares byte-equal field-name and cause-string identifiers with
 the .NET producers.
@@ -653,7 +653,7 @@ cycles via `MaxAttempts`.
 
 - One keyring per **encryption domain** — registered keyed-singleton via
   `services.AddD2EncryptionFor(domain, factory)`. Domains live in
-  `D2.Shared.Encryption.EncryptionDomains` (`Audit`, `Notifications`,
+  `DcsvIo.D2.Encryption.EncryptionDomains` (`Audit`, `Notifications`,
   `Courier`, ...).
 - The descriptor's `encryption` field IS the domain string (or the literal
   `"plaintext"`). The publisher resolves `IPayloadCrypto` keyed by that
@@ -709,10 +709,10 @@ cycles via `MaxAttempts`.
 | Subscriber channel         | `Subscribing/SubscriberChannel.cs` — owns one consume channel + one lazy republish channel per subscription; per-delivery DI scope; trace-context parsing; tiered-retry attempt-count enforcement; idempotency pre-check; narrow-catch around `BasicAck`; in-flight callback drain on disposal.                     |
 | Handler dispatch           | `Subscribing/HandlerDispatcherFactory.cs` — pre-builds typed dispatchers at startup from the registry; one dispatcher per registered queue.                                                                                                                                                                         |
 | DLQ failure header         | `Subscribing/DlqFailureHeaderBuilder.cs` — JSON-encodes `DlqFailureMetadata`; PII-safe (drops `exception.Message`).                                                                                                                                                                                                 |
-| Sanitized exception render | Consumes `D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender` (`TypeName` + `FirstFrame` only; never `ex.Message`). Used by every consumer-side log site that surfaces exception-derived strings (handler exceptions, ack failures, DLQ-republish failures, boundary failures).                               |
+| Sanitized exception render | Consumes `DcsvIo.D2.Utilities.Diagnostics.SanitizedExceptionRender` (`TypeName` + `FirstFrame` only; never `ex.Message`). Used by every consumer-side log site that surfaces exception-derived strings (handler exceptions, ack failures, DLQ-republish failures, boundary failures).                               |
 | Idempotency                | `Idempotency/CacheIdempotencyStore.cs` — `IMessageIdempotencyStore` impl backed by `IDistributedCache` with 24h TTL.                                                                                                                                                                                                |
 | Idempotency startup check  | `Idempotency/IdempotencyStartupCheck.cs` — hard-fails host startup when any subscription has `idempotency: true` but no `IDistributedCache` AND no operator-provided `IMessageIdempotencyStore`.                                                                                                                    |
-| Telemetry                  | `Telemetry/MessagingTelemetry.cs` — static `ActivitySource` + `Meter` named `D2.Shared.Messaging.RabbitMq`; six instruments (publishes, failures, retries, ack-failures, dlq-republish-failures counters; publish-duration histogram).                                                                              |
+| Telemetry                  | `Telemetry/MessagingTelemetry.cs` — static `ActivitySource` + `Meter` named `DcsvIo.D2.Messaging.RabbitMq`; six instruments (publishes, failures, retries, ack-failures, dlq-republish-failures counters; publish-duration histogram).                                                                              |
 
 ---
 
@@ -741,20 +741,20 @@ cycles via `MaxAttempts`.
 
 ## Dependencies
 
-- `D2.Shared.Messaging.Abstractions` — interfaces, descriptor records,
+- `DcsvIo.D2.Messaging.Abstractions` — interfaces, descriptor records,
   registry, failure helpers, attributes (`MqPub` / `MqSub`),
   `AmqpHeaders`, codegen-emitted `MqMessages.*` / `MqSubscriptions.*`.
-- `D2.Shared.Encryption` — `IPayloadCrypto` keyed per encryption domain;
+- `DcsvIo.D2.Encryption` — `IPayloadCrypto` keyed per encryption domain;
   `EncryptionDomains` constants.
-- `D2.Shared.Caching.Abstractions` — `IDistributedCache` consumed by
+- `DcsvIo.D2.Caching.Abstractions` — `IDistributedCache` consumed by
   `CacheIdempotencyStore`.
-- `D2.Shared.Handler` — subscribers are `BaseHandler<TSub, TIn, Unit>`
+- `DcsvIo.D2.Handler` — subscribers are `BaseHandler<TSub, TIn, Unit>`
   instances; the consumer wrapper invokes them via the standard pipeline.
-- `D2.Shared.Resilience` — `RetryHelper.RetryAsync` drives the publisher's
+- `DcsvIo.D2.Resilience` — `RetryHelper.RetryAsync` drives the publisher's
   built-in transient retry loop.
-- `D2.Shared.Result`, `D2.Shared.Utilities`, `D2.Shared.I18n.Abstractions`
+- `DcsvIo.D2.Result`, `DcsvIo.D2.Utilities`, `DcsvIo.D2.I18n.Abstractions`
   — standard cross-cutting deps.
-- `D2.Shared.Context.Abstractions` + `.Abstractions` — for the consumer-side DI
+- `DcsvIo.D2.Context.Abstractions` + `.Abstractions` — for the consumer-side DI
   registration of `MutableRequestContext` / `IRequestContext` (handlers
   resolve `IRequestContext` through `HandlerContext`); the consumer
   applies the `x-d2-context`-decoded `PropagatedContext` onto the per-
@@ -768,7 +768,7 @@ cycles via `MaxAttempts`.
 
 A service-agnostic Node runtime for both directions lives at
 [`public/packages/typescript/messaging/rabbitmq/`](../../../typescript/messaging/rabbitmq/README.md)
-(`@d2/messaging-rabbitmq`). On the **consume** side it declares the same topology
+(`@dcsv-io/d2-messaging-rabbitmq`). On the **consume** side it declares the same topology
 (primary + `{q}.dlx` + `{q}.dlq` + retry tiers), consumes with manual acks,
 republishes failures with the same `DlqFailureMetadata`, deduplicates via the same
 5-point idempotency contract, and establishes the same per-delivery context
@@ -780,7 +780,7 @@ message can only be published to a `plaintext` domain or one whose composer was
 wired in, a runtime default-deny (`composeBody`) second-locks the dynamic paths,
 and there is no raw-bytes publish overload — the composer for a domain is the only
 path to the socket for that domain. Its Testcontainer suite replays golden
-messages emitted by `D2.Shared.Tests`
+messages emitted by `DcsvIo.D2.Tests`
 `Integration/ContractFixtures/MqGoldenMessageFixtureEmitter` and round-trips its
 own published frames back through the consumer pipeline.
 

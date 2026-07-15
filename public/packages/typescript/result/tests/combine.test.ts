@@ -9,7 +9,7 @@ import { ErrorCodes } from "../src/error-codes.g.js";
 import { notFound, validationFailed, forbidden } from "../src/factories.g.js";
 import { fail, ok } from "../src/factories.js";
 import { HttpStatusCode } from "../src/http-status-codes.js";
-import { ErrorCategoryWire } from "@d2/error-category";
+import { ErrorCategoryWire } from "@dcsv-io/d2-error-category";
 
 describe("combine() — fixed-arity tuple form", () => {
   it("all-success → tuple of payloads", () => {

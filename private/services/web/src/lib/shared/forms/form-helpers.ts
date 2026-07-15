@@ -14,7 +14,7 @@
  * key string so the form still displays something operators can
  * recognize.
  */
-import type { InputError, TKMessage } from "@d2/result";
+import type { InputError, TKMessage } from "@dcsv-io/d2-result";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as m from "$lib/paraglide/messages.js";
 

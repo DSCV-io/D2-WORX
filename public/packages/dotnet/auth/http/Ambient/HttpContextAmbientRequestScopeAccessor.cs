@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http.Ambient;
+namespace DcsvIo.D2.Auth.Http.Ambient;
 
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 using Microsoft.AspNetCore.Http;
 
 /// <summary>
@@ -19,8 +19,8 @@ using Microsoft.AspNetCore.Http;
 /// <remarks>
 /// <para>
 /// The <see cref="IAmbientRequestScopeAccessor"/> port lives in
-/// <c>D2.Shared.Auth.Abstractions</c> (framework-free, referenced by both this
-/// lib and <c>D2.Shared.Auth.Outbound</c>). This adapter keeps the outbound lib
+/// <c>DcsvIo.D2.Auth.Abstractions</c> (framework-free, referenced by both this
+/// lib and <c>DcsvIo.D2.Auth.Outbound</c>). This adapter keeps the outbound lib
 /// free of any AspNetCore framework reference by living in this transport lib,
 /// which already references <c>Microsoft.AspNetCore.App</c>.
 /// <see cref="IHttpContextAccessor.HttpContext"/> is backed by an

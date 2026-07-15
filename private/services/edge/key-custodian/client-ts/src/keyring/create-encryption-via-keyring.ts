@@ -2,9 +2,9 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import type { IPayloadCrypto } from "@d2/encryption";
-import type { ILogger } from "@d2/logging";
-import { falsey } from "@d2/utilities";
+import type { IPayloadCrypto } from "@dcsv-io/d2-encryption";
+import type { ILogger } from "@dcsv-io/d2-logging";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 import type { RotationSubscription } from "../rotation/rotation-subscription.js";
 import { KeyringBackedPayloadCrypto } from "./keyring-backed-payload-crypto.js";

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.TokenExchange;
+namespace DcsvIo.D2.Auth.Outbound.TokenExchange;
 
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
-using D2.Shared.Auth.Outbound.Telemetry;
-using D2.Shared.Caching;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Outbound.Telemetry;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Result;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

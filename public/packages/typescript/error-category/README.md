@@ -2,11 +2,11 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/error-category
+# @dcsv-io/d2-error-category
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
-Foundational zero-dependency leaf that exports the closed `ErrorCategory` classification — the nine-value semantic/telemetry class every `D2Result` and every error code carries. Mirrors `D2.Shared.ErrorCodes.Category` on the .NET side. Lives here so `@d2/result` and `@d2/error-codes-registry` can import `ErrorCategory` without risking a circular dependency.
+Foundational zero-dependency leaf that exports the closed `ErrorCategory` classification — the nine-value semantic/telemetry class every `D2Result` and every error code carries. Mirrors `DcsvIo.D2.ErrorCodes.Category` on the .NET side. Lives here so `@dcsv-io/d2-result` and `@dcsv-io/d2-error-codes-registry` can import `ErrorCategory` without risking a circular dependency.
 
 The category is the producer's coarse signal — `infrastructure_unavailable`, `not_found`, `validation_failure` — so a consumer can do generic class-based handling (retry any `infrastructure_unavailable`) without importing the producer's error-code catalog.
 
@@ -27,7 +27,7 @@ None. This is a zero-dependency leaf so any package may import it regardless of 
 ## Usage example
 
 ```ts
-import { type ErrorCategory, ErrorCategoryWire } from "@d2/error-category";
+import { type ErrorCategory, ErrorCategoryWire } from "@dcsv-io/d2-error-category";
 
 function isRetryable(category: ErrorCategory): boolean {
   return (
@@ -39,8 +39,8 @@ function isRetryable(category: ErrorCategory): boolean {
 
 ## Why a separate package
 
-`ErrorCategory` is needed by both `@d2/result` (the typed `D2Result.category` field) and `@d2/error-codes-registry` (the `ErrorCodeInfo.category` field). Keeping it in a shallow zero-dep leaf breaks any potential cycle structurally — exactly the precedent set by `@d2/i18n-keys` for the TK constants.
+`ErrorCategory` is needed by both `@dcsv-io/d2-result` (the typed `D2Result.category` field) and `@dcsv-io/d2-error-codes-registry` (the `ErrorCodeInfo.category` field). Keeping it in a shallow zero-dep leaf breaks any potential cycle structurally — exactly the precedent set by `@dcsv-io/d2-i18n-keys` for the TK constants.
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.ErrorCodes.Category` (`ErrorCategory.g.cs`). Both are generated from the same `contracts/error-category/error-category.spec.json` source. A cross-runtime parity fixture (`contract-tests/fixtures/error-category/mapping.json`) asserts the .NET enum wire set ≡ this TS union ≡ the spec — drift structurally impossible.
+Mirrors `DcsvIo.D2.ErrorCodes.Category` (`ErrorCategory.g.cs`). Both are generated from the same `contracts/error-category/error-category.spec.json` source. A cross-runtime parity fixture (`contract-tests/fixtures/error-category/mapping.json`) asserts the .NET enum wire set ≡ this TS union ≡ the spec — drift structurally impossible.

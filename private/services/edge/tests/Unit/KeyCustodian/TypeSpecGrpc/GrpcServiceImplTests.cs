@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Threading.Tasks;
-using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Services.Protos.Common.V1;
-using D2.Services.Protos.SignFixtures.V2Alpha;
-using D2.Shared.Result;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+using DcsvIo.D2.Result;
+using global::D2.Services.Protos.Common.V1;
+using global::D2.Services.Protos.SignFixtures.V2Alpha;
 using Google.Protobuf;
 using Grpc.Core;
 using Grpc.Net.Client;
@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using DtoSignFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
 
 /// <summary>
 /// In-memory gRPC harness tests for the TypeSpec-emitted

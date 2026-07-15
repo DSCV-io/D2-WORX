@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Geo.Default.Extensions;
+namespace DcsvIo.D2.Tests.Unit.Geo.Default.Extensions;
 
 using AwesomeAssertions;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Geo.Default.Extensions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Geo.Default.Extensions;
 using Xunit;
 
 /// <summary>

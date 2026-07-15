@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Telemetry;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Telemetry;
 
 using System;
 using System.Collections.Concurrent;
@@ -12,9 +12,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth.Grpc.Telemetry;
-using D2.Shared.Auth.Http.Telemetry;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Grpc.Telemetry;
+using DcsvIo.D2.Auth.Http.Telemetry;
+using DcsvIo.D2.Context.Abstractions;
 using Microsoft.Extensions.Logging;
 using Xunit;
 

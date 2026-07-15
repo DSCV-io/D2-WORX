@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result;
+namespace DcsvIo.D2.Result;
 
 using System.Text.Json.Serialization;
-using D2.Shared.I18n;
+using DcsvIo.D2.I18n;
 
 /// <summary>
 /// A field-level validation error: the offending field name plus one or more

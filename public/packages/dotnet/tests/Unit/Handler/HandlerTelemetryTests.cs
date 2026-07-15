@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Handler;
+namespace DcsvIo.D2.Tests.Unit.Handler;
 
 using AwesomeAssertions;
-using D2.Shared.Handler;
+using DcsvIo.D2.Handler;
 using Xunit;
 
 // Same serialization as BaseHandlerTests — both subscribe to the static
@@ -18,7 +18,7 @@ public sealed class HandlerTelemetryTests
     [Fact]
     public void SourceName_MatchesAssemblyIdentifier()
     {
-        HandlerTelemetry.SourceName.Should().Be("D2.Shared.Handler");
+        HandlerTelemetry.SourceName.Should().Be("DcsvIo.D2.Handler");
     }
 
     [Fact]

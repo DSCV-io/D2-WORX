@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.RequestContextAbstractions;
+namespace DcsvIo.D2.Tests.Unit.RequestContextAbstractions;
 
 using AwesomeAssertions;
-using D2.Shared.AuthContext.Abstractions;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.AuthContext.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
 using Xunit;
 
 /// <summary>

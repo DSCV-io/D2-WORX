@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
 
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority.ISeedCertificateAuthorityHandler;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority.ISeedCertificateAuthorityHandler;
 using I = SeedCertificateAuthorityInput;
 using O = SeedCertificateAuthorityOutput;
 

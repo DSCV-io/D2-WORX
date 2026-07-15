@@ -59,28 +59,28 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.7" />
 
-    <!-- Microsoft.IdentityModel — OIDC discovery doc handling for D2.Shared.Auth.Outbound
+    <!-- Microsoft.IdentityModel — OIDC discovery doc handling for DcsvIo.D2.Auth.Outbound
          (ConfigurationManager<OpenIdConnectConfiguration> auto-fetches /.well-known/openid-configuration
          and exposes token_endpoint / jwks_uri).
          Tokens is the base — provides SecurityKey type used on JwksKeySetSnapshot
-         (D2.Shared.Auth.Abstractions). OpenIdConnect transitively depends on Tokens
+         (DcsvIo.D2.Auth.Abstractions). OpenIdConnect transitively depends on Tokens
          but we list both explicitly so each csproj declares what it actually uses. -->
     <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.16.0" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
 
     <!-- Grpc.Net.ClientFactory — gRPC client typed-builder + ConfigureChannel for the
-         D2.Shared.Auth.Outbound .AddD2ForwardedJwt() / .AddD2WorkloadCertificate()
+         DcsvIo.D2.Auth.Outbound .AddD2ForwardedJwt() / .AddD2WorkloadCertificate()
          per-channel opt-in extensions. -->
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0" />
-    <!-- Grpc.AspNetCore.Server — server-side gRPC binding for D2.Shared.Auth.Grpc
+    <!-- Grpc.AspNetCore.Server — server-side gRPC binding for DcsvIo.D2.Auth.Grpc
          (the JwtAuthInterceptor + per-method scope metadata on ServerCallContext).
          Same release train (2.71.0) as the client-only sibling above. -->
     <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.71.0" />
     <PackageVersion Include="StackExchange.Redis" Version="2.8.31" />
     <PackageVersion Include="Testcontainers.Redis" Version="4.0.0" />
 
-    <!-- RabbitMQ.Client 7.x — D2.Shared.Messaging.RabbitMq's transport client.
+    <!-- RabbitMQ.Client 7.x — DcsvIo.D2.Messaging.RabbitMq's transport client.
          v7 brings full async APIs (BasicPublishAsync, IAsyncBasicConsumer,
          publisher confirms) + topology auto-recovery. Major version bump from
          v6; don't downgrade. -->
@@ -92,21 +92,21 @@ Copyright (c) DCSV. All rights reserved.
          Testcontainers 4.x release train as the Redis + RabbitMq pins above. -->
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.0.0" />
 
-    <!-- EF Core + Npgsql — for D2.Shared.Handler.Repo (PG error code → D2Result mapping) -->
+    <!-- EF Core + Npgsql — for DcsvIo.D2.Handler.Repo (PG error code → D2Result mapping) -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
     <!-- Microsoft.EntityFrameworkCore.Relational 10.0.7 — required by
-         D2.Shared.DataGovernance.EntityFrameworkCore for IProperty.GetColumnName(),
+         DcsvIo.D2.DataGovernance.EntityFrameworkCore for IProperty.GetColumnName(),
          IReadOnlyEntityType.IsMappedToJson(), and GetTableName() (RelationalPropertyExtensions
          / RelationalEntityTypeExtensions — these APIs live in the Relational assembly, not
          the base EF Core package). Same release train (10.0.7). -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.7" />
     <!-- Microsoft.EntityFrameworkCore.InMemory — provider-free in-memory database used
-         in D2.Shared.DataGovernance.EntityFrameworkCore unit tests (model-build-only
+         in DcsvIo.D2.DataGovernance.EntityFrameworkCore unit tests (model-build-only
          assertions against IProperty annotations; no real DB provider needed). -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.7" />
     <!-- Microsoft.EntityFrameworkCore.Design — design-time services for
          `dotnet ef migrations add` (the first KeyCustodian migration in
-         D2.Edge.KeyCustodian.Infra). Referenced PrivateAssets="all" so the
+         DcsvIo.D2.Private.Edge.KeyCustodian.Infra). Referenced PrivateAssets="all" so the
          design-time assets never flow to runtime consumers. Same 10.0.7
          release train as the EF Core base + Relational pins above. -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7" />
@@ -114,28 +114,28 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <!-- Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime — NodaTime EF Core value-
          converter plugin (Instant ↔ timestamptz, LocalDateTime ↔ timestamp, ...).
-         Used by D2.Shared.Time. Same 10.x release train as the Npgsql.EFCore.PG
+         Used by DcsvIo.D2.Time. Same 10.x release train as the Npgsql.EFCore.PG
          pin above. -->
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="10.0.1" />
 
     <!-- NodaTime — canonical date/time library replacing BCL DateTime /
-         DateTimeOffset across the D2 codebase. Used by D2.Shared.Time and
+         DateTimeOffset across the D2 codebase. Used by DcsvIo.D2.Time and
          every downstream consumer that needs Instant / LocalDateTime / etc. -->
     <PackageVersion Include="NodaTime" Version="3.2.2" />
 
-    <!-- Serilog — for D2.Shared.Logging. The umbrella Serilog.AspNetCore package
+    <!-- Serilog — for DcsvIo.D2.Logging. The umbrella Serilog.AspNetCore package
          transitively pulls Serilog, Serilog.Extensions.Logging, Serilog.Sinks.Console,
          and Microsoft.Extensions.Logging.Abstractions; UseSerilogRequestLogging
          lives there. Serilog.Formatting.Compact is listed explicitly so the
          CompactJsonFormatter dep is visible (prevents transitive removal silently
          dropping the formatter). Serilog.Enrichers.Environment provides the
          WithMachineName() enricher. The OTLP log-exporter sink lives in
-         D2.Shared.Telemetry, not here. -->
+         DcsvIo.D2.Telemetry, not here. -->
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
     <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
 
-    <!-- OpenTelemetry — for D2.Shared.Telemetry. Surgical 1.15.3 overrides on
+    <!-- OpenTelemetry — for DcsvIo.D2.Telemetry. Surgical 1.15.3 overrides on
          OpenTelemetry.Api + OpenTelemetry.Exporter.OpenTelemetryProtocol per the
          GHSA-g94r-2vxg-569j / GHSA-mr8r-92fq-pj8p / GHSA-q834-8qmm-v933 advisories
          on the 1.15.0 line. Direct ref on OpenTelemetry.Api is required to override
@@ -159,11 +159,11 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
 
     <!-- libphonenumber-csharp — Apache-2.0. Phone-number parsing, validation, and
-         E.164 formatting for D2.Shared.Validation's DefaultPhoneValidator.
+         E.164 formatting for DcsvIo.D2.Validation's DefaultPhoneValidator.
          Backed by the same Google libphonenumber data as libphonenumber-js on the TS side. -->
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.31" />
 
-    <!-- Roslyn — for D2.Shared.I18n.SourceGen (TK constants generator) and
+    <!-- Roslyn — for DcsvIo.D2.I18n.SourceGen (TK constants generator) and
          Microsoft.EntityFrameworkCore.Design 10.0.7 (requires >= 5.0.0). -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />
@@ -172,7 +172,7 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="System.Text.Json" Version="10.0.7" />
   </ItemGroup>
 
-  <!-- Test infrastructure — referenced by D2.Shared.Tests + per-service test csprojs -->
+  <!-- Test infrastructure — referenced by DcsvIo.D2.Tests + per-service test csprojs -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
@@ -190,11 +190,11 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.10.0" />
 
     <!-- Microsoft.AspNetCore.TestHost — in-memory test server for end-to-end
-         middleware-pipeline tests of D2.Shared.Auth.AspNetCore. -->
+         middleware-pipeline tests of DcsvIo.D2.Auth.AspNetCore. -->
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.7" />
 
     <!-- Grpc.Tools — protoc + plugin invocation for the test-only minimal
-         .proto files used by D2.Shared.Auth.Grpc end-to-end integration tests
+         .proto files used by DcsvIo.D2.Auth.Grpc end-to-end integration tests
          (exercises the full MapGrpcService<T>() pipeline through TestServer
          + an in-process Grpc.Net.Client channel). Build-only PackageReference
          in test csprojs (PrivateAssets="all"). Same release train (2.71.0) as

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching.Tiered;
+namespace DcsvIo.D2.Caching.Tiered;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 

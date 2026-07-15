@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Subscribing;
+namespace DcsvIo.D2.Messaging.RabbitMq.Subscribing;
 
 using System.Text;
 using System.Text.Json;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Builds the <c>x-d2-failure-reason</c> header value (JSON-encoded

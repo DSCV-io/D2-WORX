@@ -6,7 +6,7 @@
 import {
   GEO_RECORDS_META,
   type RecordFieldMeta,
-} from "@d2/geo-default/_records-meta.g";
+} from "@dcsv-io/d2-geo-default/_records-meta.g";
 import { describe, expect, it } from "vitest";
 
 import { loadFixture } from "../src/index.js";

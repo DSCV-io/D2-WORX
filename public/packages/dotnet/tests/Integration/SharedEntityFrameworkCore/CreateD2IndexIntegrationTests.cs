@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.SharedEntityFrameworkCore;
+namespace DcsvIo.D2.Tests.Integration.SharedEntityFrameworkCore;
 
 using System;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.EntityFrameworkCore;
-using D2.Shared.Location.ValueObjects;
-using D2.Shared.Tests.Integration.DataGovernance;
+using DcsvIo.D2.EntityFrameworkCore;
+using DcsvIo.D2.Location.ValueObjects;
+using DcsvIo.D2.Tests.Integration.DataGovernance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;

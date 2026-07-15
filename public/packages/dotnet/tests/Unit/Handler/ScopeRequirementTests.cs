@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Handler;
+namespace DcsvIo.D2.Tests.Unit.Handler;
 
 using System.Collections.Generic;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Handler.Abstractions;
+using DcsvIo.D2.Handler.Abstractions;
 using Xunit;
 
 public sealed class ScopeRequirementTests

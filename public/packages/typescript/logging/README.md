@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/logging
+# @dcsv-io/d2-logging
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
 Pino-backed `ILogger` interface + `markRedactedFields()` PII registration
 helper + `sanitizedErrorRender()` for safe error logging. Mirrors
-`D2.Shared.Logging` (.NET).
+`DcsvIo.D2.Logging` (.NET).
 
 ## Public API
 
@@ -40,14 +40,14 @@ catch (e) {
 
 PII fields on data types are redacted via `markRedactedFields(typeId, paths)`
 for hand-written types or via the codegen-emitted `<TypeName>RedactPaths`
-constant for spec-driven types (`@d2/auth-context-abstractions`,
-`@d2/request-context-abstractions`). `setupLogger` merges both into Pino's
+constant for spec-driven types (`@dcsv-io/d2-auth-context-abstractions`,
+`@dcsv-io/d2-request-context-abstractions`). `setupLogger` merges both into Pino's
 `redact: { paths }` config so emitted JSON has the fields removed.
 
 ## Dependencies
 
-- `@d2/utilities` (boundary helpers)
-- `@d2/result` (no direct usage; dependency boundary retained for
+- `@dcsv-io/d2-utilities` (boundary helpers)
+- `@dcsv-io/d2-result` (no direct usage; dependency boundary retained for
   D2Result-aware log-helper composition)
 - `pino` (runtime logger)
 
@@ -58,10 +58,10 @@ import {
   setupLogger,
   markRedactedFields,
   sanitizedErrorRender,
-} from "@d2/logging";
+} from "@dcsv-io/d2-logging";
 
 // Codegen-emitted types contribute via setupLogger redactPaths arg.
-import { IRequestContextRedactPaths } from "@d2/request-context-abstractions";
+import { IRequestContextRedactPaths } from "@dcsv-io/d2-request-context-abstractions";
 
 // Hand-written types register at module load.
 const SESSION_TYPE = Symbol("Session");
@@ -78,7 +78,7 @@ log.info("user signed in", { userId: ctx.userId });
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.Logging`:
+Mirrors `DcsvIo.D2.Logging`:
 
 - `ILogger` ↔ .NET `ILogger` consumer surface, with the PII-safe per-level
   shape (no `Exception` parameter — analog of the .NET

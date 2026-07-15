@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.Singleflight;
+namespace DcsvIo.D2.Tests.Unit.Resilience.Singleflight;
 
 using AwesomeAssertions;
-using D2.Shared.Resilience.Singleflight;
+using DcsvIo.D2.Resilience.Singleflight;
 using Xunit;
 
 public sealed class SingleflightTests

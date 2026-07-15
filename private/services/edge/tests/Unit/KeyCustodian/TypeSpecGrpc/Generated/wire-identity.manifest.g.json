@@ -4,5 +4,5 @@
   "generation": 2,
   "stability": "alpha",
   "channel": "v2alpha",
-  "x-d2-generated-by": "@d2/typespec-emitters"
+  "x-d2-generated-by": "@dcsv-io/d2-typespec-emitters"
 }

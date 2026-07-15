@@ -162,13 +162,13 @@ describe("isUnshippedHeaderOnly", () => {
 
   it("file with an API line → false", () => {
     expect(
-      isUnshippedHeaderOnly("#nullable enable\nD2.Shared.Foo.Bar() -> void\n"),
+      isUnshippedHeaderOnly("#nullable enable\nDcsvIo.D2.Foo.Bar() -> void\n"),
     ).toBe(false);
   });
 
   it("multiple API lines → false", () => {
     expect(
-      isUnshippedHeaderOnly("#nullable enable\nD2.Shared.Foo\nD2.Shared.Bar\n"),
+      isUnshippedHeaderOnly("#nullable enable\nDcsvIo.D2.Foo\nDcsvIo.D2.Bar\n"),
     ).toBe(false);
   });
 });
@@ -190,8 +190,8 @@ const NPM_DIR = join(sep === "\\" ? "C:\\abs\\npm-thing" : "/abs/npm-thing");
 
 describe("checkFingerprintCurrency — nuget", () => {
   const nugetDir = NUGET_DIR;
-  const pkg = nugetPkg("D2.Shared.Thing", nugetDir);
-  const shippedContent = "#nullable enable\nD2.Shared.Thing.A() -> void\n";
+  const pkg = nugetPkg("DcsvIo.D2.Thing", nugetDir);
+  const shippedContent = "#nullable enable\nDcsvIo.D2.Thing.A() -> void\n";
   const unshippedContent = "#nullable enable\n";
   const sourceContent = "public class Thing {}\n";
 
@@ -272,7 +272,7 @@ describe("checkFingerprintCurrency — nuget", () => {
 
   it("non-empty Unshipped.txt → stale with unshipped-not-empty reason", () => {
     const nonEmptyUnshipped =
-      "#nullable enable\nD2.Shared.Thing.NewMethod() -> void\n";
+      "#nullable enable\nDcsvIo.D2.Thing.NewMethod() -> void\n";
     const sourceLister: SourceLister = () => ["Thing.cs"];
     const fileReader: CurrencyFileReader = (abs) => {
       if (abs === join(nugetDir, "PublicAPI.Shipped.txt"))
@@ -307,7 +307,7 @@ describe("checkFingerprintCurrency — nuget", () => {
 
   it("both fingerprint mismatch and non-empty Unshipped → both reasons reported", () => {
     const nonEmptyUnshipped =
-      "#nullable enable\nD2.Shared.Thing.NewMethod() -> void\n";
+      "#nullable enable\nDcsvIo.D2.Thing.NewMethod() -> void\n";
     const sourceLister: SourceLister = () => ["Thing.cs"];
     const fileReader: CurrencyFileReader = (abs) => {
       if (abs === join(nugetDir, ".release-fingerprint"))
@@ -338,19 +338,19 @@ describe("checkFingerprintCurrency — nuget", () => {
 
 describe("checkFingerprintCurrency — npm", () => {
   const npmDir = NPM_DIR;
-  const pkg = npmPkg("@d2/thing", npmDir);
+  const pkg = npmPkg("@dcsv-io/d2-thing", npmDir);
   const sourceContent = "export const X = 1;\n";
   const apiMdContent = "// @public\nexport const X = 1;\n";
 
   // api-extractor.json with a reportFileName so the api.md path is predictable.
   const apiExtractorJson = JSON.stringify({
     mainEntryPointFilePath: "dist/index.d.ts",
-    apiReport: { reportFileName: "@d2/thing.api.md" },
+    apiReport: { reportFileName: "@dcsv-io/d2-thing.api.md" },
   });
 
-  // With api-extractor.json specifying reportFileName "@d2/thing.api.md",
-  // resolveApiMdPathFromReader returns `<npmDir>/etc/@d2/thing.api.md`.
-  const expectedApiMdPath = join(npmDir, "etc", "@d2/thing.api.md");
+  // With api-extractor.json specifying reportFileName "@dcsv-io/d2-thing.api.md",
+  // resolveApiMdPathFromReader returns `<npmDir>/etc/@dcsv-io/d2-thing.api.md`.
+  const expectedApiMdPath = join(npmDir, "etc", "@dcsv-io/d2-thing.api.md");
 
   function buildOptions(
     onDiskFingerprint: string,
@@ -365,7 +365,7 @@ describe("checkFingerprintCurrency — npm", () => {
       if (abs === expectedApiMdPath) return apiMdContent;
       if (abs === join(npmDir, "package.json"))
         return JSON.stringify({
-          name: "@d2/thing",
+          name: "@dcsv-io/d2-thing",
           version: "0.1.0",
           dependencies: {},
         });
@@ -404,9 +404,10 @@ describe("checkFingerprintCurrency — npm", () => {
     const sourceLister: SourceLister = () => ["src/index.ts"];
     const fileReader: CurrencyFileReader = (abs) => {
       if (abs === `/abs/npm-thing/src/index.ts`) return sourceContent;
-      if (abs === `/abs/npm-thing/etc/@d2/thing.api.md`) return apiMdContent;
+      if (abs === `/abs/npm-thing/etc/@dcsv-io/d2-thing.api.md`)
+        return apiMdContent;
       if (abs === `/abs/npm-thing/package.json`)
-        return JSON.stringify({ name: "@d2/thing", version: "0.1.0" });
+        return JSON.stringify({ name: "@dcsv-io/d2-thing", version: "0.1.0" });
 
       return undefined; // no .release-fingerprint
     };
@@ -433,34 +434,34 @@ describe("checkFingerprintCurrency — npm", () => {
 });
 
 // ---------------------------------------------------------------------------
-// checkFingerprintCurrency — npm package with @d2/* workspace dependencies
+// checkFingerprintCurrency — npm package with @dcsv-io/d2-* workspace dependencies
 //
 // Regression test for the root-cause bug: the original gate built resolvedVersions
 // with only [pkg.name → currentVersion], so substituteResolvedDeps could not
-// resolve @d2/* dep literals (e.g. "workspace:*") and the DEPS input diverged
+// resolve @dcsv-io/d2-* dep literals (e.g. "workspace:*") and the DEPS input diverged
 // from the seed's map → false-positive fingerprint mismatch on every package that
-// declares any @d2/* dependency. The fix: checkFingerprintCurrency builds
+// declares any @dcsv-io/d2-* dependency. The fix: checkFingerprintCurrency builds
 // resolvedVersions from ALL packages (mirroring checkBaselineDrift), so every
-// @d2/* dep is substituted with its committed version exactly as the seed does.
+// @dcsv-io/d2-* dep is substituted with its committed version exactly as the seed does.
 // ---------------------------------------------------------------------------
 
-describe("checkFingerprintCurrency — npm package with @d2/* dependencies (regression)", () => {
+describe("checkFingerprintCurrency — npm package with @dcsv-io/d2-* dependencies (regression)", () => {
   const depDir = join(sep === "\\" ? "C:\\abs\\npm-dep" : "/abs/npm-dep");
   const consumerDir = join(
     sep === "\\" ? "C:\\abs\\npm-consumer" : "/abs/npm-consumer",
   );
 
-  const depPkg = npmPkg("@d2/dep", depDir);
-  // Consumer declares "@d2/dep": "workspace:*" in package.json — the literal
+  const depPkg = npmPkg("@dcsv-io/d2-dep", depDir);
+  // Consumer declares "@dcsv-io/d2-dep": "workspace:*" in package.json — the literal
   // the gate must substitute with "0.1.0" (depPkg.currentVersion) to match the seed.
   const consumerPkg: PackageDescriptor = {
-    name: "@d2/consumer",
+    name: "@dcsv-io/d2-consumer",
     ecosystem: "npm",
     dir: consumerDir,
     manifestPath: join(consumerDir, "package.json"),
     changelogPath: join(consumerDir, "CHANGELOG.md"),
     currentVersion: "0.2.0",
-    dependencies: ["@d2/dep"],
+    dependencies: ["@dcsv-io/d2-dep"],
   };
 
   const depSource = "export const D = 1;\n";
@@ -483,14 +484,14 @@ describe("checkFingerprintCurrency — npm package with @d2/* dependencies (regr
   function buildConsumerFingerprint(): string {
     const sourceDump = buildSourceDump(["src/index.ts"], () => consumerSource);
     const packageJson = {
-      name: "@d2/consumer",
+      name: "@dcsv-io/d2-consumer",
       version: "0.2.0",
-      dependencies: { "@d2/dep": "workspace:*" },
+      dependencies: { "@dcsv-io/d2-dep": "workspace:*" },
     };
     // Seed maps ALL consumables — here both dep + consumer at their committed versions.
     const allVersions = new Map<string, string>([
-      ["@d2/dep", "0.1.0"],
-      ["@d2/consumer", "0.2.0"],
+      ["@dcsv-io/d2-dep", "0.1.0"],
+      ["@dcsv-io/d2-consumer", "0.2.0"],
     ]);
     const substituted = substituteResolvedDeps(packageJson, allVersions);
 
@@ -502,9 +503,9 @@ describe("checkFingerprintCurrency — npm package with @d2/* dependencies (regr
     });
   }
 
-  it("consumer with @d2/dep dependency: seed-style fingerprint → current (no false positive)", () => {
+  it("consumer with @dcsv-io/d2-dep dependency: seed-style fingerprint → current (no false positive)", () => {
     // The seed writes the fingerprint using the full all-package resolved-version
-    // map so "@d2/dep": "workspace:*" → "0.1.0" in the DEPS JSON. The gate must
+    // map so "@dcsv-io/d2-dep": "workspace:*" → "0.1.0" in the DEPS JSON. The gate must
     // use the same map or it reads "workspace:*" literally and produces a different
     // hash → false positive. This test proves the fix: with both packages in the
     // inventory, the gate's recompute matches the seed's composition exactly.
@@ -519,7 +520,7 @@ describe("checkFingerprintCurrency — npm package with @d2/* dependencies (regr
       if (abs === join(depDir, "etc", "dep.api.md")) return depApiMd;
       if (abs === join(depDir, "package.json"))
         return JSON.stringify({
-          name: "@d2/dep",
+          name: "@dcsv-io/d2-dep",
           version: "0.1.0",
           dependencies: {},
         });
@@ -534,9 +535,9 @@ describe("checkFingerprintCurrency — npm package with @d2/* dependencies (regr
         return consumerApiMd;
       if (abs === join(consumerDir, "package.json"))
         return JSON.stringify({
-          name: "@d2/consumer",
+          name: "@dcsv-io/d2-consumer",
           version: "0.2.0",
-          dependencies: { "@d2/dep": "workspace:*" },
+          dependencies: { "@dcsv-io/d2-dep": "workspace:*" },
         });
       if (abs === join(consumerDir, "api-extractor.json"))
         return consumerApiExtractorJson;
@@ -554,17 +555,19 @@ describe("checkFingerprintCurrency — npm package with @d2/* dependencies (regr
     expect(result.stale).toHaveLength(0);
   });
 
-  it("consumer with @d2/dep dependency: narrow map (own-name only) would produce false positive", () => {
+  it("consumer with @dcsv-io/d2-dep dependency: narrow map (own-name only) would produce false positive", () => {
     // Demonstrate the original bug: if we seed the on-disk fingerprint using a
     // narrow map (only own name), the gate's full-map recompute produces a
     // DIFFERENT hash → stale. This assertion would FAIL before the fix (the old
     // gate would have been using the narrow map too, making them match), and it
     // PASSES after the fix because we prove the full-map fp ≠ narrow-map fp.
-    const narrowMap = new Map<string, string>([["@d2/consumer", "0.2.0"]]);
+    const narrowMap = new Map<string, string>([
+      ["@dcsv-io/d2-consumer", "0.2.0"],
+    ]);
     const packageJson = {
-      name: "@d2/consumer",
+      name: "@dcsv-io/d2-consumer",
       version: "0.2.0",
-      dependencies: { "@d2/dep": "workspace:*" },
+      dependencies: { "@dcsv-io/d2-dep": "workspace:*" },
     };
     const narrowSubstituted = substituteResolvedDeps(packageJson, narrowMap);
     const sourceDump = buildSourceDump(["src/index.ts"], () => consumerSource);
@@ -598,8 +601,8 @@ describe("checkFingerprintCurrency — multiple packages", () => {
   it("all packages current → allCurrent true", () => {
     const dirA = NUGET_DIR;
     const dirB = NUGET_DIR_2;
-    const pkgA = nugetPkg("D2.Shared.Thing", dirA);
-    const pkgB = nugetPkg("D2.Shared.Thing2", dirB);
+    const pkgA = nugetPkg("DcsvIo.D2.Thing", dirA);
+    const pkgB = nugetPkg("DcsvIo.D2.Thing2", dirB);
     const shippedA = "#nullable enable\nD2.A\n";
     const shippedB = "#nullable enable\nD2.B\n";
     const unshipped = "#nullable enable\n";
@@ -635,8 +638,8 @@ describe("checkFingerprintCurrency — multiple packages", () => {
   it("one stale package in a mix → allCurrent false, only the stale one named", () => {
     const dirA = NUGET_DIR;
     const dirB = NUGET_DIR_2;
-    const pkgA = nugetPkg("D2.Shared.Thing", dirA);
-    const pkgB = nugetPkg("D2.Shared.Thing2", dirB);
+    const pkgA = nugetPkg("DcsvIo.D2.Thing", dirA);
+    const pkgB = nugetPkg("DcsvIo.D2.Thing2", dirB);
     const shipped = "#nullable enable\nD2.X\n";
     const unshipped = "#nullable enable\n";
     const src = "public class C {}\n";
@@ -665,7 +668,7 @@ describe("checkFingerprintCurrency — multiple packages", () => {
 
     expect(result.allCurrent).toBe(false);
     expect(result.stale).toHaveLength(1);
-    expect(result.stale[0]!.name).toBe("D2.Shared.Thing2");
+    expect(result.stale[0]!.name).toBe("DcsvIo.D2.Thing2");
   });
 });
 
@@ -678,7 +681,7 @@ describe("formatCurrencyReport", () => {
     const report = formatCurrencyReport({
       results: [
         {
-          name: "D2.Shared.X",
+          name: "DcsvIo.D2.X",
           ecosystem: "nuget",
           current: true,
           reasons: [],
@@ -698,7 +701,7 @@ describe("formatCurrencyReport", () => {
       results: [],
       stale: [
         {
-          name: "D2.Shared.Result",
+          name: "DcsvIo.D2.Result",
           ecosystem: "nuget",
           current: false,
           reasons: ["fingerprint-mismatch"],
@@ -709,7 +712,7 @@ describe("formatCurrencyReport", () => {
     });
 
     expect(report).toContain("STALE BASELINES detected in 1 package(s)");
-    expect(report).toContain("D2.Shared.Result | nuget | fingerprint mismatch");
+    expect(report).toContain("DcsvIo.D2.Result | nuget | fingerprint mismatch");
     expect(report).toContain("seed-publicapi-baselines.mjs");
     expect(report).toContain("seed-apiextractor-baselines.mjs");
     expect(report).toContain("Re-stage");
@@ -720,7 +723,7 @@ describe("formatCurrencyReport", () => {
       results: [],
       stale: [
         {
-          name: "D2.Shared.Auth",
+          name: "DcsvIo.D2.Auth",
           ecosystem: "nuget",
           current: false,
           reasons: ["unshipped-not-empty"],
@@ -731,7 +734,7 @@ describe("formatCurrencyReport", () => {
     });
 
     expect(report).toContain(
-      "D2.Shared.Auth | nuget | Unshipped.txt not empty",
+      "DcsvIo.D2.Auth | nuget | Unshipped.txt not empty",
     );
   });
 
@@ -767,7 +770,7 @@ describe("checkFingerprintCurrency — real-fs integration smoke", () => {
       // Write minimal package files.
       writeFileSync(join(root, "Thing.cs"), "public class Thing {}\n", "utf-8");
       writeFileSync(
-        join(root, "D2.Shared.SmokeTest.csproj"),
+        join(root, "DcsvIo.D2.SmokeTest.csproj"),
         "<Project><PropertyGroup><Version>0.1.0</Version></PropertyGroup></Project>",
         "utf-8",
       );
@@ -783,10 +786,10 @@ describe("checkFingerprintCurrency — real-fs integration smoke", () => {
       );
 
       const pkg: PackageDescriptor = {
-        name: "D2.Shared.SmokeTest",
+        name: "DcsvIo.D2.SmokeTest",
         ecosystem: "nuget",
         dir: root,
-        manifestPath: join(root, "D2.Shared.SmokeTest.csproj"),
+        manifestPath: join(root, "DcsvIo.D2.SmokeTest.csproj"),
         changelogPath: join(root, "CHANGELOG.md"),
         currentVersion: "0.1.0",
         dependencies: [],
@@ -810,7 +813,7 @@ describe("checkFingerprintCurrency — real-fs integration smoke", () => {
       const sourceLister: SourceLister = (_dir, _eco) => ["Thing.cs"];
 
       // Compute what the on-disk fingerprint SHOULD be.
-      const resolvedVersions = new Map([["D2.Shared.SmokeTest", "0.1.0"]]);
+      const resolvedVersions = new Map([["DcsvIo.D2.SmokeTest", "0.1.0"]]);
       const sourceDump = buildSourceDump(
         ["Thing.cs"],
         () => "public class Thing {}\n",
@@ -845,7 +848,7 @@ describe("checkFingerprintCurrency — real-fs integration smoke", () => {
       });
 
       expect(failResult.allCurrent).toBe(false);
-      expect(failResult.stale[0]!.name).toBe("D2.Shared.SmokeTest");
+      expect(failResult.stale[0]!.name).toBe("DcsvIo.D2.SmokeTest");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

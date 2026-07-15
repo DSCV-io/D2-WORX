@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Logging;
+namespace DcsvIo.D2.Tests.Integration.Logging;
 
 using AwesomeAssertions;
-using D2.Shared.Logging.Destructuring;
-using D2.Shared.Tests.Integration.Logging.Infrastructure;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
 using Serilog;
 using Serilog.Events;
 using Xunit;
-using static D2.Shared.Tests.Integration.Logging.Infrastructure.IntegrationRedactionFixtures;
+using static DcsvIo.D2.Tests.Integration.Logging.Infrastructure.IntegrationRedactionFixtures;
 
 /// <summary>
 /// End-to-end Serilog-pipeline redaction coverage. Logs go through a real

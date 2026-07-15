@@ -4,22 +4,22 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge;
 
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Generated;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Http;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Generated;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+using DcsvIo.D2.Result;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -27,11 +27,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using ISessionLivenessTracker =
-    D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker;
+    DcsvIo.D2.Auth.Abstractions.Sessions.ISessionLivenessTracker;
 
 /// <summary>
 /// Compile+run validation for Edge HTTP→gRPC bridge Map* registrations
-/// against real <c>D2.Shared.Auth.Http</c> + <c>D2.Shared.Result</c>.
+/// against real <c>DcsvIo.D2.Auth.Http</c> + <c>DcsvIo.D2.Result</c>.
 /// Unbuilt collaborator <c>I{Module}GrpcClient</c> is a faithful
 /// <see cref="FakeBridgeFixtureGrpcClient"/> (§1.32).
 /// </summary>
@@ -185,7 +185,7 @@ public sealed class BridgeRegistrationValidationTests
         var doc = JsonDocument.Parse(body);
 
         if (doc.RootElement.TryGetProperty(
-                D2.Shared.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_ERROR_CODE, out var el))
+                DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_ERROR_CODE, out var el))
             return el.GetString();
         return null;
     }

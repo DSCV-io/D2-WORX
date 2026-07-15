@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Utilities
+# DcsvIo.D2.Utilities
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
@@ -12,7 +12,7 @@ Runtime dependencies are kept minimal so this lib stays domain-safe:
 
 - `dotenv.net` — only loaded when `D2Env.Load()` is called
 - `JetBrains.Annotations` — compile-time markers
-- `D2.Shared.Result` + `D2.Shared.I18n.Abstractions` — both zero-runtime-dep themselves; pulled in so `TryParseEmail` / `TryParsePhoneNumber` can return `D2Result<string>` with `TK.*`-keyed messages
+- `DcsvIo.D2.Result` + `DcsvIo.D2.I18n.Abstractions` — both zero-runtime-dep themselves; pulled in so `TryParseEmail` / `TryParsePhoneNumber` can return `D2Result<string>` with `TK.*`-keyed messages
 
 Consumed by every other shared lib + service.
 
@@ -58,9 +58,9 @@ CLI coverage one-liner (writes a Cobertura XML; coverlet.console's stdout summar
 
 ```bash
 cd public/packages/dotnet/tests
-coverlet bin/Debug/net10.0/D2.Shared.Tests.dll \
+coverlet bin/Debug/net10.0/DcsvIo.D2.Tests.dll \
   --target dotnet --targetargs "test --no-build" \
-  --include "[D2.Shared.Utilities]*" \
+  --include "[DcsvIo.D2.Utilities]*" \
   --exclude-by-attribute "GeneratedCode" \
   --format cobertura --output ./coverage/utilities.cobertura.xml
 ```

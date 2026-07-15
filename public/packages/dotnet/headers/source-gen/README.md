@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Headers.SourceGen
+# DcsvIo.D2.Headers.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
@@ -20,10 +20,10 @@ The spec file is the single source of truth for every D2 wire header (HTTP / gRP
 
 | Consuming assembly         | Filter                           | Emitted source                               |
 | -------------------------- | -------------------------------- | -------------------------------------------- |
-| `D2.Shared.Headers.Common` | `applicability.Length >= 2`      | `CommonHeaders.g.cs` (class `CommonHeaders`) |
-| `D2.Shared.Headers.Http`   | `applicability.Contains("http")` | `HttpHeaders.g.cs` (class `HttpHeaders`)     |
-| `D2.Shared.Headers.Amqp`   | `applicability.Contains("amqp")` | `AmqpHeaders.g.cs` (class `AmqpHeaders`)     |
-| `D2.Shared.Headers.Grpc`   | `applicability.Contains("grpc")` | `GrpcHeaders.g.cs` (class `GrpcHeaders`)     |
+| `DcsvIo.D2.Headers.Common` | `applicability.Length >= 2`      | `CommonHeaders.g.cs` (class `CommonHeaders`) |
+| `DcsvIo.D2.Headers.Http`   | `applicability.Contains("http")` | `HttpHeaders.g.cs` (class `HttpHeaders`)     |
+| `DcsvIo.D2.Headers.Amqp`   | `applicability.Contains("amqp")` | `AmqpHeaders.g.cs` (class `AmqpHeaders`)     |
+| `DcsvIo.D2.Headers.Grpc`   | `applicability.Contains("grpc")` | `GrpcHeaders.g.cs` (class `GrpcHeaders`)     |
 
 Cross-transport entries appear in multiple catalogs at identical wire values, codegen-guaranteed (verified by `HeaderCatalogConsistencyTests`).
 
@@ -48,12 +48,12 @@ Cross-transport entries appear in multiple catalogs at identical wire values, co
 Each consuming catalog csproj receives ONE generated source file at the canonical path:
 
 ```
-Generated/D2.Shared.Headers.SourceGen/D2.Shared.Headers.SourceGen.HeadersGenerator/<Catalog>Headers.g.cs
+Generated/DcsvIo.D2.Headers.SourceGen/DcsvIo.D2.Headers.SourceGen.HeadersGenerator/<Catalog>Headers.g.cs
 ```
 
 Where `<Catalog>` is one of `Common` / `Http` / `Amqp` / `Grpc` (matching the per-transport class name). The `Generated/` directory is tracked in git — committed for inspection, IDE navigation, and PR diff review. Re-emitted on every `dotnet build` from the spec; do not hand-edit. The `*.g.cs` glob is marked `linguist-generated=true` in `.gitattributes` so GitHub PR UI collapses these diffs by default.
 
-This convention applies uniformly to every per-transport catalog consumed by [`D2.Shared.Headers.Common`](../common/README.md), [`D2.Shared.Headers.Http`](../http/README.md), [`D2.Shared.Headers.Amqp`](../amqp/README.md), and [`D2.Shared.Headers.Grpc`](../grpc/README.md).
+This convention applies uniformly to every per-transport catalog consumed by [`DcsvIo.D2.Headers.Common`](../common/README.md), [`DcsvIo.D2.Headers.Http`](../http/README.md), [`DcsvIo.D2.Headers.Amqp`](../amqp/README.md), and [`DcsvIo.D2.Headers.Grpc`](../grpc/README.md).
 
 ---
 
@@ -96,5 +96,5 @@ This convention applies uniformly to every per-transport catalog consumed by [`D
 - [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/headers/schema.json`](../../../../../contracts/headers/schema.json) — JSON Schema for the spec
 - [`contracts/headers/headers.spec.json`](../../../../../contracts/headers/headers.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Auth.ErrorCodes.SourceGen`](../../auth/error-codes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
-- [`D2.Shared.InProcessKeys.SourceGen`](../../encryption/in-process-keys-source-gen/README.md) — sibling SrcGen for cross-binding in-process slot keys
+- [`DcsvIo.D2.Auth.ErrorCodes.SourceGen`](../../auth/error-codes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`DcsvIo.D2.InProcessKeys.SourceGen`](../../encryption/in-process-keys-source-gen/README.md) — sibling SrcGen for cross-binding in-process slot keys

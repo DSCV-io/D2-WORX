@@ -6,8 +6,8 @@
 import {
   DlqFailureCauses,
   DlqFailureMetadataFields,
-} from "@d2/messaging-abstractions";
-import { fail, tk } from "@d2/result";
+} from "@dcsv-io/d2-messaging-abstractions";
+import { fail, tk } from "@dcsv-io/d2-result";
 import { describe, expect, it } from "vitest";
 
 import { DlqFailureHeaderBuilder } from "../src/subscribing/dlq-failure-metadata.js";

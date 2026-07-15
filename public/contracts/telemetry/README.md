@@ -8,7 +8,7 @@ Telemetry tag catalog — the closed set of OTel activity/span tag names, meter 
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/telemetry/tags-source-gen/`](../../public/packages/dotnet/telemetry/tags-source-gen/README.md) (Roslyn source-gen → tag-name constants + meter/instrument descriptors; multi-target — each meter group emits into the `consumingAssembly` declared in its spec entry, e.g. `D2.Shared.Auth`, `D2.Shared.Auth.Outbound`, `D2.Shared.Handler`, `D2.Shared.Messaging.RabbitMq`, `D2.Shared.Caching.*`)
+- **.NET** — [`public/packages/dotnet/telemetry/tags-source-gen/`](../../public/packages/dotnet/telemetry/tags-source-gen/README.md) (Roslyn source-gen → tag-name constants + meter/instrument descriptors; multi-target — each meter group emits into the `consumingAssembly` declared in its spec entry, e.g. `DcsvIo.D2.Auth`, `DcsvIo.D2.Auth.Outbound`, `DcsvIo.D2.Handler`, `DcsvIo.D2.Messaging.RabbitMq`, `DcsvIo.D2.Caching.*`)
 
 No `tools/ts-codegen` emitter consumes this catalog — telemetry instrumentation is a .NET-side concern.
 

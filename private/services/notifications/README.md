@@ -25,16 +25,16 @@ The persistent feed is the source of truth for in-app notifications — WS push 
 
 ## Dependencies (.NET shared libs)
 
-- `D2.Shared.Messaging` (consumer for `d2.notifications.requests` + publisher to `d2.audit.events`)
-- `D2.Shared.Encryption` (decrypts RMQ payloads)
-- `D2.Shared.Auth` (recipient identity validation, scope checks on REST endpoints)
-- `D2.Shared.I18n` (notification subject + body rendering with locale)
-- `D2.Shared.Contacts` (recipient resolution via `notifications_contacts_db`)
+- `DcsvIo.D2.Messaging` (consumer for `d2.notifications.requests` + publisher to `d2.audit.events`)
+- `DcsvIo.D2.Encryption` (decrypts RMQ payloads)
+- `DcsvIo.D2.Auth` (recipient identity validation, scope checks on REST endpoints)
+- `DcsvIo.D2.I18n` (notification subject + body rendering with locale)
+- `DcsvIo.D2.Contacts` (recipient resolution via `notifications_contacts_db`)
 
 ## Database
 
 - `notifications_db` — owned by D2.Notifications. Schema: `notification_feed_entry` (id, recipient_user_id, producer_service, event_type, subject markdown, body markdown, link, metadata JSONB, urgency, aggregation_key nullable, read_at, created_at). Indexed on `(recipient_user_id, read_at, created_at)`.
-- `notifications_contacts_db` — via `D2.Shared.Contacts` library.
+- `notifications_contacts_db` — via `DcsvIo.D2.Contacts` library.
 
 ## Aggregation
 

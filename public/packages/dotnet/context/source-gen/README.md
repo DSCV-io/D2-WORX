@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Context.SourceGen
+# DcsvIo.D2.Context.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -24,7 +24,7 @@ mutable concrete, and the two factory methods (`FromClaims`,
 > **Cross-hop propagation does NOT go through codegen.** The small subset of
 > fields a downstream consumer can't recompute (`RequestId`, `RequestPath`,
 > fingerprints, `WhoIsHashId`) is propagated via the hand-written
-> `PropagatedContext` record + serializer in `D2.Shared.Context.Abstractions`,
+> `PropagatedContext` record + serializer in `DcsvIo.D2.Context.Abstractions`,
 > wired into transport headers (`x-d2-context` on AMQP / gRPC / HTTP).
 > Identity (UserId, OrgId, Scopes, etc.) rebuilds at every hop from the JWT
 > — never propagated.
@@ -35,12 +35,12 @@ mutable concrete, and the two factory methods (`FromClaims`,
 
 | Assembly                             | Emitted file(s)                                                                         |
 | ------------------------------------ | --------------------------------------------------------------------------------------- |
-| `D2.Shared.AuthContext.Abstractions` | `IAuthContext.g.cs`                                                                     |
-| `D2.Shared.Context.Abstractions`     | `IRequestContext.g.cs` (extends `IAuthContext`)                                         |
-| `D2.Shared.Context.Abstractions`     | `MutableRequestContext.g.cs`                                                            |
-| `D2.Shared.Context.Abstractions`     | `PropagatedContext.g.cs` (cross-hop wire record)                                        |
-| `D2.Shared.Context.Abstractions`     | `PropagatedContextExtensions.g.cs` (`MutableRequestContext.ToPropagated()` / `Apply()`) |
-| `D2.Shared.Context.Abstractions`     | `PropagatedContextSerializer.g.cs` (`Encode` / `TryDecode` for transport headers)       |
+| `DcsvIo.D2.AuthContext.Abstractions` | `IAuthContext.g.cs`                                                                     |
+| `DcsvIo.D2.Context.Abstractions`     | `IRequestContext.g.cs` (extends `IAuthContext`)                                         |
+| `DcsvIo.D2.Context.Abstractions`     | `MutableRequestContext.g.cs`                                                            |
+| `DcsvIo.D2.Context.Abstractions`     | `PropagatedContext.g.cs` (cross-hop wire record)                                        |
+| `DcsvIo.D2.Context.Abstractions`     | `PropagatedContextExtensions.g.cs` (`MutableRequestContext.ToPropagated()` / `Apply()`) |
+| `DcsvIo.D2.Context.Abstractions`     | `PropagatedContextSerializer.g.cs` (`Encode` / `TryDecode` for transport headers)       |
 | Anything else                        | nothing                                                                                 |
 
 ---
@@ -64,7 +64,7 @@ Setting `"redact": true` on a property in either spec marks it as PII-bearing.
 The generator emits `[RedactData(Reason = RedactReason.PersonalInformation)]`
 on BOTH the corresponding interface property AND the matching concrete
 property on `MutableRequestContext`. The Serilog destructuring policy
-(`D2.Shared.Logging.Destructuring.RedactDataDestructuringPolicy`) reflects
+(`DcsvIo.D2.Logging.Destructuring.RedactDataDestructuringPolicy`) reflects
 on the runtime instance type at log time, so the attribute on the concrete
 is what makes redaction fire; the attribute on the interface is what
 keeps the cross-spec parity gate
@@ -109,7 +109,7 @@ The generated `MutableRequestContext.g.cs` references:
 - `ActorChainParser.ParseFromJson(JsonElement)` / `ActorChainParser.ParseFromJsonString(string)` — RFC 8693 actor-chain parsing
 - `ScopeClaimParser.Parse(JsonElement)` / `ScopeClaimParser.ParseString(string)` — RFC 6749 §3.3 space-separated string OR JSON-array scope parsing
 
-These hand-written helpers live in `D2.Shared.Context.Abstractions` — the parsing rules are stable RFC text and don't benefit from spec-driven codegen. Tests for the parsers pin RFC compliance.
+These hand-written helpers live in `DcsvIo.D2.Context.Abstractions` — the parsing rules are stable RFC text and don't benefit from spec-driven codegen. Tests for the parsers pin RFC compliance.
 
 ---
 
@@ -118,6 +118,6 @@ These hand-written helpers live in `D2.Shared.Context.Abstractions` — the pars
 - [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/auth-context/`](../../../../../contracts/auth-context/) — auth-context spec + JSON Schema
 - [`contracts/request-context/`](../../../../../contracts/request-context/) — request-context spec + JSON Schema
-- [`D2.Shared.Auth.Scopes.SourceGen`](../../auth/scopes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`DcsvIo.D2.Auth.Scopes.SourceGen`](../../auth/scopes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
 - [RFC 8693 §2.1](https://datatracker.ietf.org/doc/html/rfc8693#section-2.1) — actor chain semantics
 - [RFC 6749 §3.3](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3) — `scope` claim format

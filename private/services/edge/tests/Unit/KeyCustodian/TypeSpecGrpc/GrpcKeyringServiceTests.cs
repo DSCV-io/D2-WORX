@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Threading.Tasks;
-using D2.Edge.Api.Grpc.KeyCustodian;
-using D2.Edge.KeyCustodian.Client.CaCertificate;
-using D2.Edge.KeyCustodian.Client.Facade;
-using D2.Edge.KeyCustodian.Client.Issuance;
-using D2.Edge.KeyCustodian.Client.Jwks;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Edge.KeyCustodian.Client.OidcConfiguration;
-using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
+using DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.OidcConfiguration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
+using global::D2.Services.Protos.KeyCustodian.V2Alpha;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -23,11 +23,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
-using ClientsGetKeyringOutput = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
-using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
-using ClientsKeyringEntry = D2.Edge.KeyCustodian.Client.Keyring.KeyringEntry;
-using ClientsSignOutput = D2.Edge.KeyCustodian.Client.Signing.SignOutput;
+using ClientsGetCaCertificateOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
+using ClientsGetKeyringOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
+using ClientsIssueLeafOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
+using ClientsKeyringEntry = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.KeyringEntry;
+using ClientsSignOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing.SignOutput;
 
 /// <summary>
 /// In-memory gRPC harness tests for the REAL TypeSpec-emitted
@@ -141,17 +141,17 @@ public sealed class GrpcKeyringServiceTests
         // [RedactData(SecretInformation)] so it is masked in structured logs (proof of the
         // nested @d2Redact emitter path).
         var property = typeof(ClientsGetKeyringOutput).Assembly
-            .GetType("D2.Edge.KeyCustodian.Client.Keyring.KeyringEntry")!
+            .GetType("DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.KeyringEntry")!
             .GetProperty("KeyBytes");
 
         property.Should().NotBeNull();
         var attributes = property.GetCustomAttributes(
-            typeof(D2.Shared.Utilities.Attributes.RedactDataAttribute), inherit: false);
+            typeof(DcsvIo.D2.Utilities.Attributes.RedactDataAttribute), inherit: false);
         attributes.Should().ContainSingle("the raw AES key bytes are redacted in logs (@d2Redact)");
 
-        var redact = (D2.Shared.Utilities.Attributes.RedactDataAttribute)attributes[0];
+        var redact = (DcsvIo.D2.Utilities.Attributes.RedactDataAttribute)attributes[0];
         redact.Reason.Should().Be(
-            D2.Shared.Utilities.Enums.RedactReason.SecretInformation,
+            DcsvIo.D2.Utilities.Enums.RedactReason.SecretInformation,
             "the reason is threaded from @d2Redact — a secret, never PersonalInformation");
     }
 
@@ -165,7 +165,7 @@ public sealed class GrpcKeyringServiceTests
 
         property.Should().NotBeNull();
         property.GetCustomAttributes(
-                typeof(D2.Shared.Utilities.Attributes.RedactDataAttribute), inherit: false)
+                typeof(DcsvIo.D2.Utilities.Attributes.RedactDataAttribute), inherit: false)
             .Should().BeEmpty(
                 "the AAD context is authenticated-not-secret and stays visible in logs");
     }
@@ -220,20 +220,20 @@ public sealed class GrpcKeyringServiceTests
 
         // Seal ops — unused by this gRPC harness (no seal service is wired); fully-qualified
         // to stay collision-safe with the proto types imported in this file.
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
+        public ValueTask<D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
             GetOrLazyProvisionSealPublicKeyAsync(
-                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
+                DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
                 CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
+                D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
                     .ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
+        public ValueTask<D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
             GetOrLazyProvisionOwnSealPrivateKeyAsync(
-                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
+                DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
                 CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
+                D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
                     .ServiceUnavailable());
 
         public ValueTask<D2Result<ClientsGetKeyringOutput?>> GetKeyringAsync(

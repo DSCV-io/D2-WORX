@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Utilities.Diagnostics;
+namespace DcsvIo.D2.Utilities.Diagnostics;
 
 using System.Diagnostics;
 
@@ -21,8 +21,8 @@ using System.Diagnostics;
 /// <para>
 /// Canonical helper consumed by every lib whose
 /// <c>[LoggerMessage]</c> delegates carry exception-derived strings —
-/// <c>D2.Shared.Auth</c>, <c>D2.Shared.Auth.Outbound</c>,
-/// <c>D2.Shared.AspNetCore</c>, <c>D2.Shared.Messaging.RabbitMq</c>, and
+/// <c>DcsvIo.D2.Auth</c>, <c>DcsvIo.D2.Auth.Outbound</c>,
+/// <c>DcsvIo.D2.AspNetCore</c>, <c>DcsvIo.D2.Messaging.RabbitMq</c>, and
 /// any future logging-pipeline consumer. Pair with the
 /// no-<see cref="Exception"/>-parameter <c>[LoggerMessage]</c> contract
 /// (enforced by per-lib reflection-based contract tests across each log

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.Abstractions;
+namespace DcsvIo.D2.DataGovernance.Abstractions;
 
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using JetBrains.Annotations;
 
 /// <summary>
@@ -102,7 +102,7 @@ public sealed record AnonymizationRule
         string? template = null)
     {
         // Plain BCL ArgumentException matches the "developer error at model-build time"
-        // contract. D2.Shared.Utilities is referenced for Falsey() (§5.1).
+        // contract. DcsvIo.D2.Utilities is referenced for Falsey() (§5.1).
         switch (kind)
         {
             case AnonymizeKind.SetNull:

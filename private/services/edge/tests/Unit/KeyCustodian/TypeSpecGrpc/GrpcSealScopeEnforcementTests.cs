@@ -4,29 +4,29 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using D2.Edge.Api.Grpc.KeyCustodian;
-using D2.Edge.KeyCustodian.Client.CaCertificate;
-using D2.Edge.KeyCustodian.Client.Facade;
-using D2.Edge.KeyCustodian.Client.Issuance;
-using D2.Edge.KeyCustodian.Client.Jwks;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Edge.KeyCustodian.Client.OidcConfiguration;
-using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Grpc;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Grpc.Status;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Grpc;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Grpc.Status;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.OidcConfiguration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+using global::D2.Services.Protos.KeyCustodian.V2Alpha;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -35,15 +35,15 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
-using ClientsGetKeyringOutput = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
-using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
-using ClientsSignOutput = D2.Edge.KeyCustodian.Client.Signing.SignOutput;
+using ClientsGetCaCertificateOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
+using ClientsGetKeyringOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
+using ClientsIssueLeafOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
+using ClientsSignOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing.SignOutput;
 using GrpcStatusCode = Grpc.Core.StatusCode;
 
 /// <summary>
 /// gRPC scope-enforcement tests for the two seal-surface services, wired against the
-/// SHARED <see cref="D2.Shared.Auth.Grpc"/> mechanism: the generated
+/// SHARED <see cref="DcsvIo.D2.Auth.Grpc"/> mechanism: the generated
 /// <c>KeyCustodianSealPublicKeyService</c> is mapped with
 /// <c>.RequireAnyScope("internal.kc.seal.encrypt")</c> and the
 /// <c>KeyCustodianOwnSealPrivateKeyService</c> with
@@ -280,20 +280,20 @@ public sealed class GrpcSealScopeEnforcementTests
     {
         // Seal ops — fully-qualified to stay collision-safe with the proto types
         // imported in this file (the same bare names live in both namespaces).
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
+        public ValueTask<D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
             GetOrLazyProvisionSealPublicKeyAsync(
-                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
+                DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
                 CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
+                D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
                     .ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
+        public ValueTask<D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
             GetOrLazyProvisionOwnSealPrivateKeyAsync(
-                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
+                DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
                 CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
+                D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
                     .ServiceUnavailable());
 
         public ValueTask<D2Result<ClientsGetKeyringOutput?>> GetKeyringAsync(

@@ -21,15 +21,15 @@ import {
   emitClientKeys,
   type GrpcClientOp,
 } from "../src/lib/grpc-client-emitter.js";
-import { parseResultPredicate } from "@d2/typespec-decorators";
-import type { PredicateNode } from "@d2/typespec-decorators";
+import { parseResultPredicate } from "@dcsv-io/d2-typespec-decorators";
+import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Fixture builders
 // ---------------------------------------------------------------------------
 
 const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
-const CLIENTS_NS = "D2.Edge.KeyCustodian.Client";
+const CLIENTS_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.Client";
 const PROTO_NS = "D2.Services.Protos.Sample.V1";
 
 function makeSignOp(overrides: Partial<GrpcClientOp> = {}): GrpcClientOp {
@@ -150,7 +150,7 @@ describe("emitGrpcClient_InterfaceFile", () => {
   it("contains namespace before using directives", () => {
     const content = getInterface();
     const nsIdx = content.indexOf(`namespace ${CLIENTS_NS};`);
-    const usingIdx = content.indexOf("using D2.Shared.Resilience.Pipeline;");
+    const usingIdx = content.indexOf("using DcsvIo.D2.Resilience.Pipeline;");
     expect(nsIdx).toBeGreaterThan(-1);
     expect(usingIdx).toBeGreaterThan(-1);
     expect(nsIdx).toBeLessThan(usingIdx);
@@ -162,7 +162,7 @@ describe("emitGrpcClient_InterfaceFile", () => {
       .split("\n")
       .filter((l) => l.startsWith("using "));
     expect(usingLines).toHaveLength(1);
-    expect(usingLines[0]).toBe("using D2.Shared.Resilience.Pipeline;");
+    expect(usingLines[0]).toBe("using DcsvIo.D2.Resilience.Pipeline;");
   });
 
   it("does not use its own namespace", () => {
@@ -220,10 +220,10 @@ describe("emitGrpcClient_ImplFile", () => {
     expect(content).toContain("using D2.Services.Protos.Common.V1;");
   });
 
-  it("includes D2.Shared.Resilience.Pipeline (not just D2.Shared.Resilience)", () => {
+  it("includes DcsvIo.D2.Resilience.Pipeline (not just DcsvIo.D2.Resilience)", () => {
     const content = getImpl();
-    expect(content).toContain("using D2.Shared.Resilience.Pipeline;");
-    expect(content).not.toContain("using D2.Shared.Resilience;");
+    expect(content).toContain("using DcsvIo.D2.Resilience.Pipeline;");
+    expect(content).not.toContain("using DcsvIo.D2.Resilience;");
   });
 
   it("does not use its own namespace", () => {
@@ -293,7 +293,7 @@ describe("emitGrpcClient_ImplFile", () => {
   it("remaps the captured transport fault via ToTransportFaultResult (gRPC-aware 503, not 500)", () => {
     const content = getImpl();
     // After ExecuteAsync, a failure caused by the captured RpcException is remapped via the
-    // SHARED D2.Shared.Result.Grpc mapping (HandleAsync's RpcException arm) — Cancelled→Canceled,
+    // SHARED DcsvIo.D2.Result.Grpc mapping (HandleAsync's RpcException arm) — Cancelled→Canceled,
     // else→ServiceUnavailable — instead of the pipeline's generic UnhandledException (500).
     expect(content).toContain(
       "if (!pipelineResult.Success && transportFault is not null)",
@@ -373,7 +373,7 @@ describe("emitGrpcClient_MapperFile", () => {
     const content = getMapper();
     // The SignOutput->DTO mapper: signature field is a string, direct copy
     expect(content).toContain(
-      "return new global::D2.Edge.KeyCustodian.Client.SignOutput(data.Signature);",
+      "return new global::DcsvIo.D2.Private.Edge.KeyCustodian.Client.SignOutput(data.Signature);",
     );
   });
 
@@ -382,11 +382,15 @@ describe("emitGrpcClient_MapperFile", () => {
     expect(content).toContain(
       "global::D2.Services.Protos.Sample.V1.SignRequest",
     );
-    expect(content).toContain("global::D2.Edge.KeyCustodian.Client.SignInput");
+    expect(content).toContain(
+      "global::DcsvIo.D2.Private.Edge.KeyCustodian.Client.SignInput",
+    );
     expect(content).toContain(
       "global::D2.Services.Protos.Sample.V1.SignOutput",
     );
-    expect(content).toContain("global::D2.Edge.KeyCustodian.Client.SignOutput");
+    expect(content).toContain(
+      "global::DcsvIo.D2.Private.Edge.KeyCustodian.Client.SignOutput",
+    );
   });
 
   it("mapper class is internal static", () => {
@@ -397,7 +401,7 @@ describe("emitGrpcClient_MapperFile", () => {
   it("extension blocks use C#14 extension(T x) form", () => {
     const content = getMapper();
     expect(content).toContain(
-      "extension(global::D2.Edge.KeyCustodian.Client.SignInput input)",
+      "extension(global::DcsvIo.D2.Private.Edge.KeyCustodian.Client.SignInput input)",
     );
     expect(content).toContain(
       "extension(global::D2.Services.Protos.Sample.V1.SignOutput data)",
@@ -447,7 +451,7 @@ describe("emitGrpcClient_MapperBytesField", () => {
     });
     const [, , mapper] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(mapper!.content).toContain(
-      "return new global::D2.Edge.KeyCustodian.Client.EmptyOutput();",
+      "return new global::DcsvIo.D2.Private.Edge.KeyCustodian.Client.EmptyOutput();",
     );
   });
 
@@ -486,18 +490,18 @@ describe("emitGrpcClient_DiExtensionFile", () => {
 
   it("includes Resilience.Pipeline using (not bare Resilience)", () => {
     const content = getDi();
-    expect(content).toContain("using D2.Shared.Resilience.Pipeline;");
-    expect(content).not.toContain("using D2.Shared.Resilience;");
+    expect(content).toContain("using DcsvIo.D2.Resilience.Pipeline;");
+    expect(content).not.toContain("using DcsvIo.D2.Resilience;");
   });
 
   it("includes Resilience.Retry for UseRetries", () => {
     const content = getDi();
-    expect(content).toContain("using D2.Shared.Resilience.Retry;");
+    expect(content).toContain("using DcsvIo.D2.Resilience.Retry;");
   });
 
   it("includes Result.Grpc for IsTransientGrpcException", () => {
     const content = getDi();
-    expect(content).toContain("using D2.Shared.Result.Grpc;");
+    expect(content).toContain("using DcsvIo.D2.Result.Grpc;");
   });
 
   it("includes Grpc.Core for RpcException", () => {
@@ -570,9 +574,9 @@ describe("emitGrpcClient_DiExtensionFile", () => {
     expect(content).not.toContain("o.Address = options.Address);");
   });
 
-  it("includes the D2.Shared.Auth.Outbound.Grpc using for the auto-wired extensions", () => {
+  it("includes the DcsvIo.D2.Auth.Outbound.Grpc using for the auto-wired extensions", () => {
     const content = getDi();
-    expect(content).toContain("using D2.Shared.Auth.Outbound.Grpc;");
+    expect(content).toContain("using DcsvIo.D2.Auth.Outbound.Grpc;");
   });
 });
 
@@ -824,24 +828,24 @@ describe("emitGrpcClient_MultiOp", () => {
 describe("emitGrpcClient_DtoNamespaceNotSelf", () => {
   it("interface aliases the DTO types (global:: rooted) when DTO ns differs from clientsNs", () => {
     const op = makeSignOp({
-      dtoCsharpNs: "D2.Edge.SomeOtherModule.Clients",
+      dtoCsharpNs: "DcsvIo.D2.Private.Edge.SomeOtherModule.Clients",
     });
     const [iface] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(iface!.content).toContain(
-      "using SignInput = global::D2.Edge.SomeOtherModule.Clients.SignInput;",
+      "using SignInput = global::DcsvIo.D2.Private.Edge.SomeOtherModule.Clients.SignInput;",
     );
     expect(iface!.content).toContain(
-      "using SignOutput = global::D2.Edge.SomeOtherModule.Clients.SignOutput;",
+      "using SignOutput = global::DcsvIo.D2.Private.Edge.SomeOtherModule.Clients.SignOutput;",
     );
   });
 
   it("impl aliases the DTO types (avoids the proto SignOutput collision) when DTO ns differs", () => {
     const op = makeSignOp({
-      dtoCsharpNs: "D2.Edge.SomeOtherModule.Clients",
+      dtoCsharpNs: "DcsvIo.D2.Private.Edge.SomeOtherModule.Clients",
     });
     const [, impl] = emitGrpcClient("Sample", [op], CLIENTS_NS);
     expect(impl!.content).toContain(
-      "using SignOutput = global::D2.Edge.SomeOtherModule.Clients.SignOutput;",
+      "using SignOutput = global::DcsvIo.D2.Private.Edge.SomeOtherModule.Clients.SignOutput;",
     );
     // The proto SERVICE namespace is NOT bare-imported (the stub is referenced via global::),
     // so the bare SignOutput in the pipeline generic args resolves to the DTO alias only.
@@ -860,10 +864,12 @@ describe("emitGrpcClient_DtoNamespaceNotSelf", () => {
 
   it("mapper file includes dtoCsharpNs using when different from clientsNs", () => {
     const op = makeSignOp({
-      dtoCsharpNs: "D2.Edge.SomeOtherModule.Clients",
+      dtoCsharpNs: "DcsvIo.D2.Private.Edge.SomeOtherModule.Clients",
     });
     const [, , mapper] = emitGrpcClient("Sample", [op], CLIENTS_NS);
-    expect(mapper!.content).toContain("using D2.Edge.SomeOtherModule.Clients;");
+    expect(mapper!.content).toContain(
+      "using DcsvIo.D2.Private.Edge.SomeOtherModule.Clients;",
+    );
   });
 });
 
@@ -887,7 +893,7 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
       grpcMethod: "SignWithKind",
       protoCsharpNs: "D2.Services.Protos.EnumFixtures.V1",
       // DTO namespace distinct from the clients namespace → enum alias IS emitted.
-      dtoCsharpNs: "D2.Edge.Tests.EnumDto.Generated",
+      dtoCsharpNs: "DcsvIo.D2.Private.Edge.Tests.EnumDto.Generated",
       sourceSpec: SOURCE,
       requestModelName: "SignWithKindInput",
       requestFields: [
@@ -936,10 +942,10 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
     const [, , mapper] = emitGrpcClient("EnumFixtures", [enumOp()], CLIENTS_NS);
 
     expect(mapper!.content).toContain(
-      "using KeyKind = global::D2.Edge.Tests.EnumDto.Generated.KeyKind;",
+      "using KeyKind = global::DcsvIo.D2.Private.Edge.Tests.EnumDto.Generated.KeyKind;",
     );
-    expect(mapper!.content).toContain("using D2.Shared.I18n;");
-    expect(mapper!.content).toContain("using D2.Shared.Result;");
+    expect(mapper!.content).toContain("using DcsvIo.D2.I18n;");
+    expect(mapper!.content).toContain("using DcsvIo.D2.Result;");
     // Outbound DTO enum → proto string via .ToWire().
     expect(mapper!.content).toContain("KeyKind = input.KeyKind.ToWire(),");
     // The per-enum helper blocks are emitted (symmetric with the server mapper).
@@ -984,10 +990,10 @@ describe("emitGrpcClient_EnumRequestField_AliasAndToWire", () => {
     );
 
     expect(mapper!.content).toContain(
-      "using KeyKind = global::D2.Edge.Tests.EnumDto.Generated.KeyKind;",
+      "using KeyKind = global::DcsvIo.D2.Private.Edge.Tests.EnumDto.Generated.KeyKind;",
     );
     expect(mapper!.content).toContain(
-      "using Role = global::D2.Edge.Tests.EnumDto.Generated.Role;",
+      "using Role = global::DcsvIo.D2.Private.Edge.Tests.EnumDto.Generated.Role;",
     );
   });
 
@@ -1042,7 +1048,7 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
       grpcService: "EnumFixturesSigner",
       grpcMethod: "SignWithKind",
       protoCsharpNs: "D2.Services.Protos.EnumFixtures.V1",
-      dtoCsharpNs: "D2.Edge.Tests.EnumDto.Generated",
+      dtoCsharpNs: "DcsvIo.D2.Private.Edge.Tests.EnumDto.Generated",
       sourceSpec: SOURCE,
       requestModelName: "SignWithKindInput",
       requestFields: [
@@ -1096,7 +1102,7 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
 
     // Mapper signature now returns D2Result<<Output>> (not a bare <Output>).
     expect(mapper!.content).toContain(
-      "internal D2Result<global::D2.Edge.Tests.EnumDto.Generated.SignWithKindOutput> ToSignWithKindOutput()",
+      "internal D2Result<global::DcsvIo.D2.Private.Edge.Tests.EnumDto.Generated.SignWithKindOutput> ToSignWithKindOutput()",
     );
     // Inbound parse via the shared Parse<Enum>Wire helper.
     expect(mapper!.content).toContain(
@@ -1104,11 +1110,11 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
     );
     // Fail-loud short-circuit on an unknown wire value.
     expect(mapper!.content).toContain(
-      "return D2Result<global::D2.Edge.Tests.EnumDto.Generated.SignWithKindOutput>.ValidationFailed(",
+      "return D2Result<global::DcsvIo.D2.Private.Edge.Tests.EnumDto.Generated.SignWithKindOutput>.ValidationFailed(",
     );
     // Success constructs the DTO with the parsed enum (and the plain signature).
     expect(mapper!.content).toContain(
-      "return D2Result<global::D2.Edge.Tests.EnumDto.Generated.SignWithKindOutput>.Ok(new global::D2.Edge.Tests.EnumDto.Generated.SignWithKindOutput(data.Signature, keyKindResult.Data));",
+      "return D2Result<global::DcsvIo.D2.Private.Edge.Tests.EnumDto.Generated.SignWithKindOutput>.Ok(new global::DcsvIo.D2.Private.Edge.Tests.EnumDto.Generated.SignWithKindOutput(data.Signature, keyKindResult.Data));",
     );
   });
 
@@ -1140,7 +1146,7 @@ describe("emitGrpcClient_EnumResponseField_ParseAndSurface", () => {
       CLIENTS_NS,
     );
     expect(mapper!.content).toContain(
-      "internal global::D2.Edge.KeyCustodian.Client.SignOutput ToSignOutput()",
+      "internal global::DcsvIo.D2.Private.Edge.KeyCustodian.Client.SignOutput ToSignOutput()",
     );
     expect(mapper!.content).not.toContain("D2Result<");
     expect(impl!.content).not.toContain("responseParseFailure");

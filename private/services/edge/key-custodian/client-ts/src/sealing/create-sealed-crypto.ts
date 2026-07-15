@@ -2,8 +2,8 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { ConsumerServiceByDomain } from "@d2/encryption-abstractions";
-import type { ILogger } from "@d2/logging";
+import { ConsumerServiceByDomain } from "@dcsv-io/d2-encryption-abstractions";
+import type { ILogger } from "@dcsv-io/d2-logging";
 
 import type { RotationSubscription } from "../rotation/rotation-subscription.js";
 import { KeyringBackedPayloadOpener } from "./keyring-backed-payload-opener.js";

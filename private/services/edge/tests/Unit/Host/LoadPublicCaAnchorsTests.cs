@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.Api.Mtls;
+using DcsvIo.D2.Private.Edge.Api.Mtls;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>

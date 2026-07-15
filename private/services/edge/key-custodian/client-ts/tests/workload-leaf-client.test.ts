@@ -11,9 +11,9 @@
 
 import { describe, expect, it } from "vitest";
 import { Temporal } from "temporal-polyfill";
-import { ok, serviceUnavailable } from "@d2/result";
+import { ok, serviceUnavailable } from "@dcsv-io/d2-result";
 import { Pkcs10CertificateRequest } from "@peculiar/x509";
-import type { ILogger, LogBindings } from "@d2/logging";
+import type { ILogger, LogBindings } from "@dcsv-io/d2-logging";
 import { WorkloadLeafClient } from "../src/issuance/workload-leaf-client.js";
 import type { WorkloadLeafMaterial } from "../src/issuance/workload-leaf-material.js";
 import { FakeWorkloadCertificateIssuer } from "./support/fake-workload-certificate-issuer.js";

@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { TkMessageWireShape, tk, type TKMessage } from "@d2/result";
+import { TkMessageWireShape, tk, type TKMessage } from "@dcsv-io/d2-result";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

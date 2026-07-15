@@ -3,8 +3,8 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { LoggerOptions } from "@d2/logging";
-import type { TelemetryOptions } from "@d2/telemetry";
+import type { LoggerOptions } from "@dcsv-io/d2-logging";
+import type { TelemetryOptions } from "@dcsv-io/d2-telemetry";
 
 /**
  * Composed options for {@link setupServiceDefaults}. Mirrors the

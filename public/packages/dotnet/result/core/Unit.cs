@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result;
+namespace DcsvIo.D2.Result;
 
 /// <summary>
 /// Singleton "no value" type for handlers / operations whose success state

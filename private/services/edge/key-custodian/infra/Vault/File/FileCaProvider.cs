@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Vault.File;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Vault.File;
 
 using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Domain.Errors;
-using D2.Edge.KeyCustodian.Infra.Configuration;
-using D2.Edge.KeyCustodian.Infra.Observability;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Observability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using IClock = D2.Shared.Time.IClock;
+using IClock = DcsvIo.D2.Time.IClock;
 
 /// <summary>
 /// File-backed <see cref="ICaProvider"/> that loads the dev certificate-authority

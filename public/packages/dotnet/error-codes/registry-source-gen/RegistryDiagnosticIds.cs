@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.Registry.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.Registry.SourceGen;
 
 /// <summary>
 /// String identifiers for the cross-catalog registry diagnostics. These
 /// extend the <c>D2ERC*</c> engine-diagnostic family established in
-/// <c>D2.Shared.ErrorCodes.SourceGen.EngineDiagnosticIds</c>
+/// <c>DcsvIo.D2.ErrorCodes.SourceGen.EngineDiagnosticIds</c>
 /// (<c>D2ERC001</c>–<c>D2ERC003</c>) with three registry-level checks:
 /// <list type="bullet">
 ///   <item>

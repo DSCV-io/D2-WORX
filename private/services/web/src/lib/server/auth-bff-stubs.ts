@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 /**
- * Local BFF auth stubs — the former `@d2/auth-bff-client` package is not on the
+ * Local BFF auth stubs — the former `@dcsv-io/d2-auth-bff-client` package is not on the
  * public workspace surface after the public/private reorg. These stubs keep
  * layout server loads type-checkable until a private auth-bff package lands.
  * Runtime behavior is fail-closed (redirect to login / home) when session is

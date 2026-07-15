@@ -2,12 +2,12 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/key-custodian-client
+# @dcsv-io/d2-private-key-custodian-client
 
 > Parent: [`private/services/edge/key-custodian/`](../README.md)
 
 The Node **workload-leaf certificate client** — the behavioral twin of the .NET
-`D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafClient`. A workload that
+`DcsvIo.D2.Auth.Outbound.WorkloadCertificate.WorkloadLeafClient`. A workload that
 needs to present a mutual-TLS client identity uses this package to obtain and keep
 current a short-lived leaf certificate from KeyCustodian, and to present it on an
 outbound gRPC channel.
@@ -38,7 +38,7 @@ certificate with its local key.
   circuit-breaker, and a still-valid leaf keeps being served if a reissue fails.
 - **Mutual-TLS presentation** — assembles `ChannelCredentials.createSsl(...)`
   presenting the leaf chain + private key and pinning the fetched CA bundle
-  (net-new TS-side; the shared `@d2/grpc-client` channel is server-TLS only).
+  (net-new TS-side; the shared `@dcsv-io/d2-grpc-client` channel is server-TLS only).
 
 ## Public surface
 
@@ -71,11 +71,11 @@ optional and the defaults mirror the .NET `AuthOutboundResilienceDefaults`.
 
 Workspace refs:
 
-- `@d2/grpc-client` — shared gRPC channel + client primitives (the base server-TLS channel).
-- `@d2/logging` — `ILogger` + `sanitizedErrorRender` for safe, key-material-free failure logging.
-- `@d2/resilience` — `CircuitBreaker` + `Singleflight` backing the reissue resilience + dedup.
-- `@d2/result` — `D2Result` typed outcomes.
-- `@d2/utilities` — shared TS utility helpers.
+- `@dcsv-io/d2-grpc-client` — shared gRPC channel + client primitives (the base server-TLS channel).
+- `@dcsv-io/d2-logging` — `ILogger` + `sanitizedErrorRender` for safe, key-material-free failure logging.
+- `@dcsv-io/d2-resilience` — `CircuitBreaker` + `Singleflight` backing the reissue resilience + dedup.
+- `@dcsv-io/d2-result` — `D2Result` typed outcomes.
+- `@dcsv-io/d2-utilities` — shared TS utility helpers.
 
 External packages:
 
@@ -94,7 +94,7 @@ import {
   WorkloadLeafClient,
   GrpcWorkloadCertificateIssuer,
   createKeyCustodianGrpcClient,
-} from "@d2/key-custodian-client";
+} from "@dcsv-io/d2-private-key-custodian-client";
 
 // `stub` is the KeyCustodian ts-proto grpc-js client bound to the KC endpoint.
 const grpcClient = createKeyCustodianGrpcClient(stub);
@@ -118,7 +118,7 @@ gRPC client lives in `src/facade/`, and each op's DTO in its concern folder
 kept together under `src/issuance/` (co-located with the `issue-leaf` DTO it
 serves). Placement is driven by each op's `@d2Concern` — the emitter routes the
 DTO into `<concern-kebab>/` and rewrites the client's DTO imports to match. They
-are produced by the `@d2/typespec-emitters` pipeline (the `ts-client-output-dirs`
+are produced by the `@dcsv-io/d2-typespec-emitters` pipeline (the `ts-client-output-dirs`
 emission target) and are **not** hand-edited — regenerate via the emitter's regen
 script.
 
@@ -165,10 +165,10 @@ KeyCustodian service.
 ### Commands
 
 ```sh
-pnpm --filter @d2/key-custodian-client build
-pnpm --filter @d2/key-custodian-client test
-pnpm --filter @d2/key-custodian-client test:coverage
-pnpm --filter @d2/key-custodian-client emit-csr-fixtures   # regenerate CSR fixtures
+pnpm --filter @dcsv-io/d2-private-key-custodian-client build
+pnpm --filter @dcsv-io/d2-private-key-custodian-client test
+pnpm --filter @dcsv-io/d2-private-key-custodian-client test:coverage
+pnpm --filter @dcsv-io/d2-private-key-custodian-client emit-csr-fixtures   # regenerate CSR fixtures
 ```
 
 ---
@@ -181,7 +181,7 @@ wire surface (dialed over the mTLS channel by the host) — the TS twin of
 the .NET KC client sealer/opener/crypto sources.
 
 - `SealingClient` / `GrpcSealingClient` + `KeyringClient` / `GrpcKeyringClient` —
-  least-privilege ports mapping the emitted DTOs to validated `@d2/encryption`
+  least-privilege ports mapping the emitted DTOs to validated `@dcsv-io/d2-encryption`
   keyrings.
 - `KeyringBackedPayloadSealer` (lazy public-key fetch), `KeyringBackedPayloadOpener`
   (fail-loud boot fetch), and `KeyringBackedPayloadCrypto` (symmetric) — each with
@@ -202,9 +202,9 @@ the .NET KC client sealer/opener/crypto sources.
   generated `ConsumerServiceByDomain` entry and this service's opener ONLY when it is
   named a consumer (least-privilege). `rotationSubscription` is REQUIRED here too (the
   .NET twin always wires the rotation subscriber). The returned instances are passed
-  explicitly into `@d2/messaging-rabbitmq`'s `createPublisher({ crypto })` /
+  explicitly into `@dcsv-io/d2-messaging-rabbitmq`'s `createPublisher({ crypto })` /
   `CryptoBodyOpener` composition (composition instead of ambient DI). Key bytes are
   never logged.
 - Both one-call helpers take a `RotationSubscription` port — the host adapts
-  `@d2/messaging-rabbitmq` `subscribe` (domain-filtered) to it; it is the behavioral
+  `@dcsv-io/d2-messaging-rabbitmq` `subscribe` (domain-filtered) to it; it is the behavioral
   twin of the .NET `IRotationEventChannel`.

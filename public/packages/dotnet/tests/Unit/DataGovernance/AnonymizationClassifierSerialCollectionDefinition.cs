@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.DataGovernance;
+namespace DcsvIo.D2.Tests.Unit.DataGovernance;
 
 using Xunit;
 

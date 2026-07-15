@@ -67,7 +67,7 @@ describe("emitFailuresCatalog (auth) — snapshot pin", () => {
     );
     expect(r.source).toContain("traceId: opts.traceId,");
     expect(r.source).toContain(
-      'import { type TKMessage } from "@d2/i18n-abstractions";',
+      'import { type TKMessage } from "@dcsv-io/d2-i18n-abstractions";',
     );
     expect(r.source).toContain(
       "errorCode: AuthErrorCodes.AUTH_BEARER_MISSING,",
@@ -90,7 +90,7 @@ describe("emitFailuresCatalog (auth) — snapshot pin", () => {
     // constant's `.key` is the snake wire key (`auth_errors_UNAUTHORIZED`) that
     // the TS Translator resolves; a string literal silently bypasses the
     // catalog and rides the wire un-renderable.
-    expect(r.source).toContain('import { TK } from "@d2/i18n-keys";');
+    expect(r.source).toContain('import { TK } from "@dcsv-io/d2-i18n-keys";');
     expect(r.source).toContain(
       "messages: opts.messages ?? [TK.auth.errors.UNAUTHORIZED],",
     );

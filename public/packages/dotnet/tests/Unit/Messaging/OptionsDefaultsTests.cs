@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging;
+namespace DcsvIo.D2.Tests.Unit.Messaging;
 
 using AwesomeAssertions;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq;
-using D2.Shared.Messaging.RabbitMq.Channels;
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Messaging.RabbitMq.Publishing;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq;
+using DcsvIo.D2.Messaging.RabbitMq.Channels;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Publishing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -28,7 +28,7 @@ public sealed class OptionsDefaultsTests
     {
         var o = new RabbitMqConnectionOptions();
         o.ConnectionUri.Should().Be(string.Empty);
-        o.ClientProvidedName.Should().Be("D2.Shared.Messaging");
+        o.ClientProvidedName.Should().Be("DcsvIo.D2.Messaging");
         o.ConsumerDispatchConcurrency.Should().BeGreaterThan(0);
 
         // Formula must track Environment.ProcessorCount. Pin it so a refactor
@@ -75,7 +75,7 @@ public sealed class OptionsDefaultsTests
     // Per-subscription defaults (queue pattern, prefetch, idempotency,
     // tiered-retry tiers + max attempts) are pinned by the spec entries
     // themselves in contracts/mq-subscriptions/mq-subscriptions.spec.json
-    // and emitted into MqSubscriptionDescriptor by D2.Shared.Messaging.SourceGen
+    // and emitted into MqSubscriptionDescriptor by DcsvIo.D2.Messaging.SourceGen
     // — the source-gen test suite covers shape + validation; this file is
     // for transport-level options only.
 

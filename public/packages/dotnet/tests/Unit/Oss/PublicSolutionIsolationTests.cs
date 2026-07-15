@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Oss;
+namespace DcsvIo.D2.Tests.Unit.Oss;
 
 using System;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using AwesomeAssertions;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Xunit;
 
 /// <summary>
 /// T3.3 — public packages / <c>D2.Public.slnx</c> graph never ProjectReferences
-/// private paths or private <c>D2.Shared.*.Extensions</c> hosts.
+/// private paths or private <c>DcsvIo.D2.*.Extensions</c> hosts.
 /// </summary>
 [Trait("Category", "Unit")]
 public sealed class PublicSolutionIsolationTests
@@ -56,9 +56,9 @@ public sealed class PublicSolutionIsolationTests
         text.Should().NotContain("private/", "Public.slnx must not list private projects");
         text.Should().NotContain("private\\");
         text.Should().NotContain(".Extensions.csproj");
-        text.Should().NotContain("D2.Shared.Auth.Abstractions.Extensions");
-        text.Should().NotContain("D2.Shared.Encryption.Extensions");
-        text.Should().NotContain("D2.Shared.I18n.Keys.Extensions");
+        text.Should().NotContain("DcsvIo.D2.Private.Auth.Abstractions.Extensions");
+        text.Should().NotContain("DcsvIo.D2.Private.Encryption.Extensions");
+        text.Should().NotContain("DcsvIo.D2.Private.I18n.Keys.Extensions");
     }
 
     private static string[] ProjectReferenceIncludes(string csprojXml)
@@ -83,13 +83,13 @@ public sealed class PublicSolutionIsolationTests
             || include.Contains("D2PrivatePackages", StringComparison.OrdinalIgnoreCase)
             || include.Contains(".Extensions.csproj", StringComparison.OrdinalIgnoreCase)
             || include.Contains(
-                "D2.Shared.Auth.Abstractions.Extensions",
+                "DcsvIo.D2.Private.Auth.Abstractions.Extensions",
                 StringComparison.OrdinalIgnoreCase)
             || include.Contains(
-                "D2.Shared.Encryption.Extensions",
+                "DcsvIo.D2.Private.Encryption.Extensions",
                 StringComparison.OrdinalIgnoreCase)
             || include.Contains(
-                "D2.Shared.I18n.Keys.Extensions",
+                "DcsvIo.D2.Private.I18n.Keys.Extensions",
                 StringComparison.OrdinalIgnoreCase);
     }
 }

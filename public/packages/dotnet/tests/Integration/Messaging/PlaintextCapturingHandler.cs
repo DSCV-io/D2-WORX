@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
-using D2.Shared.Handler;
-using D2.Shared.Result;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Result;
 
 /// <summary>Plaintext-event handler that captures into <see cref="TestCollector"/>.</summary>
 public sealed class PlaintextCapturingHandler

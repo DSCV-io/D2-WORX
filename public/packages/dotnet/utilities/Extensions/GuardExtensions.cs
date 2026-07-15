@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Utilities.Extensions;
+namespace DcsvIo.D2.Utilities.Extensions;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;

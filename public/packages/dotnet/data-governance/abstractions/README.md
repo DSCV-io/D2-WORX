@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.DataGovernance.Abstractions
+# DcsvIo.D2.DataGovernance.Abstractions
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 >
@@ -25,7 +25,7 @@ the shared rule value object (`AnonymizationRule`), and the engine seam
 Domain and host code take a dependency on this library to reference the seam
 and the markers without pulling in EF Core. All implementation details — the
 attribute-mapping EF convention, the fluent API, the tiered engine, the startup
-guard, and DI registration — live in `D2.Shared.DataGovernance.EntityFrameworkCore`.
+guard, and DI registration — live in `DcsvIo.D2.DataGovernance.EntityFrameworkCore`.
 
 Vocabulary throughout is **anonymization** — strictly separate from `[RedactData]`
 which governs log-masking only. Do not conflate the two concerns.
@@ -126,14 +126,14 @@ Task<D2Result<AnonymizationOutcome>> AnonymizeOrgAsync(Guid orgId, CancellationT
 - `Guid.Empty` → `D2Result.ValidationFailed`, no database writes.
 - Idempotent — rows where `IsAnonymized == true` are skipped.
 - Always `Task` (not `ValueTask`) — the engine always does real async DB I/O.
-- Implementation: `D2.Shared.DataGovernance.EntityFrameworkCore`.
+- Implementation: `DcsvIo.D2.DataGovernance.EntityFrameworkCore`.
 
 ## Dependencies
 
 | Dependency | Why |
 |---|---|
-| `D2.Shared.Result` | `IAnonymizationEngine` returns `Task<D2Result<AnonymizationOutcome>>`. |
-| `JetBrains.Annotations` | `[UsedImplicitly]` on `AnonymizableAttribute`'s reflectively-consumed properties (`Kind`, `ConstantValue`, `Template`). Does not flow transitively from `D2.Shared.Result` so an explicit reference is required. |
+| `DcsvIo.D2.Result` | `IAnonymizationEngine` returns `Task<D2Result<AnonymizationOutcome>>`. |
+| `JetBrains.Annotations` | `[UsedImplicitly]` on `AnonymizableAttribute`'s reflectively-consumed properties (`Kind`, `ConstantValue`, `Template`). Does not flow transitively from `DcsvIo.D2.Result` so an explicit reference is required. |
 
 ## Tests
 

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 
 using System.Text;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
-using D2.Shared.Encryption;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.KeyCustodian.V2Alpha;
 using Google.Protobuf;
-using ProtoKeyringEntry = D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry;
+using ProtoKeyringEntry = global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyringEntry;
 
 /// <summary>
 /// Shared keyring test material: a fixture key-domain, deterministic key bytes, keyring

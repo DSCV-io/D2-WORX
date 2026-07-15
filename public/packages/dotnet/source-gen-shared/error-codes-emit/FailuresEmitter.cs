@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.SourceGen;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Shared logic for emitting a per-domain catalog's DELEGATING failure
@@ -149,20 +149,20 @@ internal static class FailuresEmitter
         sb.AppendLine();
         sb.AppendLine("#nullable enable");
         sb.AppendLine();
-        sb.AppendLine("using D2.Shared.ErrorCodes.Category;");
+        sb.AppendLine("using DcsvIo.D2.ErrorCodes.Category;");
         sb.AppendLine($"using {config.MessageKeyUsingNamespace};");
 
         // TKMessage lives on the public Abstractions assembly; keep a type alias
         // when the message-key host namespace is the private ProductTK package.
         if (!string.Equals(
                 config.MessageKeyUsingNamespace,
-                "D2.Shared.I18n",
+                "DcsvIo.D2.I18n",
                 System.StringComparison.Ordinal))
         {
-            sb.AppendLine("using TKMessage = D2.Shared.I18n.TKMessage;");
+            sb.AppendLine("using TKMessage = DcsvIo.D2.I18n.TKMessage;");
         }
 
-        sb.AppendLine("using D2.Shared.Result;");
+        sb.AppendLine("using DcsvIo.D2.Result;");
         sb.AppendLine();
         sb.AppendLine($"namespace {config.RootNamespace};");
         sb.AppendLine();

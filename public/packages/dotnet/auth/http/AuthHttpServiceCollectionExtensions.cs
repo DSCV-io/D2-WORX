@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http;
+namespace DcsvIo.D2.Auth.Http;
 
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Http.Ambient;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Http.Ambient;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Context.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 /// <summary>
 /// DI registration entry point for the HTTP-transport binding of the inbound
-/// auth runtime. Companion to <c>D2.Shared.Auth.AddD2Auth</c> — that registers
+/// auth runtime. Companion to <c>DcsvIo.D2.Auth.AddD2Auth</c> — that registers
 /// the validator + liveness tracker; this registers the
 /// <see cref="IHttpContextAccessor"/> + dual-path scoped
 /// <see cref="IRequestContext"/> resolver that downstream handlers inject.
@@ -127,7 +127,7 @@ public static class AuthHttpServiceCollectionExtensions
             // (per-request state flows through the AsyncLocal-backed accessor).
             // Registered here so a forwarding host (HTTP-inbound by definition in
             // the current architecture) gets it automatically; keeping the adapter
-            // in this framework-referencing lib leaves D2.Shared.Auth.Outbound
+            // in this framework-referencing lib leaves DcsvIo.D2.Auth.Outbound
             // free of any AspNetCore framework reference.
             services.TryAddSingleton<
                 IAmbientRequestScopeAccessor,

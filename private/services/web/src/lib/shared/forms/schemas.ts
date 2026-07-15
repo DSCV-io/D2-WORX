@@ -20,7 +20,7 @@
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { postcodeValidator } from "postcode-validator";
-import { DISPLAY_NAME_INVALID_RE } from "@d2/utilities";
+import { DISPLAY_NAME_INVALID_RE } from "@dcsv-io/d2-utilities";
 import * as m from "$lib/paraglide/messages.js";
 
 /**

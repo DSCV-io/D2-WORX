@@ -1,5 +1,5 @@
 {
-  "name": "@d2/headers-grpc",
+  "name": "@dcsv-io/d2-headers-grpc",
   "version": "0.1.0",
   "private": true,
   "type": "module",

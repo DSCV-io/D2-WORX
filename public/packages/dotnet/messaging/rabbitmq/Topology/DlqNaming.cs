@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Topology;
+namespace DcsvIo.D2.Messaging.RabbitMq.Topology;
 
 /// <summary>
 /// Conventional names for the dead-letter exchange / queue that pair with

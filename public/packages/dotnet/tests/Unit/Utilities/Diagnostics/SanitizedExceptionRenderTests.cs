@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Utilities.Diagnostics;
+namespace DcsvIo.D2.Tests.Unit.Utilities.Diagnostics;
 
 using AwesomeAssertions;
-using D2.Shared.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Diagnostics;
 using Xunit;
 
 /// <summary>

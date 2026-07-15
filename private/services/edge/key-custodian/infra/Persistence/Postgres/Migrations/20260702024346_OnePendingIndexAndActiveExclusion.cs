@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres.Migrations
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres.Migrations
 {
     /// <inheritdoc />
     public partial class OnePendingIndexAndActiveExclusion : Migration

@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { ErrorCodes, HttpStatusCode } from "@d2/result";
+import { ErrorCodes, HttpStatusCode } from "@dcsv-io/d2-result";
 import { describe, expect, it } from "vitest";
 
 import { JsonCacheSerializer } from "../src/index.js";

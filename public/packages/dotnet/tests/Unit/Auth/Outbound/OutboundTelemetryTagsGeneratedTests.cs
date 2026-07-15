@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Outbound;
+namespace DcsvIo.D2.Tests.Unit.Auth.Outbound;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Outbound.Telemetry;
+using DcsvIo.D2.Auth.Outbound.Telemetry;
 using Xunit;
 
 /// <summary>

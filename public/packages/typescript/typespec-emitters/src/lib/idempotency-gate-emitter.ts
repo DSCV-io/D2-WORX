@@ -123,7 +123,7 @@ export function emitIdempotencyStoreSeam(
   lines.push("");
   lines.push(`namespace ${registrationNamespace};`);
   lines.push("");
-  lines.push("using D2.Shared.Result;");
+  lines.push("using DcsvIo.D2.Result;");
   lines.push("");
   lines.push("/// <summary>");
   lines.push("/// Faithful seam for the generated idempotency gate.");
@@ -231,7 +231,7 @@ export function buildIdempotencyGate(
 
   if (input.keySource === "header") {
     // Resolve the idempotency key from the Idempotency-Key header.
-    // Use the literal "Idempotency-Key" — no D2.Shared.Headers.Http project
+    // Use the literal "Idempotency-Key" — no DcsvIo.D2.Headers.Http project
     // reference in the generated fixture's host project; constant follow-up tracked.
     preDelegateLines.push(
       `${ind}var idempotencyKey = http.Request.Headers["Idempotency-Key"].ToString();`,
@@ -291,7 +291,7 @@ export function buildIdempotencyGate(
     `${ind}await store.StoreAsync<${storeType}>(idempotencyKey, result, ${ttl}, ct).ConfigureAwait(false);`,
   ];
 
-  const extraUsings: string[] = ["D2.Shared.Utilities.Extensions"];
+  const extraUsings: string[] = ["DcsvIo.D2.Utilities.Extensions"];
 
   return {
     extraUsings,

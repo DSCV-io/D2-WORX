@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Telemetry;
+namespace DcsvIo.D2.Tests.Unit.Telemetry;
 
 using AwesomeAssertions;
-using D2.Shared.Telemetry;
+using DcsvIo.D2.Telemetry;
 using Xunit;
 
 public sealed class D2TelemetryOptionsTests
@@ -80,21 +80,21 @@ public sealed class D2TelemetryOptionsTests
     [Fact]
     public void AdditionalActivitySources_Override_AppliesNewList()
     {
-        var custom = new[] { "D2.Edge", "D2.Edge.Auth" };
+        var custom = new[] { "DcsvIo.D2.Private.Edge", "DcsvIo.D2.Private.Edge.Auth" };
 
         var opts = new D2TelemetryOptions { AdditionalActivitySources = custom };
 
-        opts.AdditionalActivitySources.Should().BeEquivalentTo("D2.Edge", "D2.Edge.Auth");
+        opts.AdditionalActivitySources.Should().BeEquivalentTo("DcsvIo.D2.Private.Edge", "DcsvIo.D2.Private.Edge.Auth");
     }
 
     [Fact]
     public void AdditionalMeters_Override_AppliesNewList()
     {
-        var custom = new[] { "D2.Edge", "D2.Edge.Auth" };
+        var custom = new[] { "DcsvIo.D2.Private.Edge", "DcsvIo.D2.Private.Edge.Auth" };
 
         var opts = new D2TelemetryOptions { AdditionalMeters = custom };
 
-        opts.AdditionalMeters.Should().BeEquivalentTo("D2.Edge", "D2.Edge.Auth");
+        opts.AdditionalMeters.Should().BeEquivalentTo("DcsvIo.D2.Private.Edge", "DcsvIo.D2.Private.Edge.Auth");
     }
 
     [Fact]

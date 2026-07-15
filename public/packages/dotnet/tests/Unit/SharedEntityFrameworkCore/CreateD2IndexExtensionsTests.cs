@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SharedEntityFrameworkCore;
+namespace DcsvIo.D2.Tests.Unit.SharedEntityFrameworkCore;
 
 using System;
 using AwesomeAssertions;
-using D2.Shared.EntityFrameworkCore;
+using DcsvIo.D2.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Xunit;

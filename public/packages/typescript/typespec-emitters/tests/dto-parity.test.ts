@@ -11,7 +11,7 @@
 
 import { describe, it, expect } from "vitest";
 import type { Model, ModelProperty, Program, Scalar } from "@typespec/compiler";
-import { D2_REDACT_KEY } from "@d2/typespec-decorators";
+import { D2_REDACT_KEY } from "@dcsv-io/d2-typespec-decorators";
 import { walkModel } from "../src/lib/model-walk.js";
 import { emitCsharpDtos } from "../src/lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "../src/lib/ts-dto-emitter.js";

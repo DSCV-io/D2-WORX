@@ -1,4 +1,4 @@
-# Changelog — @d2/messaging-abstractions
+# Changelog — @dcsv-io/d2-messaging-abstractions
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.
@@ -13,7 +13,7 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
 
 - `MqMessagesCatalog` — the literal-typed (`as const`) per-message catalog plus
   the `MqMessageCatalogKey` union: the compile-time type-witness input the
-  @d2/messaging-rabbitmq publisher consumes (same data as `MqMessagesRegistry`,
+  @dcsv-io/d2-messaging-rabbitmq publisher consumes (same data as `MqMessagesRegistry`,
   but each `encryption` value keeps its literal type).
 
 ### Fixed

@@ -22,7 +22,7 @@ export {
   PROBLEM_TYPE_URI_PREFIX,
   ProblemDetailsExtensionKeys,
   ProblemDetailsTitles,
-} from "@d2/problem-details-abstractions";
+} from "@dcsv-io/d2-problem-details-abstractions";
 export type {
   AuthenticatedRequestContext,
   GuardRequestEvent,
@@ -33,4 +33,4 @@ export { requireOrg } from "./guards/require-org.js";
 export { requireRole } from "./guards/require-role.js";
 export { requireScope } from "./guards/require-scope.js";
 export { redirectIfAuthenticated } from "./guards/redirect-if-authenticated.js";
-export type { JwtPayload } from "@d2/auth-abstractions";
+export type { JwtPayload } from "@dcsv-io/d2-auth-abstractions";

@@ -2,8 +2,13 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { PayloadCryptoKeyring } from "@d2/encryption";
-import { type D2Result, bubbleFail, ok, serviceUnavailable } from "@d2/result";
+import { PayloadCryptoKeyring } from "@dcsv-io/d2-encryption";
+import {
+  type D2Result,
+  bubbleFail,
+  ok,
+  serviceUnavailable,
+} from "@dcsv-io/d2-result";
 
 import type { KeyCustodianGrpcClient } from "../facade/key-custodian-grpc-client.g.js";
 import type { KeyringEntry } from "./get-keyring-dto.g.js";
@@ -20,7 +25,7 @@ const _KEYRING_CALL_DEADLINE_MS = 10_000;
 /**
  * Least-privilege port over the KeyCustodian `getKeyring` op — the TS twin of the
  * .NET `IKeyringClient`. Maps the emitted `GetKeyringOutput` to a validated
- * `@d2/encryption` symmetric keyring (the `aadContext` is used verbatim as the
+ * `@dcsv-io/d2-encryption` symmetric keyring (the `aadContext` is used verbatim as the
  * additional-authenticated-data binding, never re-derived client-side).
  */
 export interface KeyringClient {

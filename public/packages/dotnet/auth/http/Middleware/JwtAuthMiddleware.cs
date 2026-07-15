@@ -4,23 +4,23 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http.Middleware;
+namespace DcsvIo.D2.Auth.Http.Middleware;
 
 using System.Net;
 using System.Text.Json;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Http.Endpoints;
-using D2.Shared.Auth.Http.ProblemDetails;
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Headers.Http;
-using D2.Shared.ProblemDetails;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Http.Endpoints;
+using DcsvIo.D2.Auth.Http.ProblemDetails;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Headers.Http;
+using DcsvIo.D2.ProblemDetails;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

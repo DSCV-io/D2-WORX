@@ -8,7 +8,7 @@ import {
   ConsumerServiceByDomain,
   EncryptionDomains,
   EncryptionDomainModes,
-} from "@d2/encryption-abstractions";
+} from "@dcsv-io/d2-encryption-abstractions";
 import { canonicalize, loadFixture } from "../src/index.js";
 
 interface CatalogMap {

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching;
+namespace DcsvIo.D2.Caching;
 
-using D2.Shared.I18n;
-using D2.Shared.Result;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Pre-built <see cref="D2Result"/> input-failure responses for cache impls.

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions.Jwks;
+namespace DcsvIo.D2.Auth.Abstractions.Jwks;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Reads-side contract for JWKS verify keys — every consumer-side service
-/// (D2.Shared.Auth runtime, Edge's own validators) calls this to look up
+/// (DcsvIo.D2.Auth runtime, Edge's own validators) calls this to look up
 /// signing keys by <c>kid</c> when validating inbound JWTs.
 /// </summary>
 /// <remarks>

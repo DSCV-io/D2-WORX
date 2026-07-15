@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Http.Endpoints;
-using D2.Shared.Auth.Startup;
+using DcsvIo.D2.Auth.Http.Endpoints;
+using DcsvIo.D2.Auth.Startup;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.Hosting;
 using global::Microsoft.AspNetCore.Http;

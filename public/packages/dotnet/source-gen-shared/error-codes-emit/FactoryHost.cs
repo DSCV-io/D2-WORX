@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.SourceGen;
 
 /// <summary>
 /// Selects how a catalog's failure factories are emitted — orthogonal to the

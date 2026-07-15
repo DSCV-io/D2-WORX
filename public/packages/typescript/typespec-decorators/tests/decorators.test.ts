@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-// Tests for @d2/typespec-decorators.
+// Tests for @dcsv-io/d2-typespec-decorators.
 //
 // Direct unit tests call each $fn with a lightweight mock DecoratorContext,
 // giving V8 source-level coverage. Integration tests use the TypeSpec test
@@ -391,7 +391,7 @@ describe("directUnit_$d2Internal", () => {
 // ---------------------------------------------------------------------------
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(import.meta.url),
   // Override: repo uses rootDir=src → outDir=dist (no src/ segment in dist/)
   jsFileFolder: "dist",
@@ -407,7 +407,7 @@ let runner: BasicTestRunner;
 beforeAll(async () => {
   const host = await createTestHost({ libraries: [D2DecoratorTestLibrary] });
   runner = createTestWrapper(host, {
-    autoImports: ["@d2/typespec-decorators"],
+    autoImports: ["@dcsv-io/d2-typespec-decorators"],
     autoUsings: ["D2"],
   });
 });
@@ -883,7 +883,7 @@ describe("directUnit_$d2Reserved_InvalidNames", () => {
 // ---------------------------------------------------------------------------
 
 it("lib_HasExpectedPackageName", () => {
-  expect($lib.name).toBe("@d2/typespec-decorators");
+  expect($lib.name).toBe("@dcsv-io/d2-typespec-decorators");
 });
 
 // ---------------------------------------------------------------------------
@@ -1048,7 +1048,7 @@ it("d2Redact_UnknownReasonEmitsInvalidRedactReason", async () => {
     }
   `);
   expect(getDiagCodes(runner)).toContain(
-    "@d2/typespec-decorators/invalid-redact-reason",
+    "@dcsv-io/d2-typespec-decorators/invalid-redact-reason",
   );
 });
 
@@ -2758,7 +2758,9 @@ describe("directUnit_$onValidate", () => {
     );
     expect(
       diags.some((d) =>
-        d.code.startsWith("@d2/typespec-decorators/resilience-predicate-"),
+        d.code.startsWith(
+          "@dcsv-io/d2-typespec-decorators/resilience-predicate-",
+        ),
       ),
     ).toBe(false);
   });
@@ -2851,7 +2853,7 @@ describe("d2RateLimitTier_RejectsInvalidTier", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-rate-limit-tier",
+      "@dcsv-io/d2-typespec-decorators/invalid-rate-limit-tier",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -2862,7 +2864,7 @@ describe("d2RateLimitTier_RejectsInvalidTier", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-rate-limit-tier",
+      "@dcsv-io/d2-typespec-decorators/invalid-rate-limit-tier",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -2877,7 +2879,7 @@ describe("d2RateLimitTier_AcceptsValidTiers", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-rate-limit-tier",
+      "@dcsv-io/d2-typespec-decorators/invalid-rate-limit-tier",
     );
   });
 
@@ -2889,7 +2891,7 @@ describe("d2RateLimitTier_AcceptsValidTiers", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-rate-limit-tier",
+      "@dcsv-io/d2-typespec-decorators/invalid-rate-limit-tier",
     );
   });
 
@@ -2901,7 +2903,7 @@ describe("d2RateLimitTier_AcceptsValidTiers", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-rate-limit-tier",
+      "@dcsv-io/d2-typespec-decorators/invalid-rate-limit-tier",
     );
   });
 });
@@ -2915,7 +2917,7 @@ describe("d2GrpcMethod_RejectsInvalidStreaming", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-grpc-streaming",
+      "@dcsv-io/d2-typespec-decorators/invalid-grpc-streaming",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -2929,7 +2931,7 @@ describe("d2GrpcMethod_AcceptsServerStream", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-grpc-streaming",
+      "@dcsv-io/d2-typespec-decorators/invalid-grpc-streaming",
     );
   });
 });
@@ -2943,7 +2945,7 @@ describe("d2ServerPush_RejectsInvalidTarget", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-push-target",
+      "@dcsv-io/d2-typespec-decorators/invalid-push-target",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -2957,7 +2959,7 @@ describe("d2ServerPush_AcceptsUser", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-push-target",
+      "@dcsv-io/d2-typespec-decorators/invalid-push-target",
     );
   });
 });
@@ -2971,7 +2973,7 @@ describe("d2Csrf_RejectsInvalidPosture", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-csrf-posture",
+      "@dcsv-io/d2-typespec-decorators/invalid-csrf-posture",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -2986,7 +2988,7 @@ describe("d2Csrf_AcceptsExempt", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-csrf-posture",
+      "@dcsv-io/d2-typespec-decorators/invalid-csrf-posture",
     );
   });
 });
@@ -3000,7 +3002,7 @@ describe("d2Idempotent_RejectsInvalidKeySource", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-idempotent-key-source",
+      "@dcsv-io/d2-typespec-decorators/invalid-idempotent-key-source",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3013,7 +3015,7 @@ describe("d2Idempotent_RejectsNonPositiveTtl", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-idempotent-ttl",
+      "@dcsv-io/d2-typespec-decorators/invalid-idempotent-ttl",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3026,7 +3028,7 @@ describe("d2Idempotent_DerivedWithoutFieldsRejected", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/idempotent-derived-requires-fields",
+      "@dcsv-io/d2-typespec-decorators/idempotent-derived-requires-fields",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3039,7 +3041,7 @@ describe("d2Idempotent_HeaderWithFieldsRejected", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/idempotent-header-forbids-fields",
+      "@dcsv-io/d2-typespec-decorators/idempotent-header-forbids-fields",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3054,7 +3056,7 @@ describe("d2RequireAnyScope_RejectsUnknownScope", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/unknown-scope",
+      "@dcsv-io/d2-typespec-decorators/unknown-scope",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3069,7 +3071,7 @@ describe("d2RequireAnyScope_AcceptsKnownScope", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/unknown-scope",
+      "@dcsv-io/d2-typespec-decorators/unknown-scope",
     );
   });
 });
@@ -3083,7 +3085,7 @@ describe("d2RequireAllScopes_RejectsUnknownScope", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/unknown-scope",
+      "@dcsv-io/d2-typespec-decorators/unknown-scope",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3098,7 +3100,7 @@ describe("d2RequireAllScopes_AcceptsKnownScope", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/unknown-scope",
+      "@dcsv-io/d2-typespec-decorators/unknown-scope",
     );
   });
 });
@@ -3112,7 +3114,7 @@ describe("d2Audience_RejectsUnknownAudience", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/unknown-audience",
+      "@dcsv-io/d2-typespec-decorators/unknown-audience",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3127,7 +3129,7 @@ describe("d2Audience_AcceptsKnownAudience", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/unknown-audience",
+      "@dcsv-io/d2-typespec-decorators/unknown-audience",
     );
   });
 });
@@ -3141,7 +3143,7 @@ describe("d2Audience_AcceptsD2EdgeSpecialCase", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/unknown-audience",
+      "@dcsv-io/d2-typespec-decorators/unknown-audience",
     );
   });
 });
@@ -3155,7 +3157,7 @@ describe("d2Audience_AcceptsD2InternalAudience", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/unknown-audience",
+      "@dcsv-io/d2-typespec-decorators/unknown-audience",
     );
   });
 });
@@ -3169,7 +3171,7 @@ describe("d2ServedBy_RejectsEmptyOwner", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/empty-served-by",
+      "@dcsv-io/d2-typespec-decorators/empty-served-by",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3180,7 +3182,7 @@ describe("d2ServedBy_RejectsEmptyOwner", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/empty-served-by",
+      "@dcsv-io/d2-typespec-decorators/empty-served-by",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3195,7 +3197,7 @@ describe("d2ServedBy_AcceptsNonEmpty", () => {
       op goodOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/empty-served-by",
+      "@dcsv-io/d2-typespec-decorators/empty-served-by",
     );
   });
 });
@@ -3209,7 +3211,7 @@ describe("d2Resilience_RejectsMalformed", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-malformed",
+      "@dcsv-io/d2-typespec-decorators/resilience-malformed",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3220,7 +3222,7 @@ describe("d2Resilience_RejectsMalformed", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-malformed",
+      "@dcsv-io/d2-typespec-decorators/resilience-malformed",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3233,7 +3235,7 @@ describe("d2Resilience_RejectsMalformed", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-malformed",
+      "@dcsv-io/d2-typespec-decorators/resilience-malformed",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3246,7 +3248,7 @@ describe("d2Resilience_RejectsUnknownPolicy", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-unknown-policy",
+      "@dcsv-io/d2-typespec-decorators/resilience-unknown-policy",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3259,7 +3261,7 @@ describe("d2Resilience_RejectsUnknownArg", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-unknown-arg",
+      "@dcsv-io/d2-typespec-decorators/resilience-unknown-arg",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3270,7 +3272,7 @@ describe("d2Resilience_RejectsUnknownArg", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-unknown-arg",
+      "@dcsv-io/d2-typespec-decorators/resilience-unknown-arg",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3283,7 +3285,7 @@ describe("d2Resilience_RejectsBadArg", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-bad-arg",
+      "@dcsv-io/d2-typespec-decorators/resilience-bad-arg",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3294,7 +3296,7 @@ describe("d2Resilience_RejectsBadArg", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-bad-arg",
+      "@dcsv-io/d2-typespec-decorators/resilience-bad-arg",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3307,7 +3309,7 @@ describe("d2Resilience_RejectsMultipleInner", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-multiple-inner",
+      "@dcsv-io/d2-typespec-decorators/resilience-multiple-inner",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3320,7 +3322,7 @@ describe("d2Resilience_RejectsPositionalAfterNamed", () => {
       op badOp(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/resilience-positional-after-named",
+      "@dcsv-io/d2-typespec-decorators/resilience-positional-after-named",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3388,7 +3390,7 @@ describe("d2InProcess_RejectsMissingServedBy", () => {
       op leafOpNoOwner(): void;
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/inprocess-requires-served-by",
+      "@dcsv-io/d2-typespec-decorators/inprocess-requires-served-by",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3403,7 +3405,7 @@ describe("d2InProcess_AcceptsWithServedBy", () => {
       op leafOp(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/inprocess-requires-served-by",
+      "@dcsv-io/d2-typespec-decorators/inprocess-requires-served-by",
     );
   });
 });
@@ -3418,7 +3420,7 @@ describe("d2InProcess_DoubleApplyIsIdempotent", () => {
       op leafOpDouble(): void;
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/inprocess-requires-served-by",
+      "@dcsv-io/d2-typespec-decorators/inprocess-requires-served-by",
     );
     const values = [...runner.program.stateMap(D2_IN_PROCESS_KEY).values()];
     expect(values).toContain(true);
@@ -3449,7 +3451,7 @@ describe("d2Field_RejectsInvalidFieldNumbers", () => {
       }
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-field-number",
+      "@dcsv-io/d2-typespec-decorators/invalid-field-number",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3461,7 +3463,7 @@ describe("d2Field_RejectsInvalidFieldNumbers", () => {
       }
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-field-number",
+      "@dcsv-io/d2-typespec-decorators/invalid-field-number",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3473,7 +3475,7 @@ describe("d2Field_RejectsInvalidFieldNumbers", () => {
       }
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-field-number",
+      "@dcsv-io/d2-typespec-decorators/invalid-field-number",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3485,7 +3487,7 @@ describe("d2Field_RejectsInvalidFieldNumbers", () => {
       }
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-field-number",
+      "@dcsv-io/d2-typespec-decorators/invalid-field-number",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3497,7 +3499,7 @@ describe("d2Field_RejectsInvalidFieldNumbers", () => {
       }
     `);
     expect(getDiagCodes(runner)).toContain(
-      "@d2/typespec-decorators/invalid-field-number",
+      "@dcsv-io/d2-typespec-decorators/invalid-field-number",
     );
     expect(runner.program.hasError()).toBe(true);
   });
@@ -3511,7 +3513,7 @@ describe("d2Field_AcceptsValidFieldNumbers", () => {
       }
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-field-number",
+      "@dcsv-io/d2-typespec-decorators/invalid-field-number",
     );
   });
 
@@ -3522,7 +3524,7 @@ describe("d2Field_AcceptsValidFieldNumbers", () => {
       }
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-field-number",
+      "@dcsv-io/d2-typespec-decorators/invalid-field-number",
     );
   });
 
@@ -3533,7 +3535,7 @@ describe("d2Field_AcceptsValidFieldNumbers", () => {
       }
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-field-number",
+      "@dcsv-io/d2-typespec-decorators/invalid-field-number",
     );
   });
 
@@ -3544,7 +3546,7 @@ describe("d2Field_AcceptsValidFieldNumbers", () => {
       }
     `);
     expect(getDiagCodes(runner)).not.toContain(
-      "@d2/typespec-decorators/invalid-field-number",
+      "@dcsv-io/d2-typespec-decorators/invalid-field-number",
     );
     expect(runner.program.stateMap(D2_FIELD_KEY).size).toBeGreaterThan(0);
   });
@@ -3591,7 +3593,7 @@ beforeAll(async () => {
     libraries: [D2DecoratorTestLibrary, HttpTestLibrary],
   });
   httpRunner = createTestWrapper(httpHost, {
-    autoImports: ["@d2/typespec-decorators", "@typespec/http"],
+    autoImports: ["@dcsv-io/d2-typespec-decorators", "@typespec/http"],
     autoUsings: ["D2", "TypeSpec.Http"],
   });
 });
@@ -3607,7 +3609,7 @@ describe("onValidate_RateTierOnInternalOpReportsDiagnostic", () => {
       op internalOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/rate-tier-requires-route",
+      "@dcsv-io/d2-typespec-decorators/rate-tier-requires-route",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3622,7 +3624,7 @@ describe("onValidate_RateTierOnRoutedOpPasses", () => {
       op listItems(): void;
     `);
     expect(getHttpDiagCodes()).not.toContain(
-      "@d2/typespec-decorators/rate-tier-requires-route",
+      "@dcsv-io/d2-typespec-decorators/rate-tier-requires-route",
     );
   });
 });
@@ -3635,7 +3637,7 @@ describe("onValidate_HarmlessPlusAnyScopeReportsConflict", () => {
       op conflictOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/harmless-scope-conflict",
+      "@dcsv-io/d2-typespec-decorators/harmless-scope-conflict",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3649,7 +3651,7 @@ describe("onValidate_HarmlessPlusAllScopesReportsConflict", () => {
       op conflictOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/harmless-scope-conflict",
+      "@dcsv-io/d2-typespec-decorators/harmless-scope-conflict",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3664,7 +3666,7 @@ describe("onValidate_HarmlessAlonePasses", () => {
       op healthCheck(): void;
     `);
     expect(getHttpDiagCodes()).not.toContain(
-      "@d2/typespec-decorators/harmless-scope-conflict",
+      "@dcsv-io/d2-typespec-decorators/harmless-scope-conflict",
     );
   });
 });
@@ -3680,7 +3682,7 @@ describe("category_RejectsMissingCategory", () => {
       op bareOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/category-required",
+      "@dcsv-io/d2-typespec-decorators/category-required",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3695,7 +3697,7 @@ describe("category_RejectsBothCommandAndQuery", () => {
       op conflictCategoryOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/category-exclusive",
+      "@dcsv-io/d2-typespec-decorators/category-exclusive",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3709,10 +3711,10 @@ describe("category_AcceptsExactlyOneCommand", () => {
       op mutateOp(): void;
     `);
     expect(getHttpDiagCodes()).not.toContain(
-      "@d2/typespec-decorators/category-required",
+      "@dcsv-io/d2-typespec-decorators/category-required",
     );
     expect(getHttpDiagCodes()).not.toContain(
-      "@d2/typespec-decorators/category-exclusive",
+      "@dcsv-io/d2-typespec-decorators/category-exclusive",
     );
   });
 });
@@ -3725,10 +3727,10 @@ describe("category_AcceptsExactlyOneQuery", () => {
       op readOp(): void;
     `);
     expect(getHttpDiagCodes()).not.toContain(
-      "@d2/typespec-decorators/category-required",
+      "@dcsv-io/d2-typespec-decorators/category-required",
     );
     expect(getHttpDiagCodes()).not.toContain(
-      "@d2/typespec-decorators/category-exclusive",
+      "@dcsv-io/d2-typespec-decorators/category-exclusive",
     );
   });
 });
@@ -3746,7 +3748,7 @@ describe("internal_RejectsRouteExposure", () => {
       op exposedInternalOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/internal-op-exposed",
+      "@dcsv-io/d2-typespec-decorators/internal-op-exposed",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3761,7 +3763,7 @@ describe("internal_RejectsGrpcExposure", () => {
       op grpcInternalOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/internal-op-exposed",
+      "@dcsv-io/d2-typespec-decorators/internal-op-exposed",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3777,7 +3779,7 @@ describe("internal_RejectsInProcessExposure", () => {
       op inProcessInternalOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/internal-op-exposed",
+      "@dcsv-io/d2-typespec-decorators/internal-op-exposed",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3792,7 +3794,7 @@ describe("internal_RejectsServerPushExposure", () => {
       op pushInternalOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/internal-op-exposed",
+      "@dcsv-io/d2-typespec-decorators/internal-op-exposed",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3806,7 +3808,7 @@ describe("internal_AcceptsWhenNotExposed", () => {
       op pureInternalOp(): void;
     `);
     expect(getHttpDiagCodes()).not.toContain(
-      "@d2/typespec-decorators/internal-op-exposed",
+      "@dcsv-io/d2-typespec-decorators/internal-op-exposed",
     );
   });
 });
@@ -3822,7 +3824,7 @@ describe("exposureOrInternal_RejectsBareOp", () => {
       op bareQueryOp(): void;
     `);
     expect(getHttpDiagCodes()).toContain(
-      "@d2/typespec-decorators/exposure-or-internal-required",
+      "@dcsv-io/d2-typespec-decorators/exposure-or-internal-required",
     );
     expect(httpRunner.program.hasError()).toBe(true);
   });
@@ -3836,7 +3838,7 @@ describe("exposureOrInternal_AcceptsInternalOp", () => {
       op internalQueryOp(): void;
     `);
     expect(getHttpDiagCodes()).not.toContain(
-      "@d2/typespec-decorators/exposure-or-internal-required",
+      "@dcsv-io/d2-typespec-decorators/exposure-or-internal-required",
     );
   });
 });
@@ -3854,7 +3856,7 @@ describe("category_DoubleApplyIsIdempotent", () => {
       op doubleCommandOp(): void;
     `);
     expect(getHttpDiagCodes()).not.toContain(
-      "@d2/typespec-decorators/category-exclusive",
+      "@dcsv-io/d2-typespec-decorators/category-exclusive",
     );
     const values = [...httpRunner.program.stateMap(D2_COMMAND_KEY).values()];
     expect(values).toContain(true);

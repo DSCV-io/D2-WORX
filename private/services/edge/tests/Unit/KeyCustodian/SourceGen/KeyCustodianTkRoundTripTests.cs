@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.SourceGen;
 
-using D2.Shared.ErrorCodes.SourceGen;
+using DcsvIo.D2.ErrorCodes.SourceGen;
 
 /// <summary>
 /// Regression pin for the keycustodian TK-key rename

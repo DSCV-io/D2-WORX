@@ -8,9 +8,15 @@ import {
   InputFailures,
   type ILocalCache,
   type LocalCacheOptions,
-} from "@d2/caching-abstractions";
-import { conflict, notFound, ok, someFound, type D2Result } from "@d2/result";
-import { falsey } from "@d2/utilities";
+} from "@dcsv-io/d2-caching-abstractions";
+import {
+  conflict,
+  notFound,
+  ok,
+  someFound,
+  type D2Result,
+} from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 import {
   createLocalCacheCounters,
@@ -36,7 +42,7 @@ const DISPOSED_MESSAGE = "DefaultLocalCache is disposed.";
  * signature ergonomics) so check-then-write windows are atomic on the
  * Node event loop.
  *
- * Per-call failures return `@d2/result` shapes (`notFound`,
+ * Per-call failures return `@dcsv-io/d2-result` shapes (`notFound`,
  * `validationFailed` via {@link InputFailures}, `conflict`). Lifecycle
  * misuse (ops after {@link dispose}) throws a plain `Error` with the
  * pinned message `"DefaultLocalCache is disposed."`.
@@ -51,7 +57,7 @@ const DISPOSED_MESSAGE = "DefaultLocalCache is disposed.";
  * Clock note: the injected clock must be non-decreasing. A backwards
  * jump can transiently resurrect an expired-but-unevicted entry.
  *
- * @see ICacheBasic / ICacheAtomic port contracts on `@d2/caching-abstractions`.
+ * @see ICacheBasic / ICacheAtomic port contracts on `@dcsv-io/d2-caching-abstractions`.
  */
 export class DefaultLocalCache implements ILocalCache, Disposable {
   private readonly options: LocalCacheOptions;

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.ServiceDefaults;
-using D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+using DcsvIo.D2.ServiceDefaults;
+using DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.TestHost;
 using global::Microsoft.Extensions.DependencyInjection;

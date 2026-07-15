@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json.Serialization;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Utilities.Extensions;
 using Xunit;
 
 /// <summary>
 /// Emits the parity fixture for the codegen-emitted geo enums reflected
-/// off the <c>D2.Shared.Geo.Abstractions</c> assembly. Each enum gets one
+/// off the <c>DcsvIo.D2.Geo.Abstractions</c> assembly. Each enum gets one
 /// sub-map keyed by enum-member-name; the value is the enum's wire form
 /// (the integer backing for value-typed enums such as
 /// <see cref="GeopoliticalEntityType"/> whose TS counterpart uses the

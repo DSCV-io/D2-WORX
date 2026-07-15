@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Logging.Destructuring;
+namespace DcsvIo.D2.Logging.Destructuring;
 
 using System.Reflection;
 

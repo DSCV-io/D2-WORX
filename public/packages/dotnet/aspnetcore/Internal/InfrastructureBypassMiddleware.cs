@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore.Internal;
+namespace DcsvIo.D2.AspNetCore.Internal;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Logging;
+namespace DcsvIo.D2.Logging;
 
-using D2.Shared.Logging.Destructuring;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,7 +16,7 @@ using Serilog.Events;
 using Serilog.Formatting.Compact;
 
 /// <summary>
-/// DI registration entry point for <see cref="D2.Shared.Logging"/> — wires
+/// DI registration entry point for <see cref="DcsvIo.D2.Logging"/> — wires
 /// the Serilog pipeline (per-source minimum-level overrides, the
 /// <see cref="RedactDataDestructuringPolicy"/> safety net for the
 /// <c>[RedactData]</c> attribute, environment + service-name + machine-name

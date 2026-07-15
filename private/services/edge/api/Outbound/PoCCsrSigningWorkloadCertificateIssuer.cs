@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Api.Outbound;
+namespace DcsvIo.D2.Private.Edge.Api.Outbound;
 
-using D2.Edge.Api.Composition;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Shared.Auth.Outbound.WorkloadCertificate;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
+using DcsvIo.D2.Private.Edge.Api.Composition;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
+using DcsvIo.D2.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NodaTime;

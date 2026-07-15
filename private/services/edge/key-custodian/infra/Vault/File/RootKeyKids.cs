@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Vault.File;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Vault.File;
 
 /// <summary>
 /// Kid + filename constants for the file-backed root keyring. The provider and

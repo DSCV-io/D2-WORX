@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SharedEntityFrameworkCore;
+namespace DcsvIo.D2.Tests.Unit.SharedEntityFrameworkCore;
 
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 

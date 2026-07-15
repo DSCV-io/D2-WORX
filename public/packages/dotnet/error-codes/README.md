@@ -23,15 +23,15 @@ Cross-catalog error-code classification and merged registry for D²-WORX. The cl
 contracts/error-category/error-category.spec.json
         │
         ▼  (category-source-gen, build-time only)
-D2.Shared.ErrorCodes.Category   (BCL-only leaf)
+DcsvIo.D2.ErrorCodes.Category   (BCL-only leaf)
         ▲
-        ├── D2.Shared.Result (result/core) — D2Result.Category is a typed ErrorCategory?
-        └── D2.Shared.ErrorCodes.Registry
+        ├── DcsvIo.D2.Result (result/core) — D2Result.Category is a typed ErrorCategory?
+        └── DcsvIo.D2.ErrorCodes.Registry
                   ▲
                   └── consuming services (Edge, Gateway, BFF) — never from domain code
 ```
 
-The `registry/` package additionally depends on `D2.Shared.I18n.Keys` so the `UserMessageKey` field in `ErrorCodeInfo` is a typed `TKMessage`.
+The `registry/` package additionally depends on `DcsvIo.D2.I18n.Keys` so the `UserMessageKey` field in `ErrorCodeInfo` is a typed `TKMessage`.
 
 ## Source of truth
 

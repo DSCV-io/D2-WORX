@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcPredicate;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcPredicate;
 
 using System.Threading.Tasks;
-using D2.Edge.Tests.TypeSpecGrpcPredicate.Generated;
-using D2.Services.Protos.PredicateFixturesDeep.V1;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Resilience.Retry;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated;
+using DcsvIo.D2.Resilience.Pipeline;
+using DcsvIo.D2.Resilience.Retry;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.PredicateFixturesDeep.V1;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -22,13 +22,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoDeepFixturePart = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepFixturePart;
-using DtoDeepFixtureWidget = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepFixtureWidget;
-using DtoDeepInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepNestFixtureInput;
-using DtoDeepOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepNestFixtureOutput;
-using ProtoDeepFixturePart = D2.Services.Protos.PredicateFixturesDeep.V1.DeepFixturePart;
-using ProtoDeepFixtureWidget = D2.Services.Protos.PredicateFixturesDeep.V1.DeepFixtureWidget;
-using ProtoDeepOutput = D2.Services.Protos.PredicateFixturesDeep.V1.DeepNestFixtureOutput;
+using DtoDeepFixturePart = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepFixturePart;
+using DtoDeepFixtureWidget = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepFixtureWidget;
+using DtoDeepInput = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepNestFixtureInput;
+using DtoDeepOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.DeepNestFixtureOutput;
+using ProtoDeepFixturePart = global::D2.Services.Protos.PredicateFixturesDeep.V1.DeepFixturePart;
+using ProtoDeepFixtureWidget = global::D2.Services.Protos.PredicateFixturesDeep.V1.DeepFixtureWidget;
+using ProtoDeepOutput = global::D2.Services.Protos.PredicateFixturesDeep.V1.DeepNestFixtureOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="PredicateFixturesDeepGrpcClient"/> — the

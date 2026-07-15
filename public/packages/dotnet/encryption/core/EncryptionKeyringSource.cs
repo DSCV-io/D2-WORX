@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Encryption;
+namespace DcsvIo.D2.Encryption;
 
 /// <summary>
 /// Provenance of the keyring backing a registered <see cref="IPayloadCrypto"/>.

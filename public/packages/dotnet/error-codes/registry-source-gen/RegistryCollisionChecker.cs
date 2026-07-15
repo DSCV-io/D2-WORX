@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.Registry.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.Registry.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Build-time safety gate that enforces two cross-catalog invariants across

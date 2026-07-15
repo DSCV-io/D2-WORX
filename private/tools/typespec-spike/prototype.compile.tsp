@@ -2,14 +2,14 @@
 // D2-WORX TypeSpec spike — COMPILE-READY prototype (path (a)).
 //
 // Identical in shape to prototype.tsp, but the inline `extern dec` block is
-// replaced by an import of the real decorator library (@d2/typespec-decorators),
+// replaced by an import of the real decorator library (@dcsv-io/d2-typespec-decorators),
 // so the FULL prototype compiles WITH the @d2* decorators applied and their
 // values land in the program StateMap for the emitter to read back.
 // ============================================================================
 
 import "@typespec/http";
 import "@typespec/openapi3";
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 
 using TypeSpec.Http;
 using D2;

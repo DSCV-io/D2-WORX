@@ -71,7 +71,7 @@ export interface ExposedOp {
   readonly category: "Commands" | "Queries";
   /**
    * The concern-qualified C# namespace the op's transport DTOs were emitted to
-   * (e.g. "D2.Edge.KeyCustodian.Client.Keyring"). The façade interface + impl
+   * (e.g. "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring"). The façade interface + impl
    * add a `using` for each distinct value so the `<Op>Input`/`<Op>Output` types
    * resolve from their concern folders.
    */
@@ -100,7 +100,7 @@ export interface ExposedOp {
  *                           Must not be empty (a zero-op module produces no file).
  * @param clientsNamespace - The C# BASE namespace for the Clients project (the
  *                           concern folders sit under it, e.g.
- *                           "D2.Edge.KeyCustodian.Client"). The façade interface
+ *                           "DcsvIo.D2.Private.Edge.KeyCustodian.Client"). The façade interface
  *                           lands in `<clientsNamespace>.Facade`; the DI file +
  *                           method names derive from its leaf segment.
  * @param appNamespace     - The C# BASE namespace for the generated app-layer
@@ -108,7 +108,7 @@ export interface ExposedOp {
  *                           `<appNamespace>.Facade`; handler-interface `using`
  *                           directives derive from `<appNamespace>.Handlers.…`.
  *                           Typically the module's Application namespace root
- *                           (e.g. "D2.Edge.KeyCustodian.App.Application").
+ *                           (e.g. "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application").
  * @returns An array of exactly three EmittedFile instances, or an empty array
  *          when `exposedOps` is empty (zero-exposed-op module → no façade).
  */
@@ -239,7 +239,7 @@ function emitImpl(
   //   - the façade interface namespace (<clients-ns>.Facade),
   //   - each op's concern DTO namespace (<clients-ns>.<Concern>),
   //   - each op's handler-interface namespace
-  //     (e.g. D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks).
+  //     (e.g. DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks).
   const allUsings = [
     facadeClientsNamespace,
     ...distinctDtoNamespaces(exposedOps),

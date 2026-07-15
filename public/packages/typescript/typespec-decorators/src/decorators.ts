@@ -165,7 +165,7 @@ export function $d2GrpcMethod(
 /**
  * Marks a model property as sensitive — redacted from structured logs. The
  * required `reason` names the data class; it is validated against the
- * `D2.Shared.Utilities.Enums.RedactReason` member set (fail-loud on an unknown
+ * `DcsvIo.D2.Utilities.Enums.RedactReason` member set (fail-loud on an unknown
  * value) and stored verbatim on the property. Emitters read back the reason
  * string and map it to `RedactReason.<reason>`. Storing the reason (not a bare
  * `true`) is what lets the emitter fail closed rather than default a

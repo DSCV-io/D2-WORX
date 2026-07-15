@@ -6,10 +6,10 @@
 
 extern alias RegistrySourceGen;
 
-namespace D2.Shared.Tests.Unit.ErrorCodesRegistry;
+namespace DcsvIo.D2.Tests.Unit.ErrorCodesRegistry;
 
 using AwesomeAssertions;
-using RegistrySourceGen::D2.Shared.ErrorCodes.Registry.SourceGen;
+using RegistrySourceGen::DcsvIo.D2.ErrorCodes.Registry.SourceGen;
 using Xunit;
 
 /// <summary>

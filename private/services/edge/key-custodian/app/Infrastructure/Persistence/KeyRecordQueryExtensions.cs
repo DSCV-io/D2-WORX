@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Persistence;
 
 /// <summary>
 /// Server-side composable LINQ filters over <see cref="KeyRecord"/> value

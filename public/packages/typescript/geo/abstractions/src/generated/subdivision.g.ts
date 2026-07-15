@@ -19,7 +19,7 @@ import type { DeprecationInfo } from "../deprecation-info.js";
  * `state` / `province` / `region`); display labels live on the
  * `type` field. Nav refs `country` + `parentSubdivision` populated
  * in the wire-nav step. Mirrors .NET
- * `D2.Shared.Geo.Abstractions.Subdivision` field-for-field.
+ * `DcsvIo.D2.Geo.Abstractions.Subdivision` field-for-field.
  */
 export interface Subdivision {
   readonly iso31662Code: SubdivisionCode;

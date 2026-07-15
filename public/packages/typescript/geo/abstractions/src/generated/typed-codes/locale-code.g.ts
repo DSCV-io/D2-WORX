@@ -13,7 +13,7 @@ import { z } from "zod";
 /**
  * IETF BCP-47 locale tag (e.g. `en-US`, `pt-BR`, `zh-Hant-TW`). Closed
  * set — the Zod schema rejects unknown tags (strict deserialization).
- * Mirrors .NET `D2.Shared.Geo.Abstractions.LocaleCode` wrapper /
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.LocaleCode` wrapper /
  * JsonConverter byte-for-byte over the wire.
  */
 export type LocaleCode = string & { readonly __brand: "LocaleCode" };

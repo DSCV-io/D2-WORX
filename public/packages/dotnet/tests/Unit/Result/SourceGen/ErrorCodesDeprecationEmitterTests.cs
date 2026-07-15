@@ -6,19 +6,19 @@
 
 extern alias ResultErrorCodesSourceGen;
 
-namespace D2.Shared.Tests.Unit.Result.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Result.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
 using Xunit;
 using BaseFactoriesEmitter =
-    ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.BaseFactoriesEmitter;
-using CatalogConfig = ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.CatalogConfig;
-using ConstantsEmitter = ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.ConstantsEmitter;
-using ErrorCodeEntry = ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.ErrorCodeEntry;
+    ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.BaseFactoriesEmitter;
+using CatalogConfig = ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.CatalogConfig;
+using ConstantsEmitter = ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.ConstantsEmitter;
+using ErrorCodeEntry = ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.ErrorCodeEntry;
 using ErrorCodesGenerator =
-    ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.ErrorCodesGenerator;
-using ErrorCodesSpec = ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.ErrorCodesSpec;
+    ResultErrorCodesSourceGen::DcsvIo.D2.ResultErrorCodes.SourceGen.ErrorCodesGenerator;
+using ErrorCodesSpec = ResultErrorCodesSourceGen::DcsvIo.D2.ErrorCodes.SourceGen.ErrorCodesSpec;
 
 /// <summary>
 /// Codegen tests for the contract-side deprecate-not-delete marker

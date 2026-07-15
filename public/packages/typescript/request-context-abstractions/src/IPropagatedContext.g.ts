@@ -8,7 +8,7 @@
 
 /* eslint-disable */
 
-import type { CallPathEntry } from "@d2/auth-context-abstractions";
+import type { CallPathEntry } from "@dcsv-io/d2-auth-context-abstractions";
 
 /**
  * Cross-hop propagated subset of IRequestContext. Identity fields

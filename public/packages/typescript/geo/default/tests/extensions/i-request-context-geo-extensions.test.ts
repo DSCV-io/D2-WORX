@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { IRequestContext } from "@d2/request-context-abstractions";
+import type { IRequestContext } from "@dcsv-io/d2-request-context-abstractions";
 import { describe, expect, it } from "vitest";
 
 import {

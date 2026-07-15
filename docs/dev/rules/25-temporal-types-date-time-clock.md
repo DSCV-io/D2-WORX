@@ -8,7 +8,7 @@ _[← rules index](../rules.md) · §25 of the D2-WORX rules catalog._
 
 **Predicate index:** §25.1–§25.12 · 12 predicates.
 
-Temporal bugs are silent until they fire — DST twice a year, leap days every four years, tzdb updates every few months; failure modes are scheduled jobs that don't fire, fire twice, fire at non-existent local times, or crash on tzdb update. This category enforces the temporal-design discipline codified at `D2.Shared.Time` (.NET) + `@d2/time` (TS) so the same disciplines carry to every consumer.
+Temporal bugs are silent until they fire — DST twice a year, leap days every four years, tzdb updates every few months; failure modes are scheduled jobs that don't fire, fire twice, fire at non-existent local times, or crash on tzdb update. This category enforces the temporal-design discipline codified at `DcsvIo.D2.Time` (.NET) + `@dcsv-io/d2-time` (TS) so the same disciplines carry to every consumer.
 
 **The catalog**: `IClock` is the single injection seam. `NodaTime` (.NET) / `Temporal` (TS) types are mandatory in production — never BCL `DateTime` / JS `Date`. Every temporal field is assigned one of three categories at design time (Cat 1 `ZonedInstant` / Cat 2 bare `Instant` / Cat 3 `LocalAnchoredEvent`). Cat 1 + Cat 3 records are constructed only via `Create(...)` smart-constructor factories returning `D2Result<T>`. DST resolution is encapsulated in `LocalAnchoredEvent.ComputeNextFire()`. Wire format is ISO 8601. Adversarial coverage at lib-introduction time is mandatory per `feedback_temporal_adversarial_test_required`.
 
@@ -19,7 +19,7 @@ Temporal bugs are silent until they fire — DST twice a year, leap days every f
 - **25.1** Does production code inject `IClock` and call `clock.GetCurrentInstant()` (.NET) / `clock.getInstant()` (TS) for "what time is it now?", rather than calling any system clock API directly?
   - **Forbidden tokens** (.NET, in non-test / non-composition-root paths): `SystemClock.Instance`, `NodaTime.SystemClock.Instance`, `DateTime.UtcNow`, `DateTime.Now`, `DateTimeOffset.UtcNow`, `DateTimeOffset.Now`.
   - **Forbidden tokens** (TS, in non-test / non-composition-root paths): `Temporal.Now.instant()`, `Temporal.Now.zonedDateTimeISO()`, `Temporal.Now.plainDateTimeISO()`, `Date.now()`, `new Date()`.
-  - **Exceptions**: composition roots binding `IClock → SystemClock` in production / `IClock → TestClock` in tests; `D2.Shared.Time.SystemClock` / `@d2/time` `SystemClock` internal delegation to the underlying platform API; `TestClock` infrastructure itself.
+  - **Exceptions**: composition roots binding `IClock → SystemClock` in production / `IClock → TestClock` in tests; `DcsvIo.D2.Time.SystemClock` / `@dcsv-io/d2-time` `SystemClock` internal delegation to the underlying platform API; `TestClock` infrastructure itself.
   - Evidence: grep the forbidden token set against production code with composition-root + test-infra exclusions → expect zero hits, OR per-hit "checked, justified at <file:line> because <reason>".
   - **Why**: determinism. Tests inject `TestClock` to make time programmable; direct system-clock calls hardcode "now", so wall-clock drift, tzdb policy changes, and DST transitions become unobservable to tests.
   - **How**: anything needing "now" takes `IClock` via constructor injection; when porting code that calls a system clock, wrap at the boundary.

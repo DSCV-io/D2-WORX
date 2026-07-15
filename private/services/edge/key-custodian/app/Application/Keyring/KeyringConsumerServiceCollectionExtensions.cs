@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Keyring;
 
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Shared.Encryption;
-using D2.Shared.Time;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Time;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Grpc.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.Grpc.SourceGen;
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Grpc.Trailers.SourceGen;
+using DcsvIo.D2.Grpc.Trailers.SourceGen;
 using Xunit;
 
 /// <summary>

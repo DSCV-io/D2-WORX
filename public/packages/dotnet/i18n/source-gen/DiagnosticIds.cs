@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.I18n.SourceGen;
+namespace DcsvIo.D2.I18n.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by <see cref="TKGenerator"/>.

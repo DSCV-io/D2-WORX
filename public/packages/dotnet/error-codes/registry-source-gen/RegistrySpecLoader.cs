@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.Registry.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.Registry.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
-using D2.Shared.ErrorCodes.SourceGen;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.ErrorCodes.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Aggregates all error-code spec files surfaced via <c>AdditionalFiles</c>

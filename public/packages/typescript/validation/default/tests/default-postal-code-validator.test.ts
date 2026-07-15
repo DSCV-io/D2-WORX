@@ -3,8 +3,8 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { CountryCode } from "@d2/geo-abstractions";
-import { TK } from "@d2/i18n-keys";
+import type { CountryCode } from "@dcsv-io/d2-geo-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import { describe, expect, it } from "vitest";
 
 import { DefaultPostalCodeValidator } from "../src/default-postal-code-validator.js";

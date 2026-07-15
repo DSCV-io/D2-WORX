@@ -2,17 +2,17 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Geo.Default
+# DcsvIo.D2.Geo.Default
 
 > Parent: [`public/packages/dotnet/README.md`](../../README.md)
 >
 > **Audience**: backend .NET service engineers who need the actual geo catalog data — the per-entity instances + lookup tables + nested static-class hierarchies — bound into memory at process start.
 
-Source-generator-emitted in-memory catalog data for the seven geo reference catalogs. The types this assembly references live in [`D2.Shared.Geo.Abstractions`](../abstractions/README.md); this assembly contributes the per-entity static instances + `FrozenDictionary` lookup tables + nested static-class hierarchies + a single `[ModuleInitializer]`-driven coordinator that wires cross-record nav refs after every catalog's static initializers have run.
+Source-generator-emitted in-memory catalog data for the seven geo reference catalogs. The types this assembly references live in [`DcsvIo.D2.Geo.Abstractions`](../abstractions/README.md); this assembly contributes the per-entity static instances + `FrozenDictionary` lookup tables + nested static-class hierarchies + a single `[ModuleInitializer]`-driven coordinator that wires cross-record nav refs after every catalog's static initializers have run.
 
 ## What lands here
 
-Every type is codegen-emitted by `D2.Shared.Geo.SourceGen` (`Generated/`) — there is zero hand-written `.cs` in this assembly besides the project file. The dispatcher reads the seven geo spec files under `contracts/geo/` and, when `compilation.AssemblyName == "D2.Shared.Geo.Default"`, emits:
+Every type is codegen-emitted by `DcsvIo.D2.Geo.SourceGen` (`Generated/`) — there is zero hand-written `.cs` in this assembly besides the project file. The dispatcher reads the seven geo spec files under `contracts/geo/` and, when `compilation.AssemblyName == "DcsvIo.D2.Geo.Default"`, emits:
 
 | File                            | Contents                                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -66,7 +66,7 @@ internal static class CountryLookup
 }
 ```
 
-The `internal set` accessors on nav properties are reachable from this assembly only because `D2.Shared.Geo.Abstractions` declares `[assembly: InternalsVisibleTo("D2.Shared.Geo.Default")]`. See [the Abstractions README record-shape architecture section](../abstractions/README.md) for the full cycle-resolution design.
+The `internal set` accessors on nav properties are reachable from this assembly only because `DcsvIo.D2.Geo.Abstractions` declares `[assembly: InternalsVisibleTo("DcsvIo.D2.Geo.Default")]`. See [the Abstractions README record-shape architecture section](../abstractions/README.md) for the full cycle-resolution design.
 
 ### Universal dual-representation
 
@@ -91,7 +91,7 @@ The code rep exists for O(1) membership checks (`country.GeopoliticalEntityShort
 
 ### Cache-aside reminder for `IGeoNameResolver`
 
-`DefaultGeoNameResolver` builds its normalized-name → record map lazily on first call (cache-aside pattern). First lookup is O(n) over the catalog; subsequent lookups are O(1) against the cached map. The implementation uses thread-safe lazy init (`Lazy<T>` with `LazyThreadSafetyMode.ExecutionAndPublication`) so concurrent first-callers race once on the build factory; only one wins and publishes. The TS `@d2/geo-default` resolver mirrors this pattern over JS's single-thread execution model.
+`DefaultGeoNameResolver` builds its normalized-name → record map lazily on first call (cache-aside pattern). First lookup is O(n) over the catalog; subsequent lookups are O(1) against the cached map. The implementation uses thread-safe lazy init (`Lazy<T>` with `LazyThreadSafetyMode.ExecutionAndPublication`) so concurrent first-callers race once on the build factory; only one wins and publishes. The TS `@dcsv-io/d2-geo-default` resolver mirrors this pattern over JS's single-thread execution model.
 
 ## Name resolver
 
@@ -103,7 +103,7 @@ The code rep exists for O(1) membership checks (`country.GeopoliticalEntityShort
 | ---------------------------------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DefaultGeoNameResolver.TryResolveCountryByName(string name)`                            | `D2Result<Country>`     | Pass-1 exact → Pass-2 startsWith → Pass-3 contains → Pass-4 length-scaled Levenshtein cascade.                                                                                                                                                                                     |
 | `DefaultGeoNameResolver.TryResolveSubdivisionByName(string name, Country parentCountry)` | `D2Result<Subdivision>` | Same cascade, scoped to `parentCountry.Subdivisions`. `parentCountry` is required (null returns `ValidationFailed`).                                                                                                                                                               |
-| `IRequestContext.Country()` (Default-layer extension)                                    | `Country?`              | Record-returning wrapper over the Abstractions-layer `Country()` accessor. Returns the full catalog record so callers can read nested data (`request.Country()?.PrimaryLanguage?.DisplayName`) without a second lookup. Lives in the `D2.Shared.Geo.Default.Extensions` namespace. |
+| `IRequestContext.Country()` (Default-layer extension)                                    | `Country?`              | Record-returning wrapper over the Abstractions-layer `Country()` accessor. Returns the full catalog record so callers can read nested data (`request.Country()?.PrimaryLanguage?.DisplayName`) without a second lookup. Lives in the `DcsvIo.D2.Geo.Default.Extensions` namespace. |
 | `IRequestContext.Subdivision()` (Default-layer extension)                                | `Subdivision?`          | Same shape as `Country()` for the subdivision raw field.                                                                                                                                                                                                                           |
 | `services.AddD2GeoDefault()`                                                             | `IServiceCollection`    | Registers `IGeoNameResolver` as `DefaultGeoNameResolver` (singleton). The DI factory does NOT eagerly trigger cache build — the first resolver call performs the O(n) build.                                                                                                       |
 
@@ -129,7 +129,7 @@ The resolver intentionally carries no instrumentation (no `ActivitySource`, no `
 - **Cache memory profile.** Country map: ~250 records × ~6 matchable name fields = ~1,500 entries. Per-country subdivision maps: ~3,600 subdivisions total × ~5 matchable name fields = ~18,000 entries spread across the per-country dictionaries. Total bounded around 500 KB worst case.
 - **Namespace shadowing.** The Default-layer `IRequestContext.Country()` and the Abstractions-layer `IRequestContext.Country()` share the same method name on the same receiver type. Pick exactly one namespace per call site via `using`: importing both produces CS0121 (ambiguous reference) at compile time. The PATTERNS.md namespace-disambiguated-extension entry documents the idiom.
 
-  Treat the CS0121 as a deliberate design contract, not a bug — the compile-time error forces the call site to declare its intent (code rep via `D2.Shared.Geo.Abstractions.Extensions`, record rep via `D2.Shared.Geo.Default.Extensions`). Consumer guidance: prefer the Default-layer namespace at the call site since most callers want the resolved record (`country.PrimaryLanguage`, `country.Subdivisions`) and the Default-layer wrapper short-circuits to the Abstractions-layer code anyway when the catalog miss is defensive. If both namespaces must be in scope (rare — usually only inside cross-layer plumbing), drop the `using` directives for the colliding members and fully qualify the call (`D2.Shared.Geo.Default.Extensions.IRequestContextGeoExtensions.Country(context)`). The matching Subdivision pair carries the same contract.
+  Treat the CS0121 as a deliberate design contract, not a bug — the compile-time error forces the call site to declare its intent (code rep via `DcsvIo.D2.Geo.Abstractions.Extensions`, record rep via `DcsvIo.D2.Geo.Default.Extensions`). Consumer guidance: prefer the Default-layer namespace at the call site since most callers want the resolved record (`country.PrimaryLanguage`, `country.Subdivisions`) and the Default-layer wrapper short-circuits to the Abstractions-layer code anyway when the catalog miss is defensive. If both namespaces must be in scope (rare — usually only inside cross-layer plumbing), drop the `using` directives for the colliding members and fully qualify the call (`DcsvIo.D2.Geo.Default.Extensions.IRequestContextGeoExtensions.Country(context)`). The matching Subdivision pair carries the same contract.
 
 - **Pass-3 ambiguity classes.** Inputs like `"Korea"`, `"Congo"`, `"Carolina"` return `NotFound` by design — multiple records contain the substring, and the resolver refuses to guess. Callers needing one specific answer should pass the more precise display name (e.g. `"Republic of Korea"`).
 - **PII discipline.** The `name` parameter is treated as opaque PII inside the resolver. The resolver never logs the input, never attaches it to a `D2Result` reason field, and never emits it as a span tag. Upstream callers preserving the raw upstream string for an audit trail own the redaction at their own layer.
@@ -143,20 +143,20 @@ The resolver intentionally carries no instrumentation (no `ActivitySource`, no `
 
 ## Codegen dispatch
 
-`D2.Shared.Geo.SourceGen` is a multi-target dispatcher — see [`../source-gen/README.md`](../source-gen/README.md) for the full design. When the generator runs against `D2.Shared.Geo.Abstractions` it emits the spec-derived TYPES (record shapes, `*Code` enums, wrapper structs, `JsonConverter`s); when it runs against this assembly it emits the catalog DATA (per-entity static instances + lookups + coordinator). Both assemblies wire the same analyzer + the same seven `AdditionalFiles`.
+`DcsvIo.D2.Geo.SourceGen` is a multi-target dispatcher — see [`../source-gen/README.md`](../source-gen/README.md) for the full design. When the generator runs against `DcsvIo.D2.Geo.Abstractions` it emits the spec-derived TYPES (record shapes, `*Code` enums, wrapper structs, `JsonConverter`s); when it runs against this assembly it emits the catalog DATA (per-entity static instances + lookups + coordinator). Both assemblies wire the same analyzer + the same seven `AdditionalFiles`.
 
 ## Dependencies
 
-- `D2.Shared.Geo.Abstractions` — the types this assembly instantiates plus the `IGeoNameResolver` contract + `NameNormalizer` + `LevenshteinComparer` helpers consumed by the resolver.
-- `D2.Shared.Utilities` — `Truthy()` / `Falsey()` extension methods used by both the emitted lookup-construction code AND the resolver input validation.
-- `D2.Shared.Result` — `D2Result` envelope returned by every public resolver method.
-- `D2.Shared.I18n.Abstractions` — `TKMessage` translation-key constants carried in `D2Result` message fields.
-- `D2.Shared.Context.Abstractions` — `IRequestContext` receiver for the Default-layer record-returning extensions.
+- `DcsvIo.D2.Geo.Abstractions` — the types this assembly instantiates plus the `IGeoNameResolver` contract + `NameNormalizer` + `LevenshteinComparer` helpers consumed by the resolver.
+- `DcsvIo.D2.Utilities` — `Truthy()` / `Falsey()` extension methods used by both the emitted lookup-construction code AND the resolver input validation.
+- `DcsvIo.D2.Result` — `D2Result` envelope returned by every public resolver method.
+- `DcsvIo.D2.I18n.Abstractions` — `TKMessage` translation-key constants carried in `D2Result` message fields.
+- `DcsvIo.D2.Context.Abstractions` — `IRequestContext` receiver for the Default-layer record-returning extensions.
 - `Microsoft.Extensions.DependencyInjection.Abstractions` — `IServiceCollection` receiver for the `AddD2GeoDefault` registration extension.
-- `D2.Shared.Geo.SourceGen` — analyzer-only reference (no runtime dll).
+- `DcsvIo.D2.Geo.SourceGen` — analyzer-only reference (no runtime dll).
 
 Zero NodaTime / Configuration / IO dependencies.
 
 ## Bundle size
 
-The emitted catalog data is the bulk of the ~200 KB geo footprint. Domain code that takes a `ProjectReference` here pays for the catalog; consumers that only need the type surface should reference `D2.Shared.Geo.Abstractions` instead.
+The emitted catalog data is the bulk of the ~200 KB geo footprint. Domain code that takes a `ProjectReference` here pays for the catalog; consumers that only need the type surface should reference `DcsvIo.D2.Geo.Abstractions` instead.

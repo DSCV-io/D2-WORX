@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 InputError wire-shape spec",
-  "description": "Schema for contracts/input-error/input-error.spec.json — the source-of-truth catalog of JSON property-name constants that govern the cross-language InputError wire shape ({field, errors: TKMessage[]}). D2.Shared.WireShapes.SourceGen reads it to emit InputErrorWireShape into D2.Shared.Result; tools/ts-codegen/src/input-error-emit.ts reads it to emit input-error.g.ts into @d2/result. The .NET InputError record (sealed record InputError(string Field, IReadOnlyList<TKMessage> Errors)) and the TS-side interface reference the spec-derived constants — wire-format drift on 'field'/'errors' is structurally impossible.",
+  "description": "Schema for contracts/input-error/input-error.spec.json — the source-of-truth catalog of JSON property-name constants that govern the cross-language InputError wire shape ({field, errors: TKMessage[]}). DcsvIo.D2.WireShapes.SourceGen reads it to emit InputErrorWireShape into DcsvIo.D2.Result; tools/ts-codegen/src/input-error-emit.ts reads it to emit input-error.g.ts into @dcsv-io/d2-result. The .NET InputError record (sealed record InputError(string Field, IReadOnlyList<TKMessage> Errors)) and the TS-side interface reference the spec-derived constants — wire-format drift on 'field'/'errors' is structurally impossible.",
   "type": "object",
   "required": ["properties"],
   "additionalProperties": false,

@@ -4,13 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey.IActivateKeyHandler;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey.IActivateKeyHandler;
 using I = ActivateKeyInput;
-using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules.KeySummary;
 
 /// <summary>
 /// Smoke-tests and activates a pending key.

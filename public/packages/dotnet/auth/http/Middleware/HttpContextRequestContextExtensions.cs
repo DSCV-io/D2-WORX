@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http.Middleware;
+namespace DcsvIo.D2.Auth.Http.Middleware;
 
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Context.Abstractions;
 using Microsoft.AspNetCore.Http;
 
 /// <summary>

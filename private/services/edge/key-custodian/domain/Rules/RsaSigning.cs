@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.Rules;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules;
 
 /// <summary>
 /// Pure rule that signs a payload with an RSA private key using RS256

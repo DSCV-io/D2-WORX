@@ -37,7 +37,7 @@ This is the framework's first real-world test — calibrating the journal format
 - ✅ 01-auth-abstractions (2 audit rounds to clean + 1 user-disposition round; 5 fixes + 27 test-local renames + 2 rules.md tightenings)
 - ✅ 02-auth-audiences-source-gen (1 round; brace fix + dead-factory refactor + AudiencesGeneratorTests created + Polyfills/StringExt.cs)
 - ✅ 03-auth-scopes-source-gen (1 round; README ScopeSpecModels split + Polyfills + 2 collection-expr + 21 long-line wraps)
-- ✅ 04-context-source-gen (1 round; PropagatedEmitter `.Falsey()` emission with `using D2.Shared.Utilities.Extensions` + `!` post-Falsey; README drift fixed (3 entries); 3 collection exprs to `(ContextSpec[])[auth, request]`. **DEFERRED to follow-up**: 8 src + 13 test long lines, missing PropagatedEmitter unit tests, missing D2CTX004 firing test, switch defaults defensive add)
+- ✅ 04-context-source-gen (1 round; PropagatedEmitter `.Falsey()` emission with `using DcsvIo.D2.Utilities.Extensions` + `!` post-Falsey; README drift fixed (3 entries); 3 collection exprs to `(ContextSpec[])[auth, request]`. **DEFERRED to follow-up**: 8 src + 13 test long lines, missing PropagatedEmitter unit tests, missing D2CTX004 firing test, switch defaults defensive add)
 - ✅ 05-encryption (1 round; collection expr at PayloadCryptoKeyringTests.cs:248 + README Telemetry section. **DEFERRED to follow-up**: 35 src + 6 test long lines, duplicate-key registration test, MustDisposeResource annotations (audit recommended skip due to false-positive risk), 2 adversarial test gaps)
 - ✅ 06-i18n-abstractions (1 round; silent-skip → `Should().BeTrue` fail-fast in TKGeneratedTests + collection expr at TKMessageTests.cs:405. **DEFERRED to follow-up**: TK constant per-value pinning matrix (M1, ~150 lines new test), README Node parity note (defensible per §9.30 applicability))
 - ✅ 07-i18n-source-gen (1 round; rename `Category` → `_CATEGORY` to match sibling pattern + Polyfills/StringExt.cs (cross-srcgen) + new README mirroring sibling structure. **DEFERRED to follow-up**: missing TKGenerator + IsCatalogPath + ResolveDescriptor + EscapeStringLiteral/EscapeXmlDoc + EmitDiagnostic factory tests + DiagnosticDescriptors descriptor-shape tests)
@@ -45,7 +45,7 @@ This is the framework's first real-world test — calibrating the journal format
 
 ### Tier 1 — depends on tier 0 only
 
-- ✅ 09-auth-context-abstractions (1 round; F1 snake_case test-local rename + F2 README sibling-lib duplicate collapse + Edge cases / Telemetry sections added; F3 escalation resolved with judgment — keep `D2.Shared.Auth` reference as informative)
+- ✅ 09-auth-context-abstractions (1 round; F1 snake_case test-local rename + F2 README sibling-lib duplicate collapse + Edge cases / Telemetry sections added; F3 escalation resolved with judgment — keep `DcsvIo.D2.Auth` reference as informative)
 - ✅ 10-result (1 round; F1 README parity (Unit, PartialSuccess, IsPartialSuccess, WithTraceId, missing ErrorCodes), F2 UnitTests added, F3+F4 PartialSuccess + IsPartialSuccess tests, F5 ErrorCodesTests pinning matrix (16 codes), F7 line wraps, F9 unverified-100% claim softened. F8 (CombineAsync) + F11 (TOuter? wrapping) escalations resolved with judgment + documented in README. **DEFERRED to follow-up**: F6 default! adversarial pin, F10 XML remarks on inheriting factories, F12 per-code booleans default-instance pin)
 
 ### Tier 1 boundary verification — ✅ clean
@@ -63,13 +63,13 @@ This is the framework's first real-world test — calibrating the journal format
 ### Tier 2 boundary verification — ✅ clean
 
 - `dotnet build server/D2.slnx --no-restore` → 0 warnings, 0 errors
-- `jb inspectcode server/D2.slnx --severity=WARNING` → 0 warnings (after cleaning 1 incidental warning — unused `using D2.Shared.Result;` in the new InputFailuresTests.cs)
+- `jb inspectcode server/D2.slnx --severity=WARNING` → 0 warnings (after cleaning 1 incidental warning — unused `using DcsvIo.D2.Result;` in the new InputFailuresTests.cs)
 - `dotnet test server/shared/dotnet/tests` → 2068 / 2068 tests pass (15 new tests this tier)
 
 ### Tier 3
 
 - ✅ 14-context-abstractions (1 round; F1 misnamed test renamed (lied about throw behavior); F6 ScopeClaimParser whitespace-only array elements rejected via `Falsey()`. F2-F5 derived-property tests + idempotency + round-trip + MAX_HEADER_LENGTH boundary deferred to follow-up.)
-- ✅ 15-i18n (1 round; F1 `Falsey()` swap on Translator.Interpolate (req `using D2.Shared.Utilities.Extensions` + `parameters!` post-Falsey); F2 `Truthy()` swap on SupportedLocales; F3 README/XML doc Resolve fallback chain (canonical→language-prefix→Base); F4 ITranslator.T XML doc throws clarification (cross-step touch in i18n-abstractions, contract-level alignment).)
+- ✅ 15-i18n (1 round; F1 `Falsey()` swap on Translator.Interpolate (req `using DcsvIo.D2.Utilities.Extensions` + `parameters!` post-Falsey); F2 `Truthy()` swap on SupportedLocales; F3 README/XML doc Resolve fallback chain (canonical→language-prefix→Base); F4 ITranslator.T XML doc throws clarification (cross-step touch in i18n-abstractions, contract-level alignment).)
 - ✅ 16-caching-distributed-redis (1 round; **F1 CRITICAL §3.1 PII leak — `[LoggerMessage]` no longer accepts Exception** (refactored to `string exceptionType` via `ex.GetType().Name` at call sites); **F4 CRITICAL BUG — IncrementAsync TTL clobber** (Lua script now gates `PEXPIRE` on `PTTL < 0`, matching Redis-INCR-with-TTL parity); F7 `[MustDisposeResource]` corrected (was `(false)`); F13 raw `new D2Result(...)` → BubbleFail for generic returns. F2 cache-key-as-PII (documented contract via step 11), F3 backplane plaintext keys ESCALATE (kept current behavior, contract documented), F5 Subscription.Token race / F6 \_disposed thread-safety / F8 cancellation token plumbing / F9 SR_Errors outcome tags / F10-F12 DI + reflection tests / F14 README cancellation semantics deferred to follow-up.)
 - ✅ 17-caching-local-default (1 round; **F1 CRITICAL BUG — IncrementAsync TTL clobber** (refactored SetCore to take `DateTimeOffset?` absolute expiration; existing-numeric increment path reads existing absolute from `r_expirations` and reapplies); F4 non-positive `expiration` validated at every public surface (SetAsync/SetManyAsync/SetNxAsync/IncrementAsync/AcquireLockAsync); F6 lock anti-pattern fixed (dedicated `r_writeLock` instead of `lock(r_cache)`, removed both `[SuppressMessage]` attributes); F8 per-entry empty-key validation in GetMany/SetMany/RemoveMany; F3 README integration tests path corrected (Behavior tests live in unit tier); F2/F5/F7 README clarifications (no Conflict counter by design, accepted narrow eviction-callback race documented, dispose-then-use throws documented). 7 regression tests added pinning the bug fixes.)
 - ✅ 18-caching-tiered (1 round; **F1 CRITICAL §3.1 PII leak — TieredCacheLog `[LoggerMessage]` Exception removed** (refactored to take string errorCode); **ESCALATE-1 contract: option (a) chosen** — L1-failure-after-L2-success now logs (`L1WriteFailedAfterL2Success`) and returns L2 success per §18 graceful degradation; SetAsync/SetManyAsync/RemoveAsync/RemoveManyAsync all updated; F5 README "binary result" claim now accurate; F7 README documents L1 invalidation handler swallowed failures. F2/F3/F4/F6/F8/F9 test gaps + README minor doc clarifications + ESCALATE-2 stale-L1 race documentation deferred to follow-up.)
@@ -142,8 +142,8 @@ All 27 source-step audits + the test-project audit + final-review closed clean. 
 
 ### Cross-cutting refactor candidates (NOT applied — flagged for separate decision)
 
-- **CC-1**: Extract `SanitizedExceptionRender` to a single home (target: `D2.Shared.Utilities/Logging/` or new `D2.Shared.Telemetry`). Multiple lib copies + inline `ex.GetType().Name` sites accumulated across the §3.1 sweep.
-- **CC-2**: Consolidate `InputFailures.Required` (caching-abstractions) ↔ `MessagingFailures.Required` (messaging-abstractions). Byte-identical. Target: extract to new `D2.Shared.Result.InputFailures`.
+- **CC-1**: Extract `SanitizedExceptionRender` to a single home (target: `DcsvIo.D2.Utilities/Logging/` or new `DcsvIo.D2.Telemetry`). Multiple lib copies + inline `ex.GetType().Name` sites accumulated across the §3.1 sweep.
+- **CC-2**: Consolidate `InputFailures.Required` (caching-abstractions) ↔ `MessagingFailures.Required` (messaging-abstractions). Byte-identical. Target: extract to new `DcsvIo.D2.Result.InputFailures`.
 - **CC-3**: Test-coverage-fill follow-up deliverable rolling up tier-N follow-up scope (~2200-2500 lines new test code).
 - **CC-4**: Defense-in-depth — hash/truncate cache keys at log time + at backplane broadcast (currently relies on `EntityName:{id}` non-PII contract).
 - **CC-5**: Folder rename `tests/Unit/RequestContext*` → `tests/Unit/Context/Abstractions/`.
@@ -202,7 +202,7 @@ Same audit loop, scope = whole deliverable. Catches:
 
 ### Cross-cutting findings flagged (handled at later step or escalated)
 
-- **§9.30 Node parity (auth-abstractions)** — no `@d2/auth-abstractions` Node mirror exists. User decision: defer §9.30 enforcement until Node side is being actively built. Rules.md §9.30 tightened with applicability clause. Will not re-flag on every shared-lib audit.
+- **§9.30 Node parity (auth-abstractions)** — no `@dcsv-io/d2-auth-abstractions` Node mirror exists. User decision: defer §9.30 enforcement until Node side is being actively built. Rules.md §9.30 tightened with applicability clause. Will not re-flag on every shared-lib audit.
 - **Mermaid dep-graph drift** — 4 missing edges (CacheLocal→Utilities, CacheRedis→Utilities, AuthOutbound→CacheAbs, AuthOutbound→Resilience). Scheduled for final-review per PLAN.
 
 ### Proposed predicate tweaks (round up at SHIP)
@@ -216,7 +216,7 @@ Same audit loop, scope = whole deliverable. Catches:
 
 - **§1.1 strengthening** — explicitly require per-public-value pinning for constants / enum values / static-class members (not just "every public method has a test"). Catching the CLIENT_ID-style miss requires per-value evidence, not per-class evidence. (Origin: step 01 finding.)
 - **§11.3 expansion** — add a check for "every `.cs` filename mentioned in README actually exists at that path" — catches the codegen-file-path drift class. (Origin: step 01, step 03 both surfaced this.)
-- **§5.1 SrcGen carve-out clarification** — `IsNullOrEmpty` / `IsNullOrWhiteSpace` use in netstandard2.0 srcgens (which can't reference `D2.Shared.Utilities`) requires a `Polyfills/StringExt.cs` with a local `Falsey()` extension matching the real semantics. Document the polyfill pattern as the project-standard solution to the TFM-mismatch carve-out. (Origin: cross-srcgen finding across steps 02, 03, 07, 08.)
+- **§5.1 SrcGen carve-out clarification** — `IsNullOrEmpty` / `IsNullOrWhiteSpace` use in netstandard2.0 srcgens (which can't reference `DcsvIo.D2.Utilities`) requires a `Polyfills/StringExt.cs` with a local `Falsey()` extension matching the real semantics. Document the polyfill pattern as the project-standard solution to the TFM-mismatch carve-out. (Origin: cross-srcgen finding across steps 02, 03, 07, 08.)
 
 ## Tier-1 boundary discoveries
 

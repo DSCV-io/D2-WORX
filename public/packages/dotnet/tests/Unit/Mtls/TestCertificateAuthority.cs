@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Mtls;
+namespace DcsvIo.D2.Tests.Unit.Mtls;
 
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;

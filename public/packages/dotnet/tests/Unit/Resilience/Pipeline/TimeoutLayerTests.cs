@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.Pipeline;
+namespace DcsvIo.D2.Tests.Unit.Resilience.Pipeline;
 
 using AwesomeAssertions;
-using D2.Shared.Resilience.Pipeline;
+using DcsvIo.D2.Resilience.Pipeline;
 using Xunit;
 
 public sealed class TimeoutLayerTests

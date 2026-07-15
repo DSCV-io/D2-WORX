@@ -12,7 +12,7 @@
 // spike run; the DELTA vs push.tsp is the single `@d2InProcess` line.)
 // ============================================================================
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 
 using D2;
 

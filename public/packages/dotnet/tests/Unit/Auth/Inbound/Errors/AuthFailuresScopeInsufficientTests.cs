@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Errors;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Errors;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.Auth.Errors;
-using D2.Shared.I18n;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.I18n;
 using Xunit;
 
 /// <summary>

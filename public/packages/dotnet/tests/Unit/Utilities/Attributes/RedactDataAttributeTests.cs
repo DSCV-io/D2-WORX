@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Utilities.Attributes;
+namespace DcsvIo.D2.Tests.Unit.Utilities.Attributes;
 
 using AwesomeAssertions;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
+using DcsvIo.D2.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Enums;
 using Xunit;
 
 public sealed class RedactDataAttributeTests

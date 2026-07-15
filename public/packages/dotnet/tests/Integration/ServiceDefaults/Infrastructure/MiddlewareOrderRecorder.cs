@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 
 /// <summary>
 /// Thread-safe sequence recorder used by the middleware-ordering tests.

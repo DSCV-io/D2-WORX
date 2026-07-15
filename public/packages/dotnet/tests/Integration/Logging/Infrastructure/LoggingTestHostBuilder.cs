@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Logging.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
 
-using D2.Shared.Logging;
-using D2.Shared.Logging.Destructuring;
+using DcsvIo.D2.Logging;
+using DcsvIo.D2.Logging.Destructuring;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
 
-using D2.Private.Auth;
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate.IGetCaCertificateHandler;
-using I = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput;
-using O = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
+using DcsvIo.D2.Private.Auth;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate.IGetCaCertificateHandler;
+using I = DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
 
 /// <summary>
 /// Returns the certificate-authority chain â€” the active root (the trust anchor a
@@ -128,7 +128,7 @@ public sealed class GetCaCertificateHandler(
     private D2Result<O?> DenyWithTelemetry(D2Result authResult, string? immediateCaller)
     {
         // Switch on the EMITTED error-code constants, never raw string literals (in
-        // scope via the app/GlobalUsings.cs D2.Edge.KeyCustodian.Domain.Errors global
+        // scope via the app/GlobalUsings.cs DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors global
         // using). The uniform 403 CA_CERTIFICATE_NOT_AUTHORIZED splits by deny arm
         // for TELEMETRY ONLY â€” the wire code stays uniform.
         var reason = authResult.ErrorCode switch

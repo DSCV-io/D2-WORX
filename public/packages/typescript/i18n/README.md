@@ -2,12 +2,12 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/i18n
+# @dcsv-io/d2-i18n
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
 `ITranslator` interface + `SupportedLocales` registry + default `Translator`
-implementation. Mirrors `D2.Shared.I18n` (.NET) so cross-language wire stays
+implementation. Mirrors `DcsvIo.D2.I18n` (.NET) so cross-language wire stays
 consistent. The TS-side TK constants catalog itself is provided by Paraglide
 in the SvelteKit BFF; this package is the SHARED interface that any TS
 consumer (Paraglide-backed or hand-rolled) implements against.
@@ -22,17 +22,17 @@ consumer (Paraglide-backed or hand-rolled) implements against.
 | `loadSupportedLocalesConfig(prefix, env)` | Reads indexed env-var array (`PREFIX__0=en-US, PREFIX__1=fr-FR`).                         |
 | `Translator` (class)                      | Default `ITranslator` impl with locale fallback + `{name}` parameter substitution.        |
 | `LocaleCatalogs`                          | Map of `locale → key → template-string` consumed by `Translator`.                         |
-| `TKMessage` / `tk()`                      | Re-exported from `@d2/i18n-abstractions` for caller convenience.                          |
+| `TKMessage` / `tk()`                      | Re-exported from `@dcsv-io/d2-i18n-abstractions` for caller convenience.                          |
 
 ## Dependencies
 
-- `@d2/utilities` (boundary helpers, env parsing)
-- `@d2/i18n-abstractions` (TKMessage type + tk() factory)
+- `@dcsv-io/d2-utilities` (boundary helpers, env parsing)
+- `@dcsv-io/d2-i18n-abstractions` (TKMessage type + tk() factory)
 
 ## Usage example
 
 ```ts
-import { SupportedLocales, Translator, tk } from "@d2/i18n";
+import { SupportedLocales, Translator, tk } from "@dcsv-io/d2-i18n";
 
 const locales = new SupportedLocales({ enabled: ["en-US", "fr-FR"] });
 const catalogs = {
@@ -46,11 +46,11 @@ t.t("fr-CH", tk("TK.greet", { name: "Alice" })); // "Bonjour, Alice"
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.I18n`:
+Mirrors `DcsvIo.D2.I18n`:
 
-- `ITranslator` ↔ `D2.Shared.I18n.ITranslator`
-- `SupportedLocales` ↔ `D2.Shared.I18n.SupportedLocales` — same canonical-casing + language-fallback semantics.
-- `Translator` ↔ `D2.Shared.I18n.Translator` — same fallback chain (requested → default → key-verbatim) + same `{name}` placeholder syntax.
+- `ITranslator` ↔ `DcsvIo.D2.I18n.ITranslator`
+- `SupportedLocales` ↔ `DcsvIo.D2.I18n.SupportedLocales` — same canonical-casing + language-fallback semantics.
+- `Translator` ↔ `DcsvIo.D2.I18n.Translator` — same fallback chain (requested → default → key-verbatim) + same `{name}` placeholder syntax.
 
 ## Edge cases
 

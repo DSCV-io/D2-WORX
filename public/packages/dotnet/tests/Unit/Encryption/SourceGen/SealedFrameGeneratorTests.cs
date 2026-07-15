@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Encryption.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.EncryptionFrame.SourceGen;
+using DcsvIo.D2.EncryptionFrame.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -53,7 +53,7 @@ public sealed class SealedFrameGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsSealedFrameLayoutGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specFileName: "encryption-frame-sealed.spec.json",
             specJson: _SAMPLE_SPEC);
 
@@ -79,7 +79,7 @@ public sealed class SealedFrameGeneratorTests
     public void Generator_TargetAssemblyButNoSpec_EmitsNothing()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specFileName: null,
             specJson: null);
 
@@ -92,7 +92,7 @@ public sealed class SealedFrameGeneratorTests
         // The sealed generator filters on the SEALED spec file name — the
         // symmetric catalog must never feed it.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specFileName: "encryption-frame.spec.json",
             specJson: _SAMPLE_SPEC);
 
@@ -103,7 +103,7 @@ public sealed class SealedFrameGeneratorTests
     public void Generator_MalformedSpec_EmitsSealedMalformedSpecDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specFileName: "encryption-frame-sealed.spec.json",
             specJson: "{not valid");
 
@@ -115,7 +115,7 @@ public sealed class SealedFrameGeneratorTests
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Encryption",
+                assemblyName: "DcsvIo.D2.Encryption",
                 specFileName: "encryption-frame-sealed.spec.json",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
@@ -123,7 +123,7 @@ public sealed class SealedFrameGeneratorTests
             .Select(t => t.ToString())
             .ToList();
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Encryption",
+                assemblyName: "DcsvIo.D2.Encryption",
                 specFileName: "encryption-frame-sealed.spec.json",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees

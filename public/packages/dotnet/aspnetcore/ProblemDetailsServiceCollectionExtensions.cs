@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore;
+namespace DcsvIo.D2.AspNetCore;
 
-using D2.Shared.AspNetCore.Internal;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.AspNetCore.Internal;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 

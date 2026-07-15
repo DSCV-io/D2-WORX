@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 import { diagError, DiagnosticIds } from "../lib/diagnostics.js";
 import type { EmitDiagnostic } from "../lib/diagnostics.js";
@@ -16,7 +16,7 @@ import type { EmitDiagnostic } from "../lib/diagnostics.js";
  * exempt (display strings on `Subdivision.type` like `"State"` / `"Province"`
  * / `"Parish"` remain legal user-facing labels).
  *
- * Mirrors .NET `D2.Shared.Geo.SourceGen.VocabularyGuard.Validate` shape +
+ * Mirrors .NET `DcsvIo.D2.Geo.SourceGen.VocabularyGuard.Validate` shape +
  * tokens byte-for-byte.
  */
 

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
 
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// In-memory <see cref="ISessionLivenessTracker"/> stand-in. Tests configure

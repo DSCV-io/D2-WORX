@@ -10,7 +10,7 @@
 // CsrVerification + issuance rules against them — TS-generated requests proven
 // by the production .NET validator.
 //
-// Regeneration: `pnpm --filter @d2/key-custodian-client emit-csr-fixtures`.
+// Regeneration: `pnpm --filter @dcsv-io/d2-private-key-custodian-client emit-csr-fixtures`.
 // ECDSA signatures are randomized, so re-running produces new bytes with the
 // SAME verdicts — commit the refreshed set together with this script when the
 // CSR construction changes.
@@ -179,7 +179,8 @@ async function main(): Promise<void> {
   const manifest = {
     emittedBy:
       "private/services/edge/key-custodian/client-ts/scripts/emit-csr-fixtures.fixture.ts",
-    regenerate: "pnpm --filter @d2/key-custodian-client emit-csr-fixtures",
+    regenerate:
+      "pnpm --filter @dcsv-io/d2-private-key-custodian-client emit-csr-fixtures",
     note: "ECDSA signatures are randomized: regeneration produces new bytes with the same verdicts. The .NET NodeLeafClient tests drive the REAL CsrVerification + issuance rules over these files.",
     fixtures: entries,
   };

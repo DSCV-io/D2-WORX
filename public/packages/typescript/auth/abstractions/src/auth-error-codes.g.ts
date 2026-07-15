@@ -10,7 +10,7 @@
 
 /**
  * Machine-readable error codes for auth runtime failures. Mirrors .NET
- * D2.Shared.Auth.Errors.AuthErrorCodes (same string values).
+ * DcsvIo.D2.Auth.Errors.AuthErrorCodes (same string values).
  */
 export const AuthErrorCodes = {
   AUTH_BEARER_MALFORMED: "AUTH_BEARER_MALFORMED",

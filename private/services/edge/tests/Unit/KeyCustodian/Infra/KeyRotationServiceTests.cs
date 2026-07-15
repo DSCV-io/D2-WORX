@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
-using D2.Edge.KeyCustodian.Infra.Configuration;
-using D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler.Abstractions;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler.Abstractions;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Scheduling.Hosted;
+using DcsvIo.D2.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NodaTime;
-using TestClock = D2.Shared.Time.TestClock;
+using TestClock = DcsvIo.D2.Time.TestClock;
 
 /// <summary>
 /// Unit tests for <see cref="KeyRotationService"/>: the bootstrap key-type
@@ -293,7 +293,7 @@ public sealed class KeyRotationServiceTests
     /// </summary>
     private static ServiceProvider BuildScopeProviderWithFakeHandler(
         RequestContextCapture capture,
-        D2.Shared.Time.IClock? clock = null,
+        DcsvIo.D2.Time.IClock? clock = null,
         string serviceId = "key-custodian")
     {
         var services = new ServiceCollection();

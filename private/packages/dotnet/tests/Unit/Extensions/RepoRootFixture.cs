@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Extensions;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Extensions;
 
 using System;
 using System.IO;

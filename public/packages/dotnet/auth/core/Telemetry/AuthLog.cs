@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Telemetry;
+namespace DcsvIo.D2.Auth.Telemetry;
 
 using Microsoft.Extensions.Logging;
 
@@ -19,9 +19,9 @@ using Microsoft.Extensions.Logging;
 /// <see cref="Exception"/> parameter directly — exception messages can
 /// interpolate JWT bytes, request URIs, response bodies, or other runtime
 /// data that must not reach the log pipeline. Callers pass
-/// <see cref="D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender.TypeName(Exception)"/>
+/// <see cref="DcsvIo.D2.Utilities.Diagnostics.SanitizedExceptionRender.TypeName(Exception)"/>
 /// and
-/// <see cref="D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender.FirstFrame(Exception)"/>
+/// <see cref="DcsvIo.D2.Utilities.Diagnostics.SanitizedExceptionRender.FirstFrame(Exception)"/>
 /// as separate strings instead. Enforced across the class by reflection-based contract
 /// tests in the test project.
 /// </para>
@@ -99,7 +99,7 @@ internal static partial class AuthLog
         Message = "JwksBackplaneSubscriber: ICacheInvalidationBackplane is not registered. "
                 + "Cluster-wide key-rotated events will not propagate; falling back to "
                 + "ConfigurationManager's AutomaticRefreshInterval (default 24h). Register a "
-                + "backplane (e.g. via D2.Shared.Caching.Distributed.Redis) for prompt rotation.")]
+                + "backplane (e.g. via DcsvIo.D2.Caching.Distributed.Redis) for prompt rotation.")]
     public static partial void JwksBackplaneAbsent(this ILogger logger);
 
     [LoggerMessage(
@@ -111,8 +111,8 @@ internal static partial class AuthLog
                 + "consistency. Register a backplane for cluster-wide event observability.")]
     public static partial void SessionRevokedBackplaneAbsent(this ILogger logger);
 
-    // ---- Transport-layer middleware (consumed by D2.Shared.Auth.Http +
-    // D2.Shared.Auth.Grpc) ----
+    // ---- Transport-layer middleware (consumed by DcsvIo.D2.Auth.Http +
+    // DcsvIo.D2.Auth.Grpc) ----
     [LoggerMessage(
         EventId = 4001,
         Level = LogLevel.Information,

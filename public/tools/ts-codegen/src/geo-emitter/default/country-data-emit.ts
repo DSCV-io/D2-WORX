@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey, truthy } from "@d2/utilities";
+import { falsey, truthy } from "@dcsv-io/d2-utilities";
 
 import { buildHeader } from "../../lib/file-emit.js";
 import { StringBuilder } from "../../lib/string-builder.js";
@@ -95,11 +95,11 @@ function emitCountries(
   sb.appendLine();
   sb.appendLine(
     "import type { Country, CountryCurrencyAcceptance, GeopoliticalEntity, Locale, LocaleCode," +
-      ' Subdivision, SubdivisionCode } from "@d2/geo-abstractions";',
+      ' Subdivision, SubdivisionCode } from "@dcsv-io/d2-geo-abstractions";',
   );
   sb.appendLine(
     "import { CountryCode, CurrencyCode, GeopoliticalEntityCode, LanguageCode }" +
-      ' from "@d2/geo-abstractions";',
+      ' from "@dcsv-io/d2-geo-abstractions";',
   );
   sb.appendLine();
   sb.appendLine(

@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Edge.KeyCustodian.Domain.Errors;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Private.Auth;
-using D2.Private.Encryption;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
+using DcsvIo.D2.Private.Encryption;
 using Microsoft.Extensions.Options;
 using Xunit;
 

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Telemetry.Internal;
+namespace DcsvIo.D2.Tests.Unit.Telemetry.Internal;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.Telemetry.Internal;
+using DcsvIo.D2.Telemetry.Internal;
 using Xunit;
 
 public sealed class InternalIpFilterTests

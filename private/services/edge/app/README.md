@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge.App
+# DcsvIo.D2.Private.Edge.App
 
 > Parent: [`../README.md`](../README.md)
 
@@ -12,7 +12,7 @@ Thin **host** App shell for Edge process-level application types. **Not** KeyCus
 
 ## Purpose
 
-Empty shell for host-module Application + Infrastructure ports (auth, rate-limit, WhoIs, etc.). Modules remain placeholders. Composition root remains **`D2.Edge.Api`** only.
+Empty shell for host-module Application + Infrastructure ports (auth, rate-limit, WhoIs, etc.). Modules remain placeholders. Composition root remains **`DcsvIo.D2.Private.Edge.Api`** only.
 
 ## §11.15 section N/A (shell assembly)
 

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.Abstractions;
+namespace DcsvIo.D2.DataGovernance.Abstractions;
 
 /// <summary>
 /// Immutable summary of a completed anonymization sweep returned by

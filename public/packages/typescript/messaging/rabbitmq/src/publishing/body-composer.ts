@@ -3,9 +3,9 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { IPayloadCrypto, IPayloadSealer } from "@d2/encryption";
-import { EncryptionDomainModes } from "@d2/encryption-abstractions";
-import type { MqMessageDescriptor } from "@d2/messaging-abstractions";
+import type { IPayloadCrypto, IPayloadSealer } from "@dcsv-io/d2-encryption";
+import { EncryptionDomainModes } from "@dcsv-io/d2-encryption-abstractions";
+import type { MqMessageDescriptor } from "@dcsv-io/d2-messaging-abstractions";
 
 import { readEncryptionKid } from "./encryption-kid.js";
 

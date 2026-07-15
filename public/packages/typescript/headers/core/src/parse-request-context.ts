@@ -3,11 +3,11 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey, UUID_RE } from "@d2/utilities";
+import { falsey, UUID_RE } from "@dcsv-io/d2-utilities";
 import type {
   IRequestContext,
   ActorEntry,
-} from "@d2/request-context-abstractions";
+} from "@dcsv-io/d2-request-context-abstractions";
 import {
   PropagatedContextSerializer,
   OrgType,
@@ -15,11 +15,11 @@ import {
   ActorKind,
   ImpersonationKind,
   RequestOrigin,
-} from "@d2/request-context-abstractions";
-import type { D2Result } from "@d2/result";
-import { ok } from "@d2/result";
-import { CommonHeaders } from "@d2/headers-common";
-import type { JwtPayload } from "@d2/auth-abstractions";
+} from "@dcsv-io/d2-request-context-abstractions";
+import type { D2Result } from "@dcsv-io/d2-result";
+import { ok } from "@dcsv-io/d2-result";
+import { CommonHeaders } from "@dcsv-io/d2-headers-common";
+import type { JwtPayload } from "@dcsv-io/d2-auth-abstractions";
 import { parseAuthHeader } from "./parse-auth-header.js";
 
 /**

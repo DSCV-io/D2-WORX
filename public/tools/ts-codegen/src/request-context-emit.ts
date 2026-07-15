@@ -74,7 +74,7 @@ export function emitPropagatedContextInterface(spec: ContextSpec): string {
   sb.appendLine();
   if (hasPropagatedCallPath(spec)) {
     sb.appendLine(
-      'import type { CallPathEntry } from "@d2/auth-context-abstractions";',
+      'import type { CallPathEntry } from "@dcsv-io/d2-auth-context-abstractions";',
     );
     sb.appendLine();
   }
@@ -348,7 +348,7 @@ export function runRequestContextEmit(
 
   // Reuse the auth-context emit logic for the interface (same shape).
   // importMode='package' tells the emitter to import enum/type defs
-  // from @d2/auth-context-abstractions instead of relative ./enums/.
+  // from @dcsv-io/d2-auth-context-abstractions instead of relative ./enums/.
   const interfaceResult = emitAuthContext(loadResult.spec, "package");
   if (interfaceResult.diagnostics.length > 0)
     return interfaceResult.diagnostics;

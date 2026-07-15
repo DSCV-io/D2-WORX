@@ -3,10 +3,10 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-// Runtime crypto twin of .NET `D2.Shared.Encryption` — WebCrypto AES-256-GCM
+// Runtime crypto twin of .NET `DcsvIo.D2.Encryption` — WebCrypto AES-256-GCM
 // (v1 symmetric) + P-256 ECDH-ES → HKDF-SHA256 → AES-256-GCM (v2 sealed), both
 // directions, byte-identical to the .NET encoder (KAT-pinned). Consumes the
-// wire-layout constants from @d2/encryption-abstractions.
+// wire-layout constants from @dcsv-io/d2-encryption-abstractions.
 
 // Ports.
 export type {

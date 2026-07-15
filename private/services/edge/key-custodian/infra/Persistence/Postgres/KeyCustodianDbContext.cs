@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
 
 /// <summary>
 /// The concrete PostgreSQL <see cref="DbContext"/> backing

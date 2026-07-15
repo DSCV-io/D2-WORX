@@ -4,21 +4,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ServiceDefaults;
+namespace DcsvIo.D2.ServiceDefaults;
 
-using D2.Shared.AspNetCore;
-using D2.Shared.AspNetCore.Mtls;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Grpc;
-using D2.Shared.Auth.Http;
-using D2.Shared.Auth.Startup;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
-using D2.Shared.I18n;
-using D2.Shared.Logging;
-using D2.Shared.Telemetry;
-using D2.Shared.Utilities.Configuration;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.AspNetCore.Mtls;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Grpc;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Auth.Startup;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Logging;
+using DcsvIo.D2.Telemetry;
+using DcsvIo.D2.Utilities.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -194,7 +194,7 @@ public static class ServiceDefaultsServiceCollectionExtensions
             // mTLS is opt-in via supplying the delegate — a host that doesn't
             // supply it gets no client-certificate requirement (safe-by-default;
             // an un-wired host must not start requiring client certs and lock
-            // itself out). The Kestrel-config logic lives in D2.Shared.AspNetCore;
+            // itself out). The Kestrel-config logic lives in DcsvIo.D2.AspNetCore;
             // the aggregator only composes it (zero logic of its own).
             if (options.MutualTlsConfigure is not null)
                 services.AddD2MutualTls(options.MutualTlsConfigure);

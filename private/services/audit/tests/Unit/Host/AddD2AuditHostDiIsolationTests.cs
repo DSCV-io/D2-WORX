@@ -4,26 +4,26 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Audit.Tests.Unit.Host;
 
-using D2.Audit.Api.Composition;
-using D2.Audit.Api.Kestrel;
-using D2.Audit.Api.Mtls;
-using D2.Audit.App.Application;
-using D2.Audit.App.Application.Handlers.Queries.PingAudit;
-using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Shared.AspNetCore.Mtls;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Distributed.Redis;
-using D2.Shared.Caching.Tiered;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
-using D2.Shared.Utilities.Configuration;
-using D2.Shared.WorkloadIdentity;
+using DcsvIo.D2.AspNetCore.Mtls;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Distributed.Redis;
+using DcsvIo.D2.Caching.Tiered;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Private.Audit.Api.Composition;
+using DcsvIo.D2.Private.Audit.Api.Kestrel;
+using DcsvIo.D2.Private.Audit.Api.Mtls;
+using DcsvIo.D2.Private.Audit.App.Application;
+using DcsvIo.D2.Private.Audit.App.Application.Handlers.Queries.PingAudit;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
+using DcsvIo.D2.Spiffe;
+using DcsvIo.D2.Utilities.Configuration;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -91,7 +91,7 @@ public sealed class AddD2AuditHostDiIsolationTests : IDisposable
         descriptors.Any(d => d.ServiceType == typeof(IJwksProvider))
             .Should().BeTrue();
 
-        // JwtValidator is internal to D2.Shared.Auth — pin by type name (not public).
+        // JwtValidator is internal to DcsvIo.D2.Auth — pin by type name (not public).
         descriptors.Any(d =>
                 d.ServiceType.Name is "JwtValidator" or "ClaimsToContextMapper"
                 || d.ImplementationType?.Name is "JwtValidator" or "ClaimsToContextMapper")

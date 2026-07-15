@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://d2-worx.dev/contracts/geo/timezones.schema.json",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/timezones.schema.json",
   "title": "Timezone catalog (codegen-ready)",
   "description": "Tier 2 codegen-ready Timezone catalog. Matches the TimezoneSpec record shape consumed by .NET SourceGen + TS emitter. Offsets sourced from Node's built-in ICU Intl.DateTimeFormat sampled at January 15 (STD) and July 15 (DST) per UTC year.",
   "type": "object",

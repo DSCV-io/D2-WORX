@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { SealedFrame } from "@d2/encryption-abstractions";
+import { SealedFrame } from "@dcsv-io/d2-encryption-abstractions";
 
 import {
   deriveRawSecret,
@@ -20,7 +20,7 @@ import { aesGcmEncrypt, randomBytes } from "./subtle.js";
 /**
  * Default {@link IPayloadSealer} implementation: the P-256 ECDH-ES →
  * HKDF-SHA256 → AES-256-GCM hybrid seal over a {@link RecipientPublicKeyring}.
- * The twin of .NET `D2.Shared.Encryption.PayloadSealer`.
+ * The twin of .NET `DcsvIo.D2.Encryption.PayloadSealer`.
  *
  * Per seal: a fresh ephemeral P-256 keypair → ECDH against the recipient's
  * active public key → HKDF-SHA256 (under the frozen derivation conventions) →

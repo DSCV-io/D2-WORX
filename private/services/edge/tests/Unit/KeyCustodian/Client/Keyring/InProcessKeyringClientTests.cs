@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 
 using System.Net;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Application.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Keyring;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

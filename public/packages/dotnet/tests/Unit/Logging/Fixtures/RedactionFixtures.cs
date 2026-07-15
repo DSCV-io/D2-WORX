@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Logging.Fixtures;
+namespace DcsvIo.D2.Tests.Unit.Logging.Fixtures;
 
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
+using DcsvIo.D2.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Enums;
 
 /// <summary>
 /// Fixture types used to drive <c>RedactDataDestructuringPolicy</c> unit

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Location;
+namespace DcsvIo.D2.Tests.Unit.Location;
 
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Location.ValueObjects;
-using D2.Shared.Logging.Destructuring;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Location.ValueObjects;
+using DcsvIo.D2.Logging.Destructuring;
 using Serilog.Core;
 using Serilog.Events;
 using Xunit;

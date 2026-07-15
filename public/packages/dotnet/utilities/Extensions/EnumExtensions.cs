@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Utilities.Extensions;
+namespace DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// String-side parse helpers for <see cref="System.Enum"/>-typed values.

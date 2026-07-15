@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Handler;
+namespace DcsvIo.D2.Tests.Unit.Handler;
 
 using System;
 using System.Collections.Generic;
@@ -14,10 +14,10 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Handler;
-using D2.Shared.Handler.Abstractions;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Handler.Abstractions;
+using DcsvIo.D2.Result;
 using Xunit;
 
 // Telemetry tests subscribe to the STATIC HandlerTelemetry.SR_Meter +

@@ -3,13 +3,13 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { D2Result } from "@d2/result";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 import type { Country } from "../generated/country.g.js";
 import type { Subdivision } from "../generated/subdivision.g.js";
 
 /**
- * Mirror of .NET `D2.Shared.Geo.Abstractions.NameResolution.IGeoNameResolver`
+ * Mirror of .NET `DcsvIo.D2.Geo.Abstractions.NameResolution.IGeoNameResolver`
  * — the cascade-based free-form text → entity resolver for countries and
  * subdivisions. Resolves `"United States"` → the `Country` record,
  * `"California"` (within US) → the `Subdivision` record, etc.
@@ -41,7 +41,7 @@ import type { Subdivision } from "../generated/subdivision.g.js";
  * catalog; subsequent lookups are O(1) against the cached map. Mirrors
  * .NET `DefaultGeoNameResolver` semantics.
  *
- * `D2Result<T>` (from `@d2/result`) is the cross-language result
+ * `D2Result<T>` (from `@dcsv-io/d2-result`) is the cross-language result
  * envelope — mirrors .NET `D2Result<T>` byte-for-byte over the wire.
  *
  * Both .NET and TS resolvers return full records (never bare codes) so

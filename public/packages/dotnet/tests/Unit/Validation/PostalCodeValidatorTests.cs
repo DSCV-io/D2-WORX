@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation;
+namespace DcsvIo.D2.Tests.Unit.Validation;
 
 using System.Diagnostics;
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.I18n;
-using D2.Shared.Validation;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Validation;
 using Xunit;
 
 /// <summary>

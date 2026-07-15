@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
 /// <summary>
 /// Input to <c>GetRotationPlan</c>. The plan is computed across all domains from

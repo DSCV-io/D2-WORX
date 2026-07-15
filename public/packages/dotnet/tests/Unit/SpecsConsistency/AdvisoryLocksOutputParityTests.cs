@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.AdvisoryLocks.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.AdvisoryLocks.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -26,7 +26,7 @@ using Xunit;
 /// </summary>
 public sealed class AdvisoryLocksOutputParityTests
 {
-    private const string _ASSEMBLY = "D2.Edge.KeyCustodian.Infra";
+    private const string _ASSEMBLY = "DcsvIo.D2.Private.Edge.KeyCustodian.Infra";
     private const string _SPEC_FILE_NAME = "advisory-locks.spec.json";
 
     private static readonly string sr_generatedBase =
@@ -38,8 +38,8 @@ public sealed class AdvisoryLocksOutputParityTests
             "key-custodian",
             "infra",
             "Generated",
-            "D2.Shared.AdvisoryLocks.SourceGen",
-            "D2.Shared.AdvisoryLocks.SourceGen.AdvisoryLocksGenerator");
+            "DcsvIo.D2.AdvisoryLocks.SourceGen",
+            "DcsvIo.D2.AdvisoryLocks.SourceGen.AdvisoryLocksGenerator");
 
     [Fact]
     public void AdvisoryLocks_RegeneratedOutput_MatchesCommittedFile()

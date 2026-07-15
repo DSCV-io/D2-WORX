@@ -3,9 +3,14 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n-keys";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import type { Temporal } from "temporal-polyfill";
-import { type D2Result, inputError, ok, validationFailed } from "@d2/result";
+import {
+  type D2Result,
+  inputError,
+  ok,
+  validationFailed,
+} from "@dcsv-io/d2-result";
 
 /**
  * Translation key for IANA validation failures. Mirrors

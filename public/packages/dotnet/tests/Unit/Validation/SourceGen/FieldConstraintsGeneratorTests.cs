@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Validation.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Validation.SourceGen;
+using DcsvIo.D2.Validation.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -23,7 +23,7 @@ using Xunit;
 /// </summary>
 public sealed class FieldConstraintsGeneratorTests
 {
-    private const string _TARGET = "D2.Shared.Validation.Abstractions";
+    private const string _TARGET = "DcsvIo.D2.Validation.Abstractions";
 
     private const string _SAMPLE_SPEC = """
     {

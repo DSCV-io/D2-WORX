@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Vault.File;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Vault.File;
 
 using System.IO;
 using System.Security.Cryptography;
-using D2.Edge.KeyCustodian.Infra.Configuration;
-using D2.Edge.KeyCustodian.Infra.Observability;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Observability;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

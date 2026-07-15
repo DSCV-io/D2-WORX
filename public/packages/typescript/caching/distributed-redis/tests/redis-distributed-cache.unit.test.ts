@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { ErrorCodes, HttpStatusCode } from "@d2/result";
+import { ErrorCodes, HttpStatusCode } from "@dcsv-io/d2-result";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -13,9 +13,9 @@ import {
   RedisDistributedCache,
 } from "../src/index.js";
 import { BACKPLANE_NOT_REGISTERED_MESSAGE } from "../src/redis-distributed-cache.js";
-import type { ICacheSerializer } from "@d2/caching-abstractions";
-import type { D2Result } from "@d2/result";
-import { fail, ok } from "@d2/result";
+import type { ICacheSerializer } from "@dcsv-io/d2-caching-abstractions";
+import type { D2Result } from "@dcsv-io/d2-result";
+import { fail, ok } from "@dcsv-io/d2-result";
 import { createMetricTestHarness } from "./metric-test-harness.js";
 import {
   createNoOpTestLogger,

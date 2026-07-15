@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Utilities.Serialization;
+namespace DcsvIo.D2.Utilities.Serialization;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;

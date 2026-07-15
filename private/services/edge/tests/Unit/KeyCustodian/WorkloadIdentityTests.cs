@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
 /// Tests for KeyCustodian's <see cref="WorkloadIdentity"/> domain wrapper. The
 /// exhaustive SPIFFE-grammar matrix now lives in the shared
 /// <c>SpiffeWorkloadIdentityTests</c> (the grammar moved to
-/// <c>D2.Shared.WorkloadIdentity</c>). This suite is the
+/// <c>DcsvIo.D2.Spiffe</c>). This suite is the
 /// <b>delegation regression-pin</b>: KeyCustodian re-maps the shared grammar's
 /// generic <c>ValidationFailed</c> to its own
 /// <c>KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY</c> code on the issuance side, and the

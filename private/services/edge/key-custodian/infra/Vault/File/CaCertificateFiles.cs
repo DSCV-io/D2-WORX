@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Vault.File;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Vault.File;
 
 /// <summary>
 /// Filename constants for the file-backed dev certificate-authority chain. The

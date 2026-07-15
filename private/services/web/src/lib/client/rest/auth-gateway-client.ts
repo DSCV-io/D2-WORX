@@ -14,7 +14,7 @@
  *
  * For BetterAuth operations (signUp, signIn, etc.), use authClient instead.
  */
-import { D2Result } from "@d2/result";
+import { D2Result } from "@dcsv-io/d2-result";
 import { executeFetch } from "$lib/shared/rest/gateway-response.js";
 
 const DEFAULT_TIMEOUT_MS = 10_000;

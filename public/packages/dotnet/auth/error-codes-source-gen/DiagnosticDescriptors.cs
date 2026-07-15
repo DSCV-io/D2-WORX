@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.Auth.ErrorCodes.SourceGen;
 
 using Microsoft.CodeAnalysis;
 
@@ -66,5 +66,5 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    private const string _CATEGORY = "D2.Shared.Auth.ErrorCodes.SourceGen";
+    private const string _CATEGORY = "DcsvIo.D2.Auth.ErrorCodes.SourceGen";
 }

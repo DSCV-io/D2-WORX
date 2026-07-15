@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging;
+namespace DcsvIo.D2.Messaging;
 
 using System;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Marks a message type as publishable through <see cref="IMessageBus"/>.

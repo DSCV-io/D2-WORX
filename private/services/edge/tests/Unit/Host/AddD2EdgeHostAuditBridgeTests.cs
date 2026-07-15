@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
-using D2.Audit.Client;
-using D2.Edge.Api.Composition;
+using DcsvIo.D2.Private.Audit.Client;
+using DcsvIo.D2.Private.Edge.Api.Composition;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Utilities.Extensions;
+namespace DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Extension methods for <see cref="IEnumerable{T}"/> that mirror the

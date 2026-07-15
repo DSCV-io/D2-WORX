@@ -14,7 +14,7 @@
 //
 // Usage (repo root):
 //   node public/tools/scripts/check-publicapi-shipped.mjs
-//   SEED_ALLOW_EMPTY=D2.Shared.Foo node public/tools/scripts/check-publicapi-shipped.mjs
+//   SEED_ALLOW_EMPTY=DcsvIo.D2.Foo node public/tools/scripts/check-publicapi-shipped.mjs
 //
 // Exit 0 = OK; exit 1 = one or more packages wrongfully empty (table on stderr).
 
@@ -75,7 +75,7 @@ const sharedDotnetRoot = path.join(REPO_ROOT, "public", "packages", "dotnet");
 const sharedConsumables = walk(sharedDotnetRoot)
   .filter((f) => f.endsWith(".csproj"))
   .filter((f) => !f.endsWith("SourceGen.csproj"))
-  .filter((f) => !/D2\.Shared\.Tests\.csproj$/.test(f));
+  .filter((f) => !/DcsvIo\.D2\.Tests\.csproj$/.test(f));
 
 const kcClient = path.join(
   REPO_ROOT,
@@ -84,7 +84,7 @@ const kcClient = path.join(
   "edge",
   "key-custodian",
   "client",
-  "D2.Edge.KeyCustodian.Client.csproj",
+  "DcsvIo.D2.Private.Edge.KeyCustodian.Client.csproj",
 );
 
 const consumables = [...sharedConsumables, kcClient].sort();

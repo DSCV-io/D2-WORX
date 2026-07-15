@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth;
+namespace DcsvIo.D2.Tests.Unit.Auth;
 
 using System.Collections.Generic;
 using System.IO;
@@ -12,8 +12,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Utilities.Extensions;
 using Xunit;
 
 /// <summary>

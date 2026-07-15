@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging;
+namespace DcsvIo.D2.Messaging;
 
 using System.Text.Json.Serialization;
 
@@ -28,7 +28,7 @@ public sealed record DlqFailureMetadata
 {
     /// <summary>Gets the handler's failure cause — one of the
     /// <c>DlqFailureCauses</c> constants (closed-enum string catalog emitted
-    /// by D2.Shared.Messaging.DlqMetadata.SourceGen into D2.Shared.Messaging.RabbitMq).
+    /// by DcsvIo.D2.Messaging.DlqMetadata.SourceGen into DcsvIo.D2.Messaging.RabbitMq).
     /// The producer-side <c>DlqFailureHeaderBuilder</c> only emits values
     /// from that closed catalog.</summary>
     [JsonPropertyName(DlqFailureMetadataFields.CAUSE)]

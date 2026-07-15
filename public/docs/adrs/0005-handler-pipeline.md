@@ -21,7 +21,7 @@ These two concerns — universal pipeline and provider-specific exception mappin
 
 ## Decision
 
-### Layer 1 — Abstractions (`D2.Shared.Handler.Abstractions`)
+### Layer 1 — Abstractions (`DcsvIo.D2.Handler.Abstractions`)
 
 `IHandler<TInput, TOutput>` and `IHandlerContext` are published in a zero-heavy-dependency package. Domain-layer code and application interfaces reference these contracts without pulling DI, OTel, or AspNetCore transitively. `HandlerOptions` (a `sealed record`) carries per-call toggles (`LogInput`/`LogOutput`, slow/critical thresholds defaulting to 100 ms/500 ms, `ScopeRequirement`) and lives here so callers can adjust behavior without referencing the core package. The abstractions/core split follows the general pattern of ADR-0006.
 
@@ -36,18 +36,18 @@ protected override HandlerOptions DefaultOptions => new()
 };
 ```
 
-`HandlerScopeMatch` mirrors the transport-layer `ScopeMatch` enum but lives in the handler abstractions package so handler assemblies carry no compile-time dependency on the auth layer (layer-hygiene invariant: `D2.Shared.Handler.Abstractions` references neither `D2.Shared.Auth.Abstractions` nor any ASP.NET Core package).
+`HandlerScopeMatch` mirrors the transport-layer `ScopeMatch` enum but lives in the handler abstractions package so handler assemblies carry no compile-time dependency on the auth layer (layer-hygiene invariant: `DcsvIo.D2.Handler.Abstractions` references neither `DcsvIo.D2.Auth.Abstractions` nor any ASP.NET Core package).
 
 A `null` `HandlerOptions.ScopeRequirement` (the default) disables the per-handler check entirely — any authenticated caller that passed the transport-layer auth middleware or interceptor may invoke the handler. An empty `Scopes` set is rejected at construction time: the `ScopeRequirement` constructor throws `ArgumentException` if `Scopes` is empty. Pass a `null` `ScopeRequirement` to disable the per-handler check. The pipeline guard (`is { Scopes.Count: > 0 }`) remains as defense-in-depth for a now-unreachable branch.
 
-### Layer 2 — Core pipeline (`D2.Shared.Handler`)
+### Layer 2 — Core pipeline (`DcsvIo.D2.Handler`)
 
 `BaseHandler<TSelf, TInput, TOutput>` is the abstract base every handler inherits. The CRTP `TSelf` parameter drives the typed logger category (`HandlerContext<TSelf>` resolves `ILogger<TSelf>` via DI) and the OTel tag value `d2.handler.name`.
 
 `RunCorePipelineAsync` is non-virtual (non-overridable). Per invocation it:
 
 1. Evaluates `ScopeRequirement` (any-of or all-of, per `HandlerScopeMatch`) and returns `D2Result.Forbidden` at entry if the caller's `IRequestContext.Scopes` does not satisfy it — before any work runs. A `null` `ScopeRequirement` skips the check entirely (the `is { Scopes.Count: > 0 }` guard remains as defense-in-depth, but an empty set is now unconstructible).
-2. Starts an `ActivitySource` span (source name `D2.Shared.Handler`) tagged with `d2.handler.name`, user/org/role, and full impersonation context when present.
+2. Starts an `ActivitySource` span (source name `DcsvIo.D2.Handler`) tagged with `d2.handler.name`, user/org/role, and full impersonation context when present.
 3. Opens a structured log scope carrying the same correlation fields so every log line emitted inside `ExecuteAsync` automatically carries `d2.trace_id`, `d2.user_id`, `d2.org_id`, and handler name.
 4. Increments `d2.handler.invoked` and starts a `Stopwatch`.
 5. Calls `ExecuteAsync` inside a universal try/catch:
@@ -63,7 +63,7 @@ The four OTel instruments (`invoked` / `succeeded` / `failed` / `duration`) live
 
 `AddD2Handler` registers `HandlerContext<>` as an open-generic Transient. `IRequestContext` is deliberately NOT registered here — each transport stack (HTTP, gRPC, RabbitMQ) builds and scopes its own per-request `IRequestContext` via its own middleware before any handler resolves.
 
-### Layer 3 — Repo handler (`D2.Shared.Handler.Repo`)
+### Layer 3 — Repo handler (`DcsvIo.D2.Handler.Repo`)
 
 `BaseRepoHandler<TSelf, TInput, TOutput>` extends `BaseHandler` and overrides `HandleAsync`. It calls `RunCorePipelineAsync`, receives `(result, exception)`, and if an exception was captured:
 
@@ -72,15 +72,15 @@ The four OTel instruments (`invoked` / `succeeded` / `failed` / `duration`) live
 
 `MapDbException` is a protected virtual hook returning `null` by default. Handlers override it to attach domain-specific `TKMessage` keys and `InputError`s to a known constraint failure (e.g. a unique violation on the user-email index → `auth_errors_EMAIL_ALREADY_TAKEN` + `new InputError("email", ...)`).
 
-`IDbExceptionClassifier` (`D2.Shared.Handler.Repo.Abstractions`) is the provider boundary: a single `DbFailureKind? Classify(Exception)` method, registered singleton, required thread-safe.
+`IDbExceptionClassifier` (`DcsvIo.D2.Handler.Repo.Abstractions`) is the provider boundary: a single `DbFailureKind? Classify(Exception)` method, registered singleton, required thread-safe.
 
-### Layer 4 — PostgreSQL classifier (`D2.Shared.Handler.Repo.Postgres`)
+### Layer 4 — PostgreSQL classifier (`DcsvIo.D2.Handler.Repo.Postgres`)
 
 `PostgresDbExceptionClassifier` implements `IDbExceptionClassifier` with a two-pass strategy: pass 1 walks the inner-exception chain (handling `AggregateException` branches) for a `PostgresException` with a SQLSTATE and maps `23505` → `UniqueViolation`, `23503` → `ForeignKeyViolation`, `23502` → `NotNullViolation`, `23514` → `CheckViolation`, `40001`/`40P01` → `Deadlock`, `57014` → `Timeout`, `57P03`/`53300`/`08*` → `ConnectionFailure`; pass 2 scans for `SocketException`/`IOException` → `ConnectionFailure`; anything else returns `null` (programmer/config error → surfaces as `UnhandledException` so ops are paged). Client-side `OperationCanceledException` from Npgsql `CommandTimeout` never reaches this classifier — `BaseHandler` handles it first. `AddD2Postgres` registers the classifier via `TryAddSingleton` (a custom classifier registered earlier wins).
 
 ### What deliberately does NOT use `BaseHandler`
 
-`DefaultLocalCache` (`D2.Shared.Caching.Local.Default`) bypasses `BaseHandler` entirely: its xmldoc states the work itself is tens of nanoseconds and a handler pipeline would be ~100× overhead. The per-call cost (Activity creation, log-scope dictionary allocation, Stopwatch, counter increments) would dwarf the tens-of-nanoseconds cache work. This is the recognized carve-out: the pipeline serves long-lived, I/O-bound operations; latency-critical in-process primitives opt out by design.
+`DefaultLocalCache` (`DcsvIo.D2.Caching.Local.Default`) bypasses `BaseHandler` entirely: its xmldoc states the work itself is tens of nanoseconds and a handler pipeline would be ~100× overhead. The per-call cost (Activity creation, log-scope dictionary allocation, Stopwatch, counter increments) would dwarf the tens-of-nanoseconds cache work. This is the recognized carve-out: the pipeline serves long-lived, I/O-bound operations; latency-critical in-process primitives opt out by design.
 
 ### CQRS and naming conventions
 

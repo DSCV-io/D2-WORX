@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation;
+namespace DcsvIo.D2.Validation;
 
 using System.Collections.Frozen;
 using System.Reflection;
@@ -38,7 +38,7 @@ internal static class PostalCodeRegexData
         var matchTimeout = TimeSpan.FromMilliseconds(_MATCH_TIMEOUT_MS);
 
         var assembly = Assembly.GetExecutingAssembly();
-        const string resourceName = "D2.Shared.Validation.PostalCodeRegexData.json";
+        const string resourceName = "DcsvIo.D2.Validation.PostalCodeRegexData.json";
 
         using var stream = assembly.GetManifestResourceStream(resourceName)
             ?? throw new InvalidOperationException(

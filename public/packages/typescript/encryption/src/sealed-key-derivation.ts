@@ -8,7 +8,7 @@ import { hkdfSha256 } from "./subtle.js";
 /**
  * The frozen key-derivation and AEAD-binding conventions of the sealed
  * (ECDH-ES hybrid) encryption mode — the byte-for-byte twin of .NET
- * `D2.Shared.Encryption.SealedKeyDerivation`. Both the sealer and the opener
+ * `DcsvIo.D2.Encryption.SealedKeyDerivation`. Both the sealer and the opener
  * derive through this single module so producer and consumer can never
  * disagree.
  *

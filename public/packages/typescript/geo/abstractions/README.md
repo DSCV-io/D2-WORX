@@ -2,33 +2,33 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/geo-abstractions
+# @dcsv-io/d2-geo-abstractions
 
 > Parent: [`public/packages/typescript/`](../../README.md)
 >
 > **Audience**: backend Node/TypeScript service and BFF engineers who need
 > a data-free reference-data type surface — interfaces, meta-records, and
 > name-resolution primitives — without dragging the full geo catalog
-> (`@d2/geo-default`).
+> (`@dcsv-io/d2-geo-default`).
 
 Codegen-emitted reference-data type surface + hand-written meta-record +
-name-resolution primitives. Mirrors `D2.Shared.Geo.Abstractions` (.NET).
+name-resolution primitives. Mirrors `DcsvIo.D2.Geo.Abstractions` (.NET).
 
 ## Overview
 
 The geo reference-data layer ships in two TS packages:
 
-- **`@d2/geo-abstractions`** — this package. Type shapes (record interfaces,
+- **`@dcsv-io/d2-geo-abstractions`** — this package. Type shapes (record interfaces,
   branded typed-code wrappers, validation schemas) + `DeprecationInfo` +
   name-resolution helpers. Near-zero runtime payload at import — pure types
   plus two small string-algorithm functions.
-- **`@d2/geo-default`** — the catalog data itself (~200 KB of country /
+- **`@dcsv-io/d2-geo-default`** — the catalog data itself (~200 KB of country /
   subdivision / currency / language / locale / timezone / geopolitical-entity
   records). Depends on this package.
 
 Domain code that takes a `Country` parameter imports from
-`@d2/geo-abstractions`; only composition-root / catalog-bootstrap code
-imports `@d2/geo-default`. This keeps the ~200 KB catalog out of bundles
+`@dcsv-io/d2-geo-abstractions`; only composition-root / catalog-bootstrap code
+imports `@dcsv-io/d2-geo-default`. This keeps the ~200 KB catalog out of bundles
 that only need the type shapes.
 
 ## Record shape architecture
@@ -38,7 +38,7 @@ that only need the type shapes.
 Every reference-data catalog ships ONE record interface. Each record carries
 scalars + universal dual-representation for every relationship.
 
-| Catalog                         | Record interface            | Plural data accessor (in `@d2/geo-default`)    | Lookup table                                                 |
+| Catalog                         | Record interface            | Plural data accessor (in `@dcsv-io/d2-geo-default`)    | Lookup table                                                 |
 | ------------------------------- | --------------------------- | ---------------------------------------------- | ------------------------------------------------------------ |
 | Country                         | `Country`                   | `Countries.US`                                 | `CountryLookup.byCode[CountryCode.US]`                       |
 | Subdivision                     | `Subdivision`               | (no plural; use `SubdivisionLookup`)           | `SubdivisionLookup.byCode["US-NY"]`                          |
@@ -124,7 +124,7 @@ const us: Country = {
 ```
 
 The cast is confined to codegen-emitted module-init code under
-`@d2/geo-default`. Hand-written consumer code MUST treat the record fields
+`@dcsv-io/d2-geo-default`. Hand-written consumer code MUST treat the record fields
 as `readonly` (compile-time enforced). Wiring nav refs outside of
 codegen-emitted module init is a hand-written-code-touching-codegen-territory
 bug.
@@ -158,9 +158,9 @@ and runs as part of the workspace codegen orchestrator (`pnpm codegen`).
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.Geo.Abstractions`:
+Mirrors `DcsvIo.D2.Geo.Abstractions`:
 
-- `DeprecationInfo` ↔ `D2.Shared.Geo.Abstractions.DeprecationInfo` —
+- `DeprecationInfo` ↔ `DcsvIo.D2.Geo.Abstractions.DeprecationInfo` —
   same four fields, same JSON wire shape. `DateOnly DeprecatedAt`
   serializes to ISO-8601 calendar-date string; the TS-side mirror uses
   `string` carrying the same `YYYY-MM-DD` text.

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.SourceGen;
+namespace DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Value-equatable record used as the IIncrementalGenerator pipeline boundary.

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.InProcessKeys;
+namespace DcsvIo.D2.Tests.Unit.InProcessKeys;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.InProcessKeys.SourceGen;
+using DcsvIo.D2.InProcessKeys.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -31,7 +31,7 @@ public sealed class InProcessKeysEmitterTests
         var result = InProcessKeysEmitter.Emit(
             spec,
             InProcessKeysEmitter.BindingFilter.Http,
-            targetNamespace: "D2.Shared.Auth.Abstractions.Http",
+            targetNamespace: "DcsvIo.D2.Auth.Abstractions.Http",
             className: "D2HttpContextItems",
             visibility: "public");
 

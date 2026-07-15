@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.Abstractions;
+namespace DcsvIo.D2.DataGovernance.Abstractions;
 
 /// <summary>
 /// Marks an entity as owned by an organization subject. The anonymization engine reads

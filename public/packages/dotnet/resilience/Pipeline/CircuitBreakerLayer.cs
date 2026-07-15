@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Pipeline;
+namespace DcsvIo.D2.Resilience.Pipeline;
 
-using D2.Shared.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.CircuitBreaker;
 
 /// <summary>
 /// Pipeline layer that fast-fails through a wrapped

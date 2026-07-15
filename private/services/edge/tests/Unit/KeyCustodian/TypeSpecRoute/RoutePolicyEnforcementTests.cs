@@ -4,24 +4,24 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute;
 
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using D2.Edge.Tests.TypeSpecDto.Generated;
-using D2.Edge.Tests.TypeSpecRoute.Generated;
-using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Http;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+using DcsvIo.D2.Result;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -250,8 +250,8 @@ public sealed class RoutePolicyEnforcementTests
                             new FakeJwksProvider(jwtBuilder.PublicKey));
 
                         // Swap session liveness tracker for the always-alive fake.
-                        services.RemoveAll<D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker>();
-                        services.AddSingleton<D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker>(
+                        services.RemoveAll<DcsvIo.D2.Auth.Abstractions.Sessions.ISessionLivenessTracker>();
+                        services.AddSingleton<DcsvIo.D2.Auth.Abstractions.Sessions.ISessionLivenessTracker>(
                             new FakeSessionLivenessTracker());
 
                         // Register the façade fake for DI resolution in the route lambdas.
@@ -288,7 +288,7 @@ public sealed class RoutePolicyEnforcementTests
         var doc = JsonDocument.Parse(body);
 
         if (doc.RootElement.TryGetProperty(
-                D2.Shared.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_ERROR_CODE, out var el))
+                DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys.EXTENSION_ERROR_CODE, out var el))
             return el.GetString();
         return null;
     }

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.SourceGen;
 
 using Microsoft.CodeAnalysis;
 
@@ -50,5 +50,5 @@ internal static class EngineDiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    private const string _CATEGORY = "D2.Shared.ErrorCodes.SourceGen";
+    private const string _CATEGORY = "DcsvIo.D2.ErrorCodes.SourceGen";
 }

@@ -24,7 +24,7 @@
  * the caller explicitly allow-listed the package.
  *
  * @param {object} args
- * @param {string} args.pkgName          The consumable package name (@d2/*).
+ * @param {string} args.pkgName          The consumable package name (@dcsv-io/d2-*).
  * @param {boolean} args.hasPublicMembers True when the .api.md holds >=1 `export ` line.
  * @param {boolean} args.allowEmpty       True to permit a genuine zero-export surface.
  * @throws {Error} when a degenerate report is not explicitly allowed.

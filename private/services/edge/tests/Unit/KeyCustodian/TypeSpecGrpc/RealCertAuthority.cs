@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Shared.Auth.Outbound.WorkloadCertificate;
-using WorkloadIdentity = D2.Edge.KeyCustodian.Domain.ValueObjects.WorkloadIdentity;
+using DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules;
+using WorkloadIdentity = DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects.WorkloadIdentity;
 
 /// <summary>
 /// Certificate-authority fixture for the end-to-end mutual-TLS harness that mints

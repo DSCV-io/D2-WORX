@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry.Internal;
+namespace DcsvIo.D2.Telemetry.Internal;
 
-using D2.Shared.Auth.Outbound.Telemetry;
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.Caching.Distributed.Redis;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Handler;
-using D2.Shared.Messaging.RabbitMq.Telemetry;
+using DcsvIo.D2.Auth.Outbound.Telemetry;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.Caching.Distributed.Redis;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Messaging.RabbitMq.Telemetry;
 
 /// <summary>
 /// Single source of truth for the
@@ -27,7 +27,7 @@ using D2.Shared.Messaging.RabbitMq.Telemetry;
 /// <para>
 /// Spec-pinning unit tests in <c>AggregatedTelemetrySourcesTests</c>
 /// assert the LITERAL wire values
-/// (<c>"D2.Shared.Handler"</c>, <c>"D2.Shared.Auth"</c>, etc.) so a const
+/// (<c>"DcsvIo.D2.Handler"</c>, <c>"DcsvIo.D2.Auth"</c>, etc.) so a const
 /// symbol rename to a different VALUE doesn't silently change the wire
 /// format consumed by Tempo / Loki / Prometheus dashboards. Both layers
 /// of safety apply: const-symbol references catch renames at compile

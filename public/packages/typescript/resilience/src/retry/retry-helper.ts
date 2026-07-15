@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { D2Result } from "@d2/result";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 import { AbortError } from "../pipeline/abort.js";
 import { RETRY_DEFAULTS } from "./retry-defaults.js";

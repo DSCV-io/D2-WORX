@@ -10,7 +10,7 @@ import {
   AuthErrorCodes,
   AuthFailures,
   getAuthErrorHttpStatus,
-} from "@d2/auth-abstractions";
+} from "@dcsv-io/d2-auth-abstractions";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Jwks;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Jwks;
 
 using System;
 using System.Collections.Generic;
@@ -13,9 +13,9 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Jwks;
-using D2.Shared.Auth.Telemetry;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Jwks;
+using DcsvIo.D2.Auth.Telemetry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;

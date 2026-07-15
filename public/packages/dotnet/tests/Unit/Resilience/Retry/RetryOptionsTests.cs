@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.Retry;
+namespace DcsvIo.D2.Tests.Unit.Resilience.Retry;
 
 using AwesomeAssertions;
-using D2.Shared.Resilience.Retry;
+using DcsvIo.D2.Resilience.Retry;
 using Xunit;
 
 public sealed class RetryOptionsTests

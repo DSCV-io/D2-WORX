@@ -2,21 +2,21 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/headers-common
+# @dcsv-io/d2-headers-common
 
 > Parent: [`public/packages/typescript/`](../../README.md)
 
-> **Duplicated from [`contracts/headers/headers.spec.json`](../../../../../contracts/headers/headers.spec.json) — update both in lockstep.** This catalog mirrors its .NET sibling [`D2.Shared.Headers.Common`](../../../dotnet/headers/common/README.md) at byte-equal wire values per the cross-language parity contract documented in [`docs/PARITY.md`](../../../../../docs/PARITY.md). Both sides emit from the same spec; physical dedup across TS ↔ .NET is not feasible. Parity is asserted by `contract-tests/headers.parity.test.ts` (TS) and `HeaderCatalogConsistencyTests` (.NET).
+> **Duplicated from [`contracts/headers/headers.spec.json`](../../../../../contracts/headers/headers.spec.json) — update both in lockstep.** This catalog mirrors its .NET sibling [`DcsvIo.D2.Headers.Common`](../../../dotnet/headers/common/README.md) at byte-equal wire values per the cross-language parity contract documented in [`docs/PARITY.md`](../../../../../docs/PARITY.md). Both sides emit from the same spec; physical dedup across TS ↔ .NET is not feasible. Parity is asserted by `contract-tests/headers.parity.test.ts` (TS) and `HeaderCatalogConsistencyTests` (.NET).
 
-Cross-transport D2 wire-protocol headers — entries with applicability count >= 2 (i.e. headers that appear identically on multiple transports). Mirrors .NET `D2.Shared.Headers.Common.CommonHeaders`.
+Cross-transport D2 wire-protocol headers — entries with applicability count >= 2 (i.e. headers that appear identically on multiple transports). Mirrors .NET `DcsvIo.D2.Headers.Common.CommonHeaders`.
 
 ## Public API
 
 | Export               | Source                | Mirror                                      |
 | -------------------- | --------------------- | ------------------------------------------- |
-| `CommonHeaders`      | `common-headers.g.ts` | `D2.Shared.Headers.Common.CommonHeaders`    |
+| `CommonHeaders`      | `common-headers.g.ts` | `DcsvIo.D2.Headers.Common.CommonHeaders`    |
 | `CommonHeaderName`   | `common-headers.g.ts` | n/a (TS-only union type)                    |
-| `ALL_COMMON_HEADERS` | `common-headers.g.ts` | `D2.Shared.Headers.Common.AllCommonHeaders` |
+| `ALL_COMMON_HEADERS` | `common-headers.g.ts` | `DcsvIo.D2.Headers.Common.AllCommonHeaders` |
 
 ## Codegen workflow
 
@@ -24,7 +24,7 @@ Cross-transport D2 wire-protocol headers — entries with applicability count >=
 
 ## When to reach for this catalog
 
-Use `@d2/headers-common` when the consumer is transport-agnostic — e.g. a tracing utility that handles `traceparent` / `tracestate` regardless of whether the request arrived over HTTP, gRPC, or AMQP. Transport-specific consumers should reach for `@d2/headers-http`, `@d2/headers-amqp`, or `@d2/headers-grpc` instead — those catalogs include the cross-transport entries inline at identical wire values, so a single `import` covers everything that transport's pipeline can encounter.
+Use `@dcsv-io/d2-headers-common` when the consumer is transport-agnostic — e.g. a tracing utility that handles `traceparent` / `tracestate` regardless of whether the request arrived over HTTP, gRPC, or AMQP. Transport-specific consumers should reach for `@dcsv-io/d2-headers-http`, `@dcsv-io/d2-headers-amqp`, or `@dcsv-io/d2-headers-grpc` instead — those catalogs include the cross-transport entries inline at identical wire values, so a single `import` covers everything that transport's pipeline can encounter.
 
 ## Spec contract
 
@@ -37,6 +37,6 @@ None at runtime — pure constants. DevDeps: `vitest` + `@vitest/coverage-v8` + 
 ## Reference
 
 - [`contracts/headers/headers.spec.json`](../../../../../contracts/headers/headers.spec.json) — source spec
-- [`@d2/headers-http`](../http/README.md) — HTTP-applicable subset
-- [`@d2/headers-amqp`](../amqp/README.md) — AMQP-applicable subset
-- [`@d2/headers-grpc`](../grpc/README.md) — gRPC-applicable subset
+- [`@dcsv-io/d2-headers-http`](../http/README.md) — HTTP-applicable subset
+- [`@dcsv-io/d2-headers-amqp`](../amqp/README.md) — AMQP-applicable subset
+- [`@dcsv-io/d2-headers-grpc`](../grpc/README.md) — gRPC-applicable subset

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.Enums;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Enums;
 
 /// <summary>
 /// Derived, state-machine-driven discriminator for an encryption key.

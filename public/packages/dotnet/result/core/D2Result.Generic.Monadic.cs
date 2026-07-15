@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result;
+namespace DcsvIo.D2.Result;
 
 /// <summary>
 /// Monadic instance methods on <see cref="D2Result{TData}"/> for composing pipelines

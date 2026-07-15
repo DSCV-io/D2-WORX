@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching.Distributed.Redis;
+namespace DcsvIo.D2.Caching.Distributed.Redis;
 
 using System.Diagnostics.Metrics;
 
@@ -18,7 +18,7 @@ using System.Diagnostics.Metrics;
 /// <para>
 /// Class is <c>public</c> so the meter name constant
 /// (<see cref="METER_NAME"/>) is reachable cross-assembly — consumed by
-/// <c>D2.Shared.Telemetry</c>'s aggregation registration so cache hits /
+/// <c>DcsvIo.D2.Telemetry</c>'s aggregation registration so cache hits /
 /// misses / sets reach the OTLP / Prometheus exporters without per-host
 /// opt-in. The counter fields remain <c>internal</c> — only the lib's own
 /// hot-path code increments them; external callers should use the
@@ -30,9 +30,9 @@ public static class RedisCacheTelemetry
     /// <summary>
     /// The OpenTelemetry <see cref="Meter"/> name. Hosts add this via
     /// <c>.WithMetrics(m =&gt; m.AddMeter(RedisCacheTelemetry.METER_NAME))</c>
-    /// when wiring telemetry without <c>D2.Shared.Telemetry</c>'s aggregator.
+    /// when wiring telemetry without <c>DcsvIo.D2.Telemetry</c>'s aggregator.
     /// </summary>
-    public const string METER_NAME = "D2.Shared.Caching.Distributed.Redis";
+    public const string METER_NAME = "DcsvIo.D2.Caching.Distributed.Redis";
 
     /// <summary>OTel meter for the Redis distributed cache.</summary>
     internal static readonly Meter SR_Meter = new(METER_NAME, "1.0.0");

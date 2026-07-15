@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry.Tags.SourceGen;
+namespace DcsvIo.D2.Telemetry.Tags.SourceGen;
 
 using System.Collections.Immutable;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Result of <see cref="TelemetryTagsEmitter.Emit"/>. Pure data — the Roslyn

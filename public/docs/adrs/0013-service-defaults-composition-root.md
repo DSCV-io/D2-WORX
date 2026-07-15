@@ -19,7 +19,7 @@ The abstractions/implementation split (ADR-0006), observability (ADR-0010), and 
 
 ## Decision
 
-A single thin-aggregator csproj (`D2.Shared.ServiceDefaults`) owns the composition of all foundational shared libs. **The aggregator owns zero logic and zero configuration knowledge. Middleware ordering is locked and exposes no insertion points.**
+A single thin-aggregator csproj (`DcsvIo.D2.ServiceDefaults`) owns the composition of all foundational shared libs. **The aggregator owns zero logic and zero configuration knowledge. Middleware ordering is locked and exposes no insertion points.**
 
 ### 1. Thin aggregator with zero logic and pass-through delegates
 

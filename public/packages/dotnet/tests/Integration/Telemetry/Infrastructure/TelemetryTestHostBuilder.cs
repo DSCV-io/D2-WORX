@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Telemetry.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.Telemetry.Infrastructure;
 
-using D2.Shared.Telemetry;
+using DcsvIo.D2.Telemetry;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ProblemDetails.SourceGen;
+namespace DcsvIo.D2.ProblemDetails.SourceGen;
 
 using System;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -18,12 +18,12 @@ using Microsoft.CodeAnalysis.Text;
 /// <c>D2ProblemDetailsKeys</c> carrying the spec-derived constants
 /// (<c>TYPE_URI_PREFIX</c>, <c>CONTENT_TYPE</c>, <c>EXTENSION_*</c>,
 /// <c>TITLE_*</c>) + the <c>TitleFor</c> switch into
-/// <c>D2.Shared.ProblemDetails.Abstractions</c> by reading
+/// <c>DcsvIo.D2.ProblemDetails.Abstractions</c> by reading
 /// <c>contracts/problem-details/problem-details.spec.json</c> via
 /// <c>AdditionalFiles</c>. Single-target — only emits when the consuming
-/// assembly is <c>D2.Shared.ProblemDetails.Abstractions</c>. The abstractions
-/// csproj is referenced by both <c>D2.Shared.Auth.Http</c> (path A emitter)
-/// and <c>D2.Shared.AspNetCore</c> (path B Customizer), so a single emitted
+/// assembly is <c>DcsvIo.D2.ProblemDetails.Abstractions</c>. The abstractions
+/// csproj is referenced by both <c>DcsvIo.D2.Auth.Http</c> (path A emitter)
+/// and <c>DcsvIo.D2.AspNetCore</c> (path B Customizer), so a single emitted
 /// constant set serves both .NET ProblemDetails wire paths.
 /// </summary>
 [Generator]
@@ -31,7 +31,7 @@ public sealed class ProblemDetailsGenerator : IIncrementalGenerator
 {
     private const string _SOURCE_NAME = "D2ProblemDetailsKeys.g.cs";
     private const string _SPEC_FILE_NAME = "problem-details.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.ProblemDetails.Abstractions";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.ProblemDetails.Abstractions";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

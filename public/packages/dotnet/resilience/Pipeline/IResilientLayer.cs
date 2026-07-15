@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Pipeline;
+namespace DcsvIo.D2.Resilience.Pipeline;
 
 /// <summary>
 /// A single decoration step in a <see cref="ResilientPipeline{TKey, TValue}"/>.

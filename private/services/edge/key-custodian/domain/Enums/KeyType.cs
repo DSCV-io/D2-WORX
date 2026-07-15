@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.Enums;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Enums;
 
 /// <summary>
 /// Discriminates between the cryptographic algorithms a managed key employs.

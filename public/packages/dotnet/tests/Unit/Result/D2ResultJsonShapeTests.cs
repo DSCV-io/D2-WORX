@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Result;
+namespace DcsvIo.D2.Tests.Unit.Result;
 
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
-using D2.Shared.Result;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
 using Xunit;
 
 /// <summary>
@@ -234,7 +234,7 @@ public sealed class D2ResultJsonShapeTests
     [Fact]
     public void Category_WireString_RehydratesViaConverter()
     {
-        // The .NET D2Result envelope is serialize-only (the TS @d2/result parser
+        // The .NET D2Result envelope is serialize-only (the TS @dcsv-io/d2-result parser
         // owns deserialization â€” see the cross-runtime fixtures). The wireâ†’typed
         // direction for the category field itself is the ErrorCategoryJsonConverter
         // round-trip: the snake string parses back to the typed ErrorCategory,

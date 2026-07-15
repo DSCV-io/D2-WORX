@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Spec;
+namespace DcsvIo.D2.Geo.SourceGen.Spec;
 
 /// <summary>
 /// Common header block carried by every geo spec file. Captures the

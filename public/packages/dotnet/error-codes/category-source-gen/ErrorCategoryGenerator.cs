@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.Category.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.Category.SourceGen;
 
 using System;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits the <c>ErrorCategory</c>
 /// enum, the <c>ErrorCategoryWire</c> mapping, and the
-/// <c>ErrorCategoryJsonConverter</c> into <c>D2.Shared.ErrorCodes.Category</c>.
+/// <c>ErrorCategoryJsonConverter</c> into <c>DcsvIo.D2.ErrorCodes.Category</c>.
 /// Single-target.
 /// </summary>
 [Generator]
@@ -24,7 +24,7 @@ public sealed class ErrorCategoryGenerator : IIncrementalGenerator
 {
     private const string _SOURCE_NAME = "ErrorCategory.g.cs";
     private const string _SPEC_FILE_NAME = "error-category.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.ErrorCodes.Category";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.ErrorCodes.Category";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

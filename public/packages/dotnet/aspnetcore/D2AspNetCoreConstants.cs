@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore;
+namespace DcsvIo.D2.AspNetCore;
 
 /// <summary>
-/// Public constants exposed by <see cref="D2.Shared.AspNetCore"/> — endpoint
+/// Public constants exposed by <see cref="DcsvIo.D2.AspNetCore"/> — endpoint
 /// route paths, header names, configuration keys, and the canonical
 /// infrastructure-path list shared with consumers
-/// (<see cref="D2.Shared.AspNetCore.InfrastructurePathMatcher"/>'s default
+/// (<see cref="DcsvIo.D2.AspNetCore.InfrastructurePathMatcher"/>'s default
 /// path set, the <c>UseD2InfrastructureBypass</c> default, the
-/// <c>D2.Shared.Logging</c> request-logging middleware default, and the
-/// <c>D2.Shared.Telemetry</c> AspNetCore-instrumentation filter default).
+/// <c>DcsvIo.D2.Logging</c> request-logging middleware default, and the
+/// <c>DcsvIo.D2.Telemetry</c> AspNetCore-instrumentation filter default).
 /// </summary>
 /// <remarks>
 /// Consumers that want to reference the canonical infrastructure paths or
@@ -41,7 +41,7 @@ public static class D2AspNetCoreConstants
 
     /// <summary>
     /// Canonical Prometheus scraping route path. Mapped by
-    /// <c>D2.Shared.Telemetry.WebApplicationTelemetryExtensions.MapD2PrometheusEndpoint</c>
+    /// <c>DcsvIo.D2.Telemetry.WebApplicationTelemetryExtensions.MapD2PrometheusEndpoint</c>
     /// when the in-process Prometheus exporter is enabled.
     /// </summary>
     public const string METRICS_ENDPOINT_PATH = "/metrics";
@@ -91,7 +91,7 @@ public static class D2AspNetCoreConstants
     /// <see cref="ProblemDetailsServiceCollectionExtensions.AddD2ProblemDetails"/>
     /// customizer accepts from the inbound
     /// <c>X-Correlation-Id</c> header
-    /// (<see cref="D2.Shared.Headers.Http.HttpHeaders.CORRELATION_ID"/>).
+    /// (<see cref="DcsvIo.D2.Headers.Http.HttpHeaders.CORRELATION_ID"/>).
     /// Values exceeding the cap are treated as absent (a fresh GUID is
     /// generated). Prevents an arbitrary-length user header from inflating
     /// the response body.
@@ -112,8 +112,8 @@ public static class D2AspNetCoreConstants
     /// Default infrastructure-path prefix list — consumed by
     /// <see cref="InfrastructurePathMatcher"/>, by
     /// <see cref="D2InfrastructureBypassOptions.InfrastructurePaths"/>'s
-    /// default, by the <c>D2.Shared.Logging</c> request-logging middleware
-    /// default, and by the <c>D2.Shared.Telemetry</c>
+    /// default, by the <c>DcsvIo.D2.Logging</c> request-logging middleware
+    /// default, and by the <c>DcsvIo.D2.Telemetry</c>
     /// AspNetCore-instrumentation filter default. Single source of truth so
     /// the four consumers stay aligned without per-lib duplication.
     /// </summary>

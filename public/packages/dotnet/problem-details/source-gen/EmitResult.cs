@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ProblemDetails.SourceGen;
+namespace DcsvIo.D2.ProblemDetails.SourceGen;
 
 using System.Collections.Immutable;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Result of <see cref="ProblemDetailsEmitter.Emit"/>. Pure data — the

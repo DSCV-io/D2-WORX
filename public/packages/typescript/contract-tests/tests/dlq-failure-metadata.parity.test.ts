@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   DlqFailureMetadataFields,
   DlqFailureCauses,
-} from "@d2/messaging-abstractions";
+} from "@dcsv-io/d2-messaging-abstractions";
 import { canonicalize, loadFixture } from "../src/index.js";
 
 interface CatalogMap {

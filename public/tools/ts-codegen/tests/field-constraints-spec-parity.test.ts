@@ -58,8 +58,8 @@ const DOTNET_FIELD_CONSTRAINTS_PATH = resolve(
   "validation",
   "abstractions",
   "Generated",
-  "D2.Shared.Validation.SourceGen",
-  "D2.Shared.Validation.SourceGen.FieldConstraintsGenerator",
+  "DcsvIo.D2.Validation.SourceGen",
+  "DcsvIo.D2.Validation.SourceGen.FieldConstraintsGenerator",
   "FieldConstraints.g.cs",
 );
 
@@ -70,8 +70,8 @@ const DOTNET_TAXONOMY_PATH = resolve(
   "validation",
   "abstractions",
   "Generated",
-  "D2.Shared.Validation.SourceGen",
-  "D2.Shared.Validation.SourceGen.FieldConstraintsGenerator",
+  "DcsvIo.D2.Validation.SourceGen",
+  "DcsvIo.D2.Validation.SourceGen.FieldConstraintsGenerator",
   "Taxonomy.g.cs",
 );
 

@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { MessagingActivityTags } from "@d2/telemetry";
+import { MessagingActivityTags } from "@dcsv-io/d2-telemetry";
 import { canonicalize, loadFixture } from "../src/index.js";
 
 interface CatalogMap {

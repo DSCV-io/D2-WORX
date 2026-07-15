@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Extensions;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Extensions;
 
 using System;
 using System.Collections.Generic;
@@ -99,16 +99,16 @@ internal static class ExtensionsCsprojLaw
             .Any(i =>
                 i.Contains("product-constants", StringComparison.OrdinalIgnoreCase)
                 || i.Contains(
-                    "D2.Private.ProductConstants",
+                    "DcsvIo.D2.Private.ProductConstants",
                     StringComparison.OrdinalIgnoreCase)
                 || i.Contains(
-                    "i18n-keys\\D2.Private.I18n.Keys",
+                    "i18n-keys\\DcsvIo.D2.Private.I18n.Keys",
                     StringComparison.OrdinalIgnoreCase)
                 || i.Contains(
-                    "i18n-keys/D2.Private.I18n.Keys",
+                    "i18n-keys/DcsvIo.D2.Private.I18n.Keys",
                     StringComparison.OrdinalIgnoreCase)
                 || i.Contains(
-                    "D2.Private.I18n.Keys.csproj",
+                    "DcsvIo.D2.Private.I18n.Keys.csproj",
                     StringComparison.OrdinalIgnoreCase));
     }
 
@@ -127,13 +127,13 @@ internal static class ExtensionsCsprojLaw
                     || i.Contains("D2PrivatePackages", StringComparison.OrdinalIgnoreCase)
                     || i.Contains(".Extensions.csproj", StringComparison.OrdinalIgnoreCase)
                     || i.Contains(
-                        "D2.Shared.Auth.Abstractions.Extensions",
+                        "DcsvIo.D2.Private.Auth.Abstractions.Extensions",
                         StringComparison.OrdinalIgnoreCase)
                     || i.Contains(
-                        "D2.Shared.Encryption.Extensions",
+                        "DcsvIo.D2.Private.Encryption.Extensions",
                         StringComparison.OrdinalIgnoreCase)
                     || i.Contains(
-                        "D2.Shared.I18n.Keys.Extensions",
+                        "DcsvIo.D2.Private.I18n.Keys.Extensions",
                         StringComparison.OrdinalIgnoreCase);
             });
     }

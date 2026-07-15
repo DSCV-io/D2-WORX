@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Sealing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Sealing;
 
-using D2.Edge.KeyCustodian.Client.Sealing;
-using D2.Shared.Encryption;
-using D2.Shared.Time;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
+using DcsvIo.D2.Time;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>

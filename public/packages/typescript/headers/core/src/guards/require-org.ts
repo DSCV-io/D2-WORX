@@ -3,11 +3,11 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { AuthErrorCodes } from "@d2/auth-abstractions";
-import type { OrgType } from "@d2/auth-context-abstractions";
-import { forbidden, HttpStatusCode } from "@d2/result";
-import { falsey } from "@d2/utilities";
-import { PROBLEM_DETAILS_CONTENT_TYPE } from "@d2/problem-details-abstractions";
+import { AuthErrorCodes } from "@dcsv-io/d2-auth-abstractions";
+import type { OrgType } from "@dcsv-io/d2-auth-context-abstractions";
+import { forbidden, HttpStatusCode } from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "@dcsv-io/d2-problem-details-abstractions";
 import { toProblemDetails } from "../problem-details.js";
 import type {
   AuthenticatedRequestContext,

@@ -4,21 +4,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc;
 
 using System.Collections.Generic;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Grpc;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Grpc.Status;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Result;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Protos;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Grpc;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Grpc.Status;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Protos;
 using global::Grpc.Core;
 using global::Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -36,7 +36,7 @@ using GrpcStatusCode = global::Grpc.Core.StatusCode;
 /// proves that scope attributes placed on the gRPC service implementation
 /// class (<c>[D2RequireAnyScope]</c>, <c>[D2RequireAllScopes]</c>,
 /// <c>[D2HarmlessEndpoint]</c>) actually enforce access through the real
-/// <see cref="D2.Shared.Auth.Grpc.Interceptors.JwtAuthInterceptor"/> when
+/// <see cref="DcsvIo.D2.Auth.Grpc.Interceptors.JwtAuthInterceptor"/> when
 /// NO fluent <c>.RequireAnyScope()</c> / <c>.RequireAllScopes()</c> /
 /// <c>.MarkAsD2HarmlessEndpoint()</c> is wired at <c>MapGrpcService&lt;T&gt;()</c>.
 /// </summary>
@@ -44,7 +44,7 @@ using GrpcStatusCode = global::Grpc.Core.StatusCode;
 /// <para>
 /// <strong>Why a separate class from <c>GrpcAuthIntegrationTests</c></strong>:
 /// the sibling class uses the FLUENT path (builder extensions set
-/// <see cref="D2.Shared.Auth.Grpc.Endpoints.MethodScopeMetadata"/> directly
+/// <see cref="DcsvIo.D2.Auth.Grpc.Endpoints.MethodScopeMetadata"/> directly
 /// on the endpoint metadata collection).  The interceptor checks that slot
 /// FIRST and, when it finds a match, skips the attribute walk entirely.
 /// Attribute enforcement is exercised ONLY when the builder extension path
@@ -405,13 +405,13 @@ public sealed class GrpcAttributeScopeEnforcementIntegrationTests
         });
 
         // Swap the network-touching JwksProvider for the in-memory fake.
-        services.RemoveAll<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>();
-        services.RemoveAll<D2.Shared.Auth.Jwks.HttpJwksProvider>();
-        services.AddSingleton<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(
+        services.RemoveAll<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>();
+        services.RemoveAll<DcsvIo.D2.Auth.Jwks.HttpJwksProvider>();
+        services.AddSingleton<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(
             new FakeJwksProvider(jwtBuilder.PublicKey));
         services.RemoveAll<JwtValidator>();
         services.AddSingleton(sp => new JwtValidator(
-            sp.GetRequiredService<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(),
+            sp.GetRequiredService<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(),
             sp.GetRequiredService<IOptions<AuthOptions>>(),
             sp.GetRequiredService<ClaimsToContextMapper>(),
             Microsoft.Extensions.Logging.Abstractions

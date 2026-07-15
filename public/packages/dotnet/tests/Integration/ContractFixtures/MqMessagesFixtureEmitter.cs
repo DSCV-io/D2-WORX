@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Messaging;
 using Xunit;
 
 /// <summary>
 /// Emits the <c>mq-messages</c> descriptor-mirror parity fixture from the
 /// runtime <see cref="MqMessagesRegistry"/> so the TS
-/// <c>@d2/messaging-abstractions</c> <c>MqMessagesRegistry</c> mirror (emitted
+/// <c>@dcsv-io/d2-messaging-abstractions</c> <c>MqMessagesRegistry</c> mirror (emitted
 /// by <c>tools/ts-codegen/src/mq-messages-emit.ts</c> from the same
 /// <c>contracts/mq-messages/mq-messages.spec.json</c>) can be asserted
 /// field-by-field against the .NET source of truth. Field names use the TS

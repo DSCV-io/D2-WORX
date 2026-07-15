@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// In-memory fake of <see cref="IBridgeFixtureGrpcClient"/> for bridge

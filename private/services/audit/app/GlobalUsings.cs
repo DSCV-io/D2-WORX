@@ -5,4 +5,4 @@
 // -----------------------------------------------------------------------
 
 // IHandler<> used by generated IPingAuditHandler.g.cs (emitUsing=false).
-global using D2.Shared.Handler.Abstractions;
+global using DcsvIo.D2.Handler.Abstractions;

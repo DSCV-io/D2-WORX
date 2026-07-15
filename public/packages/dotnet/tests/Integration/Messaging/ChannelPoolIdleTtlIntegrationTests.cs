@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
 using AwesomeAssertions;
-using D2.Shared.Messaging.RabbitMq.Channels;
-using D2.Shared.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Channels;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
 using global::RabbitMQ.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry.Internal;
+namespace DcsvIo.D2.Telemetry.Internal;
 
 using System.Net;
 

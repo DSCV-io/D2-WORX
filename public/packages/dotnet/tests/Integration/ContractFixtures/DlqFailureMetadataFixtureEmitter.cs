@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq.Subscribing;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq.Subscribing;
 using Xunit;
 
 /// <summary>

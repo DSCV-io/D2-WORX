@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen;
+namespace DcsvIo.D2.Geo.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
-using D2.Shared.Geo.SourceGen.Spec;
-using D2.Shared.SourceGen;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.Geo.SourceGen.Spec;
+using DcsvIo.D2.SourceGen;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for parsing the geo Tier-2 JSON spec files into typed DTOs
-/// under <c>D2.Shared.Geo.SourceGen.Spec</c>. The loader walks each
+/// under <c>DcsvIo.D2.Geo.SourceGen.Spec</c>. The loader walks each
 /// <see cref="SpecFile"/> exactly once per generator run and dispatches
 /// on the file name to the correct per-catalog parser. JSON-shape
 /// failures surface as <see cref="DiagnosticIds.MalformedSpec"/>;

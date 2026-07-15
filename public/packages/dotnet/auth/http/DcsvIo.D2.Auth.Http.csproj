@@ -1,0 +1,117 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Auth.Http</RootNamespace>
+    <!--
+      Sdk.Web defaults OutputType to Exe (since it's intended for runnable web
+      apps); explicit Library override since this is a shared library, NOT an
+      app entry point. Sdk.Web is still preferred over plain Sdk because it
+      brings the AspNetCore framework reference automatically — the alternative
+      (`<FrameworkReference Include="Microsoft.AspNetCore.App" />` on plain Sdk)
+      is functionally equivalent but not the modern convention.
+    -->
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <!--
+    HTTP-transport binding for DcsvIo.D2.Auth — convention-based middleware
+    that runs the JWT validation pipeline + session liveness check on inbound
+    HTTP requests, emits RFC 7807 ProblemDetails on failure, and supports
+    per-endpoint scope requirements via the ASP.NET endpoint-metadata pattern.
+
+    Lives in its own csproj (separate from DcsvIo.D2.Auth) so the AspNetCore
+    framework reference is opt-in: worker / console / gRPC-only services that
+    consume DcsvIo.D2.Auth for JWT validation in non-HTTP paths don't need to
+    drag in Microsoft.AspNetCore.App. Sibling DcsvIo.D2.Auth.Grpc holds the
+    gRPC-transport binding under the same logic. The two transport-binding
+    csprojs are siblings (no inter-csproj dep): each registers an identical
+    scoped IRequestContext resolver lambda that reads from the shared
+    HttpContext.Items slot key defined in DcsvIo.D2.Auth.Abstractions.Http.
+
+    The csproj is named .Http (not .AspNetCore) for naming-symmetry parity
+    with sibling .Grpc — both are transport-binding csprojs running on the
+    same AspNetCore Kestrel runtime; naming the HTTP one for the host
+    runtime while naming the gRPC one for the transport protocol would be
+    misleading.
+
+    Microsoft.NET.Sdk.Web implicitly pulls the AspNetCore framework reference
+    (alternative to a manual <FrameworkReference Include="Microsoft.AspNetCore.App" />).
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+    <!--
+      Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions
+      packages are NOT listed here — Microsoft.NET.Sdk.Web's framework reference
+      (Microsoft.AspNetCore.App) ships them, and adding explicit PackageReferences
+      triggers NU1510 ("will not be pruned"). The codebase IS pinned to specific
+      versions via Directory.Packages.props, but the framework reference takes
+      precedence for libraries that ALSO reference the AspNetCore framework.
+    -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      auth — JwtValidator (internal sealed; consumed via InternalsVisibleTo from auth's csproj),
+      AuthFailures (semantic D2Result factories), AuthErrorCodes, AuthLog, AuthTelemetry.
+    -->
+    <ProjectReference Include="..\core\DcsvIo.D2.Auth.csproj" />
+    <!--
+      auth-abstractions — ISessionLivenessTracker contract + JwtClaimTypes (d2_session_id) +
+      D2HttpContextItems.REQUEST_CONTEXT slot key (shared with sibling auth-grpc) +
+      IAmbientRequestScopeAccessor port (the framework-free ambient-scope abstraction
+      the outbound forwarding credential depends on; the adapter lives here in
+      HttpContextAmbientRequestScopeAccessor, registered by AddD2AuthHttp()).
+    -->
+    <ProjectReference Include="..\abstractions\DcsvIo.D2.Auth.Abstractions.csproj" />
+    <!--
+      context\abstractions — IRequestContext shape; HttpContext.Items slot type.
+    -->
+    <ProjectReference Include="..\..\context\abstractions\DcsvIo.D2.Context.Abstractions.csproj" />
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <ProjectReference Include="..\..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+    <!--
+      headers-http — codegen-emitted HTTP wire-protocol header constants
+      (HttpHeaders.IDEMPOTENCY_KEY, .CLIENT_FINGERPRINT, .AUTHORIZATION, ...).
+      Single spec-driven catalog shared with the TS-side @dcsv-io/d2-headers package
+      so wire-protocol header names are byte-identical across .NET and Node.
+    -->
+    <ProjectReference Include="..\..\headers\http\DcsvIo.D2.Headers.Http.csproj" />
+    <!--
+      problem-details/abstractions — codegen-emitted RFC 7807 wire-format
+      catalog (D2ProblemDetailsKeys.TYPE_URI_PREFIX, .CONTENT_TYPE,
+      .EXTENSION_*, .TITLE_*, + TitleFor switch). Consumed by
+      D2ProblemDetailsExtensions.ToProblemDetails + JwtAuthMiddleware
+      response-write. Cross-language parity with the TS-side
+      @dcsv-io/d2-problem-details-abstractions ProblemDetails catalog (re-exported
+      from @dcsv-io/d2-headers for compat) is structurally guaranteed (single spec
+      source emits both sides).
+    -->
+    <ProjectReference Include="..\..\problem-details\abstractions\DcsvIo.D2.ProblemDetails.Abstractions.csproj" />
+    <!--
+      time — IClock injection seam used by the Edge-inbound establishment middleware to
+      timestamp the Edge call-path entry it starts the path with.
+    -->
+    <ProjectReference Include="..\..\time\DcsvIo.D2.Time.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Auth.Http</PackageId>
+    <Description>HTTP-transport binding for D2-WORX inbound auth — convention-based middleware running JWT validation, session liveness, RFC 7807 ProblemDetails, and per-endpoint scopes.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

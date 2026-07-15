@@ -4,21 +4,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth;
+namespace DcsvIo.D2.Tests.Unit.Auth;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 using Xunit;
 
 /// <summary>
 /// End-to-end smoke tests for the codegen-emitted <c>Scopes.g.cs</c> static
 /// partial class on the **public** dual-values half (Anon + Self only).
 /// Product scopes (Auth / Billing / internal.kc.*) live on
-/// <c>D2.Private.Auth.ProductScopes</c> and are not pinned here.
+/// <c>DcsvIo.D2.Private.Auth.ProductScopes</c> and are not pinned here.
 /// </summary>
 public sealed class ScopesGeneratedTests
 {

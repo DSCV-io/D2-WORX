@@ -30,10 +30,10 @@ import {
 } from "../src/lib/openapi-emitter.js";
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),

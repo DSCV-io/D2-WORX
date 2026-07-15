@@ -24,10 +24,10 @@ import { VersioningTestLibrary } from "@typespec/versioning/testing";
 
 // Mount the decorators library.
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -37,7 +37,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 
 // Mount the emitter package.
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -74,7 +74,7 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -90,9 +90,9 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Test",
           "proto-package": "d2.test.v1",
           "proto-csharp-namespace": "D2.Test.Protos.V1",
@@ -195,7 +195,7 @@ describe("protoGrpcEmitIntegration_ParamlessOp_SynthesizedInputDrivesMapper", ()
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -210,9 +210,9 @@ describe("protoGrpcEmitIntegration_ParamlessOp_SynthesizedInputDrivesMapper", ()
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Test",
           "proto-package": "d2.test.v1",
           "proto-csharp-namespace": "D2.Test.Protos.V1",
@@ -282,7 +282,7 @@ describe("protoGrpcEmitIntegration_NestedModel_AssemblesNestedDescriptors", () =
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -298,9 +298,9 @@ describe("protoGrpcEmitIntegration_NestedModel_AssemblesNestedDescriptors", () =
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Test",
           "proto-package": "d2.test.v1",
           "proto-csharp-namespace": "D2.Test.Protos.V1",
@@ -356,7 +356,7 @@ describe("protoGrpcEmitIntegration_GetJwks_NoProtoEmitted", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -371,9 +371,9 @@ describe("protoGrpcEmitIntegration_GetJwks_NoProtoEmitted", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Test",
           "proto-package": "d2.test.v1",
           "proto-csharp-namespace": "D2.Test.Protos.V1",
@@ -424,7 +424,7 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -441,16 +441,18 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
-            "D2.Edge.KeyCustodian.App.Application.Handlers",
+            "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
           "proto-package": "d2.signfixtures.v2alpha",
           "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V2Alpha",
-          "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
+          "grpc-service-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Api.Generated",
         },
       },
       outputDir: "testing:/out",
@@ -471,7 +473,9 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () =
     // Real-module façade type name.
     expect(serviceContent).toContain("IKeyCustodianApi");
     // Must use the Clients namespace as the using target.
-    expect(serviceContent).toContain("D2.Edge.KeyCustodian.Client");
+    expect(serviceContent).toContain(
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
+    );
     // Delegates via SignFixtureAsync (the façade method name).
     expect(serviceContent).toContain("SignFixtureAsync");
     // Must NOT fall through to ISignFixtureHandler.
@@ -500,7 +504,7 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -524,15 +528,17 @@ describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () =
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+        "@dcsv-io/d2-typespec-emitters": {
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
-            "D2.Edge.KeyCustodian.App.Application.Handlers",
+            "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
           "proto-package": "d2.signfixtures.v2alpha",
           "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V2Alpha",
-          "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
+          "grpc-service-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Api.Generated",
         },
       },
       outputDir: "testing:/out",
@@ -578,7 +584,7 @@ describe("protoGrpcEmitIntegration_UnmappedScalar_D2TSP001", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Test;
 
@@ -593,9 +599,9 @@ describe("protoGrpcEmitIntegration_UnmappedScalar_D2TSP001", () => {
     let compileError: unknown;
     try {
       await host.compile("main.tsp", {
-        emit: ["@d2/typespec-emitters"],
+        emit: ["@dcsv-io/d2-typespec-emitters"],
         options: {
-          "@d2/typespec-emitters": {
+          "@dcsv-io/d2-typespec-emitters": {
             "csharp-namespace": "D2.Test",
             "proto-package": "d2.test.v1",
             "proto-csharp-namespace": "D2.Test.Protos.V1",
@@ -634,7 +640,7 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -668,9 +674,9 @@ describe("protoGrpcEmitIntegration_Resilience_PredicateAndSentinelEmitted", () =
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Test.Dto",
           "csharp-clients-namespace": "D2.Test.Clients",
           "csharp-app-namespace-base": "D2.Test.App.Application.Handlers",
@@ -771,7 +777,7 @@ describe("protoGrpcEmitIntegration_UnpinnedField_D2TSP009_CleanMessage", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Test;
 
@@ -788,9 +794,9 @@ describe("protoGrpcEmitIntegration_UnpinnedField_D2TSP009_CleanMessage", () => {
     let compileError: unknown;
     try {
       await host.compile("main.tsp", {
-        emit: ["@d2/typespec-emitters"],
+        emit: ["@dcsv-io/d2-typespec-emitters"],
         options: {
-          "@d2/typespec-emitters": {
+          "@dcsv-io/d2-typespec-emitters": {
             "csharp-namespace": "D2.Test",
             "proto-package": "d2.test.v1",
             "proto-csharp-namespace": "D2.Test.Protos.V1",
@@ -812,7 +818,7 @@ describe("protoGrpcEmitIntegration_UnpinnedField_D2TSP009_CleanMessage", () => {
     // The rendered diagnostic message must contain the field name and model name
     // from the pre-formatted sentence constructed in resolveProtoFields.
     const d2tsp009 = host.program.diagnostics.find(
-      (d) => d.code === "@d2/typespec-emitters/unpinned-proto-field",
+      (d) => d.code === "@dcsv-io/d2-typespec-emitters/unpinned-proto-field",
     );
     expect(d2tsp009).toBeDefined();
 
@@ -865,7 +871,7 @@ describe("protoGrpcEmitIntegration_D2Reserved_ReservedLinesEmitted", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Test;
 
@@ -883,9 +889,9 @@ describe("protoGrpcEmitIntegration_D2Reserved_ReservedLinesEmitted", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Test",
           "proto-package": "d2.test.v1",
           "proto-csharp-namespace": "D2.Test.Protos.V1",
@@ -952,7 +958,7 @@ describe("protoGrpcEmitIntegration_D2Reserved_DuplicateNamesDeduplicated", () =>
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Test;
 
@@ -969,9 +975,9 @@ describe("protoGrpcEmitIntegration_D2Reserved_DuplicateNamesDeduplicated", () =>
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Test",
           "proto-package": "d2.test.v1",
           "proto-csharp-namespace": "D2.Test.Protos.V1",
@@ -1016,7 +1022,7 @@ describe("protoGrpcEmitIntegration_WireVersion_EmittedOnGrpcOp", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -1031,9 +1037,9 @@ describe("protoGrpcEmitIntegration_WireVersion_EmittedOnGrpcOp", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Test",
           "proto-package": "d2.test.v2alpha",
           "proto-csharp-namespace": "D2.Test.Protos.V2Alpha",
@@ -1099,7 +1105,7 @@ describe("protoGrpcEmitIntegration_D2TSP010_FiresOnChannelMismatch", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -1118,9 +1124,9 @@ describe("protoGrpcEmitIntegration_D2TSP010_FiresOnChannelMismatch", () => {
     // throw so we can inspect host.program.diagnostics for D2TSP010.
     try {
       await host.compile("main.tsp", {
-        emit: ["@d2/typespec-emitters"],
+        emit: ["@dcsv-io/d2-typespec-emitters"],
         options: {
-          "@d2/typespec-emitters": {
+          "@dcsv-io/d2-typespec-emitters": {
             "csharp-namespace": "D2.Test",
             // Deliberately mismatched: v2alpha vs V2Beta
             "proto-package": "d2.test.v2alpha",
@@ -1176,7 +1182,7 @@ describe("protoGrpcEmitIntegration_UnpinnedField_NoOrphanedWireIdentity", () => 
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Test;
 
@@ -1193,9 +1199,9 @@ describe("protoGrpcEmitIntegration_UnpinnedField_NoOrphanedWireIdentity", () => 
     let compileError: unknown;
     try {
       await host.compile("main.tsp", {
-        emit: ["@d2/typespec-emitters"],
+        emit: ["@dcsv-io/d2-typespec-emitters"],
         options: {
-          "@d2/typespec-emitters": {
+          "@dcsv-io/d2-typespec-emitters": {
             "csharp-namespace": "D2.Test",
             "proto-package": "d2.test.v2alpha",
             "proto-csharp-namespace": "D2.Test.Protos.V2Alpha",
@@ -1216,7 +1222,7 @@ describe("protoGrpcEmitIntegration_UnpinnedField_NoOrphanedWireIdentity", () => 
     expect(hasErrors).toBe(true);
 
     const d2tsp009 = host.program.diagnostics.find(
-      (d) => d.code === "@d2/typespec-emitters/unpinned-proto-field",
+      (d) => d.code === "@dcsv-io/d2-typespec-emitters/unpinned-proto-field",
     );
     expect(d2tsp009).toBeDefined();
 
@@ -1255,7 +1261,7 @@ describe("protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtu
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/versioning";
       using D2;
       using TypeSpec.Versioning;
@@ -1276,13 +1282,14 @@ describe("protoGrpcEmitIntegration_VersionedAdoption_ByteNeutralForExistingFixtu
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Test",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
-            "D2.Edge.KeyCustodian.App.Application.Handlers",
+            "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
           "proto-package": "d2.signfixtures.v2alpha",
           "proto-csharp-namespace": "D2.Services.Protos.SignFixtures.V2Alpha",
           "grpc-service-namespace": "D2.Test.Grpc",

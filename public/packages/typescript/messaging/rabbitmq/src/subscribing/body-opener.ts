@@ -3,8 +3,11 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { DlqFailureCauses } from "@d2/messaging-abstractions";
-import { EncryptionFrame, SealedFrame } from "@d2/encryption-abstractions";
+import { DlqFailureCauses } from "@dcsv-io/d2-messaging-abstractions";
+import {
+  EncryptionFrame,
+  SealedFrame,
+} from "@dcsv-io/d2-encryption-abstractions";
 
 import { MessageBodyDecodeError } from "./message-body-decode-error.js";
 

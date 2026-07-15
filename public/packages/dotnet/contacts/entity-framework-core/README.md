@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Contacts.EntityFrameworkCore
+# DcsvIo.D2.Contacts.EntityFrameworkCore
 
 > Parent: [`contacts/`](../README.md) · [`public/packages/dotnet/`](../../README.md)
 >
-> **Audience**: backend .NET service engineers mapping `D2.Shared.Contacts` value objects into EF Core entity models via infra `IEntityTypeConfiguration<T>`.
+> **Audience**: backend .NET service engineers mapping `DcsvIo.D2.Contacts` value objects into EF Core entity models via infra `IEntityTypeConfiguration<T>`.
 
-Per-VO complex-type and value-converter mapping helpers for the D2.Shared.Contacts value objects.
+Per-VO complex-type and value-converter mapping helpers for the DcsvIo.D2.Contacts value objects.
 The helpers are called from the host's `IEntityTypeConfiguration<T>` implementation — the domain
 aggregate holds plain VO-typed properties and carries zero EF references.
 
@@ -17,7 +17,7 @@ Each helper, in one call:
 - Wires member value converters where needed (`Uri`)
 - Applies `HasMaxLength` from `FieldConstraints.*` caps
 - Writes the per-field anonymize defaults via the fluent `.Anonymize*` API
-  from `D2.Shared.DataGovernance.EntityFrameworkCore`
+  from `DcsvIo.D2.DataGovernance.EntityFrameworkCore`
 
 Ships no `DbContext`, no migrations, and no DI engine. The host owns all of those.
 
@@ -122,7 +122,7 @@ The coupling object exposes:
 
 **Root-scoped anonymize templates.** A value-converted email/phone column lives on the root
 entity, so a `{UserId}` template resolves against the root entity's scalar siblings — the
-`D2.Shared.DataGovernance` V4 guard is satisfied by construction.
+`DcsvIo.D2.DataGovernance` V4 guard is satisfied by construction.
 
 **Example anonymize values** (README examples, not toolkit defaults — the caller supplies the value):
 - Non-unique email: `"deleted@deleted.user.dcsv.io"`
@@ -135,7 +135,7 @@ entity, so a `{UserId}` template resolves against the root entity's scalar sibli
 
 For the EF Core 10 limitation on indexing `ComplexProperty` member columns and the
 `CreateD2Index` workaround, see
-[`D2.Shared.EntityFrameworkCore`](../../entity-framework-core/README.md).
+[`DcsvIo.D2.EntityFrameworkCore`](../../entity-framework-core/README.md).
 
 ---
 
@@ -164,7 +164,7 @@ Tombstone values are non-i18n literals — deliberately stable across locales.
    `ModelConfigurationBuilder` in `ConfigureConventions`.
 3. Implement `IUserOwned` + `IAnonymizationTrackable` on entities that carry anonymizable contacts.
 4. Supply a root scalar `UserId` property when using a `{UserId}` template on email/phone — the
-   `D2.Shared.DataGovernance` V4 guard resolves template tokens against root-entity scalar
+   `DcsvIo.D2.DataGovernance` V4 guard resolves template tokens against root-entity scalar
    siblings.
 
 ---
@@ -185,7 +185,7 @@ No configuration — the helpers carry no tunable behavior. All caps come from t
 
 ## Dependencies
 
-- `D2.Shared.Contacts` (`contacts/core/`) — the 6 VO types being mapped
-- `D2.Shared.DataGovernance.EntityFrameworkCore` — annotation key + `AnonymizationRule` factory
+- `DcsvIo.D2.Contacts` (`contacts/core/`) — the 6 VO types being mapped
+- `DcsvIo.D2.DataGovernance.EntityFrameworkCore` — annotation key + `AnonymizationRule` factory
 - `Microsoft.EntityFrameworkCore.Relational` — `EntityTypeBuilder<T>`, `ComplexPropertyBuilder<T>`,
   `PropertyBuilder<T>`, `HasMaxLength`, `HasConversion`

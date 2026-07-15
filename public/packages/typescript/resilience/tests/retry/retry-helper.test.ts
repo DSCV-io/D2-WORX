@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it, vi } from "vitest";
-import * as factories from "@d2/result";
+import * as factories from "@dcsv-io/d2-result";
 import { CircuitOpenError } from "../../src/circuit-breaker/circuit-open-error.js";
 import { TimeoutError } from "../../src/pipeline/timeout-layer.js";
 import {

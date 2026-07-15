@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Http.Endpoints;
+namespace DcsvIo.D2.Auth.Http.Endpoints;
 
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Builder;
 
 /// <summary>
@@ -31,7 +31,7 @@ using Microsoft.AspNetCore.Builder;
 /// <strong>Intentional asymmetry with the gRPC fluent extensions</strong>:
 /// this class is generic on <see cref="IEndpointConventionBuilder"/> (any
 /// HTTP builder is valid) while the gRPC sibling
-/// (<c>RequireD2GrpcScopeExtensions</c> in <c>D2.Shared.Auth.Grpc</c>) is
+/// (<c>RequireD2GrpcScopeExtensions</c> in <c>DcsvIo.D2.Auth.Grpc</c>) is
 /// constrained to <c>GrpcServiceEndpointConventionBuilder</c>.
 /// The asymmetry is by design: <see cref="EndpointScopeMetadata"/> is
 /// consumed by <c>JwtAuthMiddleware</c>, which runs on every HTTP endpoint

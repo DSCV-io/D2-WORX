@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Handler;
+namespace DcsvIo.D2.Tests.Unit.Handler;
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using D2.Shared.Handler;
+using DcsvIo.D2.Handler;
 
 /// <summary>
 /// Captures every <see cref="Activity"/> emitted by the

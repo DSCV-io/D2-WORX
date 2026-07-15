@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Mtls;
+namespace DcsvIo.D2.Auth.Grpc.Mtls;
 
-using D2.Shared.AspNetCore.Mtls;
+using DcsvIo.D2.AspNetCore.Mtls;
 using global::Grpc.Core;
 
 /// <summary>
@@ -21,11 +21,11 @@ using global::Grpc.Core;
 /// <see cref="Microsoft.AspNetCore.Http.HttpContext"/> via the shipped
 /// <c>ServerCallContext.GetHttpContext()</c> bridge and DELEGATES to the
 /// <c>HttpContext.GetD2PeerWorkloadIdentity()</c> accessor in
-/// <c>D2.Shared.AspNetCore.Mtls</c>. The identity is therefore derived in exactly
+/// <c>DcsvIo.D2.AspNetCore.Mtls</c>. The identity is therefore derived in exactly
 /// ONE place (from the validated <c>Connection.ClientCertificate</c>) — this is a
 /// thin transport-adapter, not a second extraction. The
 /// <see cref="ServerCallContext"/> type lives in the gRPC framework, so this overload
-/// lives in the gRPC-aware library (<c>D2.Shared.Auth.Grpc</c>) rather than the
+/// lives in the gRPC-aware library (<c>DcsvIo.D2.Auth.Grpc</c>) rather than the
 /// gRPC-free foundation library that owns the <see cref="Microsoft.AspNetCore.Http.HttpContext"/>
 /// overload. In production KC's gRPC services are ASP.NET-Core-hosted (Kestrel), so
 /// <c>GetHttpContext()</c> returns the real per-call context.

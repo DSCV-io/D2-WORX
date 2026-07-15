@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, it, expect, vi } from "vitest";
-import type { InputError } from "@d2/result";
+import type { InputError } from "@dcsv-io/d2-result";
 
 // Paraglide message lookup. The form-helpers module renders TKMessages
 // via `m[key]()`; tests stub the module so behavior is deterministic

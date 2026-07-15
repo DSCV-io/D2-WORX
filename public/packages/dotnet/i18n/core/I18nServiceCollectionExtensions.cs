@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.I18n;
+namespace DcsvIo.D2.I18n;
 
 using System.IO;
 using Microsoft.Extensions.Configuration;

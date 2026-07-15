@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Spec;
+namespace DcsvIo.D2.Geo.SourceGen.Spec;
 
 /// <summary>
 /// Aggregate view of all geo spec files parsed in a single generator run.

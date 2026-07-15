@@ -16,7 +16,7 @@ import {
   LanguageCode,
   MeasurementSystem,
   WritingDirection,
-} from "@d2/geo-abstractions";
+} from "@dcsv-io/d2-geo-abstractions";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

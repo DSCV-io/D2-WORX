@@ -8,8 +8,8 @@ import {
   subdivisionsForCountry,
   buildCountriesWithSubdivisions,
 } from "../geo-ref-data.js";
-import type { Country, Subdivision, SubdivisionCode } from "@d2/geo-abstractions";
-import { DayOfWeek, MeasurementSystem } from "@d2/geo-abstractions";
+import type { Country, Subdivision, SubdivisionCode } from "@dcsv-io/d2-geo-abstractions";
+import { DayOfWeek, MeasurementSystem } from "@dcsv-io/d2-geo-abstractions";
 
 function makeCountry(overrides: Partial<Country> = {}): Country {
   return {

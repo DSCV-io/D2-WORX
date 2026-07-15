@@ -2,11 +2,11 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Tests
+# DcsvIo.D2.Tests
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
-Test infrastructure for ALL `D2.Shared.*` libraries. Deliberately one test csproj rather than per-lib — the foundational shared libs are small enough that per-lib test projects would be overkill.
+Test infrastructure for ALL `DcsvIo.D2.*` libraries. Deliberately one test csproj rather than per-lib — the foundational shared libs are small enough that per-lib test projects would be overkill.
 
 Per-service tests (Edge, Audit, Courier, Notifications, Files) live separately at `private/services/{service}/tests/D2.{Service}.Tests.csproj` — this project covers shared libs only.
 
@@ -16,7 +16,7 @@ Per-service tests (Edge, Audit, Courier, Notifications, Files) live separately a
 
 ```
 public/packages/dotnet/tests/
-├─ D2.Shared.Tests.csproj
+├─ DcsvIo.D2.Tests.csproj
 ├─ Unit/                                                # in-process unit + behavior tests
 │  ├─ Auth/                                             # → auth/abstractions enums + records + JwtClaimTypes
 │  │  └─ SourceGen/                                     # → auth/scopes-source-gen + auth/audiences-source-gen
@@ -47,7 +47,7 @@ public/packages/dotnet/tests/
    ├─ Caching/
    │  ├─ Distributed/                                   # RedisDistributedCache + RedisCacheInvalidationBackplane (Redis container)
    │  └─ Tiered/                                        # DefaultTieredCache (Redis container shared with Distributed)
-   ├─ ContractFixtures/                                 # [Trait("Category","ContractFixtures")] — emits cross-language parity fixture JSON to public/packages/typescript/contract-tests/fixtures/ (consumed by @d2/contract-tests Vitest)
+   ├─ ContractFixtures/                                 # [Trait("Category","ContractFixtures")] — emits cross-language parity fixture JSON to public/packages/typescript/contract-tests/fixtures/ (consumed by @dcsv-io/d2-contract-tests Vitest)
    └─ Messaging/                                        # RabbitMQ container — publish/consume + idempotency + DLQ + topology + adversarial
 ```
 
@@ -192,10 +192,10 @@ A summary table also prints to stdout when the test run goes through the MSBuild
 - Lib lines / branches / methods not exercised by any test
 - Branches missed because tests cover only one side of a `??` / ternary / nullable check (the most common gap)
 
-> The `(int)` 0% entries you'll see in Rider coverage on `_OnFailure_ShortCircuits` / `_DoesNotInvokeProjection` tests are intentional — they're the lambda body that the test asserts is never invoked. Coverage tooling can't distinguish "untested" from "asserted-never-called"; the 0% there IS the test result. Lib coverage (the only coverage that matters for the Definition of Done) is what the `D2.Shared.{LibName}` row in the cobertura XML reports.
+> The `(int)` 0% entries you'll see in Rider coverage on `_OnFailure_ShortCircuits` / `_DoesNotInvokeProjection` tests are intentional — they're the lambda body that the test asserts is never invoked. Coverage tooling can't distinguish "untested" from "asserted-never-called"; the 0% there IS the test result. Lib coverage (the only coverage that matters for the Definition of Done) is what the `DcsvIo.D2.{LibName}` row in the cobertura XML reports.
 
 ---
 
 ## When to expand this project
 
-A new shared lib lands in `public/packages/dotnet/{lib}/` → create `Unit/{Lib}/` here with one test file per source file (`{SourceFile}Tests.cs`). If the lib needs real infrastructure (a real DB, a real broker, a real cache), add `Integration/{Lib}/` with a Testcontainers fixture instead. Project reference to the lib goes in `D2.Shared.Tests.csproj`.
+A new shared lib lands in `public/packages/dotnet/{lib}/` → create `Unit/{Lib}/` here with one test file per source file (`{SourceFile}Tests.cs`). If the lib needs real infrastructure (a real DB, a real broker, a real cache), add `Integration/{Lib}/` with a Testcontainers fixture instead. Project reference to the lib goes in `DcsvIo.D2.Tests.csproj`.

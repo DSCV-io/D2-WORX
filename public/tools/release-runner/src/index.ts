@@ -24,9 +24,15 @@ export {
   writeNugetVersion,
 } from "./manifest-editor.js";
 export {
+  isOpenPublicNpmName,
+  isOpenPublicNugetName,
+  isPrivateConsumableNpmName,
   loadAllPackages,
   loadNpmPackages,
   loadNugetPackages,
+  loadPrivateConsumableNpmPackages,
+  loadPrivateConsumableNugetPackages,
+  loadPrivateConsumablePackages,
 } from "./manifest-loader.js";
 export { runRelease, type RunnerResult } from "./runner.js";
 export {

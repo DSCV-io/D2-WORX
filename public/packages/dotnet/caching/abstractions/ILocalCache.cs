@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching;
+namespace DcsvIo.D2.Caching;
 
 /// <summary>
 /// Per-process in-memory cache. Atomic primitives operate at process

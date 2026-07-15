@@ -33,8 +33,8 @@ New / activated lanes and guards (names locked for branch-protection — operato
 
 | Area | What landed |
 | --- | --- |
-| G1 | `@d2/key-custodian-client` unit suite in CI |
-| G2 | `@d2/messaging-rabbitmq` Testcontainers `test:integration` |
+| G1 | `@dcsv-io/d2-private-key-custodian-client` unit suite in CI |
+| G2 | `@dcsv-io/d2-messaging-rabbitmq` Testcontainers `test:integration` |
 | G3 | `tools/ts-codegen` vitest (not typecheck-only) |
 | G4 | `tools/scripts` `node --test` suite |
 | G5→local | `jb inspectcode` **local-only** (CI job later removed for cost; shared count script kept) |

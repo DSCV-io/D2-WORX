@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result.Envelope.SourceGen;
+namespace DcsvIo.D2.Result.Envelope.SourceGen;
 
 /// <summary>Diagnostic IDs for d2result-envelope source-gen.</summary>
 internal static class DiagnosticIds

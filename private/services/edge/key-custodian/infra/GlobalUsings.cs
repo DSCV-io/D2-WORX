@@ -6,13 +6,13 @@
 
 global using System.Globalization;
 global using System.Text;
-global using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-global using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
-global using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
-global using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-global using D2.Edge.KeyCustodian.Domain.Enums;
-global using D2.Edge.KeyCustodian.Domain.ValueObjects;
-global using D2.Shared.Encryption;
-global using D2.Shared.Utilities.Diagnostics;
+global using DcsvIo.D2.Encryption;
+global using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Configuration;
+global using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Messaging;
+global using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Persistence;
+global using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+global using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Enums;
+global using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
+global using DcsvIo.D2.Utilities.Diagnostics;
 global using Microsoft.EntityFrameworkCore;
 global using NodaTime;

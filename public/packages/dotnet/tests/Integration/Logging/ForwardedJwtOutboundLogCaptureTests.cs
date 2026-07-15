@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Logging;
+namespace DcsvIo.D2.Tests.Integration.Logging;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound.Grpc;
-using D2.Shared.Headers.Grpc;
-using D2.Shared.Logging.Destructuring;
-using D2.Shared.Tests.Integration.Logging.Infrastructure;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound.Grpc;
+using DcsvIo.D2.Headers.Grpc;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
 using global::Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;

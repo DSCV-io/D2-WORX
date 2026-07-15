@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Encryption.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.EncryptionFrame.SourceGen;
+using DcsvIo.D2.EncryptionFrame.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -49,7 +49,7 @@ public sealed class EncryptionFrameGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsFrameLayoutGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -74,7 +74,7 @@ public sealed class EncryptionFrameGeneratorTests
     public void Generator_TargetAssemblyButNoSpec_EmitsNothing()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -86,7 +86,7 @@ public sealed class EncryptionFrameGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -99,14 +99,14 @@ public sealed class EncryptionFrameGeneratorTests
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Encryption",
+                assemblyName: "DcsvIo.D2.Encryption",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)
             .Select(t => t.ToString())
             .ToList();
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Encryption",
+                assemblyName: "DcsvIo.D2.Encryption",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)

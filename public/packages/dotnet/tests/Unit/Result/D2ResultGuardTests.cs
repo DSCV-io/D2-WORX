@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Result;
+namespace DcsvIo.D2.Tests.Unit.Result;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.I18n;
-using D2.Shared.Result;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
 using Xunit;
 
 public sealed class D2ResultGuardTests

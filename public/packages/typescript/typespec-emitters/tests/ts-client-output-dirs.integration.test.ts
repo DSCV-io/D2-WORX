@@ -26,10 +26,10 @@ import {
 } from "@typespec/compiler/testing";
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -38,7 +38,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 });
 
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -56,11 +56,12 @@ function emittedKeysEndingWith(
 
 const BASE_OPTIONS = {
   "csharp-namespace": "D2.Test",
-  "csharp-app-namespace-base": "D2.Edge.MintFixtures.App.Application.Handlers",
+  "csharp-app-namespace-base":
+    "DcsvIo.D2.Private.Edge.MintFixtures.App.Application.Handlers",
 };
 
 const MINT_TSP = `
-  import "@d2/typespec-decorators";
+  import "@dcsv-io/d2-typespec-decorators";
   using D2;
   namespace D2.Fixtures;
 
@@ -87,11 +88,12 @@ describe("tsClientOutputDirs_MirrorsClientAndDtosForMappedModule", () => {
     host.addTypeSpecFile("main.tsp", MINT_TSP);
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           ...BASE_OPTIONS,
-          "csharp-clients-namespace": "D2.Edge.MintFixtures.Clients",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.MintFixtures.Clients",
           "ts-client-output-dirs": {
             MintFixtures: "private/services/edge/mint/client-ts/src",
           },
@@ -140,11 +142,12 @@ describe("tsClientOutputDirs_UnmappedModuleNotMirrored", () => {
     host.addTypeSpecFile("main.tsp", MINT_TSP);
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           ...BASE_OPTIONS,
-          "csharp-clients-namespace": "D2.Edge.MintFixtures.Clients",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.MintFixtures.Clients",
           // A DIFFERENT module is mapped — MintFixtures is not, so it is not mirrored.
           "ts-client-output-dirs": {
             SomeOtherModule:

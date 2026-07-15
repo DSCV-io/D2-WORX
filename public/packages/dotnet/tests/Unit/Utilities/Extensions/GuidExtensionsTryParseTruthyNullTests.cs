@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Utilities.Extensions;
+namespace DcsvIo.D2.Tests.Unit.Utilities.Extensions;
 
 using System;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using Xunit;
 
 public sealed class GuidExtensionsTryParseTruthyNullTests

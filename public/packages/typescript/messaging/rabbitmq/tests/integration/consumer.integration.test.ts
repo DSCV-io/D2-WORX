@@ -12,13 +12,13 @@ import {
   type StartedRabbitMQContainer,
 } from "@testcontainers/rabbitmq";
 import { Connection } from "rabbitmq-client";
-import type { ILogger } from "@d2/logging";
-import { fail, ok } from "@d2/result";
-import { AmqpHeaders } from "@d2/headers-amqp";
+import type { ILogger } from "@dcsv-io/d2-logging";
+import { fail, ok } from "@dcsv-io/d2-result";
+import { AmqpHeaders } from "@dcsv-io/d2-headers-amqp";
 import {
   DlqFailureCauses,
   DlqFailureMetadataFields,
-} from "@d2/messaging-abstractions";
+} from "@dcsv-io/d2-messaging-abstractions";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -91,7 +91,7 @@ function unique(prefix: string): string {
   return `${prefix}.${Date.now().toString(36)}.${uniqueCounter}`;
 }
 
-describe("@d2/messaging-rabbitmq consumer — Testcontainer wire-contract proof", () => {
+describe("@dcsv-io/d2-messaging-rabbitmq consumer — Testcontainer wire-contract proof", () => {
   let container: StartedRabbitMQContainer;
   let connection: Connection;
 

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian;
 
-using D2.Edge.KeyCustodian.Infra;
-using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
-using D2.Shared.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;

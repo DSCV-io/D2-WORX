@@ -4,13 +4,13 @@
 // -----------------------------------------------------------------------
 
 import { InterceptingCall, type Interceptor } from "@grpc/grpc-js";
-import { truthy } from "@d2/utilities";
-import { CommonHeaders } from "@d2/headers-common";
-import type { ILogger } from "@d2/logging";
+import { truthy } from "@dcsv-io/d2-utilities";
+import { CommonHeaders } from "@dcsv-io/d2-headers-common";
+import type { ILogger } from "@dcsv-io/d2-logging";
 import {
   PropagatedContextSerializer,
   type IPropagatedContext,
-} from "@d2/request-context-abstractions";
+} from "@dcsv-io/d2-request-context-abstractions";
 
 /**
  * Construct a gRPC client interceptor that injects the current request's

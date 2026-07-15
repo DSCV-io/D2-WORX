@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Api.Pipeline;
+namespace DcsvIo.D2.Private.Edge.Api.Pipeline;
 
-using D2.Shared.AspNetCore;
-using D2.Shared.Auth.Http;
-using D2.Shared.Logging;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Logging;
+using DcsvIo.D2.ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

@@ -7,9 +7,9 @@ import {
   type DlqFailureCause,
   DlqFailureCauses,
   DlqFailureMetadataFields,
-} from "@d2/messaging-abstractions";
-import { sanitizedErrorRender } from "@d2/logging";
-import type { D2Result } from "@d2/result";
+} from "@dcsv-io/d2-messaging-abstractions";
+import { sanitizedErrorRender } from "@dcsv-io/d2-logging";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 const _DETAIL_MAX_CHARS = 256;
 

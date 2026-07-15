@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation;
+namespace DcsvIo.D2.Validation;
 
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
+using DcsvIo.D2.Validation.Abstractions;
 using PhoneNumbers;
 
 /// <summary>
 /// Default <see cref="IPhoneValidator"/> — delegates to
 /// <see cref="PhoneNumberUtil"/> (libphonenumber-csharp, Apache-2.0) for
 /// parsing, validation, and E.164 normalization. Mirrors the TypeScript
-/// <c>@d2/validation</c> <c>DefaultPhoneValidator</c> in contract and behavior.
+/// <c>@dcsv-io/d2-validation</c> <c>DefaultPhoneValidator</c> in contract and behavior.
 /// </summary>
 /// <remarks>
 /// <para>

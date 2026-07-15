@@ -22,7 +22,7 @@
 //     calls facade.<Op>Async(input, ct) (2-arg, transport-neutral). Otherwise it injects
 //     I<Op>Handler and calls handler.HandleAsync(input, ct). Caller provides the target.
 //   - D2Result envelope: the handler/façade result is mapped to the Response message via
-//     result.ToProtoResponse() (D2.Shared.Result.Grpc mapper). Success AND failure both
+//     result.ToProtoResponse() (DcsvIo.D2.Result.Grpc mapper). Success AND failure both
 //     ride the envelope. RpcException is NEVER thrown for business results (reserved for
 //     genuine transport/infra faults). gRPC status stays OK for all business results.
 //   - The Response message carries: field 1 = D2ResultProto result; field 2 = <Op>Output data.
@@ -87,9 +87,9 @@ export interface GrpcDelegationTarget {
  * @param protoCsharpNs       - C# namespace for the Grpc.Tools-generated proto types
  *                              (e.g. "D2.Services.Protos.KeyCustodian.V2Alpha").
  * @param serviceImplNs       - C# namespace for the generated service class + mapper
- *                              (e.g. "D2.Edge.Tests.TypeSpecGrpc.Generated").
+ *                              (e.g. "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated").
  * @param dtoCsharpNs         - C# namespace where the handler DTO types live
- *                              (e.g. "D2.Edge.Tests.TypeSpecDto.Generated").
+ *                              (e.g. "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated").
  * @param sourceSpec          - Relative spec path for the banner.
  * @param protoRequestName    - Proto message name for the request (e.g. "SignRequest").
  * @param protoResponseName   - Proto message name for the response (e.g. "SignResponse").
@@ -243,13 +243,13 @@ function emitServiceClass(
     );
   }
 
-  // D2.Shared.Result is needed only when the request mapper returns D2Result<Input>
+  // DcsvIo.D2.Result is needed only when the request mapper returns D2Result<Input>
   // (enum-bearing request) so the service can short-circuit a parse failure.
-  if (requestHasEnums) lines.push("using D2.Shared.Result;");
+  if (requestHasEnums) lines.push("using DcsvIo.D2.Result;");
   // global:: on Result.Grpc + Grpc.Core: serviceImplNs may contain a ".Grpc."
   // segment (production Edge.Api.Grpc.KeyCustodian) that would otherwise shadow
-  // bare `using Grpc.Core` into D2.Edge.Api.Grpc.Core (CS0234).
-  lines.push("using global::D2.Shared.Result.Grpc;");
+  // bare `using Grpc.Core` into DcsvIo.D2.Private.Edge.Api.Grpc.Core (CS0234).
+  lines.push("using global::DcsvIo.D2.Result.Grpc;");
   lines.push("using global::Grpc.Core;");
   // When the delegation target (façade or handler) lives in a different namespace,
   // add a using so the ctor parameter type resolves.
@@ -416,11 +416,11 @@ function emitTransportMappers(
     ...nestedModels.flatMap((nm) => nm.fields),
   ].some((f) => f.nested !== undefined && f.repeated);
 
-  lines.push("using D2.Shared.Result;");
-  lines.push("using D2.Shared.Result.Grpc;");
+  lines.push("using DcsvIo.D2.Result;");
+  lines.push("using DcsvIo.D2.Result.Grpc;");
   lines.push("using Google.Protobuf;");
-  // TK lives in D2.Shared.I18n — needed by the inbound Parse<Enum>Wire fail-loud path.
-  if (allEnums.length > 0) lines.push("using D2.Shared.I18n;");
+  // TK lives in DcsvIo.D2.I18n — needed by the inbound Parse<Enum>Wire fail-loud path.
+  if (allEnums.length > 0) lines.push("using DcsvIo.D2.I18n;");
   if (hasArrayOfModel) lines.push("using System.Linq;");
   lines.push("");
 

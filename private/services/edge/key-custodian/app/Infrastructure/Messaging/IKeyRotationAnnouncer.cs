@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Messaging;
 
 /// <summary>
 /// Domain-shaped publisher port that announces a key-lifecycle change to other

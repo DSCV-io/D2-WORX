@@ -3,14 +3,14 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 /**
  * Name-normalization pipeline used by the geo name-resolver fuzzy matcher
  * to fold user-supplied free-form text down to a canonical comparison
  * form. Pure function — no I/O, no shared state, thread safe by design.
  *
- * Mirrors .NET `D2.Shared.Geo.Abstractions.NameResolution.NameNormalizer`
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.NameResolution.NameNormalizer`
  * byte-for-byte; the same input MUST produce the same output on both
  * runtimes. Cross-language parity is pinned via the byte-equivalent
  * fixture exercised by the parity test suite.
@@ -21,7 +21,7 @@ import { falsey } from "@d2/utilities";
  *
  * 1. **Empty / whitespace-only short-circuit** — returns `""` so callers
  *    can pipe raw user input in without first guarding against blanks.
- *    Implemented via `falsey()` from `@d2/utilities` (the parity helper
+ *    Implemented via `falsey()` from `@dcsv-io/d2-utilities` (the parity helper
  *    that mirrors the .NET `Falsey()` extension semantics — null /
  *    undefined / empty / whitespace-only all collapse to `true`). The
  *    function signature rejects `null` / `undefined` at compile time, so
@@ -60,13 +60,13 @@ import { falsey } from "@d2/utilities";
  * @param input - the free-form text to normalize. Empty / whitespace-only
  *   input returns `""`. Callers that need to distinguish "no input" from
  *   "valid-but-not-found" should check `=== ""` (or `falsey()` from
- *   `@d2/utilities`) after the call.
+ *   `@dcsv-io/d2-utilities`) after the call.
  * @returns the normalized comparison key, or `""` for empty /
  *   whitespace-only input.
  */
 export function normalize(input: string): string {
   // 1. Empty / whitespace-only short-circuit via the shared `falsey()`
-  //    helper from `@d2/utilities` — mirrors the .NET `input.Falsey()`
+  //    helper from `@dcsv-io/d2-utilities` — mirrors the .NET `input.Falsey()`
   //    extension semantics so both runtimes collapse the same set of
   //    "no signal" inputs (null / undefined / empty / whitespace-only).
   if (falsey(input)) return "";

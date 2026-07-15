@@ -2,16 +2,16 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/caching-local-default
+# @dcsv-io/d2-caching-local-default
 
-> Parent: [`../README.md`](../README.md) · .NET mirror: `D2.Shared.Caching.Local.Default`
+> Parent: [`../README.md`](../README.md) · .NET mirror: `DcsvIo.D2.Caching.Local.Default`
 
-Node/BFF authors who need a per-process `ILocalCache` inject this default in-process implementation — an LRU map store with TTL tracking, process-scope atomic primitives (set-if-absent, counters, locks), aggregate OTel counters, and `@d2/result` shapes on every operation. This README covers usage, construction, per-operation semantics, TTL and eviction rules, telemetry, and disposal.
+Node/BFF authors who need a per-process `ILocalCache` inject this default in-process implementation — an LRU map store with TTL tracking, process-scope atomic primitives (set-if-absent, counters, locks), aggregate OTel counters, and `@dcsv-io/d2-result` shapes on every operation. This README covers usage, construction, per-operation semantics, TTL and eviction rules, telemetry, and disposal.
 
 ## Usage
 
 ```ts
-import { DefaultLocalCache } from "@d2/caching-local-default";
+import { DefaultLocalCache } from "@dcsv-io/d2-caching-local-default";
 
 using cache = new DefaultLocalCache({
   maxEntries: 10_000,
@@ -44,7 +44,7 @@ new DefaultLocalCache(
 ```
 
 `Partial<LocalCacheOptions>` is merged over `LOCAL_CACHE_DEFAULTS` via
-`createLocalCacheOptions` (both owned by `@d2/caching-abstractions`). The
+`createLocalCacheOptions` (both owned by `@dcsv-io/d2-caching-abstractions`). The
 optional `clock` parameter defaults to `Date.now` and is the sole time source
 for value TTL, lock expiry, and remaining-TTL arithmetic — inject a fake in
 tests.
@@ -150,7 +150,7 @@ disposed (the .NET twin behaves the same way).
 
 ## Telemetry
 
-Meter `"D2.Shared.Caching.Local"` v`1.0.0` with five aggregate counters (no tags,
+Meter `"DcsvIo.D2.Caching.Local"` v`1.0.0` with five aggregate counters (no tags,
 no spans, no logs — per-call instrumentation would dominate sub-microsecond
 work):
 
@@ -165,7 +165,7 @@ work):
 `increment` on an existing counter does **not** increment `sets`.
 
 Counters bind to the global OpenTelemetry MeterProvider at construction time.
-Construct caches after telemetry setup (setupTelemetry from @d2/telemetry) or
+Construct caches after telemetry setup (setupTelemetry from @dcsv-io/d2-telemetry) or
 the counters bind to the no-op meter for the life of the instance. With no
 MeterProvider registered every operation still works - metric adds are silent
 no-ops.
@@ -203,9 +203,9 @@ operation completes synchronously in process, so there is no cancellation window
 
 ## Dependencies
 
-- `@d2/caching-abstractions` — ports + options + `InputFailures`
-- `@d2/result` — result factories
-- `@d2/utilities` — `falsey`
+- `@dcsv-io/d2-caching-abstractions` — ports + options + `InputFailures`
+- `@dcsv-io/d2-result` — result factories
+- `@dcsv-io/d2-utilities` — `falsey`
 - `@opentelemetry/api` — counters
 
 ## References

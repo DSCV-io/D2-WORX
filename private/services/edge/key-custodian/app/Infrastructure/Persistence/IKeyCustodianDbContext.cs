@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Persistence;
 
 /// <summary>
 /// The persistence seam the App layer's command and query handlers depend on.

@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
-using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Edge.KeyCustodian.App.Application.Signing;
-using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Private.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Signing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

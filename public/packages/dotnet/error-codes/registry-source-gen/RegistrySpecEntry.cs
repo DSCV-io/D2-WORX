@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.Registry.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.Registry.SourceGen;
 
 /// <summary>
 /// A single error-code entry enriched with registry-level fields — the

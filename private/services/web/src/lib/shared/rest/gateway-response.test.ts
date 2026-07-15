@@ -2,8 +2,8 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n-keys";
-import { PROBLEM_DETAILS_CONTENT_TYPE } from "@d2/problem-details-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "@dcsv-io/d2-problem-details-abstractions";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   normalizeKeys,
@@ -12,7 +12,7 @@ import {
   networkErrorResult,
   executeFetch,
 } from "./gateway-response";
-import type { HttpStatusCode } from "@d2/result";
+import type { HttpStatusCode } from "@dcsv-io/d2-result";
 
 // ---------------------------------------------------------------------------
 // normalizeKeys

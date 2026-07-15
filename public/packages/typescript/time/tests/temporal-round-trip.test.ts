@@ -6,14 +6,14 @@
 // Temporal-adversarial round-trip suite — TypeScript half.
 //
 // Drives the SAME contracts/temporal/temporal-adversarial.fixture.json as the
-// C# half (D2.Edge.Tests TemporalRoundTripTests), so an identical wire value
+// C# half (DcsvIo.D2.Private.Edge.Tests TemporalRoundTripTests), so an identical wire value
 // materializes to the equivalent domain value in BOTH languages. Each test maps
 // a wire string (the shape the TypeSpec DTO emitter produces — ISO-8601 instant
-// / offset-free local / ISO-8601 duration) to the @d2/time + Temporal domain
+// / offset-free local / ISO-8601 duration) to the @dcsv-io/d2-time + Temporal domain
 // value and back, asserting nothing is lost. The composite cases prove the IANA
 // zone NAME survives the wire (a bare offset cannot carry it).
 //
-// This suite lives in @d2/time (not the emitter package) because @d2/time owns
+// This suite lives in @dcsv-io/d2-time (not the emitter package) because @dcsv-io/d2-time owns
 // the temporal domain types being round-tripped and already carries
 // temporal-polyfill + the cross-language fixture loader. Cross-language parity
 // is preserved by both halves consuming the identical shared fixture file.
@@ -23,7 +23,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { Temporal } from "temporal-polyfill";
-import { TK } from "@d2/i18n-keys";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import { LocalAnchoredEvent, ZonedInstant } from "../src/types.js";
 
 // ---------------------------------------------------------------------------
@@ -471,7 +471,7 @@ describe("temporalRoundTrip_YearBoundary", () => {
 describe("temporalRoundTrip_SubSecondPrecision", () => {
   it("AD9_duration_subSecondNanos_roundTripsLossless_bothLanguages", () => {
     // Temporal.Duration round-trips ISO-8601 decimal-fraction seconds losslessly
-    // to nanoseconds. The .NET half now matches via the D2.Shared.Time IsoDuration
+    // to nanoseconds. The .NET half now matches via the DcsvIo.D2.Time IsoDuration
     // helper (int64-nanosecond, no float), so the SAME shared-fixture wire string
     // materializes to the SAME 123_456_789 ns value in both languages — the wire
     // stays an ISO-8601 STRING, sub-second precision included.

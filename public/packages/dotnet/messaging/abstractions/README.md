@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Messaging.Abstractions
+# DcsvIo.D2.Messaging.Abstractions
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -12,7 +12,7 @@ handlers with `[MqSub(MqSubscriptions.X)]`, and depend on `IMessageBus` /
 `IMessageIdempotencyStore` — without dragging in `RabbitMQ.Client` or any
 specific transport.
 
-The default impl is [`D2.Shared.Messaging.RabbitMq`](../rabbitmq/README.md).
+The default impl is [`DcsvIo.D2.Messaging.RabbitMq`](../rabbitmq/README.md).
 Alternate transports (where they exist) land as sibling csprojs and
 use the same surface.
 
@@ -101,14 +101,14 @@ the optional broker-level retry topology. Carried inside an
 `MqSubscriptionDescriptor` when the spec entry has a `tieredRetry` block.
 
 AMQP wire-protocol header constants live in
-[`D2.Shared.Headers.Amqp`](../../headers/amqp/README.md) (codegen-emitted
+[`DcsvIo.D2.Headers.Amqp`](../../headers/amqp/README.md) (codegen-emitted
 from `contracts/headers/headers.spec.json`). Cross-transport entries
 (e.g. `traceparent`, `tracestate`, `x-d2-context`) appear at identical
-wire values in [`D2.Shared.Headers.Common`](../../headers/common/README.md).
+wire values in [`DcsvIo.D2.Headers.Common`](../../headers/common/README.md).
 Messages MUST NOT carry identity / raw PII in plaintext headers — only
 routing, observability, and the small operational propagation subset
 (`x-d2-context` is base64url-of-JSON of the hand-written `PropagatedContext`
-record in `D2.Shared.Context.Abstractions`). See
+record in `DcsvIo.D2.Context.Abstractions`). See
 [`messaging/rabbitmq/README.md`](../rabbitmq/README.md) for the
 full runtime + wire-format contract.
 
@@ -163,15 +163,15 @@ code should prefer the scanner.
 
 ## Dependencies
 
-- `D2.Shared.Result` — every op returns `D2Result<T>` / `D2Result`.
-- `D2.Shared.I18n.Abstractions` — typed `TKMessage` for failure surfaces.
-- `D2.Shared.Handler` — `BaseHandler<THandler, TIn, Unit>` constraint on
+- `DcsvIo.D2.Result` — every op returns `D2Result<T>` / `D2Result`.
+- `DcsvIo.D2.I18n.Abstractions` — typed `TKMessage` for failure surfaces.
+- `DcsvIo.D2.Handler` — `BaseHandler<THandler, TIn, Unit>` constraint on
   subscribers.
-- `D2.Shared.Encryption` — `EncryptionDomains` constants are the legal
+- `DcsvIo.D2.Encryption` — `EncryptionDomains` constants are the legal
   values for `MqMessageDescriptor.Encryption` (alongside the `"plaintext"`
   literal).
-- `D2.Shared.Utilities` — `Falsey()` / `Truthy()` extensions.
-- Build-time analyzer ref to `D2.Shared.Messaging.SourceGen` (zero runtime cost).
+- `DcsvIo.D2.Utilities` — `Falsey()` / `Truthy()` extensions.
+- Build-time analyzer ref to `DcsvIo.D2.Messaging.SourceGen` (zero runtime cost).
 
 ## References
 

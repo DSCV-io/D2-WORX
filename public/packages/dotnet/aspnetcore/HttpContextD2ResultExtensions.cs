@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore;
+namespace DcsvIo.D2.AspNetCore;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 using Microsoft.AspNetCore.Http;
 
 /// <summary>

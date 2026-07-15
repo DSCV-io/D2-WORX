@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Interceptors;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Interceptors;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Grpc.Interceptors;
+using DcsvIo.D2.Auth.Grpc.Interceptors;
 using Xunit;
 
 /// <summary>

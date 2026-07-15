@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Headers;
+namespace DcsvIo.D2.Tests.Unit.Headers;
 
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Headers.Amqp;
-using D2.Shared.Headers.Common;
-using D2.Shared.Headers.Grpc;
-using D2.Shared.Headers.Http;
+using DcsvIo.D2.Headers.Amqp;
+using DcsvIo.D2.Headers.Common;
+using DcsvIo.D2.Headers.Grpc;
+using DcsvIo.D2.Headers.Http;
 using Xunit;
 
 /// <summary>

@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Grpc.Trailers.SourceGen
+# DcsvIo.D2.Grpc.Trailers.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -14,10 +14,10 @@ Roslyn incremental source generator that emits the `D2GrpcTrailers` static class
 
 ## What this emits
 
-When the consuming assembly is `D2.Shared.Auth.Grpc`, the generator emits `D2GrpcTrailers.g.cs` containing:
+When the consuming assembly is `DcsvIo.D2.Auth.Grpc`, the generator emits `D2GrpcTrailers.g.cs` containing:
 
 ```csharp
-namespace D2.Shared.Auth.Grpc.Status;
+namespace DcsvIo.D2.Auth.Grpc.Status;
 
 public static class D2GrpcTrailers
 {
@@ -33,7 +33,7 @@ Every gRPC pipeline that emits trailer metadata references `D2GrpcTrailers.ERROR
 
 ## Cross-language parity
 
-The SAME spec drives `@d2/grpc-client` via `tools/ts-codegen/src/grpc-trailers-emit.ts` → `grpc-trailers.g.ts`. Both sides emit identical wire keys; a parity test (`public/packages/typescript/contract-tests/tests/grpc-trailers.parity.test.ts`) byte-compares the catalogs against an emitted fixture.
+The SAME spec drives `@dcsv-io/d2-grpc-client` via `tools/ts-codegen/src/grpc-trailers-emit.ts` → `grpc-trailers.g.ts`. Both sides emit identical wire keys; a parity test (`public/packages/typescript/contract-tests/tests/grpc-trailers.parity.test.ts`) byte-compares the catalogs against an emitted fixture.
 
 ## Casing note (`traceId`)
 

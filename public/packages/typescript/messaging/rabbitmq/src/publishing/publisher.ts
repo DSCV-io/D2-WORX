@@ -4,21 +4,21 @@
 // -----------------------------------------------------------------------
 
 import { SpanStatusCode } from "@opentelemetry/api";
-import { AmqpHeaders } from "@d2/headers-amqp";
-import type { ILogger } from "@d2/logging";
-import { sanitizedErrorRender } from "@d2/logging";
+import { AmqpHeaders } from "@dcsv-io/d2-headers-amqp";
+import type { ILogger } from "@dcsv-io/d2-logging";
+import { sanitizedErrorRender } from "@dcsv-io/d2-logging";
 import {
   MqMessagesRegistry,
   type MqMessageDescriptor,
-} from "@d2/messaging-abstractions";
+} from "@dcsv-io/d2-messaging-abstractions";
 import {
   type D2Result,
   ok,
   serviceUnavailable,
   unhandledException,
-} from "@d2/result";
-import { MessagingActivityTags } from "@d2/telemetry";
-import { uuidv7 } from "@d2/utilities";
+} from "@dcsv-io/d2-result";
+import { MessagingActivityTags } from "@dcsv-io/d2-telemetry";
+import { uuidv7 } from "@dcsv-io/d2-utilities";
 import type { Connection } from "rabbitmq-client";
 
 import {

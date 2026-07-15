@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Caching.Tiered;
+namespace DcsvIo.D2.Tests.Integration.Caching.Tiered;
 
 using AwesomeAssertions;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Distributed.Redis;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Caching.Tiered;
-using D2.Shared.Tests.Integration.Caching.Distributed;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Distributed.Redis;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Caching.Tiered;
+using DcsvIo.D2.Tests.Integration.Caching.Distributed;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

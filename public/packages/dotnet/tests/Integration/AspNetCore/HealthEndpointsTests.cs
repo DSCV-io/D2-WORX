@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.AspNetCore;
+namespace DcsvIo.D2.Tests.Integration.AspNetCore;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
-using D2.Shared.Tests.Integration.AspNetCore.Infrastructure;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Tests.Integration.AspNetCore.Infrastructure;
 using global::Microsoft.AspNetCore.TestHost;
 using global::Microsoft.Extensions.DependencyInjection;
 using global::Microsoft.Extensions.Diagnostics.HealthChecks;

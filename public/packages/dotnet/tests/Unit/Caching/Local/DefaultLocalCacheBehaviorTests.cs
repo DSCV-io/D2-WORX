@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Caching.Local;
+namespace DcsvIo.D2.Tests.Unit.Caching.Local;
 
 using AwesomeAssertions;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Telemetry;
-using D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Telemetry;
+using DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.TestHost;
 using global::Microsoft.Extensions.DependencyInjection;

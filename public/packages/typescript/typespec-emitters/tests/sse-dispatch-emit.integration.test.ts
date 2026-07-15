@@ -22,10 +22,10 @@ import {
 } from "@typespec/compiler/testing";
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -34,7 +34,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 });
 
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -70,7 +70,7 @@ describe("sseDispatchEmitIntegration_TwoPushOps_EmitsFullDispatchLayer", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -91,10 +91,11 @@ describe("sseDispatchEmitIntegration_TwoPushOps_EmitsFullDispatchLayer", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
-          "csharp-namespace": "D2.Edge.Tests.TypeSpecSse.Generated",
+        "@dcsv-io/d2-typespec-emitters": {
+          "csharp-namespace":
+            "DcsvIo.D2.Private.Edge.Tests.TypeSpecSse.Generated",
         },
       },
       outputDir: "testing:/out",
@@ -194,7 +195,7 @@ describe("sseDispatchEmitIntegration_VoidOutputPush_D2TSP008NoPartial", () => {
     badHost.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -210,10 +211,11 @@ describe("sseDispatchEmitIntegration_VoidOutputPush_D2TSP008NoPartial", () => {
     let compileError: unknown = undefined;
     try {
       await badHost.compile("main.tsp", {
-        emit: ["@d2/typespec-emitters"],
+        emit: ["@dcsv-io/d2-typespec-emitters"],
         options: {
-          "@d2/typespec-emitters": {
-            "csharp-namespace": "D2.Edge.Tests.TypeSpecSse.Generated",
+          "@dcsv-io/d2-typespec-emitters": {
+            "csharp-namespace":
+              "DcsvIo.D2.Private.Edge.Tests.TypeSpecSse.Generated",
           },
         },
         outputDir: "testing:/out",
@@ -245,7 +247,7 @@ describe("sseDispatchEmitIntegration_VoidOutputPush_D2TSP008NoPartial", () => {
     badHost.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -262,10 +264,11 @@ describe("sseDispatchEmitIntegration_VoidOutputPush_D2TSP008NoPartial", () => {
     let compileError: unknown = undefined;
     try {
       await badHost.compile("main.tsp", {
-        emit: ["@d2/typespec-emitters"],
+        emit: ["@dcsv-io/d2-typespec-emitters"],
         options: {
-          "@d2/typespec-emitters": {
-            "csharp-namespace": "D2.Edge.Tests.TypeSpecSse.Generated",
+          "@dcsv-io/d2-typespec-emitters": {
+            "csharp-namespace":
+              "DcsvIo.D2.Private.Edge.Tests.TypeSpecSse.Generated",
           },
         },
         outputDir: "testing:/out",

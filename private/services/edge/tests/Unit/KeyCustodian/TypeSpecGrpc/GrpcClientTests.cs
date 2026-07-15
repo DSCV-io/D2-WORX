@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Services.Protos.SignFixtures.V2Alpha;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Resilience.Retry;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated;
+using DcsvIo.D2.Resilience.Pipeline;
+using DcsvIo.D2.Resilience.Retry;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.SignFixtures.V2Alpha;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -24,9 +24,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
-using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
-using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
+using DtoSignFixtureInput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
+using DtoSignFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using ProtoSignFixtureOutput = global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="SignFixtureGrpcClient"/> — the

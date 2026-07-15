@@ -37,7 +37,7 @@
 // Non-consumable paths (services, docs, tooling): no bump attributed.
 
 import { parseBreakingFooters } from "contract-gate";
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import { parseVersionLoose, applyBump } from "./semver.js";
 import { isPreStable } from "./diff-bump.js";
 import type {

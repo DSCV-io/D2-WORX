@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.DlqMetadata.SourceGen;
+namespace DcsvIo.D2.Messaging.DlqMetadata.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>Parses <c>dlq-failure-metadata.spec.json</c>.</summary>
 internal static class DlqFailureMetadataSpecLoader

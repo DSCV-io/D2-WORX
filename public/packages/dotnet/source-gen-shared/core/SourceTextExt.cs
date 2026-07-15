@@ -8,7 +8,7 @@
 // structurally impossible.
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.SourceGen;
+namespace DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Source-text helpers shared by every D² Roslyn emitter.

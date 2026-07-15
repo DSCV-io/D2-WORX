@@ -12,9 +12,9 @@ import { D2Result } from "./d2-result.js";
 import { ErrorCodes } from "./error-codes.g.js";
 import { HttpStatusCode } from "./http-status-codes.js";
 import type { InputError } from "./input-error.js";
-import { type ErrorCategory, ErrorCategoryWire } from "@d2/error-category";
-import { type TKMessage } from "@d2/i18n-abstractions";
-import { TK } from "@d2/i18n-keys";
+import { type ErrorCategory, ErrorCategoryWire } from "@dcsv-io/d2-error-category";
+import { type TKMessage } from "@dcsv-io/d2-i18n-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 
 export interface ErrorOpts {
   messages?: readonly TKMessage[];

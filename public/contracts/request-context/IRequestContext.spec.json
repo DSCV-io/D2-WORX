@@ -1,9 +1,9 @@
 {
   "$schema": "./schema.json",
   "name": "IRequestContext",
-  "namespace": "D2.Shared.Context.Abstractions",
+  "namespace": "DcsvIo.D2.Context.Abstractions",
   "description": "Per-request runtime context. Extends IAuthContext with transport-level (tracing) and network/enrichment information. Populated by transport-specific middleware (aspnetcore for HTTP, messaging-rabbitmq for RabbitMQ, etc.) into a MutableRequestContext concrete instance; downstream consumers see only the read-only IRequestContext interface.",
-  "extends": "D2.Shared.AuthContext.Abstractions.IAuthContext",
+  "extends": "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
   "sections": [
     {
       "name": "Tracing",
@@ -81,7 +81,7 @@
           "name": "RiskScore",
           "type": "int?",
           "propagate": true,
-          "doc": "Composite request-risk score (0-100; higher = more risky) computed by Edge's risk engine for THIS request. Inputs include geo-velocity drift from the sign-in baseline, ASN reputation, Tor / proxy / hosting flags, per-org and per-user policy contributions, and fingerprint-mismatch components (SessionFingerprint vs CurrentFingerprint). 0 = no risk; ≥ user/org step-up threshold = OTP step-up; ≥ user/org block threshold = block + invalidate session. Null on internal services and pre-risk-engine paths. Propagated via x-d2-context so audit rows record Edge's verdict at the moment of the originating request. Edge owns the contribution math + thresholds; consumer-side libs (D2.Shared.Auth) only read this field, never compute it."
+          "doc": "Composite request-risk score (0-100; higher = more risky) computed by Edge's risk engine for THIS request. Inputs include geo-velocity drift from the sign-in baseline, ASN reputation, Tor / proxy / hosting flags, per-org and per-user policy contributions, and fingerprint-mismatch components (SessionFingerprint vs CurrentFingerprint). 0 = no risk; ≥ user/org step-up threshold = OTP step-up; ≥ user/org block threshold = block + invalidate session. Null on internal services and pre-risk-engine paths. Propagated via x-d2-context so audit rows record Edge's verdict at the moment of the originating request. Edge owns the contribution math + thresholds; consumer-side libs (DcsvIo.D2.Auth) only read this field, never compute it."
         }
       ]
     },
@@ -109,13 +109,13 @@
           "name": "TimezoneIanaName",
           "type": "string?",
           "propagate": true,
-          "doc": "Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference > org default preference > X-D2-Timezone header > WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via D2.Shared.Geo.Default) > fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps."
+          "doc": "Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference > org default preference > X-D2-Timezone header > WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via DcsvIo.D2.Geo.Default) > fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps."
         },
         {
           "name": "CurrencyIso4217Code",
           "type": "string?",
           "propagate": true,
-          "doc": "Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference > org default preference > X-D2-Currency header > CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via D2.Shared.Geo.Default) > fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required)."
+          "doc": "Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference > org default preference > X-D2-Currency header > CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via DcsvIo.D2.Geo.Default) > fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required)."
         }
       ]
     },
@@ -149,7 +149,7 @@
         {
           "name": "AdminLocationHashId",
           "type": "string?",
-          "doc": "Hash of the admin-location component only (city + region + country + postal). Matches D2.Shared.Location.AdminLocation.HashId for content-addressable lookup."
+          "doc": "Hash of the admin-location component only (city + region + country + postal). Matches DcsvIo.D2.Location.AdminLocation.HashId for content-addressable lookup."
         },
         {
           "name": "City",
@@ -183,7 +183,7 @@
           "name": "Latitude",
           "type": "double?",
           "redact": true,
-          "doc": "Latitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object per D2.Shared.Location."
+          "doc": "Latitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object per DcsvIo.D2.Location."
         },
         {
           "name": "Longitude",

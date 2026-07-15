@@ -4,12 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Domain;
+namespace DcsvIo.D2.Private.Edge.Domain;
 
 /// <summary>
 /// Assembly marker for the thin Edge host Domain shell. Empty shell for
 /// host-module pure domain types; modules remain placeholders.
 /// </summary>
-internal static class AssemblyMarker
+/// <remarks>
+/// Public so identity-law spot pins can assert CLR FullName roots without IVT.
+/// </remarks>
+public static class AssemblyMarker
 {
 }

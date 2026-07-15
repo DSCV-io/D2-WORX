@@ -35,13 +35,13 @@ import {
   D2_RESERVED_KEY,
   parseResultPredicate,
   parse as parseResiliencePipeline,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 import type {
   IdempotentPayload,
   PredicateNode,
   ReservedPayload,
   ResiliencePolicyNode,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
 import { walkModel } from "./lib/model-walk.js";
 import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
@@ -119,7 +119,7 @@ import { emitWireIdentityManifest } from "./lib/wire-manifest-emitter.js";
 //      @d2Resilience predicate twins (C# + TS) + the retry sentinel.
 //   8. <module>-grpc-client.g.ts — the TS SSR gRPC client (per @d2ServedBy
 //      module): the TS twin of the C# gRPC client, delegating to the real
-//      @d2/grpc-client seam over the ts-proto grpc-js stub, folding in the
+//      @dcsv-io/d2-grpc-client seam over the ts-proto grpc-js stub, folding in the
 //      emitted TS predicate twin's retry-arm for a @d2Resilience op.
 //   9. <module>-rest-client.g.ts — the TS browser REST client (per @d2ServedBy
 //      module): per-@route typed fns delegating to the $lib apiCall/apiCallAnon
@@ -802,8 +802,8 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   if (csClientsNamespace !== undefined && csAppNamespaceBase !== undefined) {
     for (const [moduleName, moduleOps] of exposedOpsByModule) {
       // Derive the app namespace root from the namespace base (strip the per-op CQRS suffix).
-      // The base is e.g. "D2.Edge.KeyCustodian.App.Application.Handlers" →
-      // app namespace root = "D2.Edge.KeyCustodian.App.Application".
+      // The base is e.g. "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers" →
+      // app namespace root = "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application".
       const appNsRoot = csAppNamespaceBase.replace(/\.Handlers$/, "");
       const facadeFiles = emitFacade(
         moduleName,
@@ -890,7 +890,7 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // ---- TS SSR gRPC client — one <module>-grpc-client.g.ts per @d2ServedBy module ----
   // Reuses the already-collected grpcOpsByModule (one TS client per module with
   // ≥1 @d2GrpcMethod op). The TS twin of the C# gRPC client: delegates to the real
-  // @d2/grpc-client seam over the ts-proto grpc-js stub; folds the emitted TS
+  // @dcsv-io/d2-grpc-client seam over the ts-proto grpc-js stub; folds the emitted TS
   // predicate twin into the retry-arm for a @d2Resilience op.
   for (const [moduleName, moduleOps] of grpcOpsByModule) {
     // Thread each op's @d2Concern into the TS client ONLY when this module is a
@@ -1077,7 +1077,7 @@ export async function $onEmit(context: EmitContext): Promise<void> {
 
   // ---- Smoke manifest (kept so the operations-manifest integration test stays green) --------
   const manifest: OperationsManifest = {
-    emitter: "@d2/typespec-emitters",
+    emitter: "@dcsv-io/d2-typespec-emitters",
     operationCount: ops.length,
     operations: ops,
   };
@@ -1272,7 +1272,7 @@ function resolveDtoNamespace(
  *   `<base>.<Category>.<PascalOp>`
  * For fixture ops (no csAppNamespaceBase):
  *   `grpcServiceNs` (the fixture gRPC namespace, matches the existing fixture
- *   pattern for ISignHandler in D2.Edge.Tests.TypeSpecGrpc.Generated).
+ *   pattern for ISignHandler in DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated).
  */
 function resolveHandlerNamespace(
   category: "Commands" | "Queries" | undefined,

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.JwtClaims.SourceGen;
+namespace DcsvIo.D2.Auth.JwtClaims.SourceGen;
 
 using Microsoft.CodeAnalysis;
 
@@ -70,5 +70,5 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    private const string _CATEGORY = "D2.Shared.Auth.JwtClaims.SourceGen";
+    private const string _CATEGORY = "DcsvIo.D2.Auth.JwtClaims.SourceGen";
 }

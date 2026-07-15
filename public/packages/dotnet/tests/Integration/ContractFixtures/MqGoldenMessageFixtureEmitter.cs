@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
@@ -12,19 +12,19 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AwesomeAssertions;
-using D2.Shared.Auth.Events;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Encryption;
-using D2.Shared.Headers.Amqp;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq.Encryption;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Events;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Headers.Amqp;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq.Encryption;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 /// <summary>
 /// Emits golden wire messages (body bytes + AMQP headers) that the TS
-/// <c>@d2/messaging-rabbitmq</c> Testcontainer integration suite replays through
+/// <c>@dcsv-io/d2-messaging-rabbitmq</c> Testcontainer integration suite replays through
 /// a real broker (D11). The body is serialized with the SAME options the
 /// runtime <c>EncryptedBodyComposer</c> uses (camelCase + omit-null); the
 /// <c>x-d2-context</c> header is produced by the real
@@ -52,7 +52,7 @@ public sealed class MqGoldenMessageFixtureEmitter
         "9k9UDMauc/9PTbrtmbWhRANCAAQcu3gDUuYgdaan/4uF2SnWekAoJSx3nDj2merWTH0mEcok" +
         "rO0jSFyMpMLRNpOdsFH2i9X8AjOs5+Bk+J6A3U7+";
 
-    // Mirrors D2.Shared.Messaging.RabbitMq MessagingJsonOptions (internal to the
+    // Mirrors DcsvIo.D2.Messaging.RabbitMq MessagingJsonOptions (internal to the
     // rabbitmq lib) — camelCase property names + omit-null, the exact shape the
     // publisher writes on the wire.
     private static readonly JsonSerializerOptions sr_bodyOptions = new()
@@ -137,7 +137,7 @@ public sealed class MqGoldenMessageFixtureEmitter
         var headers = new SortedDictionary<string, object?>(StringComparer.Ordinal)
         {
             [AmqpHeaders.CONTENT_TYPE] = "application/octet-stream",
-            [AmqpHeaders.PROTO_TYPE] = "D2.Shared.Sample.EncryptedFixtureEvent",
+            [AmqpHeaders.PROTO_TYPE] = "DcsvIo.D2.Sample.EncryptedFixtureEvent",
             [AmqpHeaders.MESSAGE_ID] = "0192f8c1-2222-7000-8000-0000000000bb",
             [AmqpHeaders.ENCRYPTION_KID] = "k1-a",
         };
@@ -158,8 +158,8 @@ public sealed class MqGoldenMessageFixtureEmitter
         // A REAL sealed (version-2) golden MESSAGE — the message JSON is composed by the
         // production EncryptedBodyComposer.Compose sealed branch, resolving the keyed
         // IPayloadSealer by the descriptor's consumer service exactly as a live producer
-        // host does. It proves the TS @d2/messaging-rabbitmq consumer (CryptoBodyOpener
-        // over @d2/encryption's PayloadOpener) opens a genuinely .NET-composed sealed body.
+        // host does. It proves the TS @dcsv-io/d2-messaging-rabbitmq consumer (CryptoBodyOpener
+        // over @dcsv-io/d2-encryption's PayloadOpener) opens a genuinely .NET-composed sealed body.
         // Unlike the deterministic sealed-crypto-kat vector, the frame is NON-deterministic
         // (the sealer mints a fresh per-message ephemeral keypair + nonce — no injection
         // point by design), so re-emitting yields a different bodyBase64. The write is

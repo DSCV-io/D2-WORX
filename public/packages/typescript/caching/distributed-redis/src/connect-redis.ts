@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import Redis from "ioredis";
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 import type { RedisCacheOptions } from "./redis-cache-options.js";
 

@@ -3,14 +3,19 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n-keys";
-import { inputError, ok, validationFailed, type D2Result } from "@d2/result";
-import { falsey } from "@d2/utilities";
-import type { IEmailValidator } from "@d2/validation-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
+import {
+  inputError,
+  ok,
+  validationFailed,
+  type D2Result,
+} from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
+import type { IEmailValidator } from "@dcsv-io/d2-validation-abstractions";
 
 /**
  * Email-format pattern — the cross-language source of truth shared with the
- * .NET `D2.Shared.Validation.DefaultEmailValidator.EMAIL_PATTERN` const. The
+ * .NET `DcsvIo.D2.Validation.DefaultEmailValidator.EMAIL_PATTERN` const. The
  * two literals are asserted byte-identical by a parity test, so any change
  * here MUST be mirrored on the .NET side.
  *
@@ -29,7 +34,7 @@ const emailRegex = new RegExp(EMAIL_PATTERN, "i");
 
 /**
  * Default `IEmailValidator` implementation. Mirrors the .NET
- * `D2.Shared.Validation.DefaultEmailValidator` — same pattern, same
+ * `DcsvIo.D2.Validation.DefaultEmailValidator` — same pattern, same
  * normalization (trim then lowercase), same per-field `D2Result` contract.
  */
 export class DefaultEmailValidator implements IEmailValidator {

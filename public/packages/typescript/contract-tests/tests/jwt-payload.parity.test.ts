@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { JwtClaimTypes, type JwtPayload } from "@d2/auth-abstractions";
+import { JwtClaimTypes, type JwtPayload } from "@dcsv-io/d2-auth-abstractions";
 import { loadFixture } from "../src/index.js";
 
 interface JwtPayloadFixturePayload {

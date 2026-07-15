@@ -104,7 +104,7 @@ Auth Core is everything a **correct mint** and a real product auth surface must 
 D2 (0031) → A2 Auth Core (this keep) → A3 Minting → Auth Extras + E1 → …
 ```
 
-Auth lives as a **module-within-Edge** (`domain` / `app` / `infra`), composition on `D2.Edge.Api`, database **`d2-auth`**. Same host pattern as KeyCustodian.
+Auth lives as a **module-within-Edge** (`domain` / `app` / `infra`), composition on `DcsvIo.D2.Private.Edge.Api`, database **`d2-auth`**. Same host pattern as KeyCustodian.
 
 ---
 
@@ -624,9 +624,9 @@ Root/operator **may delete child orgs**. Cascade: hot memberships → history, w
 | Need | Store | Readers |
 | --- | --- | --- |
 | Hot product security (risk at sign-in, “my sign-ins”, member history) | **`d2-auth`** | User / org admin via Auth APIs |
-| Platform compliance / staff / cross-service | **D2.Audit** via `d2.audit.events` | Staff / compliance |
+| Platform compliance / staff / cross-service | **DcsvIo.D2.Private.Audit** via `d2.audit.events` | Staff / compliance |
 
-Auth writes **local** tables for online use and **publishes** via **outbox** (M11 / L149) — no silent drop if Audit consumer is lagging or not yet deployed. User-facing Security tab → **Auth**, not end-user D2.Audit queries.
+Auth writes **local** tables for online use and **publishes** via **outbox** (M11 / L149) — no silent drop if Audit consumer is lagging or not yet deployed. User-facing Security tab → **Auth**, not end-user DcsvIo.D2.Private.Audit queries.
 
 V2 already uses this for sign-in: live data in auth **and** central trail.
 
@@ -1054,7 +1054,7 @@ SCIM externalId  (IdP immutable user id — preferred bind key, unique per root)
 | **externalId** | Unique per **root** (per IdP config). Survives email renames |
 | **Match order (provision / update)** | (1) `externalId` → (2) known IdP subject → (3) normalized email **only if** link policy allows |
 | **Conflict = fail closed** | Never silent merge across two principals. Reject op; leave prior state intact |
-| **Critical alert** | On any **corrupt / reject-for-integrity** outcome (email would steal another user; subject/externalId already on another user; match-order split brain; last-owner block; map points at missing org): notify **root owners** (and security contacts if configured) **immediately** via product notification + Auth audit + D2.Audit when present. **Dedupe** by incident key so IdP retries do not spam |
+| **Critical alert** | On any **corrupt / reject-for-integrity** outcome (email would steal another user; subject/externalId already on another user; match-order split brain; last-owner block; map points at missing org): notify **root owners** (and security contacts if configured) **immediately** via product notification + Auth audit + DcsvIo.D2.Private.Audit when present. **Dedupe** by incident key so IdP retries do not spam |
 | **SCIM email change** | Apply only if new email free; if occupied by another principal → reject + critical alert |
 | **Reassign externalId / subject** | Illegal without explicit staff/admin unlink path |
 

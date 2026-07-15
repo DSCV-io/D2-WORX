@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Validation.Abstractions;
 using Xunit;
 
 /// <summary>
 /// Emits the parity fixture for the codegen-emitted field-constraints catalog
-/// reflected off the <c>D2.Shared.Validation.Abstractions</c> assembly. The
+/// reflected off the <c>DcsvIo.D2.Validation.Abstractions</c> assembly. The
 /// fixture carries two top-level groups:
 /// <list type="bullet">
 ///   <item>

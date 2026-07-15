@@ -11,7 +11,7 @@
 /**
  * Spec-derived JSON property-name catalog for the TKMessage wire shape. Every JSON serializer / deserializer in TypeScript references these constants for property names instead of inline string literals — drift between the wire and the code is structurally impossible.
  *
- * Cross-language parity: the SAME spec drives the .NET-side catalog via D2.Shared.WireShapes.SourceGen. Both sides emit the same property names byte-for-byte; cross-language wire drift is impossible.
+ * Cross-language parity: the SAME spec drives the .NET-side catalog via DcsvIo.D2.WireShapes.SourceGen. Both sides emit the same property names byte-for-byte; cross-language wire drift is impossible.
  */
 export const TkMessageWireShape = {
   /**

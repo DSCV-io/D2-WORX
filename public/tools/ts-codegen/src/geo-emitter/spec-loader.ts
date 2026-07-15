@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 import {
   diagError,
@@ -31,7 +31,7 @@ import type {
 
 /**
  * Pure logic for parsing the geo Tier-2 JSON spec files into typed DTOs
- * (`./spec-types.ts`). Mirrors .NET `D2.Shared.Geo.SourceGen.SpecLoader`
+ * (`./spec-types.ts`). Mirrors .NET `DcsvIo.D2.Geo.SourceGen.SpecLoader`
  * field-for-field — both runtimes consume the same JSON, so the
  * deserialization surface is identical by construction. JSON-shape failures
  * surface as `D2GEO001`; missing-metadata failures surface as `D2GEO006`.

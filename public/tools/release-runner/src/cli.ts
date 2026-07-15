@@ -36,7 +36,7 @@
 //
 // Excluded from the unit-coverage threshold (see vitest.config.ts).
 
-import { falsey, truthy } from "@d2/utilities";
+import { falsey, truthy } from "@dcsv-io/d2-utilities";
 import { resolveBaseline } from "./baseline.js";
 import { validateGitRef } from "contract-gate";
 import { commitsInRange } from "./git-adapter.js";

@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Result.Grpc
+# DcsvIo.D2.Result.Grpc
 
 Faithful in-memory → wire → in-memory `D2Result` round-trip over a gRPC
 `D2ResultProto` response envelope. Every service handler returns a `D2Result`
@@ -52,7 +52,7 @@ Two mechanisms coexist on every gRPC call — each has a distinct role and must 
 | Mechanism | What it carries | gRPC status on the wire | Who reads it |
 | --- | --- | --- | --- |
 | **`D2ResultProto` response envelope** (this lib) | Business results — both success and failure. A handler returning `NotFound()` or `ValidationFailed()` produces a normal gRPC `OK` response; the failure detail rides inside the `D2ResultProto result` envelope field. | gRPC `OK` (status 0) + response body | `HandleAsync` / `ToD2Result<T>` — caller gets a clean `D2Result` with zero try-catch for business failures |
-| **`RpcException` + `D2GrpcTrailers`** (`D2.Shared.Auth.Grpc`) | Transport/auth rejections — JWT validation failure, JWKS unavailable, scope insufficient. These are genuine transport-layer faults, not handler outcomes. | Non-`OK` gRPC status (`Unauthenticated` (16) or `Unavailable` (14)) + trailers (`d2_error_code` / `d2_messages` / `traceId`) | Auth middleware on the server side; retry/circuit-breaker on the client side |
+| **`RpcException` + `D2GrpcTrailers`** (`DcsvIo.D2.Auth.Grpc`) | Transport/auth rejections — JWT validation failure, JWKS unavailable, scope insufficient. These are genuine transport-layer faults, not handler outcomes. | Non-`OK` gRPC status (`Unauthenticated` (16) or `Unavailable` (14)) + trailers (`d2_error_code` / `d2_messages` / `traceId`) | Auth middleware on the server side; retry/circuit-breaker on the client side |
 
 **Boundary rule**: a `401` from the JWT interceptor is `RpcException(Unauthenticated)` — never a `D2ResultProto{ success=false, status_code=401 }`. A `404` from a handler is `D2ResultProto{ success=false, status_code=404 }` — never an `RpcException`. The two paths are structurally separate and must stay that way.
 
@@ -65,11 +65,11 @@ generated `D2ResultProto` / `TKMessageProto` / `InputErrorProto` types live in n
 ## Dependencies (acyclic)
 
 ```
-D2.Shared.Result.Grpc
-  ├── D2.Shared.Result          (result-core — D2Result, InputError, TKMessage)
-  ├── D2.Shared.ErrorCodes.Category   (ErrorCategory, ErrorCategoryWire)
-  ├── D2.Shared.Utilities       (Falsey() null-guard)
-  ├── D2.Shared.I18n.Abstractions     (TKMessage ctor — InternalsVisibleTo)
+DcsvIo.D2.Result.Grpc
+  ├── DcsvIo.D2.Result          (result-core — D2Result, InputError, TKMessage)
+  ├── DcsvIo.D2.ErrorCodes.Category   (ErrorCategory, ErrorCategoryWire)
+  ├── DcsvIo.D2.Utilities       (Falsey() null-guard)
+  ├── DcsvIo.D2.I18n.Abstractions     (TKMessage ctor — InternalsVisibleTo)
   ├── Google.Protobuf           (proto runtime)
   └── Grpc.Net.Client           (AsyncUnaryCall<T>, RpcException)
 ```

@@ -40,7 +40,7 @@
 // This is a test fixture, not a real operation. Every fixture-only leaf symbol
 // carries a `Fixture` marker in its own name.
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 
 using D2;
 

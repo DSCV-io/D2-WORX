@@ -3,17 +3,20 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { D2Result, type InputError } from "@d2/result";
-import type { D2ResultProto } from "@d2/protos";
-import { type ErrorCategory, ALL_ERROR_CATEGORIES } from "@d2/error-category";
-import { tk } from "@d2/i18n-abstractions";
-import { truthyOrUndefined } from "@d2/utilities";
+import { D2Result, type InputError } from "@dcsv-io/d2-result";
+import type { D2ResultProto } from "@dcsv-io/d2-protos";
+import {
+  type ErrorCategory,
+  ALL_ERROR_CATEGORIES,
+} from "@dcsv-io/d2-error-category";
+import { tk } from "@dcsv-io/d2-i18n-abstractions";
+import { truthyOrUndefined } from "@dcsv-io/d2-utilities";
 
 /**
  * Convert a `D2ResultProto` back to a `D2Result<TData>`, optionally stitching
  * in separately-selected typed payload data.
  *
- * Mirrors .NET `D2.Shared.Result.Grpc.ProtoExtensions.ToD2Result<TData>()`.
+ * Mirrors .NET `DcsvIo.D2.Result.Grpc.ProtoExtensions.ToD2Result<TData>()`.
  *
  * Mapping rules:
  * - `success`, `statusCode` — always carried.

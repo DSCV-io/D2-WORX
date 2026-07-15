@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Publishing;
+namespace DcsvIo.D2.Messaging.RabbitMq.Publishing;
 
 using System.Diagnostics;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Headers.Amqp;
-using D2.Shared.I18n;
-using D2.Shared.Messaging.RabbitMq.Channels;
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Messaging.RabbitMq.Encryption;
-using D2.Shared.Messaging.RabbitMq.Telemetry;
-using D2.Shared.Resilience.Retry;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Headers.Amqp;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Messaging.RabbitMq.Channels;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Encryption;
+using DcsvIo.D2.Messaging.RabbitMq.Telemetry;
+using DcsvIo.D2.Resilience.Retry;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using global::RabbitMQ.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -53,7 +53,7 @@ internal sealed class RabbitMqMessageBus : IMessageBus
     /// <summary>Initializes the bus.</summary>
     /// <param name="channelPool">Bounded publisher channel pool.</param>
     /// <param name="scopeFactory">Per-publish DI scope factory — resolves
-    /// per-domain <see cref="D2.Shared.Encryption.IPayloadCrypto"/> via keyed
+    /// per-domain <see cref="DcsvIo.D2.Encryption.IPayloadCrypto"/> via keyed
     /// services for encrypted message types AND
     /// <see cref="IRequestContext"/> for the propagated-context header. The
     /// bus is a Singleton (every publish builds a transient ~µs-cost scope)

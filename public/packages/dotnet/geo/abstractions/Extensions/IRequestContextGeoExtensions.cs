@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Abstractions.Extensions;
+namespace DcsvIo.D2.Geo.Abstractions.Extensions;
 
 using System;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Typed geo accessors layered over <see cref="IRequestContext"/>'s raw

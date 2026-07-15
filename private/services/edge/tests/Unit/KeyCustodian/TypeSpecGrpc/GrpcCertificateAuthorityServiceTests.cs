@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Collections.Concurrent;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using D2.Edge.Api.Grpc.KeyCustodian;
-using D2.Edge.KeyCustodian.Client.CaCertificate;
-using D2.Edge.KeyCustodian.Client.Facade;
-using D2.Edge.KeyCustodian.Client.Issuance;
-using D2.Edge.KeyCustodian.Client.Jwks;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Edge.KeyCustodian.Client.OidcConfiguration;
-using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
+using DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.OidcConfiguration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
+using global::D2.Services.Protos.KeyCustodian.V2Alpha;
 using Google.Protobuf;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -26,10 +26,10 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ClientsGetCaCertificateOutput = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
-using ClientsGetKeyringOutput = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
-using ClientsIssueLeafOutput = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
-using ClientsSignOutput = D2.Edge.KeyCustodian.Client.Signing.SignOutput;
+using ClientsGetCaCertificateOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
+using ClientsGetKeyringOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
+using ClientsIssueLeafOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
+using ClientsSignOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing.SignOutput;
 
 /// <summary>
 /// In-memory gRPC harness tests for the TypeSpec-emitted
@@ -206,14 +206,14 @@ public sealed class GrpcCertificateAuthorityServiceTests
         IssueWorkloadCertificateRequest.Parser.ParseFrom(request.ToByteArray())
             .CsrDer.ToByteArray().Should().Equal(request.CsrDer.ToByteArray());
 
-        var output = new D2.Services.Protos.KeyCustodian.V2Alpha.IssueLeafOutput
+        var output = new global::D2.Services.Protos.KeyCustodian.V2Alpha.IssueLeafOutput
         {
             CertificateDer = ByteString.CopyFrom([0x01]),
             IssuerCertificateDer = ByteString.CopyFrom([0x02]),
             NotBefore = "2026-01-01T00:00:00.0000000+00:00",
             NotAfter = "2026-01-02T00:00:00.0000000+00:00",
         };
-        var parsed = D2.Services.Protos.KeyCustodian.V2Alpha.IssueLeafOutput.Parser
+        var parsed = global::D2.Services.Protos.KeyCustodian.V2Alpha.IssueLeafOutput.Parser
             .ParseFrom(output.ToByteArray());
         parsed.Should().Be(output);
     }
@@ -221,12 +221,12 @@ public sealed class GrpcCertificateAuthorityServiceTests
     [Fact]
     public void GetCaCertificateMessages_RoundTripBytes()
     {
-        var output = new D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateOutput
+        var output = new global::D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateOutput
         {
             RootCertificateDer = ByteString.CopyFrom([0x01]),
             IntermediateCertificateDer = ByteString.CopyFrom([0x02]),
         };
-        var parsed = D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateOutput.Parser
+        var parsed = global::D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateOutput.Parser
             .ParseFrom(output.ToByteArray());
         parsed.Should().Be(output);
 
@@ -260,10 +260,10 @@ public sealed class GrpcCertificateAuthorityServiceTests
                  {
                      IssueWorkloadCertificateRequest.Descriptor,
                      IssueWorkloadCertificateResponse.Descriptor,
-                     D2.Services.Protos.KeyCustodian.V2Alpha.IssueLeafOutput.Descriptor,
+                     global::D2.Services.Protos.KeyCustodian.V2Alpha.IssueLeafOutput.Descriptor,
                      GetCaCertificateRequest.Descriptor,
                      GetCaCertificateResponse.Descriptor,
-                     D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateOutput.Descriptor,
+                     global::D2.Services.Protos.KeyCustodian.V2Alpha.GetCaCertificateOutput.Descriptor,
                  })
         {
             descriptor.Fields.InDeclarationOrder()
@@ -360,20 +360,20 @@ public sealed class GrpcCertificateAuthorityServiceTests
 
         // Seal ops — unused by this gRPC harness (no seal service is wired); fully-qualified
         // to stay collision-safe with the proto types imported in this file.
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
+        public ValueTask<D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
             GetOrLazyProvisionSealPublicKeyAsync(
-                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
+                DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
                 CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
+                D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
                     .ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
+        public ValueTask<D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
             GetOrLazyProvisionOwnSealPrivateKeyAsync(
-                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
+                DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
                 CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
+                D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
                     .ServiceUnavailable());
 
         public ValueTask<D2Result<ClientsIssueLeafOutput?>> IssueLeafAsync(
@@ -428,20 +428,20 @@ public sealed class GrpcCertificateAuthorityServiceTests
     {
         // Seal ops — unused by this gRPC harness (no seal service is wired); fully-qualified
         // to stay collision-safe with the proto types imported in this file.
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
+        public ValueTask<D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>>
             GetOrLazyProvisionSealPublicKeyAsync(
-                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
+                DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput input,
                 CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
+                D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput?>
                     .ServiceUnavailable());
 
-        public ValueTask<D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
+        public ValueTask<D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>>
             GetOrLazyProvisionOwnSealPrivateKeyAsync(
-                D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
+                DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput input,
                 CancellationToken ct = default)
             => ValueTask.FromResult(
-                D2Result<D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
+                D2Result<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput?>
                     .ServiceUnavailable());
 
         public ValueTask<D2Result<ClientsIssueLeafOutput?>> IssueLeafAsync(

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.EntityFrameworkCore;
+namespace DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 
 using System.Reflection;
-using D2.Shared.DataGovernance.Abstractions;
+using DcsvIo.D2.DataGovernance.Abstractions;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;

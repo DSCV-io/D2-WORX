@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Repo.Abstractions;
+namespace DcsvIo.D2.Handler.Repo.Abstractions;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Standardized <see cref="D2Result.ErrorCode"/> values for DB-flavored

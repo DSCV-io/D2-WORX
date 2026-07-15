@@ -8,8 +8,8 @@ i18n message catalog — one JSON file per supported locale (`en-US`, `en-GB`, `
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/i18n/source-gen/`](../../public/packages/dotnet/i18n/source-gen/README.md) (Roslyn `TKGenerator` → decomposes every key in `en-US.json` into a nested `TK.<domain>.<category>.<CONSTANT>` const tree in `D2.Shared.I18n.Keys`)
-- **TypeScript** — [`tools/ts-codegen` › `tk-keys-emit.ts`](../../tools/ts-codegen/README.md) (→ matching nested `TK.*` const-object tree in `@d2/i18n`)
+- **.NET** — [`public/packages/dotnet/i18n/source-gen/`](../../public/packages/dotnet/i18n/source-gen/README.md) (Roslyn `TKGenerator` → decomposes every key in `en-US.json` into a nested `TK.<domain>.<category>.<CONSTANT>` const tree in `DcsvIo.D2.I18n.Keys`)
+- **TypeScript** — [`tools/ts-codegen` › `tk-keys-emit.ts`](../../tools/ts-codegen/README.md) (→ matching nested `TK.*` const-object tree in `@dcsv-io/d2-i18n`)
 - **Paraglide** (SvelteKit BFF, `private/services/web`) — compiles all locale files into optimized per-locale message modules at build time
 
 ## See also

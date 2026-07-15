@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.WorkloadCertificate;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.WorkloadCertificate;
 
 using System.Diagnostics.Metrics;
 using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;
-using D2.Shared.Auth.Outbound.Telemetry;
-using D2.Shared.Auth.Outbound.WorkloadCertificate;
-using D2.Shared.Result;
-using D2.Shared.Tests.Unit.Handler;
+using DcsvIo.D2.Auth.Outbound.Telemetry;
+using DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Tests.Unit.Handler;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;

@@ -8,7 +8,7 @@
  * Converts catalog record arrays into combobox-friendly option arrays
  * with display labels, flag paths, phone prefixes, etc.
  */
-import type { Country, Subdivision } from "@d2/geo-abstractions";
+import type { Country, Subdivision } from "@dcsv-io/d2-geo-abstractions";
 import { getCountryCallingCode } from "./phone-format.js";
 
 /**

@@ -8,8 +8,8 @@ Generic error-code catalog — the platform-wide set of cross-domain error codes
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/source-gen-shared/error-codes-source-gen/`](../../public/packages/dotnet/source-gen-shared/error-codes-source-gen/README.md) (Roslyn source-gen → `ErrorCodes` constants + `D2Result` semantic factories in `D2.Shared.Result`). The merged cross-service registry is built by [`error-codes/registry-source-gen/`](../../public/packages/dotnet/error-codes/registry-source-gen/) (no README).
-- **TypeScript** — [`tools/ts-codegen` › `error-codes-emit.ts`](../../tools/ts-codegen/README.md) (→ generic error-code constants + base `D2Result` factories in `@d2/result`); [`tools/ts-codegen` › `error-codes-registry-emit.ts`](../../tools/ts-codegen/README.md) globs every `*-error-codes.spec.json` (including this one) into the merged registry in `@d2/error-codes-registry`
+- **.NET** — [`public/packages/dotnet/source-gen-shared/error-codes-source-gen/`](../../public/packages/dotnet/source-gen-shared/error-codes-source-gen/README.md) (Roslyn source-gen → `ErrorCodes` constants + `D2Result` semantic factories in `DcsvIo.D2.Result`). The merged cross-service registry is built by [`error-codes/registry-source-gen/`](../../public/packages/dotnet/error-codes/registry-source-gen/) (no README).
+- **TypeScript** — [`tools/ts-codegen` › `error-codes-emit.ts`](../../tools/ts-codegen/README.md) (→ generic error-code constants + base `D2Result` factories in `@dcsv-io/d2-result`); [`tools/ts-codegen` › `error-codes-registry-emit.ts`](../../tools/ts-codegen/README.md) globs every `*-error-codes.spec.json` (including this one) into the merged registry in `@dcsv-io/d2-error-codes-registry`
 - **TypeSpec** — [`public/packages/typescript/typespec-decorators/`](../../public/packages/typescript/typespec-decorators/README.md) reads every `*-error-codes.spec.json` to validate decorator arguments at compile time
 
 ## See also

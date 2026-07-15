@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Telemetry.Internal;
+namespace DcsvIo.D2.Tests.Unit.Telemetry.Internal;
 
 using AwesomeAssertions;
-using D2.Shared.Telemetry.Internal;
+using DcsvIo.D2.Telemetry.Internal;
 using Xunit;
 
 /// <summary>
 /// Per-VALUE pinning for every aggregated source / meter name. The wire
-/// values (literal strings <c>"D2.Shared.Auth"</c> etc.) are the
+/// values (literal strings <c>"DcsvIo.D2.Auth"</c> etc.) are the
 /// long-lived contract operators query Tempo / Loki / Prometheus by
-/// (e.g. <c>service="D2.Shared.Auth"</c>); a value drift would silently
+/// (e.g. <c>service="DcsvIo.D2.Auth"</c>); a value drift would silently
 /// break those dashboards. Pinning here forces an explicit ack of any
 /// rename.
 /// </summary>
@@ -27,10 +27,10 @@ public sealed class AggregatedTelemetrySourcesTests
     }
 
     [Theory]
-    [InlineData("D2.Shared.Handler")]
-    [InlineData("D2.Shared.Auth")]
-    [InlineData("D2.Shared.Auth.Outbound")]
-    [InlineData("D2.Shared.Messaging.RabbitMq")]
+    [InlineData("DcsvIo.D2.Handler")]
+    [InlineData("DcsvIo.D2.Auth")]
+    [InlineData("DcsvIo.D2.Auth.Outbound")]
+    [InlineData("DcsvIo.D2.Messaging.RabbitMq")]
     public void ActivitySourceNames_ContainsExpectedLiteral(string expected)
     {
         AggregatedTelemetrySources.SR_ActivitySourceNames.Should().Contain(expected);
@@ -51,12 +51,12 @@ public sealed class AggregatedTelemetrySourcesTests
     }
 
     [Theory]
-    [InlineData("D2.Shared.Handler")]
-    [InlineData("D2.Shared.Auth")]
-    [InlineData("D2.Shared.Auth.Outbound")]
-    [InlineData("D2.Shared.Messaging.RabbitMq")]
-    [InlineData("D2.Shared.Caching.Distributed.Redis")]
-    [InlineData("D2.Shared.Caching.Local")]
+    [InlineData("DcsvIo.D2.Handler")]
+    [InlineData("DcsvIo.D2.Auth")]
+    [InlineData("DcsvIo.D2.Auth.Outbound")]
+    [InlineData("DcsvIo.D2.Messaging.RabbitMq")]
+    [InlineData("DcsvIo.D2.Caching.Distributed.Redis")]
+    [InlineData("DcsvIo.D2.Caching.Local")]
     public void MeterNames_ContainsExpectedLiteral(string expected)
     {
         AggregatedTelemetrySources.SR_MeterNames.Should().Contain(expected);

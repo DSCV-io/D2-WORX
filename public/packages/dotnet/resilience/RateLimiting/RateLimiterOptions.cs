@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.RateLimiting;
+namespace DcsvIo.D2.Resilience.RateLimiting;
 
 /// <summary>
 /// Configuration for <see cref="RateLimiter"/> and

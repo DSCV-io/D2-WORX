@@ -3,11 +3,11 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { ILogger, LogBindings } from "@d2/logging";
+import type { ILogger, LogBindings } from "@dcsv-io/d2-logging";
 import {
   type IPropagatedContext,
   PropagatedContextSerializer,
-} from "@d2/request-context-abstractions";
+} from "@dcsv-io/d2-request-context-abstractions";
 
 import { type ConsumedMessage } from "../src/subscribing/consumed-message.js";
 

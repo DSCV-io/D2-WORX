@@ -7,7 +7,7 @@ import {
   CountryCode,
   GeopoliticalEntityCode,
   GeopoliticalEntityType,
-} from "@d2/geo-abstractions";
+} from "@dcsv-io/d2-geo-abstractions";
 import { describe, expect, it } from "vitest";
 
 import {

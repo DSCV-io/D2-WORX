@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 
 using System.Threading.Tasks;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
+using global::D2.Services.Protos.KeyCustodian.V2Alpha;
 using global::Grpc.Core;
 
 /// <summary>

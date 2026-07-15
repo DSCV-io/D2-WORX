@@ -8,7 +8,7 @@ import {
   DayOfWeek,
   LanguageCode,
   type LocaleCode,
-} from "@d2/geo-abstractions";
+} from "@dcsv-io/d2-geo-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { LocaleLookup } from "../../src/locales.js";

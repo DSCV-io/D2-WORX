@@ -3,15 +3,15 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { CountryCode } from "@d2/geo-abstractions";
-import type { D2Result } from "@d2/result";
+import type { CountryCode } from "@dcsv-io/d2-geo-abstractions";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 /**
- * Mirror of .NET `D2.Shared.Validation.Abstractions.IPostalCodeValidator` —
+ * Mirror of .NET `DcsvIo.D2.Validation.Abstractions.IPostalCodeValidator` —
  * country-aware postal-code validator that returns a normalized form on
  * success.
  *
- * Implementations live in `@d2/validation` backed by the default
+ * Implementations live in `@dcsv-io/d2-validation` backed by the default
  * per-country normalization rules; tests can supply ad-hoc fixtures by
  * implementing this interface directly.
  */

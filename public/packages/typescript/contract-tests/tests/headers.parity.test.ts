@@ -4,10 +4,10 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { AmqpHeaders } from "@d2/headers-amqp";
-import { CommonHeaders } from "@d2/headers-common";
-import { GrpcHeaders } from "@d2/headers-grpc";
-import { HttpHeaders } from "@d2/headers-http";
+import { AmqpHeaders } from "@dcsv-io/d2-headers-amqp";
+import { CommonHeaders } from "@dcsv-io/d2-headers-common";
+import { GrpcHeaders } from "@dcsv-io/d2-headers-grpc";
+import { HttpHeaders } from "@dcsv-io/d2-headers-http";
 import { canonicalize, loadFixture } from "../src/index.js";
 
 interface HeaderMap {

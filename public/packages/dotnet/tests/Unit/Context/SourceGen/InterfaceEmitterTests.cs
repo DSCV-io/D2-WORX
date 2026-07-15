@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Context.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Context.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.Context.SourceGen;
+using DcsvIo.D2.Context.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -28,7 +28,7 @@ public sealed class InterfaceEmitterTests
     {
         var spec = Spec(
             "IAuthContext",
-            "D2.Shared.AuthContext.Abstractions",
+            "DcsvIo.D2.AuthContext.Abstractions",
             description: "Test description",
             sections: [
                 Section(
@@ -42,7 +42,7 @@ public sealed class InterfaceEmitterTests
         result.HintName.Should().Be("IAuthContext.g.cs");
 
         var src = result.GeneratedSource;
-        src.Should().Contain("namespace D2.Shared.AuthContext.Abstractions;");
+        src.Should().Contain("namespace DcsvIo.D2.AuthContext.Abstractions;");
         src.Should().Contain("public interface IAuthContext");
         src.Should().Contain("#region Token");
         src.Should().Contain("#endregion");
@@ -74,8 +74,8 @@ public sealed class InterfaceEmitterTests
     {
         var spec = Spec(
             "IRequestContext",
-            "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             sections: [Section("Tracing", Property("TraceId", "string?"))]);
 
         var result = InterfaceEmitter.Emit(spec);
@@ -84,7 +84,7 @@ public sealed class InterfaceEmitterTests
         result.GeneratedSource.Should()
             .Contain(
                 "public interface IRequestContext"
-                + " : global::D2.Shared.AuthContext.Abstractions.IAuthContext");
+                + " : global::DcsvIo.D2.AuthContext.Abstractions.IAuthContext");
     }
 
     [Fact]
@@ -327,8 +327,8 @@ public sealed class InterfaceEmitterTests
 
         var result = InterfaceEmitter.Emit(spec);
 
-        result.GeneratedSource.Should().Contain("using D2.Shared.Utilities.Attributes;");
-        result.GeneratedSource.Should().Contain("using D2.Shared.Utilities.Enums;");
+        result.GeneratedSource.Should().Contain("using DcsvIo.D2.Utilities.Attributes;");
+        result.GeneratedSource.Should().Contain("using DcsvIo.D2.Utilities.Enums;");
     }
 
     // ----------------------------------------------------------------------

@@ -3,12 +3,16 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { D2Result, InputError } from "@d2/result";
-import { D2ResultProto, InputErrorProto, TKMessageProto } from "@d2/protos";
+import type { D2Result, InputError } from "@dcsv-io/d2-result";
+import {
+  D2ResultProto,
+  InputErrorProto,
+  TKMessageProto,
+} from "@dcsv-io/d2-protos";
 
 /**
  * Convert a `D2Result` to its `D2ResultProto` wire representation.
- * Mirrors .NET `D2.Shared.Result.Grpc.ProtoExtensions.ToProto()`.
+ * Mirrors .NET `DcsvIo.D2.Result.Grpc.ProtoExtensions.ToProto()`.
  *
  * Mapping rules:
  * - `success`, `statusCode` — always present.

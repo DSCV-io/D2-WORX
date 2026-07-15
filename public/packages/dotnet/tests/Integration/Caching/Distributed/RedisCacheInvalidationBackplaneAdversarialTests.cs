@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Caching.Distributed;
+namespace DcsvIo.D2.Tests.Integration.Caching.Distributed;
 
 using AwesomeAssertions;
-using D2.Shared.Caching.Distributed.Redis;
+using DcsvIo.D2.Caching.Distributed.Redis;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

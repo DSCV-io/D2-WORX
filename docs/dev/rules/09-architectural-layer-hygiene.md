@@ -25,7 +25,7 @@ The most expensive class of failure — wrong layer chosen at design time, code 
 - **9.3** Do endpoints derive org/user scope from session/claims, NEVER from user-supplied input? (IDOR prevention.)
   - Evidence: per new endpoint → request shape confirmed; no `userId`/`orgId`/`role` in body when session has them.
 
-- **9.4** Do handlers validate input via smart-constructor `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`, then `BubbleFail` on the result? Primitive-level rules use `string?.TryParse*` from `D2.Shared.Utilities`; cross-field rules belong in the composite `Create`.
+- **9.4** Do handlers validate input via smart-constructor `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`, then `BubbleFail` on the result? Primitive-level rules use `string?.TryParse*` from `DcsvIo.D2.Utilities`; cross-field rules belong in the composite `Create`.
   - **Why**: never let Redis / DB be the first to reject invalid data.
   - Evidence: per new handler → first 3 lines of `ExecuteAsync` confirm.
 
@@ -52,7 +52,7 @@ The most expensive class of failure — wrong layer chosen at design time, code 
   - **If you already poisoned a Drizzle journal** (one-time repair only, with explicit user approval): edit `_journal.json` `when` to a real past timestamp slotted between neighbors → `UPDATE drizzle.__drizzle_migrations SET created_at = <new_when> WHERE id = <row>` → restart service.
   - Evidence: per new migration file → `git log` shows generator output, not hand-edits.
 
-- **9.11** Does sync between services go via gRPC (HTTP/2)? Async via RabbitMQ? Sensitive RMQ payloads encrypted via `D2.Shared.Encryption`?
+- **9.11** Does sync between services go via gRPC (HTTP/2)? Async via RabbitMQ? Sensitive RMQ payloads encrypted via `DcsvIo.D2.Encryption`?
   - Evidence: per inter-service call → transport confirmed; per sensitive payload → encryption confirmed.
 
 - **9.12** Do all notification deliveries go through D2.Courier → contact resolution? (No direct emails / texts from any other service.)
@@ -130,7 +130,7 @@ The most expensive class of failure — wrong layer chosen at design time, code 
 
 - **9.30** Is .NET ↔ Node platform parity preserved for any cross-platform shared concept?
   - **Applicability**: fires only when BOTH platforms are in active build for the area. If the Node side isn't built yet (current state for most shared libs), the .NET side is NOT blocked — but the parity gap MUST be tracked so the Node mirror is on the roadmap. Re-flagging the same gap on every shared-lib audit before Node is being built is noise; tracking it once with a documented disposition suffices.
-  - **Rule (when applicable)**: if a concept is a separate project / package on one platform (e.g. `D2.Shared.Translation.Default`), it MUST be a separate package on the other (e.g. `@d2/translation`). Same naming theme, same responsibility boundaries.
+  - **Rule (when applicable)**: if a concept is a separate project / package on one platform (e.g. `DcsvIo.D2.Translation.Default`), it MUST be a separate package on the other (e.g. `@dcsv-io/d2-translation`). Same naming theme, same responsibility boundaries.
   - **Why**: developers transfer mental models instantly when packages mirror each other; divergence creates duplicate concept names that drift.
   - **When creating any new shared package on one platform**: check if the corresponding package exists on the other. Both platforms active → create the mirror in the same change. Only one active (current v2 .NET-only state) → document the parity gap as a tracked deliverable.
   - **Cross-ref**: [docs/PARITY.md](../PARITY.md) tracks intentional cross-platform parity + the "Why exclusive?" framework.
@@ -154,7 +154,7 @@ The most expensive class of failure — wrong layer chosen at design time, code 
   - **How**: check + branch on the `SaveChangesAsync()` return. The unit test pins both the success path (rowsAffected == 1 → Ok) AND the not-found path (rowsAffected == 0 → NotFound).
 
 - **9.33** For every gRPC service modified or introduced in this scope, do the client-side and server-side proto-generated stubs reference the SAME proto-package version (no version drift between caller and implementor)?
-  - **Scope**: every gRPC service where the client lib (`*.Client` csproj or `@d2/*-client`) and the server impl (`*.API` csproj or `@d2/*-api`) consume proto-generated stubs. Cross-language services (.NET ↔ Node) are the highest-risk surface.
+  - **Scope**: every gRPC service where the client lib (`*.Client` csproj or `@dcsv-io/d2-*-client`) and the server impl (`*.API` csproj or `@dcsv-io/d2-*-api`) consume proto-generated stubs. Cross-language services (.NET ↔ Node) are the highest-risk surface.
   - **Required**: both reference the SAME proto-source-of-truth (`public/contracts/protos/<topic>/<version>/*.proto`) AND the SAME generated-stub version. When the proto is modified, BOTH regenerate stubs in the SAME change.
   - **Forbidden**: the client pinning an older proto-stub version while the server consumes the latest — wire-format drift waiting for a runtime crash. Same class: hand-written stub partials diverging from the proto shape on either side.
   - **Evidence**: per gRPC service modified → client + server csproj / package.json diff cited; same proto-source path cited; regenerated stubs landed in the same commit per §11.1.
@@ -177,7 +177,7 @@ The most expensive class of failure — wrong layer chosen at design time, code 
 - **9.36** For every project reference and every `using` introduced in a service project, does it respect the one-direction law — domain depends on nothing but shared primitives; app depends on domain (+ abstractions + EF *types*) but never a concrete adapter; infra depends on app + domain (+ vendor SDKs); api depends on app + infra; **api is the ONLY project that may reference infra**?
   - **Scope**: every `<ProjectReference>` in a service's `domain`/`app`/`infra`/`api` csproj + every `using` in those projects' source.
   - **Forbidden** (each is a FINDING): domain referencing `Microsoft.EntityFrameworkCore` / `Microsoft.Extensions.Options` / `Microsoft.Extensions.DependencyInjection` / any logging framework (Serilog / `Microsoft.Extensions.Logging`) / any vendor SDK / any app or infra type; app referencing a concrete vendor SDK or an infra type; app referencing a transport (proto/REST/SSE) type (app speaks `<Op>Input`/`<Op>Output` only); any project OTHER than api referencing infra.
-  - **Allowed**: domain → `D2.Shared.Result` / `D2.Shared.I18n` (`TK.*` + generated `<Service>Failures`) / `D2.Shared.Utilities` / `D2.Shared.Time` (incl. `IClock` as a *parameter*) / `System.Security.Cryptography` (BCL crypto is ambient) / pure shared VO/catalog libs; app → EF Core *types* via the `I<Service>DbContext` port (EF-as-DDD — [ADR-0017](../../public/docs/adrs/0017-ef-as-ddd-persistence.md)); infra → vendor SDKs; api → app + infra + transport libs.
+  - **Allowed**: domain → `DcsvIo.D2.Result` / `DcsvIo.D2.I18n` (`TK.*` + generated `<Service>Failures`) / `DcsvIo.D2.Utilities` / `DcsvIo.D2.Time` (incl. `IClock` as a *parameter*) / `System.Security.Cryptography` (BCL crypto is ambient) / pure shared VO/catalog libs; app → EF Core *types* via the `I<Service>DbContext` port (EF-as-DDD — [ADR-0017](../../public/docs/adrs/0017-ef-as-ddd-persistence.md)); infra → vendor SDKs; api → app + infra + transport libs.
   - **Why**: the dependency law is the invariant behind every structure rule ([ADR-0020](../../public/docs/adrs/0020-service-project-structure.md)); the compiler enforces it through `<ProjectReference>` edges — a domain project not referencing `Microsoft.EntityFrameworkCore.dll` cannot compile any EF type regardless of usings. Vendor churn isolation, a transport-reusable orchestration layer, and an infrastructure-free testable domain ALL collapse if an edge points the wrong way.
   - **How**: check each `<ProjectReference>` / `using` against the law; the tie-breaker for ambiguous placement is "which layer still compiles if I delete the layer below the candidate?". Evidence: per service project → enumerate `<ProjectReference>` edges + confirm no project but api references infra + `grep -rEn 'using (Microsoft\.EntityFrameworkCore|Microsoft\.Extensions\.(Options|DependencyInjection|Logging)|Serilog)' <domain scope>` → domain expects zero + app scope: EF types allowed via the port, Options/DI in DI-extension methods only, zero in handler bodies beyond `BaseHandler`. Cross-ref §9.8 / §11.29, §5.26.
 

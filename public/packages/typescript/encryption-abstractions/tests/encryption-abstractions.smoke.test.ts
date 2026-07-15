@@ -13,7 +13,7 @@ import {
 
 // The four closed domain identifiers — spec source of truth is
 // contracts/encryption-domains/encryption-domains.spec.json.
-// Mirrors .NET D2.Shared.Encryption.EncryptionDomains wire values.
+// Mirrors .NET DcsvIo.D2.Encryption.EncryptionDomains wire values.
 const EXPECTED_DOMAINS = [
   "audit",
   "notifications",
@@ -31,7 +31,7 @@ const EXPECTED_FRAME_FIELDS = [
   "CIPHERTEXT_WITH_TAG",
 ] as const;
 
-describe("@d2/encryption-abstractions — EncryptionDomains", () => {
+describe("@dcsv-io/d2-encryption-abstractions — EncryptionDomains", () => {
   it("ALL_ENCRYPTION_DOMAINS contains exactly the four spec-declared identifiers", () => {
     expect([...ALL_ENCRYPTION_DOMAINS].sort()).toEqual(
       [...EXPECTED_DOMAINS].sort(),
@@ -60,7 +60,7 @@ describe("@d2/encryption-abstractions — EncryptionDomains", () => {
   });
 });
 
-describe("@d2/encryption-abstractions — EncryptionFrame", () => {
+describe("@dcsv-io/d2-encryption-abstractions — EncryptionFrame", () => {
   it("ALL_ENCRYPTION_FRAME_FIELDS contains exactly the five spec-declared field names", () => {
     expect([...ALL_ENCRYPTION_FRAME_FIELDS].sort()).toEqual(
       [...EXPECTED_FRAME_FIELDS].sort(),

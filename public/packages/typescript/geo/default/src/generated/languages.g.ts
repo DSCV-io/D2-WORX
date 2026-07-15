@@ -8,8 +8,8 @@
 
 /* eslint-disable */
 
-import type { Country, Language, Locale, LocaleCode } from "@d2/geo-abstractions";
-import { CountryCode, LanguageCode } from "@d2/geo-abstractions";
+import type { Country, Language, Locale, LocaleCode } from "@dcsv-io/d2-geo-abstractions";
+import { CountryCode, LanguageCode } from "@dcsv-io/d2-geo-abstractions";
 
 // Sibling-lookup imports — referenced inside wireLanguageNav.
 import { CountryLookup } from "./countries.g.js";

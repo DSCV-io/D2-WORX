@@ -4,13 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey.IGenerateKeyHandler;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey.IGenerateKeyHandler;
 using I = GenerateKeyInput;
-using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules.KeySummary;
 
 /// <summary>
 /// Generates a new pending key for a domain.

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Telemetry.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.Telemetry.Infrastructure;
 
 using System.Collections.Concurrent;
 using OpenTelemetry;

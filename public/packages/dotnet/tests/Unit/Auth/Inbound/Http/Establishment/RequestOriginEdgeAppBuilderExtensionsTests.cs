@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Http.Establishment;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Http.Establishment;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Http;
+using DcsvIo.D2.Auth.Http;
 using Microsoft.AspNetCore.Builder;
 using Xunit;
 

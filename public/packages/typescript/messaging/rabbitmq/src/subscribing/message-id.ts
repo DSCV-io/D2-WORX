@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { AmqpHeaders } from "@d2/headers-amqp";
+import { AmqpHeaders } from "@dcsv-io/d2-headers-amqp";
 
 // Hard cap on accepted message-id length. Our publisher emits a 36-char
 // UUIDv7; an attacker controlling a queue we subscribe to could send a 64KB id

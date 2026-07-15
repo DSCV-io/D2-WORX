@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.EntityFrameworkCore;
+namespace DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 
 /// <summary>
 /// A single segment in a parsed anonymization template. A segment is either a literal

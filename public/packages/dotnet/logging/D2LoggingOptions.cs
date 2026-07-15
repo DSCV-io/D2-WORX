@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Logging;
+namespace DcsvIo.D2.Logging;
 
 using Serilog.Events;
 

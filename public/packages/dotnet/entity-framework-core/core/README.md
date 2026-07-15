@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.EntityFrameworkCore
+# DcsvIo.D2.EntityFrameworkCore
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 >
@@ -114,5 +114,5 @@ No configuration — the helper carries no tunable behavior.
 
 - `Microsoft.EntityFrameworkCore.Relational` — `MigrationBuilder`, `CreateIndexOperation`,
   `OperationBuilder<CreateIndexOperation>`
-- `D2.Shared.Utilities` — `ThrowIfFalsey` for a combined null/empty/whitespace guard on
+- `DcsvIo.D2.Utilities` — `ThrowIfFalsey` for a combined null/empty/whitespace guard on
   required string parameters (cycle-free — Utilities does not reference EF or this lib)

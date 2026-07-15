@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
+namespace DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
 
 using System.Security.Cryptography.X509Certificates;
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Per-process source of this workload's current live leaf certificate for outbound

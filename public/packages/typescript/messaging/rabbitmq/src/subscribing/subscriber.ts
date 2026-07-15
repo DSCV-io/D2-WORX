@@ -8,8 +8,8 @@ import {
   type Connection,
   ConsumerStatus,
 } from "rabbitmq-client";
-import type { ILogger } from "@d2/logging";
-import { sanitizedErrorRender } from "@d2/logging";
+import type { ILogger } from "@dcsv-io/d2-logging";
+import { sanitizedErrorRender } from "@dcsv-io/d2-logging";
 
 import { type BodyOpener, PlaintextBodyOpener } from "./body-opener.js";
 import { type ConsumedMessage } from "./consumed-message.js";

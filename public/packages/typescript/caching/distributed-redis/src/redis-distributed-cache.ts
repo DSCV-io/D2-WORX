@@ -8,9 +8,9 @@ import {
   type ICacheInvalidationBackplane,
   type ICacheSerializer,
   type IDistributedCache,
-} from "@d2/caching-abstractions";
-import type { ILogger } from "@d2/logging";
-import { sanitizedErrorRender } from "@d2/logging";
+} from "@dcsv-io/d2-caching-abstractions";
+import type { ILogger } from "@dcsv-io/d2-logging";
+import { sanitizedErrorRender } from "@dcsv-io/d2-logging";
 import {
   bubbleFail,
   canceled,
@@ -20,8 +20,8 @@ import {
   serviceUnavailable,
   someFound,
   type D2Result,
-} from "@d2/result";
-import { falsey } from "@d2/utilities";
+} from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
 import type Redis from "ioredis";
 
 import type { RedisCacheOptions } from "./redis-cache-options.js";
@@ -91,7 +91,7 @@ export interface RedisDistributedCacheDeps {
  * setNx / broadcast wrappers; `getMany` skips per-entry deserialize
  * failures (mirror of .NET GetMany).
  *
- * @see IDistributedCache port contracts on `@d2/caching-abstractions`.
+ * @see IDistributedCache port contracts on `@dcsv-io/d2-caching-abstractions`.
  */
 export class RedisDistributedCache implements IDistributedCache {
   private readonly redis: Redis;

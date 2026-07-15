@@ -15,10 +15,10 @@
 // the .Generated.Facade namespace the real façade emitter targets for I<Module>Api,
 // so harness consumers reference one façade namespace regardless of which façade they
 // fake; the namespace intentionally does not track this file's folder.
-namespace D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
+namespace DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade;
 
-using D2.Edge.Tests.TypeSpecDto.Generated;
-using D2.Shared.Result;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Fixture façade interface for the SignFixture signer operations.

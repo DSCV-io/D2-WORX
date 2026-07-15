@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Endpoints;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Endpoints;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
 using Xunit;
 
 public sealed class D2RequireAnyScopeAttributeTests
@@ -95,7 +95,7 @@ public sealed class D2RequireAnyScopeAttributeTests
         typeof(D2RequireAnyScopeAttribute).Name
             .Should().Be("D2RequireAnyScopeAttribute");
         typeof(D2RequireAnyScopeAttribute).FullName
-            .Should().Be("D2.Shared.Auth.Grpc.Endpoints.D2RequireAnyScopeAttribute");
+            .Should().Be("DcsvIo.D2.Auth.Grpc.Endpoints.D2RequireAnyScopeAttribute");
     }
 
     [Fact]

@@ -48,7 +48,7 @@ export interface EmitResult {
  *   (D2ERC003), cross-catalog duplicate-code (D2ERC004), reserved-namespace
  *   violation (D2ERC005), malformed registry spec (D2ERC006), unknown category
  *   (D2ERC007). Mirrors the .NET shared `D2ERC*` family from
- *   D2.Shared.ErrorCodes.SourceGen.
+ *   DcsvIo.D2.ErrorCodes.SourceGen.
  * - `D2HDR001-007`: headers spec.
  * - `D2JWT001-006`: jwt-claims spec.
  * - `D2PRB001-006`: problem-details spec.
@@ -78,7 +78,7 @@ export const DiagnosticIds = {
   SCP_MALFORMED_SPEC: "D2SCP009",
 
   // Auth protocol audiences. Mirror the .NET
-  // D2.Shared.Auth.ProtocolAudiences.SourceGen DiagnosticIds values byte-for-byte
+  // DcsvIo.D2.Auth.ProtocolAudiences.SourceGen DiagnosticIds values byte-for-byte
   // — same spec source on both sides means the same predicate-violation surface,
   // so identical IDs are correct.
   PAUD_DUPLICATE_NAME: "D2PAUD001",
@@ -95,7 +95,7 @@ export const DiagnosticIds = {
   AEC_MALFORMED_SPEC: "D2AEC005",
 
   // Generic D2Result error codes. Mirror the .NET
-  // D2.Shared.ResultErrorCodes.SourceGen DiagnosticIds values byte-for-byte
+  // DcsvIo.D2.ResultErrorCodes.SourceGen DiagnosticIds values byte-for-byte
   // — same spec source on both sides means same predicate violation surface,
   // so identical IDs are correct.
   EC_MALFORMED_SPEC: "D2EC001",
@@ -107,7 +107,7 @@ export const DiagnosticIds = {
   // Shared error-codes engine (catalog-neutral). These fire for ANY
   // *-error-codes catalog the unified emitter processes, so they use a
   // catalog-neutral family rather than D2EC*/D2AEC*. Mirror the .NET shared
-  // D2.Shared.ErrorCodes.SourceGen D2ERC* ids byte-for-byte — same spec source
+  // DcsvIo.D2.ErrorCodes.SourceGen D2ERC* ids byte-for-byte — same spec source
   // on both sides means same predicate violation surface so identical IDs are
   // correct. A CI grep for `D2ERC` catches both runtimes.
   ERC_DOMAIN_PREFIX_VIOLATION: "D2ERC001",
@@ -143,7 +143,7 @@ export const DiagnosticIds = {
   JWT_MISSING_SPEC: "D2JWT005",
   JWT_EMPTY_VALUE: "D2JWT006",
 
-  // Problem details. Mirror the .NET D2.Shared.ProblemDetails.SourceGen
+  // Problem details. Mirror the .NET DcsvIo.D2.ProblemDetails.SourceGen
   // DiagnosticIds values byte-for-byte — same spec source on both sides
   // means same predicate violation surface so identical IDs are correct.
   PRB_MALFORMED_SPEC: "D2PRB001",
@@ -154,14 +154,14 @@ export const DiagnosticIds = {
   PRB_TYPE_URI_PREFIX_MISSING_TRAILING_SLASH: "D2PRB006",
 
   // Wire shapes (TKMessage + InputError). Mirror the .NET
-  // D2.Shared.WireShapes.SourceGen DiagnosticIds values byte-for-byte.
+  // DcsvIo.D2.WireShapes.SourceGen DiagnosticIds values byte-for-byte.
   WS_MALFORMED_SPEC: "D2WS001",
   WS_DUPLICATE_PROPERTY_CONST_NAME: "D2WS002",
   WS_DUPLICATE_PROPERTY_VALUE: "D2WS003",
   WS_INVALID_CONST_NAME: "D2WS004",
   WS_MISSING_SPEC: "D2WS005",
 
-  // gRPC trailers. Mirror the .NET D2.Shared.Grpc.Trailers.SourceGen
+  // gRPC trailers. Mirror the .NET DcsvIo.D2.Grpc.Trailers.SourceGen
   // DiagnosticIds values byte-for-byte — same spec source on both sides
   // means same predicate violation surface so identical IDs are correct.
   GT_MALFORMED_SPEC: "D2GT001",
@@ -171,7 +171,7 @@ export const DiagnosticIds = {
   GT_EMPTY_VALUE: "D2GT005",
 
   // OTel messaging activity tags. Mirror the .NET
-  // D2.Shared.OtelMessagingTags.SourceGen DiagnosticIds values
+  // DcsvIo.D2.OtelMessagingTags.SourceGen DiagnosticIds values
   // byte-for-byte — same spec source on both sides.
   OMT_MALFORMED_SPEC: "D2OMT001",
   OMT_DUPLICATE_CONST_NAME: "D2OMT002",
@@ -180,7 +180,7 @@ export const DiagnosticIds = {
   OMT_EMPTY_VALUE: "D2OMT005",
 
   // MQ messages descriptor catalog (contracts/mq-messages/). Mirror the .NET
-  // D2.Shared.Messaging.SourceGen.MqGenerator DiagnosticIds values — same spec
+  // DcsvIo.D2.Messaging.SourceGen.MqGenerator DiagnosticIds values — same spec
   // source on both sides means the same predicate-violation surface, so
   // identical IDs are correct. D2MQ003 (duplicate constant) + D2MQ004
   // (missing/unknown encryption default-deny) are named in the spec schema;
@@ -193,7 +193,7 @@ export const DiagnosticIds = {
   MQ_EMPTY_VALUE: "D2MQ006",
 
   // Encryption domains. Mirror the .NET
-  // D2.Shared.EncryptionDomains.SourceGen DiagnosticIds values
+  // DcsvIo.D2.EncryptionDomains.SourceGen DiagnosticIds values
   // byte-for-byte — same spec source on both sides.
   ED_MALFORMED_SPEC: "D2ED001",
   ED_DUPLICATE_CONST_NAME: "D2ED002",
@@ -206,7 +206,7 @@ export const DiagnosticIds = {
   ED_INVALID_CONSUMER_SERVICE: "D2ED009",
 
   // DLQ failure metadata (fields + causes sub-catalogs). Mirror the .NET
-  // D2.Shared.Messaging.DlqMetadata.SourceGen DiagnosticIds values
+  // DcsvIo.D2.Messaging.DlqMetadata.SourceGen DiagnosticIds values
   // byte-for-byte — same spec source on both sides.
   DLQ_MALFORMED_SPEC: "D2DLQ001",
   DLQ_DUPLICATE_FIELD_CONST_NAME: "D2DLQ002",
@@ -216,7 +216,7 @@ export const DiagnosticIds = {
   DLQ_EMPTY_VALUE: "D2DLQ006",
 
   // Encryption frame binary layout. Mirror the .NET
-  // D2.Shared.EncryptionFrame.SourceGen DiagnosticIds values
+  // DcsvIo.D2.EncryptionFrame.SourceGen DiagnosticIds values
   // byte-for-byte — same spec source on both sides.
   EF_MALFORMED_SPEC: "D2EF001",
   EF_DUPLICATE_FIELD_NAME: "D2EF002",
@@ -226,7 +226,7 @@ export const DiagnosticIds = {
 
   // SEALED encryption frame binary layout (the version-2 sibling spec,
   // contracts/encryption-frame-sealed/). Mirror the .NET
-  // D2.Shared.EncryptionFrame.SourceGen sealed-arm DiagnosticIds values
+  // DcsvIo.D2.EncryptionFrame.SourceGen sealed-arm DiagnosticIds values
   // byte-for-byte — same spec source on both sides. D2EF010 rejects a
   // sealed spec version < 2 (version 1 is the symmetric frame's
   // discriminator); D2EF011 rejects a field kind outside the closed set the
@@ -242,7 +242,7 @@ export const DiagnosticIds = {
   EFS_BINARY_LENGTH_PREFIX_MISSING: "D2EF012",
 
   // D2Result envelope (Shape B field names). Mirror the .NET
-  // D2.Shared.Result.Envelope.SourceGen DiagnosticIds values
+  // DcsvIo.D2.Result.Envelope.SourceGen DiagnosticIds values
   // byte-for-byte — same spec source on both sides means same predicate
   // violation surface so identical IDs are correct.
   DRE_MALFORMED_SPEC: "D2DRE001",
@@ -251,7 +251,7 @@ export const DiagnosticIds = {
   DRE_INVALID_CONST_NAME: "D2DRE004",
   DRE_EMPTY_VALUE: "D2DRE005",
 
-  // Geo catalogs. Mirror the .NET D2.Shared.Geo.SourceGen DiagnosticIds
+  // Geo catalogs. Mirror the .NET DcsvIo.D2.Geo.SourceGen DiagnosticIds
   // values byte-for-byte — same spec source on both sides means same
   // predicate violation surface so identical IDs are correct.
   GEO_MALFORMED_SPEC: "D2GEO001",
@@ -293,14 +293,14 @@ export const DiagnosticIds = {
   GEO_MISSING_LOCALE_REFERENCE: "D2GEO012",
 
   // i18n TK keys catalog. Mirrors the .NET
-  // D2.Shared.I18n.SourceGen.KeyDecomposer diagnostic IDs byte-for-byte —
+  // DcsvIo.D2.I18n.SourceGen.KeyDecomposer diagnostic IDs byte-for-byte —
   // same en-US.json source on both sides means same predicate violation
   // surface so identical IDs are correct.
   TK_MALFORMED_SOURCE: "D2TK001",
   TK_INVALID_KEY: "D2TK002",
 
   // Field-constraints catalog (field-length bounds + taxonomy enums). Mirror
-  // the .NET D2.Shared.Validation.SourceGen DiagnosticIds values byte-for-byte
+  // the .NET DcsvIo.D2.Validation.SourceGen DiagnosticIds values byte-for-byte
   // — same spec source on both sides means same predicate violation surface so
   // identical IDs are correct.
   FC_MALFORMED_SPEC: "D2FC001",
@@ -314,7 +314,7 @@ export const DiagnosticIds = {
   FC_INVALID_ENUM_MEMBER_NAME: "D2FC009",
 
   // Error category catalog (the nine closed ErrorCategory wire strings).
-  // Mirror the .NET D2.Shared.ErrorCodes.Category.SourceGen DiagnosticIds
+  // Mirror the .NET DcsvIo.D2.ErrorCodes.Category.SourceGen DiagnosticIds
   // values byte-for-byte — same spec source on both sides.
   ECAT_MALFORMED_SPEC: "D2ECAT001",
   ECAT_DUPLICATE_WIRE: "D2ECAT002",

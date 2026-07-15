@@ -4,10 +4,10 @@
 // -----------------------------------------------------------------------
 
 import { context, trace } from "@opentelemetry/api";
-import { AmqpHeaders } from "@d2/headers-amqp";
-import type { ILogger } from "@d2/logging";
-import { sanitizedErrorRender } from "@d2/logging";
-import type { D2Result } from "@d2/result";
+import { AmqpHeaders } from "@dcsv-io/d2-headers-amqp";
+import type { ILogger } from "@dcsv-io/d2-logging";
+import { sanitizedErrorRender } from "@dcsv-io/d2-logging";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 import {
   type ConsumeContext,

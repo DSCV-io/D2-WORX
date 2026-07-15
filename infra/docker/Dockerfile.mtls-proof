@@ -49,5 +49,5 @@ RUN dotnet restore public/tools/loggermessage-splitter/D2.Tools.LoggerMessageSpl
 
 # Build + run the mutual-TLS harness on Linux (xunit.v3 MTP filter-class).
 ENTRYPOINT ["dotnet", "run", "--no-launch-profile", \
-    "--project", "private/services/edge/tests/D2.Edge.Tests.csproj", \
+    "--project", "private/services/edge/tests/DcsvIo.D2.Private.Edge.Tests.csproj", \
     "--", "--filter-class", "*MutualTlsSignerHarnessTests*"]

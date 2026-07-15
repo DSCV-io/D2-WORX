@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Spec;
+namespace DcsvIo.D2.Geo.SourceGen.Spec;
 
 /// <summary>
 /// One entry parsed from <c>locales.spec.json</c>.

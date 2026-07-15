@@ -8,8 +8,8 @@ import type {
   IDistributedCache,
   ILocalCache,
   ITieredCache,
-} from "@d2/caching-abstractions";
-import type { ILogger } from "@d2/logging";
+} from "@dcsv-io/d2-caching-abstractions";
+import type { ILogger } from "@dcsv-io/d2-logging";
 import {
   ErrorCodes,
   HttpStatusCode,
@@ -17,7 +17,7 @@ import {
   ok,
   someFound,
   type D2Result,
-} from "@d2/result";
+} from "@dcsv-io/d2-result";
 
 import {
   logL1InvalidationFailed,
@@ -65,7 +65,7 @@ export interface DefaultTieredCacheDeps {
  * Pure composition - does not own or dispose L1, L2, or the backplane.
  * Disposing this instance only unsubscribes its backplane handler.
  *
- * @see ITieredCache port contracts on `@d2/caching-abstractions`.
+ * @see ITieredCache port contracts on `@dcsv-io/d2-caching-abstractions`.
  */
 export class DefaultTieredCache implements ITieredCache, AsyncDisposable {
   private readonly l1: ILocalCache;

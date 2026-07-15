@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Context.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Context.SourceGen;
 
 using System;
 using System.IO;
@@ -56,7 +56,7 @@ public sealed class ContextEmitterDogfoodTests
 
     private static string? LocateSourceGenDirectory()
     {
-        // tests bin path: public/packages/dotnet/tests/bin/Debug/net10.0/D2.Shared.Tests.dll
+        // tests bin path: public/packages/dotnet/tests/bin/Debug/net10.0/DcsvIo.D2.Tests.dll
         // walk up to repo root, then back down to context/source-gen.
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)

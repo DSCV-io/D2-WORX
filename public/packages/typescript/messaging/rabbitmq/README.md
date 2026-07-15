@@ -2,12 +2,12 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/messaging-rabbitmq
+# @dcsv-io/d2-messaging-rabbitmq
 
 > Parent: [`public/packages/typescript/`](../../README.md)
 
 The TypeScript **CONSUMER** runtime twin of the .NET
-[`D2.Shared.Messaging.RabbitMq`](../../../../dotnet/messaging/rabbitmq/README.md)
+[`DcsvIo.D2.Messaging.RabbitMq`](../../../../dotnet/messaging/rabbitmq/README.md)
 consumer path. A service author building a Node service that consumes messages
 a .NET service publishes uses this package: a service-agnostic RabbitMQ
 subscriber with the same topology, same DLQ convention, and same cross-hop
@@ -38,7 +38,7 @@ paths: the descriptor's domain mode is consulted unconditionally, and a missing
 composer for an encrypted domain, or an unknown domain, fails loud before any
 socket write. The body is composed once (a resend reuses the exact bytes — no
 re-encrypt under a fresh nonce). The KC-backed composer instances are wired by
-the host via `@d2/key-custodian-client`'s `createSealedCryptoViaKeyCustodian`.
+the host via `@dcsv-io/d2-private-key-custodian-client`'s `createSealedCryptoViaKeyCustodian`.
 
 On the consume side, `CryptoBodyOpener` (sealed / symmetric) plugs the real
 crypto into the body-decompose seam: a wrong-version frame, a plaintext body on
@@ -56,7 +56,7 @@ import {
   subscribe,
   QueuePattern,
   InMemoryMessageIdempotencyStore,
-} from "@d2/messaging-rabbitmq";
+} from "@dcsv-io/d2-messaging-rabbitmq";
 
 const connection = createConnection({
   connectionUri: process.env.D2_RABBITMQ_URI!, // secret — never logged whole
@@ -103,7 +103,7 @@ The handler returns a `D2Result`. A failed result dead-letters the message
 2. **Per-message context** — decodes the `x-d2-context` header
    (base64url-of-JSON, exactly what the .NET `PropagatedContextSerializer.Encode`
    and the gRPC interceptor produce) via the shared
-   `@d2/request-context-abstractions` serializer and applies the operational
+   `@dcsv-io/d2-request-context-abstractions` serializer and applies the operational
    subset (request id / path / fingerprints / WhoIs hash / locale-tier fields /
    `callPath`) onto a fresh per-message context. **Identity is never taken from
    the wire**, and **`RequestOrigin` is never wire-reconstructed** — those
@@ -148,12 +148,12 @@ queue lock).
   100% `src/**` coverage.
 - **Integration** (`pnpm test:integration`) — a Testcontainer RabbitMQ replaying
   **real .NET-emitted golden messages** (emitted by
-  `D2.Shared.Tests` `Integration/ContractFixtures/MqGoldenMessageFixtureEmitter`
+  `DcsvIo.D2.Tests` `Integration/ContractFixtures/MqGoldenMessageFixtureEmitter`
   into `contract-tests/fixtures/mq-messages-golden/`): wire-contract consume,
   encrypted-frame → DLQ, handler-failure DLQ metadata, idempotency dedup, and
   competing consumers.
 - **Descriptor mirror** — `MqMessages` / `MqMessagesRegistry` (in
-  `@d2/messaging-abstractions`, emitted by `tools/ts-codegen/src/mq-messages-emit.ts`)
+  `@dcsv-io/d2-messaging-abstractions`, emitted by `tools/ts-codegen/src/mq-messages-emit.ts`)
   is asserted byte-equal to the .NET `MqMessagesRegistry` by
   `contract-tests/tests/mq-messages.parity.test.ts`.
 
@@ -162,11 +162,11 @@ queue lock).
 ## Dependencies
 
 - `rabbitmq-client` — the only vendor dep (transport).
-- `@d2/headers-amqp` — AMQP header wire-value constants.
-- `@d2/messaging-abstractions` — `DlqFailureMetadataFields` / `DlqFailureCauses`
+- `@dcsv-io/d2-headers-amqp` — AMQP header wire-value constants.
+- `@dcsv-io/d2-messaging-abstractions` — `DlqFailureMetadataFields` / `DlqFailureCauses`
   + the `MqMessages` descriptor mirror.
-- `@d2/request-context-abstractions` — `PropagatedContextSerializer` +
+- `@dcsv-io/d2-request-context-abstractions` — `PropagatedContextSerializer` +
   `IPropagatedContext`.
-- `@d2/encryption-abstractions` — frame-version constants (fail-loud guard).
-- `@d2/telemetry` — the `MessagingActivityTags` span-tag catalog.
-- `@d2/result`, `@d2/logging`, `@d2/utilities` — cross-cutting.
+- `@dcsv-io/d2-encryption-abstractions` — frame-version constants (fail-loud guard).
+- `@dcsv-io/d2-telemetry` — the `MessagingActivityTags` span-tag catalog.
+- `@dcsv-io/d2-result`, `@dcsv-io/d2-logging`, `@dcsv-io/d2-utilities` — cross-cutting.

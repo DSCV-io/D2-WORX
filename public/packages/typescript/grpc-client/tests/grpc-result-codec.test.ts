@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { D2ResultProto } from "@d2/protos";
+import { D2ResultProto } from "@dcsv-io/d2-protos";
 import {
   D2Result,
   HttpStatusCode,
@@ -22,9 +22,12 @@ import {
   fail,
   inputError,
   tk,
-} from "@d2/result";
-import { ErrorCategoryWire, type ErrorCategory } from "@d2/error-category";
-import { TK } from "@d2/i18n-keys";
+} from "@dcsv-io/d2-result";
+import {
+  ErrorCategoryWire,
+  type ErrorCategory,
+} from "@dcsv-io/d2-error-category";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import { d2ResultToProto } from "../src/d2-result-to-proto.js";
 import { d2ResultFromProto } from "../src/d2-result-from-proto.js";
 import {

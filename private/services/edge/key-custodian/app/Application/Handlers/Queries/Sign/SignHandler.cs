@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 
-using D2.Edge.KeyCustodian.App.Application.Signing;
-using D2.Private.Auth;
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign.ISignHandler;
-using I = D2.Edge.KeyCustodian.Client.Signing.SignInput;
-using O = D2.Edge.KeyCustodian.Client.Signing.SignOutput;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Signing;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign.ISignHandler;
+using I = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing.SignInput;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing.SignOutput;
 
 /// <summary>
 /// Loads a key domain's active <see cref="KeyType.RsaSigning"/> key, decrypts the
@@ -110,7 +110,7 @@ public sealed class SignHandler(
         D2Result authResult, string? immediateCaller, KeyDomain domain)
     {
         // Switch on the EMITTED error-code constants, never raw string literals â€” they are
-        // in scope via the app/GlobalUsings.cs D2.Edge.KeyCustodian.Domain.Errors global
+        // in scope via the app/GlobalUsings.cs DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors global
         // using. This switch maps the rule's typed code to a bounded reason tag drawn from
         // the KeyCustodianMetrics.AuthorityRejections named-constant closed set.
         var reason = authResult.ErrorCode switch

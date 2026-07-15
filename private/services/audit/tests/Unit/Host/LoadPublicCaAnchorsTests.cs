@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Audit.Tests.Unit.Host;
 
-using D2.Audit.Api.Mtls;
+using DcsvIo.D2.Private.Audit.Api.Mtls;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>

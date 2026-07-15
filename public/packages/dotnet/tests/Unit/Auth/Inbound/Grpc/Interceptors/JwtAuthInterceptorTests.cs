@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Interceptors;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Interceptors;
 
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Grpc.Interceptors;
-using D2.Shared.Auth.Grpc.Status;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Grpc.Interceptors;
+using DcsvIo.D2.Auth.Grpc.Status;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
 using global::Grpc.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -483,7 +483,7 @@ public sealed class JwtAuthInterceptorTests
             sessionId: sessionId,
             extraClaims: new Dictionary<string, object>
             {
-                [D2.Shared.Auth.Abstractions.JwtClaimTypes.SCOPE] = "any.scope",
+                [DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.SCOPE] = "any.scope",
             });
         var interceptor = MakeInterceptor(builder);
         var ctx = MakeContext(
@@ -522,7 +522,7 @@ public sealed class JwtAuthInterceptorTests
             _AUDIENCE,
             extraClaims: new Dictionary<string, object>
             {
-                [D2.Shared.Auth.Abstractions.JwtClaimTypes.SCOPE] = "any.scope",
+                [DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.SCOPE] = "any.scope",
             });
         var holder = new MutableForwardedJwtAccessor();
         var interceptor = MakeInterceptor(builder);

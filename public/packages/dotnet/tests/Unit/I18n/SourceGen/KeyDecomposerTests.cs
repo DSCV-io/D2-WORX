@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.I18n.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.I18n.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.I18n.SourceGen;
+using DcsvIo.D2.I18n.SourceGen;
 using Xunit;
 
 public sealed class KeyDecomposerTests

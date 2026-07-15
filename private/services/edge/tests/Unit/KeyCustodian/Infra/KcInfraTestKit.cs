@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
 using System.Security.Cryptography;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>

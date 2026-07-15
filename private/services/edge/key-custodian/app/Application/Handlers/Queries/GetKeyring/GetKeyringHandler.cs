@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
 
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Private.Auth;
-using D2.Private.Encryption;
-using D2.Shared.Auth.Abstractions;
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring.IGetKeyringHandler;
-using I = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringInput;
-using O = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Encryption;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring.IGetKeyringHandler;
+using I = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.GetKeyringInput;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
 
 /// <summary>
 /// Loads a payload key domain's Active + Retiring <see cref="KeyType.AesPayload"/> keys,
@@ -95,8 +95,11 @@ public sealed class GetKeyringHandler(
         //     AesPayload-bound, so the KeyType fork above does NOT catch it â€” a sealed domain
         //     has no symmetric keyring by construction. Refuse it with the same sharp-400. Kept
         //     WITH the type fork (AFTER authority) so the no-domain-oracle ordering is preserved.
-        if (ProductEncryptionDomainModes.ModeFor(domain.Value) == ProductEncryptionDomainMode.Sealed)
+        if (ProductEncryptionDomainModes.ModeFor(domain.Value)
+            == ProductEncryptionDomainMode.Sealed)
+        {
             return KeyCustodianFailures<O?>.KeyTypeDomainMismatch();
+        }
 
         // 4) Load Active + Retiring payload keys for the domain. `.Payload()` is
         //    redundant-with-the-fork by construction but keeps the query self-defending â€”
@@ -170,7 +173,7 @@ public sealed class GetKeyringHandler(
         D2Result authResult, string? immediateCaller, RequestOrigin origin, KeyDomain domain)
     {
         // Switch on the EMITTED error-code constants, never raw string literals (in scope
-        // via the app/GlobalUsings.cs D2.Edge.KeyCustodian.Domain.Errors global using). The
+        // via the app/GlobalUsings.cs DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors global using). The
         // uniform 403 KEYRING_DOMAIN_NOT_AUTHORIZED splits by deny arm for TELEMETRY ONLY â€”
         // the wire code stays uniform (no domain-existence oracle): a plane deny (origin not
         // in the served set) is UNAUTHORIZED_PLANE, a policy miss is NOT_IN_ALLOWED_SET. The

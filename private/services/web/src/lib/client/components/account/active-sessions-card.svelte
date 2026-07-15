@@ -15,8 +15,8 @@ Copyright (c) DCSV. All rights reserved.
     revokeOtherSessions,
     type ActiveSessionDTO,
   } from "$lib/client/rest/account-client.js";
-  import { validationFailed } from "@d2/result";
-  import { TK } from "@d2/i18n-keys";
+  import { validationFailed } from "@dcsv-io/d2-result";
+  import { TK } from "@dcsv-io/d2-i18n-keys";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
   import {
     formatLocation,

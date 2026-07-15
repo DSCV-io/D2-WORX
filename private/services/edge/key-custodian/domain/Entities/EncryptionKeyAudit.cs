@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.Entities;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Entities;
 
 /// <summary>
 /// Append-only audit record that captures each lifecycle transition of a

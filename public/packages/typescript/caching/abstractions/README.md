@@ -2,18 +2,18 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/caching-abstractions
+# @dcsv-io/d2-caching-abstractions
 
-> Parent: [`../README.md`](../README.md) · .NET mirror: `D2.Shared.Caching.Abstractions`
+> Parent: [`../README.md`](../README.md) · .NET mirror: `DcsvIo.D2.Caching.Abstractions`
 
 Node/BFF authors inject these cache **ports** without pulling Redis, logging, or DI
 wiring into domain-safe code. The package is the TypeScript twin of
-`D2.Shared.Caching.Abstractions`: marker interfaces (`ILocalCache` /
+`DcsvIo.D2.Caching.Abstractions`: marker interfaces (`ILocalCache` /
 `IDistributedCache` / `ITieredCache`), fine-grained building blocks
 (`ICacheBasic` / `ICacheAtomic` / `ICacheBroadcast` / `ICacheSet`), plus
 `ICacheInvalidationBackplane`, `ICacheSerializer`, `InputFailures`, and
 `LocalCacheOptions` / `LOCAL_CACHE_DEFAULTS`. Every op returns
-`Promise<D2Result<…>>` / `D2Result<…>` via `@d2/result`. **No implementations**
+`Promise<D2Result<…>>` / `D2Result<…>` via `@dcsv-io/d2-result`. **No implementations**
 ship here — only contracts and pure helpers.
 
 ## Public surface — building blocks
@@ -102,7 +102,7 @@ concern, not per-call input.
 **`ICacheSerializer`** — pluggable serialization for distributed caches.
 `contentType: string` (free string, e.g. `"application/json"`);
 `serialize` / `deserialize` with `Uint8Array`. This package owns the port only; a default JSON implementation is part of the
-`@d2/caching-distributed-redis` package surface. Local
+`@dcsv-io/d2-caching-distributed-redis` package surface. Local
 caches store objects directly and do not need this. Impls use `COULD_NOT_BE_SERIALIZED` /
 `COULD_NOT_BE_DESERIALIZED` failure codes.
 
@@ -204,7 +204,7 @@ the atomicity guarantee comes from L2 (the cluster source of truth). Pattern:
   coordination, not a cached value).
 
 L1 is never authoritative for atomic state. L2 is. L1 just reflects (or
-invalidates). Concrete behavior lands in `@d2/caching-tiered`.
+invalidates). Concrete behavior lands in `@dcsv-io/d2-caching-tiered`.
 
 ## Configuration carve-out
 
@@ -223,8 +223,8 @@ Redis package options — abstractions own the **interface only**.
 Inject markers at composition roots; this package registers nothing.
 
 ```ts
-import type { ILocalCache, IDistributedCache, ITieredCache } from "@d2/caching-abstractions";
-import { InputFailures, createLocalCacheOptions } from "@d2/caching-abstractions";
+import type { ILocalCache, IDistributedCache, ITieredCache } from "@dcsv-io/d2-caching-abstractions";
+import { InputFailures, createLocalCacheOptions } from "@dcsv-io/d2-caching-abstractions";
 
 // Domain / handler code depends only on the marker:
 async function loadProfile(cache: ITieredCache, userId: string) {
@@ -248,8 +248,8 @@ const localOpts = createLocalCacheOptions({ keyPrefix: "jwks:" });
 
 ## Dependencies
 
-- `@d2/result` — every op returns `D2Result` / `D2Result<T>`
-- `@d2/i18n-keys` — `TK.common.errors.NOT_NULL_VIOLATION` for `InputFailures`
+- `@dcsv-io/d2-result` — every op returns `D2Result` / `D2Result<T>`
+- `@dcsv-io/d2-i18n-keys` — `TK.common.errors.NOT_NULL_VIOLATION` for `InputFailures`
 
 No runtime deps beyond those (no DI, no logging, no provider libs). This
 abstraction stays domain-safe so any handler can declare a cache dependency

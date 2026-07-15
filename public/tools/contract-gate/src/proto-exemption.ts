@@ -9,7 +9,7 @@
 // breaks freely — the gate does not enforce FILE-level breaking rules on it.
 // Only stable `vN` packages (no alpha/beta suffix) are gate-enforced.
 //
-// Stability derivation mirrors `parseChannel` from @d2/typespec-emitters
+// Stability derivation mirrors `parseChannel` from @dcsv-io/d2-typespec-emitters
 // wire-channel.ts. The grammar and stability logic are re-implemented as a
 // 6-line local mirror (rather than a cross-package import from
 // public/packages/typescript/) to keep the tools/ package self-contained and

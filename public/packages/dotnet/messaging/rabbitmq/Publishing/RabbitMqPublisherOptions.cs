@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Publishing;
+namespace DcsvIo.D2.Messaging.RabbitMq.Publishing;
 
 /// <summary>
 /// Transport-level publisher defaults. Per-call <see cref="PublisherOptions"/>

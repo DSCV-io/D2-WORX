@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Auth.Audiences.SourceGen
+# DcsvIo.D2.Auth.Audiences.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -14,8 +14,8 @@ Roslyn incremental source generator that emits audience catalogs from `public/co
 
 | Consuming assembly | Emitted type | Values |
 | --- | --- | --- |
-| `D2.Shared.Auth.Abstractions` | `Audiences` under `D2.Shared.Auth.Abstractions` | public AdditionalFiles only |
-| `D2.Shared.Auth.Abstractions.Extensions` | `ProductAudiences` under `D2.Private.Auth` | public∪private AdditionalFiles |
+| `DcsvIo.D2.Auth.Abstractions` | `Audiences` under `DcsvIo.D2.Auth.Abstractions` | public AdditionalFiles only |
+| `DcsvIo.D2.Private.Auth.Abstractions.Extensions` | `ProductAudiences` under `DcsvIo.D2.Private.Auth` | public∪private AdditionalFiles |
 
 Any other assembly → no emit. Private host PackageId is 1:1 with the public twin + `.Extensions`.
 
@@ -96,4 +96,4 @@ Audience strings flow through the inbound JWT validator's `aud` claim check at e
 - [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`public/contracts/auth-audiences/schema.json`](../../../../contracts/auth-audiences/schema.json) — JSON Schema (editor-time gate)
 - [`public/contracts/auth-audiences/audiences.spec.json`](../../../../contracts/auth-audiences/audiences.spec.json) — the catalog
-- [`D2.Shared.Auth.Abstractions`](../abstractions/README.md) — the consuming lib (where `Audiences.g.cs` lands)
+- [`DcsvIo.D2.Auth.Abstractions`](../abstractions/README.md) — the consuming lib (where `Audiences.g.cs` lands)

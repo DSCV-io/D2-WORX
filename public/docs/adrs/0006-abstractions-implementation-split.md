@@ -45,7 +45,7 @@ Every multi-package cluster in `public/packages/dotnet/` is split into at minimu
 - Interfaces domain code programs against (`IHandler`, `IMessageBus`, `ILocalCache`, `IDbExceptionClassifier`, `IAuthContext`, `IRequestContext`, `IGeoReference`, `IEmailValidator`, `ITranslator`, …).
 - Pure value records and enums carrying no infrastructure identity (`DbFailureKind`, `HandlerOptions`, `TKMessage`, `ActorEntry`, geo record shapes).
 - Codegen-emitted constant catalogs and spec-derived vocabulary other abstractions or generators must reference (`TK.*`, `Scopes.*`, `MqMessages.*`, `D2ProblemDetailsKeys`, geo types).
-- Zero external NuGet beyond the lowest-layer foundation libs (`D2.Shared.Result`, `D2.Shared.I18n.Abstractions`) and, where the contract surface technically requires it, one carefully scoped NuGet (e.g. `Microsoft.IdentityModel.Tokens` on `auth/abstractions` for the `SecurityKey` field of `JwksKeySetSnapshot`).
+- Zero external NuGet beyond the lowest-layer foundation libs (`DcsvIo.D2.Result`, `DcsvIo.D2.I18n.Abstractions`) and, where the contract surface technically requires it, one carefully scoped NuGet (e.g. `Microsoft.IdentityModel.Tokens` on `auth/abstractions` for the `SecurityKey` field of `JwksKeySetSnapshot`).
 
 **The runtime/provider siblings contain:**
 
@@ -78,9 +78,9 @@ Domain and application code takes `ProjectReference` only on `*/abstractions` pa
 
 **Monolithic per-concern libraries (interface + implementation together).** One csproj per cluster carrying both the interface and the implementation. Simple, low package count, but forces every consumer of the interface to transitively pick up all provider dependencies. `i18n/abstractions`'s README explicitly cites this as the rejected path: lumping the runtime translator into the same project as `TKMessage` would force every domain project to transitively pick up DI + Configuration just to spell out an error key. Any handler in any service would carry RabbitMQ.Client, StackExchange.Redis, and NodaTime in its compilation unit regardless of use.
 
-**A single mega-abstractions package.** One `D2.Shared.Abstractions` collecting all interfaces across all clusters. Removes proliferation but would need to reference every foundation type used by any interface (`D2Result`, `TKMessage`, `SecurityKey`, `CountryCode`), making it neither zero-dep nor lightweight, and it cannot serve as a codegen target for multiple generators without coupling them.
+**A single mega-abstractions package.** One `DcsvIo.D2.Abstractions` collecting all interfaces across all clusters. Removes proliferation but would need to reference every foundation type used by any interface (`D2Result`, `TKMessage`, `SecurityKey`, `CountryCode`), making it neither zero-dep nor lightweight, and it cannot serve as a codegen target for multiple generators without coupling them.
 
-**No formal split — domain code references impl packages directly.** Lowest friction: one project per concern, domain handlers import `D2.Shared.Messaging.RabbitMq` directly. Rejected because it inverts the dependency direction — domain code would depend on infrastructure, binding it to specific providers and making it impossible to test without a live broker. This is the "infra dep leaking into domain" failure mode §9 layer-hygiene rules exist to catch.
+**No formal split — domain code references impl packages directly.** Lowest friction: one project per concern, domain handlers import `DcsvIo.D2.Messaging.RabbitMq` directly. Rejected because it inverts the dependency direction — domain code would depend on infrastructure, binding it to specific providers and making it impossible to test without a live broker. This is the "infra dep leaking into domain" failure mode §9 layer-hygiene rules exist to catch.
 
 ## References
 
@@ -89,4 +89,4 @@ Domain and application code takes `ProjectReference` only on `*/abstractions` pa
 - `public/packages/dotnet/handler/repo-abstractions/README.md`, `handler/repo/README.md` — "Pure abstractions: no EF Core, no Npgsql, no provider deps"; "Provider-specific knowledge lives in sibling packages" — the most explicit provider-pluggability example.
 - `public/packages/dotnet/caching/abstractions/README.md`, `messaging/abstractions/README.md`, `geo/abstractions/README.md` — the same "domain-safe, no runtime/transport deps" rationale across clusters.
 - `docs/dev/rules.md §9` (layer hygiene) + §9.8 (dep-graph update requirement for every `<ProjectReference>` edit).
-- [ADR-0005](0005-handler-pipeline.md) — the handler/repo abstractions+core+provider triple is the most developed instance of this pattern. [ADR-0002](0002-spec-driven-codegen.md) — codegen emits into the abstractions slices. [ADR-0003](0003-d2result-errors-as-values.md), [ADR-0004](0004-i18n-tkmessage.md) — `D2.Shared.Result` + `D2.Shared.I18n.Abstractions` are the two foundation deps the abstractions slices are allowed to reference.
+- [ADR-0005](0005-handler-pipeline.md) — the handler/repo abstractions+core+provider triple is the most developed instance of this pattern. [ADR-0002](0002-spec-driven-codegen.md) — codegen emits into the abstractions slices. [ADR-0003](0003-d2result-errors-as-values.md), [ADR-0004](0004-i18n-tkmessage.md) — `DcsvIo.D2.Result` + `DcsvIo.D2.I18n.Abstractions` are the two foundation deps the abstractions slices are allowed to reference.

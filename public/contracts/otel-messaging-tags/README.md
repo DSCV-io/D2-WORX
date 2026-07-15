@@ -8,8 +8,8 @@ OpenTelemetry messaging tag catalog — the closed set of OTel semantic-conventi
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/messaging/otel-messaging-tags-source-gen/`](../../public/packages/dotnet/messaging/otel-messaging-tags-source-gen/README.md) (Roslyn source-gen → `MessagingActivityTags` attribute-name constants in `D2.Shared.Messaging.RabbitMq`)
-- **TypeScript** — [`tools/ts-codegen` › `otel-messaging-tags-emit.ts`](../../tools/ts-codegen/README.md) (→ matching attribute-name constants in `@d2/telemetry` for any TypeScript messaging instrumentation)
+- **.NET** — [`public/packages/dotnet/messaging/otel-messaging-tags-source-gen/`](../../public/packages/dotnet/messaging/otel-messaging-tags-source-gen/README.md) (Roslyn source-gen → `MessagingActivityTags` attribute-name constants in `DcsvIo.D2.Messaging.RabbitMq`)
+- **TypeScript** — [`tools/ts-codegen` › `otel-messaging-tags-emit.ts`](../../tools/ts-codegen/README.md) (→ matching attribute-name constants in `@dcsv-io/d2-telemetry` for any TypeScript messaging instrumentation)
 
 ## See also
 

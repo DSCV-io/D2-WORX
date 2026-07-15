@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
 /// <summary>Integration message fixture exercising the encrypted code path.
 /// The resolver descriptor (exchange, encryption domain) is pre-seeded by

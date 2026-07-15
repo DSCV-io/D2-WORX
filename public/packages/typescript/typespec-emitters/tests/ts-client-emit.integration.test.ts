@@ -24,10 +24,10 @@ import {
 import { HttpTestLibrary } from "@typespec/http/testing";
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -36,7 +36,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 });
 
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -58,15 +58,16 @@ function getEmittedFile(
 // csharp-bridge-namespace for standalone) keyed by the op's @d2ServedBy.
 const REAL_MODULE_OPTIONS = {
   "csharp-namespace": "D2.Test",
-  "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
-  "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+  "csharp-clients-namespace": "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
+  "csharp-app-namespace-base":
+    "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
 };
 
 function edgeModuleRouting(servedBy: string): Record<string, unknown> {
   return {
     "process-kind-by-module": { [servedBy]: "edge-module" },
     "csharp-routes-namespace": {
-      [servedBy]: `D2.Edge.Api.Routes.${servedBy}`,
+      [servedBy]: `DcsvIo.D2.Private.Edge.Api.Routes.${servedBy}`,
     },
   };
 }
@@ -88,7 +89,7 @@ describe("tsClientEmitIntegration_GrpcClient_DispatchedForGrpcOp", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -111,9 +112,9 @@ describe("tsClientEmitIntegration_GrpcClient_DispatchedForGrpcOp", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           ...REAL_MODULE_OPTIONS,
           ...edgeModuleRouting("SignFixture"),
         },
@@ -132,7 +133,7 @@ describe("tsClientEmitIntegration_GrpcClient_DispatchedForGrpcOp", () => {
     expect(grpc).toContain("export interface SignFixtureGrpcClient {");
     expect(grpc).toContain("signFixture(input: SignFixtureInput");
     expect(grpc).toContain("createSignFixtureGrpcClient");
-    expect(grpc).toContain('from "@d2/grpc-client"');
+    expect(grpc).toContain('from "@dcsv-io/d2-grpc-client"');
 
     // TS REST client (browser surface) — @route.
     const rest = getEmittedFile(host, "sign-fixture-rest-client.g.ts");
@@ -158,7 +159,7 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -181,11 +182,12 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           ...REAL_MODULE_OPTIONS,
-          "csharp-clients-namespace": "D2.Edge.PredicateFixtures.Clients",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.PredicateFixtures.Clients",
         },
       },
       outputDir: "testing:/out",
@@ -228,7 +230,7 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
     bareHost.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -251,11 +253,12 @@ describe("tsClientEmitIntegration_PredicateRetryArm_FoldedIn", () => {
     );
 
     await bareHost.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           ...REAL_MODULE_OPTIONS,
-          "csharp-clients-namespace": "D2.Edge.BareFixtures.Clients",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.BareFixtures.Clients",
         },
       },
       outputDir: "testing:/out",
@@ -290,7 +293,7 @@ describe("tsClientEmitIntegration_RestOnlyOp_NoGrpcClient", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -309,11 +312,11 @@ describe("tsClientEmitIntegration_RestOnlyOp_NoGrpcClient", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           ...REAL_MODULE_OPTIONS,
-          "csharp-clients-namespace": "D2.Edge.Accounts.Clients",
+          "csharp-clients-namespace": "DcsvIo.D2.Private.Edge.Accounts.Clients",
           ...edgeModuleRouting("Accounts"),
         },
       },

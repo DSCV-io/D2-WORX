@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Validation
+# DcsvIo.D2.Validation
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 >
@@ -10,7 +10,7 @@ Copyright (c) DCSV. All rights reserved.
 > phone, and postal-code validation backed by libphonenumber-csharp and a ported
 > postcode-validator dataset.
 
-Default implementations of the three validator contracts from `D2.Shared.Validation.Abstractions`.
+Default implementations of the three validator contracts from `DcsvIo.D2.Validation.Abstractions`.
 
 ## Validators
 
@@ -37,7 +37,7 @@ The per-country regex map lives in **`contracts/validation/postal-code-regexes.j
 — the single cross-runtime source of truth, read by BOTH runtimes. This project
 embeds it as a build-time `EmbeddedResource` (`Link`'d to the logical name
 `PostalCodeRegexData.json`, so the manifest-resource lookup in
-`PostalCodeRegexData.cs` resolves unchanged); the TypeScript `@d2/validation`
+`PostalCodeRegexData.cs` resolves unchanged); the TypeScript `@dcsv-io/d2-validation`
 package imports the same file directly. Neither runtime keeps its own copy.
 
 The dataset is ported from `postcode-validator@3.10.9` with **one deliberate
@@ -65,14 +65,14 @@ All three validators are registered via `TryAddSingleton`; override any with
 
 ## Dependencies
 
-- `D2.Shared.Validation.Abstractions` — the `IEmailValidator`, `IPhoneValidator`,
+- `DcsvIo.D2.Validation.Abstractions` — the `IEmailValidator`, `IPhoneValidator`,
   and `IPostalCodeValidator` contracts this package implements.
-- `D2.Shared.Result` — `D2Result<string>` return type and semantic factories.
-- `D2.Shared.Geo.Abstractions` — `CountryCode` parameter on `IPhoneValidator` and
+- `DcsvIo.D2.Result` — `D2Result<string>` return type and semantic factories.
+- `DcsvIo.D2.Geo.Abstractions` — `CountryCode` parameter on `IPhoneValidator` and
   `IPostalCodeValidator`.
-- `D2.Shared.I18n.Abstractions` — `TK.Common.Validation.*_INVALID` translation keys
+- `DcsvIo.D2.I18n.Abstractions` — `TK.Common.Validation.*_INVALID` translation keys
   carried in `D2Result` `InputError` fields.
-- `D2.Shared.Utilities` — `Falsey()` for null / empty / whitespace input guards.
+- `DcsvIo.D2.Utilities` — `Falsey()` for null / empty / whitespace input guards.
 - `libphonenumber-csharp 9.0.31` — phone-number parsing and E.164 normalization
   (Apache-2.0). Exact version pin; accept/reject boundary shifts between minor
   releases, so the pin keeps behavior stable across .NET and TS parity fixtures.

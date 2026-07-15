@@ -4,38 +4,38 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian;
 
 using System.Buffers.Text;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using D2.Edge.KeyCustodian.App.Application;
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Edge.KeyCustodian.App.Application.Signing;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
-using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Client.CaCertificate;
-using D2.Edge.KeyCustodian.Client.Issuance;
-using D2.Edge.KeyCustodian.Client.Signing;
-using D2.Edge.KeyCustodian.Infra;
-using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
-using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
-using D2.Private.Auth;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.EntityFrameworkCore.Postgres;
-using D2.Shared.Handler;
-using D2.Shared.Handler.Repo.Postgres;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Handler.Repo.Postgres;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Signing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Messaging;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Persistence;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -428,8 +428,8 @@ public sealed class KeyCustodianLifecycleIntegrationTests(KeyCustodianPostgresFi
             ImmediateCaller = "edge",
             Scopes = new HashSet<string>(StringComparer.Ordinal)
             {
-                D2.Private.Auth.ProductScopes.Internal.Kc.Issue,
-                D2.Private.Auth.ProductScopes.Internal.Kc.Cacert,
+                DcsvIo.D2.Private.Auth.ProductScopes.Internal.Kc.Issue,
+                DcsvIo.D2.Private.Auth.ProductScopes.Internal.Kc.Cacert,
             },
         };
 

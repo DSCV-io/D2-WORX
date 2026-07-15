@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Caching.Distributed;
+namespace DcsvIo.D2.Tests.Integration.Caching.Distributed;
 
 using System;
 using System.Threading.Tasks;

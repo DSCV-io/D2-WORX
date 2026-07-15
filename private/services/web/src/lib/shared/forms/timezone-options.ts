@@ -8,7 +8,7 @@
  * Converts raw proto TimezoneDTO maps into searchable option arrays
  * with priority timezones pinned at the top.
  */
-import type { TimezoneDTO } from "@d2/protos";
+import type { TimezoneDTO } from "@dcsv-io/d2-protos";
 
 /**
  * Priority timezones shown first in the typeahead (order preserved).

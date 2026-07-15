@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Messaging.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Messaging.DlqMetadata.SourceGen;
+using DcsvIo.D2.Messaging.DlqMetadata.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -48,7 +48,7 @@ public sealed class DlqFailureMetadataGeneratorTests
     public void Generator_FieldsAssembly_EmitsFieldsGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Messaging.Abstractions",
+            assemblyName: "DcsvIo.D2.Messaging.Abstractions",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -61,7 +61,7 @@ public sealed class DlqFailureMetadataGeneratorTests
     public void Generator_CausesAssembly_EmitsCausesGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Messaging.RabbitMq",
+            assemblyName: "DcsvIo.D2.Messaging.RabbitMq",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -86,7 +86,7 @@ public sealed class DlqFailureMetadataGeneratorTests
     public void Generator_TargetAssemblyButNoSpec_EmitsNothing()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Messaging.Abstractions",
+            assemblyName: "DcsvIo.D2.Messaging.Abstractions",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -98,7 +98,7 @@ public sealed class DlqFailureMetadataGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Messaging.Abstractions",
+            assemblyName: "DcsvIo.D2.Messaging.Abstractions",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -111,14 +111,14 @@ public sealed class DlqFailureMetadataGeneratorTests
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Messaging.Abstractions",
+                assemblyName: "DcsvIo.D2.Messaging.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)
             .Select(t => t.ToString())
             .ToList();
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Messaging.Abstractions",
+                assemblyName: "DcsvIo.D2.Messaging.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)

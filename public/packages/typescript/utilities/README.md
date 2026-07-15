@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/utilities
+# @dcsv-io/d2-utilities
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
 Boundary helpers — `falsey`/`truthy` semantics, string cleaning,
 parse-or-undefined helpers, indexed env-var array parsing, and the regex
-constants used across the TS codebase. Mirrors `D2.Shared.Utilities` (.NET).
+constants used across the TS codebase. Mirrors `DcsvIo.D2.Utilities` (.NET).
 
 ## Public API
 
@@ -35,7 +35,7 @@ None. Zero runtime deps.
 ## Usage example
 
 ```ts
-import { falsey, tryParseTruthyUndefUuid, parseEnvArray } from "@d2/utilities";
+import { falsey, tryParseTruthyUndefUuid, parseEnvArray } from "@dcsv-io/d2-utilities";
 
 if (falsey(input)) return undefined;
 
@@ -47,7 +47,7 @@ const audiences = parseEnvArray("AUTH_AUDIENCES", process.env);
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.Utilities` extensions:
+Mirrors `DcsvIo.D2.Utilities` extensions:
 
 - `falsey` / `truthy` → `Falsey()` / `Truthy()` extensions on string / collection / Guid
 - `toUndefIfEmpty` → `ToNullIfEmpty()` on string (same behavior; TS returns `undefined`, .NET returns `null` — see naming divergence note below)

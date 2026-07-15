@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption;
+namespace DcsvIo.D2.Tests.Unit.Encryption;
 
 using System.Security.Cryptography;
 using System.Text;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 
 /// <summary>
 /// Test helpers for building keyrings with deterministic but realistic

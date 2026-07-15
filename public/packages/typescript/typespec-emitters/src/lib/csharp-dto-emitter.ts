@@ -38,7 +38,7 @@
 import { buildBanner } from "./banner.js";
 import type { FieldInfo, NestedEnum, NestedModel } from "./model-walk.js";
 
-// Mirrors the member names of D2.Shared.Utilities.Enums.RedactReason — the
+// Mirrors the member names of DcsvIo.D2.Utilities.Enums.RedactReason — the
 // closed data-class taxonomy the emitter maps a @d2Redact reason onto. The
 // decorator layer already validates the reason, so an unknown value reaching
 // the emitter is an invariant break; the emitter fails loud rather than emit an
@@ -234,8 +234,8 @@ function emitRecord(
     nested.some((nm) => nm.fields.some((f) => f.jsonName !== undefined));
   const usings: string[] = [];
   if (needsRedactUsings) {
-    usings.push("using D2.Shared.Utilities.Attributes;");
-    usings.push("using D2.Shared.Utilities.Enums;");
+    usings.push("using DcsvIo.D2.Utilities.Attributes;");
+    usings.push("using DcsvIo.D2.Utilities.Enums;");
   }
   if (enums.length > 0 || anyJsonName)
     usings.push("using System.Text.Json.Serialization;");

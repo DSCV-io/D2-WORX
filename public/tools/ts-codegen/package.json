@@ -27,10 +27,10 @@
     "typecheck": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/utilities": "workspace:*"
+    "@dcsv-io/d2-utilities": "workspace:*"
   },
   "devDependencies": {
-    "@d2/i18n-keys": "workspace:*",
+    "@dcsv-io/d2-i18n-keys": "workspace:*",
     "@types/node": "24.10.0",
     "@vitest/coverage-v8": "4.0.18",
     "tsx": "4.20.6",

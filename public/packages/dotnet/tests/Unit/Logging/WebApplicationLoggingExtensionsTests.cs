@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Logging;
+namespace DcsvIo.D2.Tests.Unit.Logging;
 
 using AwesomeAssertions;
-using D2.Shared.Logging;
+using DcsvIo.D2.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

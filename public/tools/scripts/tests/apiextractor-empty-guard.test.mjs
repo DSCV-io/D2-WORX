@@ -20,18 +20,18 @@ test("THROWS when a report has NO exports and is not allow-listed", () => {
   assert.throws(
     () =>
       assertApiReportNotDegenerate({
-        pkgName: "@d2/result",
+        pkgName: "@dcsv-io/d2-result",
         hasPublicMembers: false,
         allowEmpty: false,
       }),
-    /refusing to write a fingerprint over a degenerate \.api\.md for @d2\/result/,
+    /refusing to write a fingerprint over a degenerate \.api\.md for @dcsv-io\/d2-result/,
   );
 });
 
 test("does NOT throw when --allow-empty opts the package in", () => {
   assert.doesNotThrow(() =>
     assertApiReportNotDegenerate({
-      pkgName: "@d2/result",
+      pkgName: "@dcsv-io/d2-result",
       hasPublicMembers: false,
       allowEmpty: true,
     }),
@@ -41,7 +41,7 @@ test("does NOT throw when --allow-empty opts the package in", () => {
 test("does NOT throw for a report WITH exports", () => {
   assert.doesNotThrow(() =>
     assertApiReportNotDegenerate({
-      pkgName: "@d2/result",
+      pkgName: "@dcsv-io/d2-result",
       hasPublicMembers: true,
       allowEmpty: false,
     }),
@@ -52,10 +52,10 @@ test("the throw message names the escape hatch (both flag + env var)", () => {
   assert.throws(
     () =>
       assertApiReportNotDegenerate({
-        pkgName: "@d2/telemetry",
+        pkgName: "@dcsv-io/d2-telemetry",
         hasPublicMembers: false,
         allowEmpty: false,
       }),
-    /--allow-empty @d2\/telemetry.*SEED_ALLOW_EMPTY=@d2\/telemetry/s,
+    /--allow-empty @dcsv-io\/d2-telemetry.*SEED_ALLOW_EMPTY=@dcsv-io\/d2-telemetry/s,
   );
 });

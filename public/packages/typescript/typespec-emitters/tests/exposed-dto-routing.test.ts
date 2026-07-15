@@ -18,10 +18,10 @@ import {
 
 // Mount the decorators library.
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -31,7 +31,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 
 // Mount the emitter package.
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -68,7 +68,7 @@ describe("exposedDtoRouting_ExposedOp_DtosGoToClientsNamespace", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -83,13 +83,14 @@ describe("exposedDtoRouting_ExposedOp_DtosGoToClientsNamespace", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
-            "D2.Edge.KeyCustodian.App.Application.Handlers",
+            "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",
@@ -104,18 +105,18 @@ describe("exposedDtoRouting_ExposedOp_DtosGoToClientsNamespace", () => {
     const outputContent = getEmittedFile(host, "GetJwksOutput.g.cs");
     expect(outputContent).toBeDefined();
     expect(outputContent).toContain(
-      "namespace D2.Edge.KeyCustodian.Client.Jwks;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks;",
     );
 
     // Handler interface should be in the app CQRS namespace (Queries.GetJwks).
     const handlerContent = getEmittedFile(host, "IGetJwksHandler.g.cs");
     expect(handlerContent).toBeDefined();
     expect(handlerContent).toContain(
-      "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;",
     );
     // emitUsing=false when csAppNamespaceBase is present.
     expect(handlerContent).not.toContain(
-      "using D2.Shared.Handler.Abstractions;",
+      "using DcsvIo.D2.Handler.Abstractions;",
     );
   });
 });
@@ -133,7 +134,7 @@ describe("exposedDtoRouting_InternalOp_DtosGoToAppCqrsNamespace", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -148,13 +149,14 @@ describe("exposedDtoRouting_InternalOp_DtosGoToAppCqrsNamespace", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
-            "D2.Edge.KeyCustodian.App.Application.Handlers",
+            "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",
@@ -169,10 +171,12 @@ describe("exposedDtoRouting_InternalOp_DtosGoToAppCqrsNamespace", () => {
     const inputContent = getEmittedFile(host, "ReconcileKeyStateInput.g.cs");
     expect(inputContent).toBeDefined();
     expect(inputContent).toContain(
-      "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ReconcileKeyState;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ReconcileKeyState;",
     );
     // NOT in the Clients namespace.
-    expect(inputContent).not.toContain("D2.Edge.KeyCustodian.Client");
+    expect(inputContent).not.toContain(
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
+    );
   });
 });
 
@@ -193,7 +197,7 @@ describe("exposedDtoRouting_MissingCategory_D2TSP003Fires", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Test;
 
@@ -213,12 +217,12 @@ describe("exposedDtoRouting_MissingCategory_D2TSP003Fires", () => {
     let compileError: unknown = undefined;
     try {
       await host.compile("main.tsp", {
-        emit: ["@d2/typespec-emitters"],
+        emit: ["@dcsv-io/d2-typespec-emitters"],
         options: {
-          "@d2/typespec-emitters": {
+          "@dcsv-io/d2-typespec-emitters": {
             "csharp-namespace": "D2.Fixture.Ns",
             "csharp-app-namespace-base":
-              "D2.Edge.KeyCustodian.App.Application.Handlers",
+              "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
           },
         },
         outputDir: "testing:/out",
@@ -255,7 +259,7 @@ describe("exposedDtoRouting_FacadeEmission_ExposedOpCollected", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -270,13 +274,14 @@ describe("exposedDtoRouting_FacadeEmission_ExposedOpCollected", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
-            "D2.Edge.KeyCustodian.App.Application.Handlers",
+            "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",
@@ -296,7 +301,7 @@ describe("exposedDtoRouting_FacadeEmission_ExposedOpCollected", () => {
     expect(ifaceKey).toBeDefined();
     const ifaceContent = (stored as Map<string, string>).get(ifaceKey!);
     expect(ifaceContent).toContain(
-      "namespace D2.Edge.KeyCustodian.Client.Facade;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;",
     );
     expect(ifaceContent).toContain("GetJwksAsync(");
   });
@@ -321,7 +326,7 @@ describe("exposedDtoRouting_MissingConcern_D2TSP013Fires", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -338,13 +343,14 @@ describe("exposedDtoRouting_MissingConcern_D2TSP013Fires", () => {
     let compileError: unknown = undefined;
     try {
       await host.compile("main.tsp", {
-        emit: ["@d2/typespec-emitters"],
+        emit: ["@dcsv-io/d2-typespec-emitters"],
         options: {
-          "@d2/typespec-emitters": {
+          "@dcsv-io/d2-typespec-emitters": {
             "csharp-namespace": "D2.Fixture.Ns",
-            "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+            "csharp-clients-namespace":
+              "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
             "csharp-app-namespace-base":
-              "D2.Edge.KeyCustodian.App.Application.Handlers",
+              "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
           },
         },
         outputDir: "testing:/out",
@@ -385,7 +391,7 @@ describe("exposedDtoRouting_FixtureMode_LegacyNamespaceUsed", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -399,10 +405,11 @@ describe("exposedDtoRouting_FixtureMode_LegacyNamespaceUsed", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
-          "csharp-namespace": "D2.Edge.Tests.TypeSpecDto.Generated",
+        "@dcsv-io/d2-typespec-emitters": {
+          "csharp-namespace":
+            "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
           // No csharp-app-namespace-base → fixture mode.
         },
       },
@@ -418,7 +425,7 @@ describe("exposedDtoRouting_FixtureMode_LegacyNamespaceUsed", () => {
     expect(outputContent).toBeDefined();
     // Should use the legacy fixture namespace, NOT a Clients namespace.
     expect(outputContent).toContain(
-      "namespace D2.Edge.Tests.TypeSpecDto.Generated;",
+      "namespace DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated;",
     );
   });
 });

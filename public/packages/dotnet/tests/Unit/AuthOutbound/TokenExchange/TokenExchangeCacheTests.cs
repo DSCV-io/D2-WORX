@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.TokenExchange;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.TokenExchange;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Auth.Outbound.TokenExchange;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Tests.Unit.AuthOutbound.Fixtures;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Auth.Outbound.TokenExchange;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Tests.Unit.AuthOutbound.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;

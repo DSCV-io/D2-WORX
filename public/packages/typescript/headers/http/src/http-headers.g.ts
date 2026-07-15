@@ -10,7 +10,7 @@
 
 /**
  * D2 wire-protocol headers applicable to the http catalog.
- * Generated from headers.spec.json. Mirrors .NET D2.Shared.Headers.Http.HttpHeaders.
+ * Generated from headers.spec.json. Mirrors .NET DcsvIo.D2.Headers.Http.HttpHeaders.
  */
 export const HttpHeaders = {
   /**

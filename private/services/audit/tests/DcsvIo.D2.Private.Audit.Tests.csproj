@@ -1,0 +1,46 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Private.Audit.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <NoWarn>$(NoWarn);1591;SA1600;SA1512;xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="coverlet.msbuild">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\api\DcsvIo.D2.Private.Audit.Api.csproj" />
+    <ProjectReference Include="..\app\DcsvIo.D2.Private.Audit.App.csproj" />
+    <ProjectReference Include="..\clients\dotnet\DcsvIo.D2.Private.Audit.Client.csproj" />
+    <!-- typeof(IJwtSigningCapability) dual-pin for structural deny (never registered). -->
+    <ProjectReference Include="..\..\edge\key-custodian\client\DcsvIo.D2.Private.Edge.KeyCustodian.Client.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(D2PrivatePackagesDotnetRoot)auth\abstractions-extensions\DcsvIo.D2.Private.Auth.Abstractions.Extensions.csproj" />
+  </ItemGroup>
+</Project>

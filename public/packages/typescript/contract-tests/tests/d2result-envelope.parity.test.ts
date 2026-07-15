@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import {
   D2ResultEnvelopeFieldNames,
   ALL_D2RESULT_ENVELOPE_FIELD_NAMES,
-} from "@d2/result";
+} from "@dcsv-io/d2-result";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

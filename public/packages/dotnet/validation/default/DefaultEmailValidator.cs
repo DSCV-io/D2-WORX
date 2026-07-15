@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation;
+namespace DcsvIo.D2.Validation;
 
 using System.Text.RegularExpressions;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
+using DcsvIo.D2.Validation.Abstractions;
 
 /// <summary>
 /// Default <see cref="IEmailValidator"/> — regex structural check enforcing
@@ -43,7 +43,7 @@ public sealed class DefaultEmailValidator : IEmailValidator
 {
     /// <summary>
     /// The email validation regex pattern — the cross-language source of truth
-    /// shared with the TypeScript <c>@d2/validation</c> package. Any change
+    /// shared with the TypeScript <c>@dcsv-io/d2-validation</c> package. Any change
     /// here must be mirrored on the TypeScript side; a parity test asserts
     /// byte-identity.
     /// </summary>

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Abstractions;
+namespace DcsvIo.D2.Geo.Abstractions;
 
 /// <summary>
 /// Meta-record describing the deprecation status of a geo reference-data

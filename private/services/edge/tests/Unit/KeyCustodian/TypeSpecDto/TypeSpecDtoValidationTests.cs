@@ -4,15 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecDto;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecDto;
 
 using AwesomeAssertions;
-using D2.Shared.Logging.Destructuring;
+using DcsvIo.D2.Logging.Destructuring;
 using Serilog;
 using Serilog.Events;
 using Xunit;
-
-using GenSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
+using GenSignFixtureInput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
 
 /// <summary>
 /// Validates that the TypeSpec-emitted <c>sign</c> fixture DTO wires
@@ -21,10 +20,10 @@ using GenSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput
 /// property at log time.
 ///
 /// Generated fixtures live in Unit/KeyCustodian/TypeSpecDto/Generated/*.g.cs,
-/// in namespace D2.Edge.Tests.TypeSpecDto.Generated.
+/// in namespace DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.
 /// GetJwks DTO structural-equivalence tests live in
 /// Unit/KeyCustodian/Client/Jwks/GetJwksTransportDtoTests.cs (those types now
-/// reside in D2.Edge.KeyCustodian.Client, not in this fixture namespace).
+/// reside in DcsvIo.D2.Private.Edge.KeyCustodian.Client, not in this fixture namespace).
 /// </summary>
 public sealed class TypeSpecDtoValidationTests
 {
@@ -36,8 +35,8 @@ public sealed class TypeSpecDtoValidationTests
     public void GeneratedSignFixtureInput_PayloadProperty_IsRedactedByRealPolicy()
     {
         // Build a local Serilog logger with the real RedactDataDestructuringPolicy.
-        // IVT is granted in D2.Shared.Logging.csproj so this assembly can
-        // instantiate the internal policy directly (mirrors D2.Shared.Tests pattern).
+        // IVT is granted in DcsvIo.D2.Logging.csproj so this assembly can
+        // instantiate the internal policy directly (mirrors DcsvIo.D2.Tests pattern).
         var sink = new TypeSpecDtoInMemorySink();
         var logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()

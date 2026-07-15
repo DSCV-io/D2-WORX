@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://d2-worx.dev/contracts/geo/src-data/languages.schema.json",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/src-data/languages.schema.json",
   "title": "Language catalog (pipeline-raw)",
   "description": "Tier 1 (pipeline-raw) language catalog produced by tools/geo-data-pipeline. Verbose with per-entry _provenance + diagnostics. NOT directly consumed by codegen — see ../languages.schema.json for the Tier 2 shape.",
   "type": "object",

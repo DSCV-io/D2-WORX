@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Headers.SourceGen;
+namespace DcsvIo.D2.Headers.SourceGen;
 
 using System.Collections.Immutable;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Result of <see cref="HeadersEmitter.Emit"/>. Pure data — the Roslyn host

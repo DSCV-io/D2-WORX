@@ -2,12 +2,12 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/protos
+# @dcsv-io/d2-protos
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
 Buf-generated TS modules + gRPC client stubs from `contracts/protos/`.
-Mirrors `D2.Shared.Protos` (.NET — generated via `Grpc.Tools` at csproj
+Mirrors `DcsvIo.D2.Protos` (.NET — generated via `Grpc.Tools` at csproj
 build time).
 
 ## Public API
@@ -28,7 +28,7 @@ Current re-exports from `src/index.ts`:
 | `InputErrorProto`   | `generated/common/v1/d2_result.ts`      | Field-level validation error: field name + `TKMessageProto[]` errors.     |
 
 The codec (`d2ResultToProto` / `d2ResultFromProto` / `handleGrpcCall`) that
-converts between `D2Result` and `D2ResultProto` lives in `@d2/grpc-client`,
+converts between `D2Result` and `D2ResultProto` lives in `@dcsv-io/d2-grpc-client`,
 not here — this package is the generated-stub layer only.
 
 ## Dependencies
@@ -41,7 +41,7 @@ not here — this package is the generated-stub layer only.
 ## Generation workflow
 
 ```bash
-pnpm --filter @d2/protos generate
+pnpm --filter @dcsv-io/d2-protos generate
 ```
 
 `buf.gen.yaml` configures `ts-proto` with these options:
@@ -53,8 +53,8 @@ pnpm --filter @d2/protos generate
 
 Every `.proto` file generates into BOTH:
 
-- .NET: `D2.Shared.Protos` (via `Grpc.Tools` + csproj `<Protobuf Include>`)
-- TS: `@d2/protos/src/generated/...` (via Buf + ts-proto)
+- .NET: `DcsvIo.D2.Protos` (via `Grpc.Tools` + csproj `<Protobuf Include>`)
+- TS: `@dcsv-io/d2-protos/src/generated/...` (via Buf + ts-proto)
 
 The `contracts/protos/` directory is the single source of truth — neither
 side hand-writes proto modules.

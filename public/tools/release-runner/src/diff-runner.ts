@@ -45,7 +45,7 @@
 // leaf-first processing indeterminate — release over a cyclic graph is an
 // error condition that must be surfaced, not silently continued).
 
-import { falsey, truthy } from "@d2/utilities";
+import { falsey, truthy } from "@dcsv-io/d2-utilities";
 import { parseBreakingFooters } from "contract-gate";
 import { deriveBump } from "./diff-bump.js";
 import { topoSort } from "./dependency-graph.js";

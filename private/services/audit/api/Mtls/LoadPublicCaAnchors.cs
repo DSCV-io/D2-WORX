@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Api.Mtls;
+namespace DcsvIo.D2.Private.Audit.Api.Mtls;
 
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching.Local.Default;
+namespace DcsvIo.D2.Caching.Local.Default;
 
 /// <summary>
 /// Internal record for tracking an in-process lock — the holder's

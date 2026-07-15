@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching.Local.Default;
+namespace DcsvIo.D2.Caching.Local.Default;
 
 using System.Collections.Concurrent;
 using System.Threading;
-using D2.Shared.Caching;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Internal;

@@ -7,7 +7,7 @@ import type {
   ICacheInvalidationBackplane,
   ICacheSerializer,
   IDistributedCache,
-} from "@d2/caching-abstractions";
+} from "@dcsv-io/d2-caching-abstractions";
 import { describe, expect, it } from "vitest";
 
 import * as barrel from "../src/index.js";

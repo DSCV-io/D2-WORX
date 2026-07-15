@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Context.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Context.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.Context.SourceGen;
+using DcsvIo.D2.Context.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -145,13 +145,13 @@ public sealed class MutableEmitterTests
     {
         var auth = Spec(
             name: "IAuthContext",
-            @namespace: "D2.Shared.AuthContext.Abstractions",
+            @namespace: "DcsvIo.D2.AuthContext.Abstractions",
             sections: [Section("S", Property("Subject", "string?", claim: "sub"))]);
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            @namespace: "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             sections: [Section("S", Property("Subject", "string?"))]); // collision
 
         var mutable = MutableEmitter.Emit(auth, request);
@@ -171,7 +171,7 @@ public sealed class MutableEmitterTests
         // different parsers) are allowed — collision check is cross-spec only.
         var auth = Spec(
             name: "IAuthContext",
-            @namespace: "D2.Shared.AuthContext.Abstractions",
+            @namespace: "DcsvIo.D2.AuthContext.Abstractions",
             sections: [
                 Section(
                     "S",
@@ -181,8 +181,8 @@ public sealed class MutableEmitterTests
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            @namespace: "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             sections: [Section("Tracing", Property("TraceId", "string?"))]);
 
         var mutable = MutableEmitter.Emit(auth, request);
@@ -205,13 +205,13 @@ public sealed class MutableEmitterTests
         // hardcode field assumptions about what's present.
         var auth = Spec(
             name: "IAuthContext",
-            @namespace: "D2.Shared.AuthContext.Abstractions",
+            @namespace: "DcsvIo.D2.AuthContext.Abstractions",
             sections: [Section("Token", Property("Subject", "string?", claim: "sub"))]);
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            @namespace: "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             sections: [Section("Tracing", Property("TraceId", "string?"))]);
 
         var mutable = MutableEmitter.Emit(auth, request);
@@ -236,13 +236,13 @@ public sealed class MutableEmitterTests
         // when ActorChain isn't present.
         var auth = Spec(
             name: "IAuthContext",
-            @namespace: "D2.Shared.AuthContext.Abstractions",
+            @namespace: "DcsvIo.D2.AuthContext.Abstractions",
             sections: [Section("S", Property("Subject", "string?", claim: "sub"))]);
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            @namespace: "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             sections: [Section("S", Property("TraceId", "string?"))]);
 
         var mutable = MutableEmitter.Emit(auth, request);
@@ -275,7 +275,7 @@ public sealed class MutableEmitterTests
     {
         var auth = Spec(
             name: "IAuthContext",
-            @namespace: "D2.Shared.AuthContext.Abstractions",
+            @namespace: "DcsvIo.D2.AuthContext.Abstractions",
             sections: [
                 Section(
                     "Identity",
@@ -283,8 +283,8 @@ public sealed class MutableEmitterTests
             ]);
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            @namespace: "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             sections: [Section("S", Property("TraceId", "string?"))]);
 
         var mutable = MutableEmitter.Emit(auth, request);
@@ -318,7 +318,7 @@ public sealed class MutableEmitterTests
     {
         var auth = Spec(
             name: "IAuthContext",
-            @namespace: "D2.Shared.AuthContext.Abstractions",
+            @namespace: "DcsvIo.D2.AuthContext.Abstractions",
             sections: [
                 Section(
                     "Identity",
@@ -326,14 +326,14 @@ public sealed class MutableEmitterTests
             ]);
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            @namespace: "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             sections: [Section("S", Property("TraceId", "string?"))]);
 
         var mutable = MutableEmitter.Emit(auth, request);
 
-        mutable.GeneratedSource.Should().Contain("using D2.Shared.Utilities.Attributes;");
-        mutable.GeneratedSource.Should().Contain("using D2.Shared.Utilities.Enums;");
+        mutable.GeneratedSource.Should().Contain("using DcsvIo.D2.Utilities.Attributes;");
+        mutable.GeneratedSource.Should().Contain("using DcsvIo.D2.Utilities.Enums;");
     }
 
     // ----------------------------------------------------------------------
@@ -349,7 +349,7 @@ public sealed class MutableEmitterTests
     {
         var auth = Spec(
             name: "IAuthContext",
-            @namespace: "D2.Shared.AuthContext.Abstractions",
+            @namespace: "DcsvIo.D2.AuthContext.Abstractions",
             sections:
             [
                 Section(
@@ -383,8 +383,8 @@ public sealed class MutableEmitterTests
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            @namespace: "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             sections: [
                 Section("Tracing", Property("TraceId", "string?")),
             ]);

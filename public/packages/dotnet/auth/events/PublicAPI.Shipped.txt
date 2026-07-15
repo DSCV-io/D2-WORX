@@ -1,18 +1,18 @@
 #nullable enable
-D2.Shared.Auth.Events.KeyRotatedEvent
-D2.Shared.Auth.Events.KeyRotatedEvent.<Clone>$() -> D2.Shared.Auth.Events.KeyRotatedEvent!
-D2.Shared.Auth.Events.KeyRotatedEvent.Domain.get -> string!
-D2.Shared.Auth.Events.KeyRotatedEvent.Domain.init -> void
-D2.Shared.Auth.Events.KeyRotatedEvent.Equals(D2.Shared.Auth.Events.KeyRotatedEvent? other) -> bool
-D2.Shared.Auth.Events.KeyRotatedEvent.KeyRotatedEvent() -> void
-D2.Shared.Auth.Events.KeyRotatedEvent.Kid.get -> string!
-D2.Shared.Auth.Events.KeyRotatedEvent.Kid.init -> void
-D2.Shared.Auth.Events.KeyRotatedEvent.NewStatus.get -> string!
-D2.Shared.Auth.Events.KeyRotatedEvent.NewStatus.init -> void
-D2.Shared.Auth.Events.KeyRotatedEvent.Urgent.get -> bool
-D2.Shared.Auth.Events.KeyRotatedEvent.Urgent.init -> void
-override D2.Shared.Auth.Events.KeyRotatedEvent.Equals(object? obj) -> bool
-override D2.Shared.Auth.Events.KeyRotatedEvent.GetHashCode() -> int
-override D2.Shared.Auth.Events.KeyRotatedEvent.ToString() -> string!
-static D2.Shared.Auth.Events.KeyRotatedEvent.operator !=(D2.Shared.Auth.Events.KeyRotatedEvent? left, D2.Shared.Auth.Events.KeyRotatedEvent? right) -> bool
-static D2.Shared.Auth.Events.KeyRotatedEvent.operator ==(D2.Shared.Auth.Events.KeyRotatedEvent? left, D2.Shared.Auth.Events.KeyRotatedEvent? right) -> bool
+DcsvIo.D2.Auth.Events.KeyRotatedEvent
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.<Clone>$() -> DcsvIo.D2.Auth.Events.KeyRotatedEvent!
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.Domain.get -> string!
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.Domain.init -> void
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.Equals(DcsvIo.D2.Auth.Events.KeyRotatedEvent? other) -> bool
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.KeyRotatedEvent() -> void
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.Kid.get -> string!
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.Kid.init -> void
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.NewStatus.get -> string!
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.NewStatus.init -> void
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.Urgent.get -> bool
+DcsvIo.D2.Auth.Events.KeyRotatedEvent.Urgent.init -> void
+override DcsvIo.D2.Auth.Events.KeyRotatedEvent.Equals(object? obj) -> bool
+override DcsvIo.D2.Auth.Events.KeyRotatedEvent.GetHashCode() -> int
+override DcsvIo.D2.Auth.Events.KeyRotatedEvent.ToString() -> string!
+static DcsvIo.D2.Auth.Events.KeyRotatedEvent.operator !=(DcsvIo.D2.Auth.Events.KeyRotatedEvent? left, DcsvIo.D2.Auth.Events.KeyRotatedEvent? right) -> bool
+static DcsvIo.D2.Auth.Events.KeyRotatedEvent.operator ==(DcsvIo.D2.Auth.Events.KeyRotatedEvent? left, DcsvIo.D2.Auth.Events.KeyRotatedEvent? right) -> bool

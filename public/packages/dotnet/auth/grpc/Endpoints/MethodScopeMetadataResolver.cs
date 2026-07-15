@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Endpoints;
+namespace DcsvIo.D2.Auth.Grpc.Endpoints;
 
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 using global::Grpc.Core;
 using Microsoft.AspNetCore.Http;
 

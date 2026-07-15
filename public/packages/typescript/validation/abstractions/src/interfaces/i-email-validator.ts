@@ -3,13 +3,13 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { D2Result } from "@d2/result";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 /**
- * Mirror of .NET `D2.Shared.Validation.Abstractions.IEmailValidator` —
+ * Mirror of .NET `DcsvIo.D2.Validation.Abstractions.IEmailValidator` —
  * validates an email address and returns a normalized form on success.
  *
- * Implementations live in `@d2/validation` backed by the default
+ * Implementations live in `@dcsv-io/d2-validation` backed by the default
  * normalization rules; tests can supply ad-hoc fixtures by implementing
  * this interface directly.
  */

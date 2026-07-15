@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Telemetry;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Telemetry;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Telemetry;
+using DcsvIo.D2.Auth.Telemetry;
 using Xunit;
 
 /// <summary>
@@ -21,14 +21,14 @@ public sealed class AuthTelemetryTests
     public void ActivitySource_NameMatchesConstant()
     {
         AuthTelemetry.SR_Activity.Name.Should().Be(AuthTelemetry.ACTIVITY_SOURCE_NAME);
-        AuthTelemetry.ACTIVITY_SOURCE_NAME.Should().Be("D2.Shared.Auth");
+        AuthTelemetry.ACTIVITY_SOURCE_NAME.Should().Be("DcsvIo.D2.Auth");
     }
 
     [Fact]
     public void Meter_NameMatchesConstant()
     {
         AuthTelemetry.SR_Meter.Name.Should().Be(AuthTelemetry.METER_NAME);
-        AuthTelemetry.METER_NAME.Should().Be("D2.Shared.Auth");
+        AuthTelemetry.METER_NAME.Should().Be("DcsvIo.D2.Auth");
     }
 
     [Fact]
@@ -62,8 +62,8 @@ public sealed class AuthTelemetryTests
         // Adversarial: confirm inbound + outbound libs use distinct ActivitySource /
         // Meter names. Sharing them would conflate unrelated SLOs in dashboards.
         AuthTelemetry.ACTIVITY_SOURCE_NAME.Should()
-            .NotBe(D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetry.ACTIVITY_SOURCE_NAME);
+            .NotBe(DcsvIo.D2.Auth.Outbound.Telemetry.OutboundTelemetry.ACTIVITY_SOURCE_NAME);
         AuthTelemetry.METER_NAME.Should()
-            .NotBe(D2.Shared.Auth.Outbound.Telemetry.OutboundTelemetry.METER_NAME);
+            .NotBe(DcsvIo.D2.Auth.Outbound.Telemetry.OutboundTelemetry.METER_NAME);
     }
 }

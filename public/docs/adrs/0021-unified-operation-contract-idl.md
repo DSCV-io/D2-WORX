@@ -45,7 +45,7 @@ What TypeSpec does *not* supply for this codebase is just as clear, and it is al
 
 ### The D² emitter fleet — seven emitters
 
-A `@d2/typespec-emitters` package contains the emitter fleet, each a `$onEmit` function that walks the compiled TypeSpec program graph and produces D²-shaped output:
+A `@dcsv-io/d2-typespec-emitters` package contains the emitter fleet, each a `$onEmit` function that walks the compiled TypeSpec program graph and produces D²-shaped output:
 
 | Emitter | Produces |
 | ------- | -------- |
@@ -67,7 +67,7 @@ The load-bearing risk is settled by a concrete, validated convention: **the prot
 
 ### The `@d2*` decorator vocabulary — policy as first-class contract data
 
-Policy is declared on the operation through a stable D² decorator library (the `@d2/typespec-decorators` package), each decorator writing to a `program.stateMap` keyed by a stable `Symbol.for("D2.<dec>")` so every emitter can read it back across the package boundary:
+Policy is declared on the operation through a stable D² decorator library (the `@dcsv-io/d2-typespec-decorators` package), each decorator writing to a `program.stateMap` keyed by a stable `Symbol.for("D2.<dec>")` so every emitter can read it back across the package boundary:
 
 - `@d2Scope` — the required scope (referencing the scopes registry).
 - `@d2RateLimitTier` — the rate-limit bucket.
@@ -127,7 +127,7 @@ All six success criteria passed:
 - **OpenAPI emitted correctly.** The stock emitter produced `POST /internal/v1/kc/sign` with the `SignInput` body, the `SignOutput` 200, a `D2ErrorResponse` on every error status, and `bytes` rendered as `{ "type": "string", "format": "byte" }` — confirming `bytes` coerces only in the schema projection, never in the model graph the proto emitter reads.
 - **The parity gate works as designed.** The spike declared a workload scope present in the private product scopes catalog and confirmed the parity emitter's `reportDiagnostic` path by using an out-of-registry scope as the adversarial control — demonstrating the scope-existence gate live.
 
-The seed `@d2/typespec-decorators` package and a diagnostic emitter were authored as part of the spike and proved the `extern dec` + JS-impl + `stateMap` pattern on a real compile. The two now-proven build conventions (the dedicated `tsp-index.js` split; the stable `Symbol.for` state keys) are carried into the production emitter fleet as hard requirements.
+The seed `@dcsv-io/d2-typespec-decorators` package and a diagnostic emitter were authored as part of the spike and proved the `extern dec` + JS-impl + `stateMap` pattern on a real compile. The two now-proven build conventions (the dedicated `tsp-index.js` split; the stable `Symbol.for` state keys) are carried into the production emitter fleet as hard requirements.
 
 ## Alternatives considered
 

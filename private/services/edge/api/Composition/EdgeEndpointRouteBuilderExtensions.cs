@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Api.Composition;
+namespace DcsvIo.D2.Private.Edge.Api.Composition;
 
-using D2.Edge.Api.Bridges.Audit;
-using D2.Edge.Api.Grpc.KeyCustodian;
-using D2.Edge.Api.Kestrel;
-using D2.Edge.Api.Routes.KeyCustodian;
-using D2.Private.Auth;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.Api.Bridges.Audit;
+using DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian;
+using DcsvIo.D2.Private.Edge.Api.Kestrel;
+using DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian;
+using DcsvIo.D2.ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 

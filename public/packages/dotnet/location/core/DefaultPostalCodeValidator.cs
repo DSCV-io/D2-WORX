@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location;
+namespace DcsvIo.D2.Location;
 
 using System.Text.RegularExpressions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Default <see cref="IPostalCodeValidator"/> — global-range shape check

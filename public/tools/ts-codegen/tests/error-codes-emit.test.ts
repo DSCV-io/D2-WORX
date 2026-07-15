@@ -361,7 +361,7 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
       AUTH_EN_US_KEYS,
     );
     expect(r.diagnostics).toEqual([]);
-    expect(r.source).toContain('import { TK } from "@d2/i18n-keys";');
+    expect(r.source).toContain('import { TK } from "@dcsv-io/d2-i18n-keys";');
     // Generic methods (`<T = void>`) so one method spans the untyped + typed
     // domain-failure cases (the TS equivalent of .NET's two-class split). The
     // opts object carries the optional `messages` override (the TS twin of
@@ -375,7 +375,7 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
     );
     expect(r.source).toContain("return serviceUnavailable<T>");
     expect(r.source).toContain(
-      'import { type TKMessage } from "@d2/i18n-abstractions";',
+      'import { type TKMessage } from "@dcsv-io/d2-i18n-abstractions";',
     );
     expect(r.source).toContain(
       "messages: opts.messages ?? [TK.auth.errors.UNAUTHORIZED],",
@@ -397,7 +397,7 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
     // factory it delegates to (validation_failure overrides unauthorized's
     // policy_denied; infrastructure_unavailable matches serviceUnavailable).
     expect(r.source).toContain(
-      'import { ErrorCategoryWire } from "@d2/error-category";',
+      'import { ErrorCategoryWire } from "@dcsv-io/d2-error-category";',
     );
     expect(r.source).toContain("category: ErrorCategoryWire.ValidationFailure");
     expect(r.source).toContain(
@@ -662,7 +662,7 @@ describe("emitFailuresCatalog — full httpStatus → base-factory delegation ma
     );
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain(
-      'import { D2Result, conflict, notFound } from "@d2/result";',
+      'import { D2Result, conflict, notFound } from "@dcsv-io/d2-result";',
     );
   });
 });
@@ -736,25 +736,25 @@ describe("emitBaseFactoriesCatalog (generic base factories) — shapes", () => {
     );
   }
 
-  it("imports the TK constants from the cycle-free @d2/i18n-keys package", () => {
+  it("imports the TK constants from the cycle-free @dcsv-io/d2-i18n-keys package", () => {
     const r = emit();
     expect(r.diagnostics).toEqual([]);
-    // The constants live in the shallow keys package so @d2/result references
+    // The constants live in the shallow keys package so @dcsv-io/d2-result references
     // them without recreating the result → i18n → result cycle.
-    expect(r.source).toContain('import { TK } from "@d2/i18n-keys";');
-    // NOT the @d2/i18n/keys re-export path (which transitively pulls @d2/i18n
-    // back into @d2/result's graph — the cycle).
-    expect(r.source).not.toContain('from "@d2/i18n/keys"');
+    expect(r.source).toContain('import { TK } from "@dcsv-io/d2-i18n-keys";');
+    // NOT the @dcsv-io/d2-i18n/keys re-export path (which transitively pulls @dcsv-io/d2-i18n
+    // back into @dcsv-io/d2-result's graph — the cycle).
+    expect(r.source).not.toContain('from "@dcsv-io/d2-i18n/keys"');
   });
 
-  it("imports the TKMessage type from @d2/i18n-abstractions (the moved primitive home)", () => {
+  it("imports the TKMessage type from @dcsv-io/d2-i18n-abstractions (the moved primitive home)", () => {
     const r = emit();
-    // TKMessage moved out of @d2/result into the zero-dep abstractions leaf;
+    // TKMessage moved out of @dcsv-io/d2-result into the zero-dep abstractions leaf;
     // the generated factories type their `messages` opts against it directly.
     expect(r.source).toContain(
-      'import { type TKMessage } from "@d2/i18n-abstractions";',
+      'import { type TKMessage } from "@dcsv-io/d2-i18n-abstractions";',
     );
-    // The old in-package ./tk-message.js source no longer exists in @d2/result.
+    // The old in-package ./tk-message.js source no longer exists in @dcsv-io/d2-result.
     expect(r.source).not.toContain('from "./tk-message.js"');
   });
 
@@ -841,7 +841,7 @@ describe("emitBaseFactoriesCatalog (generic base factories) — shapes", () => {
     expect(r.source).toContain("traceId?: string;");
     // ErrorCategory + the InputError type are imported from the zero-dep leaves.
     expect(r.source).toContain(
-      'import { type ErrorCategory, ErrorCategoryWire } from "@d2/error-category";',
+      'import { type ErrorCategory, ErrorCategoryWire } from "@dcsv-io/d2-error-category";',
     );
     expect(r.source).toContain(
       'import type { InputError } from "./input-error.js";',

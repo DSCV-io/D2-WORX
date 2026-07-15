@@ -8,8 +8,8 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/`](../../public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/README.md) (Roslyn source-gen → `TkMessageWireShape` property-name constants in `D2.Shared.I18n.Abstractions`)
-- **TypeScript** — [`tools/ts-codegen` › `wire-shape-emit.ts`](../../tools/ts-codegen/README.md) (`runTkMessageEmit` → `TkMessageWireShape` property-name constants in `@d2/i18n-abstractions`)
+- **.NET** — [`public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/`](../../public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/README.md) (Roslyn source-gen → `TkMessageWireShape` property-name constants in `DcsvIo.D2.I18n.Abstractions`)
+- **TypeScript** — [`tools/ts-codegen` › `wire-shape-emit.ts`](../../tools/ts-codegen/README.md) (`runTkMessageEmit` → `TkMessageWireShape` property-name constants in `@dcsv-io/d2-i18n-abstractions`)
 
 ## See also
 

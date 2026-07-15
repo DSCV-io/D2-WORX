@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { PayloadOpener, RecipientPrivateKeyring } from "@d2/encryption";
+import { PayloadOpener, RecipientPrivateKeyring } from "@dcsv-io/d2-encryption";
 // Internal derivation + codec — a KAT parity gate reproduces every stage so a
 // cross-runtime drift localizes to the failing stage (info / shared-secret /
 // DEK / frame). These are package-internal (not on the public barrel); a KAT
@@ -43,7 +43,7 @@ const fromB64 = (b64: string): Uint8Array =>
 const fromHex = (h: string): Uint8Array =>
   new Uint8Array(Buffer.from(h, "hex"));
 
-describe("sealed-crypto-kat parity (.NET PayloadSealer ↔ TS @d2/encryption)", () => {
+describe("sealed-crypto-kat parity (.NET PayloadSealer ↔ TS @dcsv-io/d2-encryption)", () => {
   const kat = loadFixture<SealedKat>("sealed-crypto-kat", "known-answer").data;
   const sid = serviceIdBytes(kat.serviceId);
   const ephSpki = fromB64(kat.ephemeralPublicSpkiBase64);

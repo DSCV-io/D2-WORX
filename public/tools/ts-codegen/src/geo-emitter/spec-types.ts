@@ -5,7 +5,7 @@
 
 /**
  * Typed deserialization shapes for the seven geo Tier-2 spec files under
- * `contracts/geo/*.spec.json`. Mirrors the .NET `D2.Shared.Geo.SourceGen.Spec`
+ * `contracts/geo/*.spec.json`. Mirrors the .NET `DcsvIo.D2.Geo.SourceGen.Spec`
  * DTO catalog field-for-field — both runtimes consume the same JSON, so the
  * deserialization surface is identical by construction. The TS side uses
  * `readonly` everywhere because spec data is immutable at every layer.

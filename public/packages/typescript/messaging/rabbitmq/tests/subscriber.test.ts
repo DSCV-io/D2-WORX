@@ -8,7 +8,7 @@ import {
   type Connection,
   ConsumerStatus,
 } from "rabbitmq-client";
-import { fail, ok } from "@d2/result";
+import { fail, ok } from "@dcsv-io/d2-result";
 import { describe, expect, it, vi } from "vitest";
 
 import { subscribe } from "../src/subscribing/subscriber.js";

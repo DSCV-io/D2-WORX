@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging.Channels;
+namespace DcsvIo.D2.Tests.Unit.Messaging.Channels;
 
 using AwesomeAssertions;
-using D2.Shared.Messaging.RabbitMq.Channels;
+using DcsvIo.D2.Messaging.RabbitMq.Channels;
 using Xunit;
 
 /// <summary>

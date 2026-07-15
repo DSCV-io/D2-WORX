@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AdvisoryLocks.SourceGen;
+namespace DcsvIo.D2.AdvisoryLocks.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>Parses <c>advisory-locks.spec.json</c> into an <see cref="AdvisoryLocksSpec"/>.</summary>
 internal static class AdvisoryLocksSpecLoader

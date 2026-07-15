@@ -1,5 +1,5 @@
 import "@typespec/http";
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 using TypeSpec.Http;
 using D2;
 

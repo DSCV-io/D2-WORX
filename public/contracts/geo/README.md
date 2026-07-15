@@ -12,8 +12,8 @@ Audience: developers contributing to or consuming the geo data pipeline (Tier 1 
 
 The Tier 2 `*.spec.json` files at this directory's root are the codegen inputs:
 
-- **.NET** — [`public/packages/dotnet/geo/source-gen/`](../../public/packages/dotnet/geo/source-gen/README.md) (Roslyn source-gen → record shapes, branded code types, lookups, and catalog data in `D2.Shared.Geo.Abstractions` / `D2.Shared.Geo.Default`)
-- **TypeScript** — [`tools/ts-codegen` › `geo-emitter/`](../../tools/ts-codegen/README.md) (→ record shapes, branded code types, Zod schemas, and catalog data in `@d2/geo-abstractions` / `@d2/geo-default`)
+- **.NET** — [`public/packages/dotnet/geo/source-gen/`](../../public/packages/dotnet/geo/source-gen/README.md) (Roslyn source-gen → record shapes, branded code types, lookups, and catalog data in `DcsvIo.D2.Geo.Abstractions` / `DcsvIo.D2.Geo.Default`)
+- **TypeScript** — [`tools/ts-codegen` › `geo-emitter/`](../../tools/ts-codegen/README.md) (→ record shapes, branded code types, Zod schemas, and catalog data in `@dcsv-io/d2-geo-abstractions` / `@dcsv-io/d2-geo-default`)
 
 Both consume the same Tier 2 specs, so cross-language parity is structural. See [docs/SRC_GEN.md](../../docs/SRC_GEN.md) for the codegen pattern and [contracts catalog](../README.md) for the full contract index.
 
@@ -23,7 +23,7 @@ The geo data flows through three tiers from upstream ingestion to consumed code:
 
 - **Tier 1** — `src-data/` — ingestion pipeline tooling output. Verbose; one JSON file per catalog with `_provenance` per entry + `sources[]` + `fieldCoverage` diagnostics. NOT consumed by codegen directly. Source: `tools/geo-data-pipeline/` pulls from CLDR / IANA tzdb / libphonenumber / datasets/\* / Wikidata SPARQL / debian/iso-codes.
 - **Tier 2** — `*.spec.json` at this directory's root — denormalized + reorganized in the platform's preferred style. Match the canonical entity record shapes (`Country` / `Locale` / `Currency` / `Language` / `Subdivision` / `Timezone` / `GeopoliticalEntity`) 1:1. **THESE are the files codegen consumes**.
-- **Tier 3** — generated C# + TS code produced by codegen (`D2.Shared.Geo.Default` / `@d2/geo-default` packages) consuming Tier 2. Lives in the downstream geo libs, not in this directory.
+- **Tier 3** — generated C# + TS code produced by codegen (`DcsvIo.D2.Geo.Default` / `@dcsv-io/d2-geo-default` packages) consuming Tier 2. Lives in the downstream geo libs, not in this directory.
 
 ## Layout
 
@@ -135,8 +135,8 @@ Composite Tier 2 output inherits derived-work licensing. Per-source license attr
 ## Navigation
 
 **Consumed by:**
-- `public/packages/dotnet/geo/source-gen/` — .NET Roslyn source-gen; emits geo record types, code wrapper structs, lookup tables, and enum constants into `D2.Shared.Geo.Abstractions` and `D2.Shared.Geo.Default`
-- `tools/ts-codegen/src/geo-emitter/` — `tools/ts-codegen` geo emitter; generates TypeScript record shapes, branded code types, Zod schemas, and catalog data into `@d2/geo-abstractions` and `@d2/geo-default`
+- `public/packages/dotnet/geo/source-gen/` — .NET Roslyn source-gen; emits geo record types, code wrapper structs, lookup tables, and enum constants into `DcsvIo.D2.Geo.Abstractions` and `DcsvIo.D2.Geo.Default`
+- `tools/ts-codegen/src/geo-emitter/` — `tools/ts-codegen` geo emitter; generates TypeScript record shapes, branded code types, Zod schemas, and catalog data into `@dcsv-io/d2-geo-abstractions` and `@dcsv-io/d2-geo-default`
 
 **Generated output** is committed + byte-gated — see [docs/SRC_GEN.md](../../docs/SRC_GEN.md).
 

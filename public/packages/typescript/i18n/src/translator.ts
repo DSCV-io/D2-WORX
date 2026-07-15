@@ -3,8 +3,8 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { TKMessage } from "@d2/i18n-abstractions";
-import { falsey } from "@d2/utilities";
+import type { TKMessage } from "@dcsv-io/d2-i18n-abstractions";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 import type { ITranslator } from "./i-translator.js";
 import type { SupportedLocales } from "./supported-locales.js";

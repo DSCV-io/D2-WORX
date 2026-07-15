@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Tests.Unit.Auth;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Tests.Unit.Auth;
+using DcsvIo.D2.Utilities.Extensions;
 using Xunit;
 
 /// <summary>

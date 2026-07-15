@@ -37,10 +37,10 @@ export function emitLanguageData(context: GeoSpecContext): {
   appendEslintDisable(sb);
   sb.appendLine();
   sb.appendLine(
-    'import type { Country, Language, Locale, LocaleCode } from "@d2/geo-abstractions";',
+    'import type { Country, Language, Locale, LocaleCode } from "@dcsv-io/d2-geo-abstractions";',
   );
   sb.appendLine(
-    'import { CountryCode, LanguageCode } from "@d2/geo-abstractions";',
+    'import { CountryCode, LanguageCode } from "@dcsv-io/d2-geo-abstractions";',
   );
   sb.appendLine();
   sb.appendLine(

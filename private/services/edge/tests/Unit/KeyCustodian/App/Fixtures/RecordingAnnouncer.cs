@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 
-using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Messaging;
 
 /// <summary>
 /// Recording <see cref="IKeyRotationAnnouncer"/> fake — captures every call and

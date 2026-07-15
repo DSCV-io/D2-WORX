@@ -70,7 +70,7 @@ node tools/contract-gate/dist/cli.js --against <baseline> --skip-proto
 node tools/contract-gate/dist/cli.js --against <baseline> --proto-only
 
 # Or run buf directly over the shared protos:
-pnpm --filter @d2/typespec-emitters exec buf breaking public/contracts/protos \
+pnpm --filter @dcsv-io/d2-typespec-emitters exec buf breaking public/contracts/protos \
   --against '.git#branch=<baseline>,subdir=public/contracts/protos'
 
 # Package tests (unit + integration):

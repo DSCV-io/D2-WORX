@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
-using D2.Edge.KeyCustodian.Client.Sealing;
-using D2.Private.Auth;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
-using D2.Shared.Handler.Repo.Abstractions;
-using D2.Shared.Handler.Repo.Postgres;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Handler.Repo.Abstractions;
+using DcsvIo.D2.Handler.Repo.Postgres;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 using global::Npgsql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;

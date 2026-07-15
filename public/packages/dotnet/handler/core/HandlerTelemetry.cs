@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler;
+namespace DcsvIo.D2.Handler;
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -26,7 +26,7 @@ using System.Diagnostics.Metrics;
 public static class HandlerTelemetry
 {
     /// <summary>OTel source name — matches the assembly's well-known identifier.</summary>
-    public const string SourceName = "D2.Shared.Handler";
+    public const string SourceName = "DcsvIo.D2.Handler";
 
     /// <summary>
     /// Static <see cref="System.Diagnostics.ActivitySource"/> for handler spans.

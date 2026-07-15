@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.WorkloadCertificate;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.WorkloadCertificate;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Auth.Outbound.Grpc;
-using D2.Shared.Auth.Outbound.WorkloadCertificate;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Auth.Outbound.Grpc;
+using DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
+using DcsvIo.D2.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;

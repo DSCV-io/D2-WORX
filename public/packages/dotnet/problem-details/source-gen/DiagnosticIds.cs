@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ProblemDetails.SourceGen;
+namespace DcsvIo.D2.ProblemDetails.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by

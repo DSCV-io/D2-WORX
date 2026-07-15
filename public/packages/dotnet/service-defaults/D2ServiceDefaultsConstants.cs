@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ServiceDefaults;
+namespace DcsvIo.D2.ServiceDefaults;
 
 /// <summary>
-/// Public constants exposed by <see cref="D2.Shared.ServiceDefaults"/>.
+/// Public constants exposed by <see cref="DcsvIo.D2.ServiceDefaults"/>.
 /// Currently empty — this aggregator owns ZERO logic and reads no env vars
 /// of its own; every behavior is delegated to a prior shared lib whose
 /// constants live on its own <c>D2*Constants</c> class.

@@ -7,7 +7,7 @@
  * Options for {@link setupTelemetry}. All endpoint URLs default to env-var
  * resolution (`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` etc.) when unset.
  *
- * Mirrors `D2.Shared.Telemetry.D2TelemetryOptions` field-for-field where
+ * Mirrors `DcsvIo.D2.Telemetry.D2TelemetryOptions` field-for-field where
  * the .NET options surface applies in Node.
  */
 export interface TelemetryOptions {

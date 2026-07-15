@@ -3,17 +3,17 @@
 // Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 // </copyright>
 // Instance-style `this string?` extension is required because source generators
-// target netstandard2.0 and cannot reference D2.Shared.Utilities (net10).
+// target netstandard2.0 and cannot reference DcsvIo.D2.Utilities (net10).
 // This polyfill reproduces Falsey/Truthy semantics locally.
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.SourceGen.Polyfills;
+namespace DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// netstandard2.0 polyfill of
-/// <c>D2.Shared.Utilities.Extensions.StringExtensions.Falsey()</c> /
+/// <c>DcsvIo.D2.Utilities.Extensions.StringExtensions.Falsey()</c> /
 /// <c>Truthy()</c>. Source generators cannot reference
-/// <c>D2.Shared.Utilities</c> (which targets <c>net10</c>) because Roslyn
+/// <c>DcsvIo.D2.Utilities</c> (which targets <c>net10</c>) because Roslyn
 /// analyzer hosts require <c>netstandard2.0</c>. This polyfill keeps call
 /// sites rule-compliant. Wired into each source-gen csproj via the shared
 /// <c>Compile Include</c> from <c>source-gen-shared/</c> — every generator
@@ -25,7 +25,7 @@ internal static class StringExt
     /// <summary>
     /// Returns <c>true</c> when <paramref name="value"/> is null, empty, or
     /// whitespace-only — matching the real
-    /// <c>D2.Shared.Utilities.Extensions.StringExtensions.Falsey(string?)</c>
+    /// <c>DcsvIo.D2.Utilities.Extensions.StringExtensions.Falsey(string?)</c>
     /// semantics.
     /// </summary>
     /// <param name="value">The string to test, or <c>null</c>.</param>

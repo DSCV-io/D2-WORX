@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Endpoints;
+namespace DcsvIo.D2.Auth.Grpc.Endpoints;
 
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Builder;
 
 /// <summary>
@@ -47,7 +47,7 @@ using Microsoft.AspNetCore.Builder;
 /// </para>
 /// <para>
 /// A distinct extension class (different namespace from
-/// <c>D2.Shared.Auth.Http.Endpoints.RequireD2ScopeExtensions</c>) is
+/// <c>DcsvIo.D2.Auth.Http.Endpoints.RequireD2ScopeExtensions</c>) is
 /// used so HTTP and gRPC fluent builders don't collide on extension-method
 /// resolution for callers that consume both transport bindings.
 /// </para>

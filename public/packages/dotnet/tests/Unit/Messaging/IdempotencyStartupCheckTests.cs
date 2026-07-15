@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging;
+namespace DcsvIo.D2.Tests.Unit.Messaging;
 
 using AwesomeAssertions;
-using D2.Shared.Caching;
-using D2.Shared.Handler;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq.Idempotency;
-using D2.Shared.Result;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq.Idempotency;
+using DcsvIo.D2.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

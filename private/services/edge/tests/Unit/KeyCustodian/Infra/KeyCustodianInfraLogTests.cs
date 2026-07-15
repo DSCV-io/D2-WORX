@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
-using D2.Edge.KeyCustodian.Infra.Observability;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Observability;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

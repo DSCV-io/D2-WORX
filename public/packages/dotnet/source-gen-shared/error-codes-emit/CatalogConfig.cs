@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.SourceGen;
 
 /// <summary>
 /// Per-catalog configuration carried by a thin <c>ErrorCodesGenerator</c>
@@ -16,7 +16,7 @@ namespace D2.Shared.ErrorCodes.SourceGen;
 /// </summary>
 /// <param name="TargetAssemblyName">
 /// The consuming assembly the catalog emits into (the dispatch gate, e.g.
-/// <c>D2.Shared.Auth</c> / <c>D2.Shared.Result</c>).
+/// <c>DcsvIo.D2.Auth</c> / <c>DcsvIo.D2.Result</c>).
 /// </param>
 /// <param name="SpecFileName">
 /// The spec filename surfaced via <c>AdditionalFiles</c> (e.g.
@@ -24,7 +24,7 @@ namespace D2.Shared.ErrorCodes.SourceGen;
 /// </param>
 /// <param name="RootNamespace">
 /// The namespace the emitted constants + failures classes live in (e.g.
-/// <c>D2.Shared.Auth.Errors</c> / <c>D2.Shared.Result</c>).
+/// <c>DcsvIo.D2.Auth.Errors</c> / <c>DcsvIo.D2.Result</c>).
 /// </param>
 /// <param name="ConstantsClassName">
 /// The emitted constants class name (e.g. <c>AuthErrorCodes</c> /
@@ -195,7 +195,7 @@ namespace D2.Shared.ErrorCodes.SourceGen;
 /// </param>
 /// <param name="MessageKeyUsingNamespace">
 /// Namespace imported for the message-key class (public:
-/// <c>D2.Shared.I18n</c>; private: <c>D2.Private.I18n</c>).
+/// <c>DcsvIo.D2.I18n</c>; private: <c>DcsvIo.D2.Private.I18n</c>).
 /// </param>
 internal sealed record CatalogConfig(
     string TargetAssemblyName,
@@ -237,4 +237,4 @@ internal sealed record CatalogConfig(
     string? BaseBooleansBanner = null,
     string? BaseBooleansSummary = null,
     string MessageKeyClassName = "TK",
-    string MessageKeyUsingNamespace = "D2.Shared.I18n");
+    string MessageKeyUsingNamespace = "DcsvIo.D2.I18n");

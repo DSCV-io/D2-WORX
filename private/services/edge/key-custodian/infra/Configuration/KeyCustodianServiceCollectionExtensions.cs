@@ -4,23 +4,23 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Configuration;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Configuration;
 
-using D2.Edge.KeyCustodian.App.Application;
-using D2.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
-using D2.Edge.KeyCustodian.Infra.Observability;
-using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
-using D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
-using D2.Edge.KeyCustodian.Infra.Vault.File;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.EntityFrameworkCore.Postgres;
-using D2.Shared.Handler.Repo.Postgres;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Handler.Repo.Postgres;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Observability;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Scheduling.Hosted;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Vault.File;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using IClock = D2.Shared.Time.IClock;
-using SystemClock = D2.Shared.Time.SystemClock;
+using IClock = DcsvIo.D2.Time.IClock;
+using SystemClock = DcsvIo.D2.Time.SystemClock;
 
 /// <summary>
 /// The KeyCustodian module composition seam — registers the whole infra adapter

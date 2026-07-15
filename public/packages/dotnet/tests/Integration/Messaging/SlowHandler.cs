@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
-using D2.Shared.Handler;
-using D2.Shared.Result;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Result;
 
 /// <summary>Slow handler that signals when it starts then sleeps for a
 /// configurable duration — exercises the in-flight callback drain behavior.

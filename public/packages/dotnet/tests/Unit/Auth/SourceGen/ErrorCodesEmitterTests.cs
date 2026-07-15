@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using AwesomeAssertions;
-using D2.Shared.Auth.ErrorCodes.SourceGen;
-using D2.Shared.ErrorCodes.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Auth.ErrorCodes.SourceGen;
+using DcsvIo.D2.ErrorCodes.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Xunit;
 
 /// <summary>
@@ -41,7 +41,7 @@ public sealed class ErrorCodesEmitterTests
 
         result.Diagnostics.Should().BeEmpty();
         result.GeneratedSource.Should().Contain("public const string AUTH_X = \"AUTH_X\";");
-        result.GeneratedSource.Should().Contain("namespace D2.Shared.Auth.Errors;");
+        result.GeneratedSource.Should().Contain("namespace DcsvIo.D2.Auth.Errors;");
         result.GeneratedSource.Should().Contain("public static class AuthErrorCodes");
         result.GeneratedSource.Should().Contain(
             "public static int GetHttpStatus(string errorCode)");

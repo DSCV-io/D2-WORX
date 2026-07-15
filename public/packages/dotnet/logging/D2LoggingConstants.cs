@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Logging;
+namespace DcsvIo.D2.Logging;
 
 /// <summary>
-/// Public constants exposed by <see cref="D2.Shared.Logging"/> — config-key
+/// Public constants exposed by <see cref="DcsvIo.D2.Logging"/> — config-key
 /// strings and other values consumers may want to reference by symbol rather
 /// than by literal.
 /// </summary>

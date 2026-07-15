@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 /**
- * Retry policy options. Mirrors .NET `D2.Shared.Resilience.RetryOptions<T>`.
+ * Retry policy options. Mirrors .NET `DcsvIo.D2.Resilience.RetryOptions<T>`.
  * Defaults live in {@link RETRY_DEFAULTS}.
  */
 export interface RetryOptions<T = unknown> {

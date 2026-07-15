@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Location;
+namespace DcsvIo.D2.Tests.Unit.Location;
 
 using AwesomeAssertions;
-using D2.Shared.Location;
+using DcsvIo.D2.Location;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
@@ -72,9 +72,9 @@ public sealed class DependencyInjectionTests
 
     private sealed class CustomValidator : IPostalCodeValidator
     {
-        public D2.Shared.Result.D2Result<string> Validate(
+        public DcsvIo.D2.Result.D2Result<string> Validate(
             string? postalCode,
-            D2.Shared.Geo.Abstractions.CountryCode? countryCode = null) =>
-                D2.Shared.Result.D2Result<string>.Ok(postalCode ?? string.Empty);
+            DcsvIo.D2.Geo.Abstractions.CountryCode? countryCode = null) =>
+                DcsvIo.D2.Result.D2Result<string>.Ok(postalCode ?? string.Empty);
     }
 }

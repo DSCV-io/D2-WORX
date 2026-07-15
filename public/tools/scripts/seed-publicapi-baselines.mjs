@@ -3,7 +3,7 @@
 //
 // Seeding tool: generates the public-API surface baselines + the output
 // fingerprint baseline for every .NET CONSUMABLE in D2-WORX — the 54 total:
-// 53 D2.Shared.* libraries under public/packages/dotnet (excluding the source-gen
+// 53 DcsvIo.D2.* libraries under public/packages/dotnet (excluding the source-gen
 // shells + the test project) plus the in-process KeyCustodian client.
 //
 // Per consumable it produces three committed baseline files next to the .csproj:
@@ -139,7 +139,7 @@ const sharedDotnetRoot = path.join(REPO_ROOT, "public", "packages", "dotnet");
 const sharedConsumables = walk(sharedDotnetRoot)
   .filter((f) => f.endsWith(".csproj"))
   .filter((f) => !f.endsWith("SourceGen.csproj"))
-  .filter((f) => !/D2\.Shared\.Tests\.csproj$/.test(f));
+  .filter((f) => !/DcsvIo\.D2\.Tests\.csproj$/.test(f));
 
 const kcClient = path.join(
   REPO_ROOT,
@@ -148,7 +148,7 @@ const kcClient = path.join(
   "edge",
   "key-custodian",
   "client",
-  "D2.Edge.KeyCustodian.Client.csproj",
+  "DcsvIo.D2.Private.Edge.KeyCustodian.Client.csproj",
 );
 
 // The FULL consumable set (never filtered) — needed to resolve dependency
@@ -385,7 +385,7 @@ function extractSurfaceViaBuild(csprojPath, packageId) {
   const output = (result.stdout ?? "") + "\n" + (result.stderr ?? "");
 
   // MSBuild appends the owning project as `[<full-csproj-path>]` — e.g.
-  // `[C:\...\D2.Shared.Time.csproj]`. Match the basename immediately followed by
+  // `[C:\...\DcsvIo.D2.Time.csproj]`. Match the basename immediately followed by
   // the closing bracket (`Time.csproj]`) so a diagnostic is attributed to THIS
   // package and never to a dependency whose path also appears in the build.
   const csprojBasename = path.basename(csprojPath);

@@ -46,7 +46,7 @@ The on-disk generated path is `Generated/{analyzerAssemblyName}/{generatorTypeFQ
 
 Each catalog's pre-existing per-catalog validation diagnostics (`D2EC*` generic / `D2AEC*` auth) stay in their shells and are mapped to descriptors there — only the two engine-level diagnostics are catalog-neutral.
 
-The **merged-registry generator** (`D2.Shared.ErrorCodes.Registry.SourceGen`) adds two further diagnostics that fire at the registry-aggregation layer (cross-catalog visibility):
+The **merged-registry generator** (`DcsvIo.D2.ErrorCodes.Registry.SourceGen`) adds two further diagnostics that fire at the registry-aggregation layer (cross-catalog visibility):
 
 | ID | Severity | Fires when |
 | --- | --- | --- |

@@ -13,7 +13,7 @@ import {
 
 // The six JSON property-name constants declared in the spec.
 // Source: contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json
-// Mirrors .NET D2.Shared.Messaging.DlqFailureMetadataFields wire values.
+// Mirrors .NET DcsvIo.D2.Messaging.DlqFailureMetadataFields wire values.
 const EXPECTED_METADATA_FIELDS = [
   "cause",
   "errorCode",
@@ -24,7 +24,7 @@ const EXPECTED_METADATA_FIELDS = [
 ] as const;
 
 // The five closed-enum cause strings declared in the spec.
-// Mirrors .NET D2.Shared.Messaging.RabbitMq.Subscribing.DlqFailureCauses wire values.
+// Mirrors .NET DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses wire values.
 const EXPECTED_CAUSES = [
   "HANDLER_RESULT_FAILURE",
   "HANDLER_EXCEPTION",
@@ -33,7 +33,7 @@ const EXPECTED_CAUSES = [
   "RETRIES_EXHAUSTED",
 ] as const;
 
-describe("@d2/messaging-abstractions — DlqFailureMetadataFields", () => {
+describe("@dcsv-io/d2-messaging-abstractions — DlqFailureMetadataFields", () => {
   // long test description — cannot wrap
   it("ALL_DLQ_FAILURE_METADATA_FIELDS contains exactly the six spec-declared JSON property names", () => {
     expect([...ALL_DLQ_FAILURE_METADATA_FIELDS].sort()).toEqual(
@@ -66,7 +66,7 @@ describe("@d2/messaging-abstractions — DlqFailureMetadataFields", () => {
   });
 });
 
-describe("@d2/messaging-abstractions — DlqFailureCauses", () => {
+describe("@dcsv-io/d2-messaging-abstractions — DlqFailureCauses", () => {
   it("ALL_DLQ_FAILURE_CAUSES contains exactly the five spec-declared cause strings", () => {
     expect([...ALL_DLQ_FAILURE_CAUSES].sort()).toEqual(
       [...EXPECTED_CAUSES].sort(),

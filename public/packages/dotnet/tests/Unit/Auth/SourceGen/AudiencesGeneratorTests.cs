@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.Audiences.SourceGen;
+using DcsvIo.D2.Auth.Audiences.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -46,7 +46,7 @@ public sealed class AudiencesGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsAudiencesGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -79,7 +79,7 @@ public sealed class AudiencesGeneratorTests
     {
         // No AdditionalText supplied — generator must fire D2AUD006 (MissingSpecFile).
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -97,7 +97,7 @@ public sealed class AudiencesGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnosticAndStillProducesEmptyShell()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -116,12 +116,12 @@ public sealed class AudiencesGeneratorTests
         // Cache stability — identical inputs must produce identical generator
         // output (otherwise downstream incremental builds re-run unnecessarily).
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Abstractions",
+                assemblyName: "DcsvIo.D2.Auth.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees.Single().ToString();
 
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Abstractions",
+                assemblyName: "DcsvIo.D2.Auth.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees.Single().ToString();
 
@@ -136,7 +136,7 @@ public sealed class AudiencesGeneratorTests
     public void Generator_PrivateAuthAbstractionsExtensions_MultiSpec_EmitsProductAudiencesUnion()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions.Extensions",
+            assemblyName: "DcsvIo.D2.Private.Auth.Abstractions.Extensions",
             specJson: null,
             multiSpecs:
             [
@@ -150,7 +150,7 @@ public sealed class AudiencesGeneratorTests
             .Should().Be("ProductAudiences.g.cs");
 
         var src = result.GeneratedTrees.Single().ToString();
-        src.Should().Contain("namespace D2.Private.Auth;");
+        src.Should().Contain("namespace DcsvIo.D2.Private.Auth;");
         src.Should().Contain("public static partial class ProductAudiences");
         src.Should().Contain("\"https://files.internal\"");
         src.Should().Contain("\"https://courier.internal\"");

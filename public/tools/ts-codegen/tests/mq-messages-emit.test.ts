@@ -14,7 +14,7 @@ const validSpec: MqMessagesSpec = {
   messages: [
     {
       constant: "AuthKeyRotated",
-      messageType: "D2.Shared.Auth.Events.KeyRotatedEvent",
+      messageType: "DcsvIo.D2.Auth.Events.KeyRotatedEvent",
       exchange: "d2.security.key-rotated",
       exchangeType: "fanout",
       encryption: "plaintext",
@@ -74,7 +74,7 @@ describe("validateMqMessagesSpec", () => {
         validSpec.messages[0]!,
         {
           ...validSpec.messages[0]!,
-          messageType: "D2.Shared.Auth.Events.OtherEvent",
+          messageType: "DcsvIo.D2.Auth.Events.OtherEvent",
         },
       ],
     });
@@ -107,7 +107,7 @@ describe("emitMqMessages — snapshot pin", () => {
     expect(r.source).toContain('exchangeType: "fanout"');
     expect(r.source).toContain('encryption: "plaintext"');
     expect(r.source).toContain(
-      'messageType: "D2.Shared.Auth.Events.KeyRotatedEvent"',
+      'messageType: "DcsvIo.D2.Auth.Events.KeyRotatedEvent"',
     );
     expect(r.source).toContain('defaultRoutingKey: ""');
     expect(r.source).toContain("ALL_MQ_MESSAGE_CONSTANTS");
@@ -130,7 +130,7 @@ describe("emitMqMessages — snapshot pin", () => {
       messages: [
         {
           constant: "AuditWritten",
-          messageType: "D2.Audit.Events.AuditWritten",
+          messageType: "DcsvIo.D2.Private.Audit.Events.AuditWritten",
           exchange: "d2.audit.written",
           exchangeType: "fanout",
           encryption: "audit",

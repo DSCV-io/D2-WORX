@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging;
+namespace DcsvIo.D2.Tests.Unit.Messaging;
 
 using AwesomeAssertions;
-using D2.Shared.Encryption;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Messaging;
 using Xunit;
 
 /// <summary>

@@ -2,33 +2,33 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Geo.Abstractions
+# DcsvIo.D2.Geo.Abstractions
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 >
 > **Audience**: backend .NET service engineers who need strongly-typed access to ISO geo reference data (countries, subdivisions, currencies, languages, locales, timezones, geopolitical entities) without pulling in catalog data or temporal libraries.
 
-Hand-written contract surface + source-generator-emitted spec-derived types for the D² geo stack. Domain code anywhere in the backend can take a `ProjectReference` here without paying for the ~200 KB catalog data (lives in `D2.Shared.Geo.Default`) or NodaTime (lives in `D2.Shared.Time`). The hand-written surface stays intentionally tiny — only the helpers and meta-records that the codegen-emitted types reference back into.
+Hand-written contract surface + source-generator-emitted spec-derived types for the D² geo stack. Domain code anywhere in the backend can take a `ProjectReference` here without paying for the ~200 KB catalog data (lives in `DcsvIo.D2.Geo.Default`) or NodaTime (lives in `DcsvIo.D2.Time`). The hand-written surface stays intentionally tiny — only the helpers and meta-records that the codegen-emitted types reference back into.
 
 ## File layout
 
 | File | Purpose |
 | ---- | ------- |
-| `D2.Shared.Geo.Abstractions.csproj` | Project file. References `D2.Shared.Result` + `D2.Shared.Utilities` + `D2.Shared.Context.Abstractions`; wires `D2.Shared.Geo.SourceGen` as an analyzer (`OutputItemType="Analyzer"` / `ReferenceOutputAssembly="false"`); surfaces the 7 geo spec files via `AdditionalFiles`; emits codegen output under `Generated/`. |
+| `DcsvIo.D2.Geo.Abstractions.csproj` | Project file. References `DcsvIo.D2.Result` + `DcsvIo.D2.Utilities` + `DcsvIo.D2.Context.Abstractions`; wires `DcsvIo.D2.Geo.SourceGen` as an analyzer (`OutputItemType="Analyzer"` / `ReferenceOutputAssembly="false"`); surfaces the 7 geo spec files via `AdditionalFiles`; emits codegen output under `Generated/`. |
 | `DeprecationInfo.cs` | Hand-written meta-record — applies uniformly to every reference-data entity (carried as an optional `Deprecation?` field on every catalog record). 4 fields: `DeprecatedAt` / `Reason` / `SupersededBy` / `SuccessorNote`. |
 | `Extensions/IRequestContextGeoExtensions.cs` | Hand-written `extension(IRequestContext)` block — typed geo accessors (`Country()`, `Subdivision()`) over the raw string WhoIs fields the context interface carries for JWT wire fidelity. |
 | `IGeoReference.cs` | Hand-written lookup contract — strongly-typed lookup methods returning the single record shape (`Country GetCountry(CountryCode code)`, etc.). |
 | `NameResolution/IGeoNameResolver.cs` | Hand-written contract for free-form text → entity resolution. Returns the full record (not the code) so the caller sees the resolved record immediately. |
 | `NameResolution/NameNormalizer.cs` | Hand-written pure helper — normalizes free-form place names (NFD decomposition → strip combining marks → ampersand-token substitution → invariant casefold → trim → collapse internal whitespace) into the canonical comparison form the name resolver indexes on. |
 | `NameResolution/LevenshteinComparer.cs` | Hand-written pure helper — bounded Levenshtein edit distance with early termination at `maxDistance + 1`. Used by the fuzzy fallback of the name resolver to rank candidates after exact-lookup misses. |
-| `Generated/` | Source-generator output directory — populated at compile time by `D2.Shared.Geo.SourceGen`. Tracked in git so PR reviewers see codegen diffs without a local build. |
+| `Generated/` | Source-generator output directory — populated at compile time by `DcsvIo.D2.Geo.SourceGen`. Tracked in git so PR reviewers see codegen diffs without a local build. |
 
 ## Codegen wiring
 
-`D2.Shared.Geo.SourceGen` is the multi-assembly dispatcher that consumes the 7 geo spec files under `contracts/geo/` and emits code into two consumer assemblies:
+`DcsvIo.D2.Geo.SourceGen` is the multi-assembly dispatcher that consumes the 7 geo spec files under `contracts/geo/` and emits code into two consumer assemblies:
 
-- **This assembly** (`D2.Shared.Geo.Abstractions`) receives the spec-derived **TYPES**: single record shape per entity (nav refs use `get; internal set;` enabled by `[assembly: InternalsVisibleTo("D2.Shared.Geo.Default")]` for the two-pass populate from the data emitter), `Code`-suffixed real enums (`CountryCode`, `CurrencyCode`, `LanguageCode`, `GeopoliticalEntityCode`), wrapper structs (`SubdivisionCode`, `LocaleCode`, `TimezoneCode`), `JsonConverter`s with closed-set validation tables, and `GeoCatalog` constants (`CatalogVersion`, `CatalogPublishedAt`).
-- `D2.Shared.Geo.Default` receives the spec-derived **DATA**: per-entity static instances, nested static-class hierarchies (e.g. `Subdivisions.US.NY`), and the in-memory lookup tables.
+- **This assembly** (`DcsvIo.D2.Geo.Abstractions`) receives the spec-derived **TYPES**: single record shape per entity (nav refs use `get; internal set;` enabled by `[assembly: InternalsVisibleTo("DcsvIo.D2.Geo.Default")]` for the two-pass populate from the data emitter), `Code`-suffixed real enums (`CountryCode`, `CurrencyCode`, `LanguageCode`, `GeopoliticalEntityCode`), wrapper structs (`SubdivisionCode`, `LocaleCode`, `TimezoneCode`), `JsonConverter`s with closed-set validation tables, and `GeoCatalog` constants (`CatalogVersion`, `CatalogPublishedAt`).
+- `DcsvIo.D2.Geo.Default` receives the spec-derived **DATA**: per-entity static instances, nested static-class hierarchies (e.g. `Subdivisions.US.NY`), and the in-memory lookup tables.
 
 The dispatch fires on `compilation.AssemblyName` so the analyzer reaches both consumer assemblies from a single project reference each. See [`../source-gen/README.md`](../source-gen/README.md) for the full multi-assembly dispatch design.
 
@@ -38,7 +38,7 @@ The dispatch fires on `compilation.AssemblyName` so the analyzer reaches both co
 
 Every reference-data catalog ships ONE record shape. Each record carries scalars + universal dual-representation for every relationship.
 
-| Catalog | Record type | Plural data accessor (in `D2.Shared.Geo.Default`) | Lookup table |
+| Catalog | Record type | Plural data accessor (in `DcsvIo.D2.Geo.Default`) | Lookup table |
 | --- | --- | --- | --- |
 | Country | `Country` | `Countries.US` | `CountryLookup.ByCode[CountryCode.US]` |
 | Subdivision | `Subdivision` | (no plural; use `SubdivisionLookup`) | `SubdivisionLookup.ByCode[Subdivisions.US.NY]` |
@@ -84,15 +84,15 @@ Wrapper-struct derived property: `SubdivisionCode.ParentCountry` → `CountryCod
 
 Cyclic record graphs (`Country.PrimaryLanguage → Language → SpokenInCountries → Country`) are resolved via friend-assembly mutation:
 
-- `D2.Shared.Geo.Abstractions.csproj` declares `[assembly: InternalsVisibleTo("D2.Shared.Geo.Default")]`.
+- `DcsvIo.D2.Geo.Abstractions.csproj` declares `[assembly: InternalsVisibleTo("DcsvIo.D2.Geo.Default")]`.
 - Codegen emits nav properties as `get; internal set;` with sensible defaults (`null` for nullable single primaries; empty `FrozenSet` / `Array.Empty<T>()` for collections).
 - Scalar required fields stay as `required init`.
 
-**Caller-readonly guarantee**: from any assembly other than `D2.Shared.Geo.Default`, `Countries.US.PrimaryLanguage = ...` MUST fail at compile time (CS0272). An outside-assembly test pins this guarantee.
+**Caller-readonly guarantee**: from any assembly other than `DcsvIo.D2.Geo.Default`, `Countries.US.PrimaryLanguage = ...` MUST fail at compile time (CS0272). An outside-assembly test pins this guarantee.
 
-**Internal-mutation discipline rule**: within `D2.Shared.Geo.Default`, ONLY codegen-emitted static initializers in `CountryLookup` / `SubdivisionLookup` / `LocaleLookup` / `TimezoneLookup` / `CurrencyLookup` / `LanguageLookup` / `GeopoliticalEntityLookup` may write to nav properties. Hand-written code MUST NOT mutate them — that's a hand-written-code-touching-codegen-territory bug.
+**Internal-mutation discipline rule**: within `DcsvIo.D2.Geo.Default`, ONLY codegen-emitted static initializers in `CountryLookup` / `SubdivisionLookup` / `LocaleLookup` / `TimezoneLookup` / `CurrencyLookup` / `LanguageLookup` / `GeopoliticalEntityLookup` may write to nav properties. Hand-written code MUST NOT mutate them — that's a hand-written-code-touching-codegen-territory bug.
 
-## Lookup-pattern idioms (in `D2.Shared.Geo.Default`)
+## Lookup-pattern idioms (in `DcsvIo.D2.Geo.Default`)
 
 - `Countries.US.DisplayName` — per-country accessor returning the `Country` record, O(1)
 - `country.PrimaryLanguage?.Endonym` — single FK nav (nullable for uninhabited territories AQ / BV / HM)
@@ -110,18 +110,18 @@ Cyclic record graphs (`Country.PrimaryLanguage → Language → SpokenInCountrie
 | Meta-records that apply to every entity (`DeprecationInfo`) | This assembly (hand-written). |
 | Name-resolution helpers (`NameNormalizer`, `LevenshteinComparer`) | This assembly (hand-written, pure). |
 | Single record shape per entity / `*Code` real enums / wrapper structs / JsonConverters | This assembly's `Generated/` (codegen-emitted). |
-| Per-entity static catalog instances + lookup tables | `D2.Shared.Geo.Default`'s `Generated/`. |
-| Free `IClock` / `Instant` / `LocalDateTime` etc. | `D2.Shared.Time` — never referenced from here, by design. |
+| Per-entity static catalog instances + lookup tables | `DcsvIo.D2.Geo.Default`'s `Generated/`. |
+| Free `IClock` / `Instant` / `LocalDateTime` etc. | `DcsvIo.D2.Time` — never referenced from here, by design. |
 
 ## Dependencies
 
-- `D2.Shared.Result` — `D2Result<T>` return type for the name resolver's `TryResolve…` surface.
-- `D2.Shared.Utilities` — `Falsey()` / `Truthy()` boundary guards on the normalizer's input path + emitted code.
-- `D2.Shared.Context.Abstractions` — the `IRequestContext` interface the geo extensions hang off.
-- `D2.Shared.Geo.SourceGen` — analyzer-only reference (no runtime dll).
+- `DcsvIo.D2.Result` — `D2Result<T>` return type for the name resolver's `TryResolve…` surface.
+- `DcsvIo.D2.Utilities` — `Falsey()` / `Truthy()` boundary guards on the normalizer's input path + emitted code.
+- `DcsvIo.D2.Context.Abstractions` — the `IRequestContext` interface the geo extensions hang off.
+- `DcsvIo.D2.Geo.SourceGen` — analyzer-only reference (no runtime dll).
 
 Zero NodaTime / catalog-data / DI / Configuration / IO dependencies. This is the domain-safe slice every other geo lib builds on top of.
 
 ## Known build-time warnings
 
-The geo source-generator (`D2.Shared.Geo.SourceGen`) emits a small number of expected `D2GEO010` catalog-uniqueness warnings (legitimate parent-child name collisions like Burkina Faso Centre / Kadiogo, real-world ambiguity like Malta's two Rabats). See [`contracts/geo/KNOWN_WARNINGS.md`](../../../../../contracts/geo/KNOWN_WARNINGS.md) for the full enumerated list + escalation triggers. New warnings NOT documented there should be investigated before suppressing.
+The geo source-generator (`DcsvIo.D2.Geo.SourceGen`) emits a small number of expected `D2GEO010` catalog-uniqueness warnings (legitimate parent-child name collisions like Burkina Faso Centre / Kadiogo, real-world ambiguity like Malta's two Rabats). See [`contracts/geo/KNOWN_WARNINGS.md`](../../../../../contracts/geo/KNOWN_WARNINGS.md) for the full enumerated list + escalation triggers. New warnings NOT documented there should be investigated before suppressing.

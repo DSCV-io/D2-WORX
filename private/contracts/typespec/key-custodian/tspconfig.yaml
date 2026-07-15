@@ -11,22 +11,22 @@
 # Audit is NEVER co-imported (wrong package/ns stamp).
 
 emit:
-  - "@d2/typespec-emitters"
+  - "@dcsv-io/d2-typespec-emitters"
 
 options:
-  "@d2/typespec-emitters":
+  "@dcsv-io/d2-typespec-emitters":
     # Nested project-root needs ../../../ to reach the same shared emit dir as
     # the historical root contracts/typespec/ config (../../ from root).
     emitter-output-dir: "{project-root}/../../../public/packages/typescript/typespec-emitters/dist/generated"
 
     # C# namespace for fixture ops (signFixture) — retained for backward compatibility.
-    csharp-namespace: "D2.Edge.Tests.TypeSpecDto.Generated"
+    csharp-namespace: "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated"
 
     # Client project namespace: exposed-op DTOs and the module façade interface.
-    csharp-clients-namespace: "D2.Edge.KeyCustodian.Client"
+    csharp-clients-namespace: "DcsvIo.D2.Private.Edge.KeyCustodian.Client"
 
     # App handler-namespace base: per-op CQRS path = <base>.<Category>.<PascalOp>.
-    csharp-app-namespace-base: "D2.Edge.KeyCustodian.App.Application.Handlers"
+    csharp-app-namespace-base: "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers"
 
     # proto3 package declaration following the stability-channel scheme.
     proto-package: "d2.keycustodian.v2alpha"
@@ -36,7 +36,7 @@ options:
 
     # C# namespace for the generated gRPC service-impl class + transport mapper.
     # Production Edge.Api home (thin services + co-located transport mappers).
-    grpc-service-namespace: "D2.Edge.Api.Grpc.KeyCustodian"
+    grpc-service-namespace: "DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian"
 
     # Process kind per @d2ServedBy module — closed set: edge-module | standalone.
     process-kind-by-module:
@@ -47,9 +47,9 @@ options:
 
     # C# namespace for generated REST Map* route registrations, keyed by @d2ServedBy.
     csharp-routes-namespace:
-      KeyCustodian: "D2.Edge.Api.Routes.KeyCustodian"
+      KeyCustodian: "DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian"
       # Fixture routes stay under the fixture transport ns (not production Edge.Api).
-      SignFixture: "D2.Edge.Tests.TypeSpecRoute.Generated"
+      SignFixture: "DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated"
 
     # TS-client production-emission target — per @d2ServedBy module → package src root.
     # Paths are repo-root-relative; the emitter walks ancestors for the monorepo

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
+namespace DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
 
 using NodaTime;
 

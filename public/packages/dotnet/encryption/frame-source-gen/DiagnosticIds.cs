@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EncryptionFrame.SourceGen;
+namespace DcsvIo.D2.EncryptionFrame.SourceGen;
 
 /// <summary>Diagnostic IDs for encryption-frame source-gen.</summary>
 internal static class DiagnosticIds

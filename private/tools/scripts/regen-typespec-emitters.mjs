@@ -13,11 +13,11 @@
  *   node tools/scripts/regen-typespec-emitters.mjs
  *
  * Or via the package alias:
- *   pnpm --filter @d2/typespec-emitters regen
+ *   pnpm --filter @dcsv-io/d2-typespec-emitters regen
  *
  * The script:
  *   1. Creates temporary NTFS junctions so the TypeSpec compiler can resolve
- *      @d2/* and @typespec/* packages from contracts/typespec/ (which has no
+ *      @dcsv-io/d2-* and @typespec/* packages from contracts/typespec/ (which has no
  *      node_modules of its own). Junctions do not require admin on Windows.
  *   2. For EACH module package (KeyCustodian, Audit, …):
  *        a. Writes a temporary main.tsp matching that package's imports
@@ -215,7 +215,7 @@ const KEY_CUSTODIAN_COPY = [
 
   // ---- KeyCustodian gRPC service impls (production Edge.Api). The global tsp
   //      compile emits these into grpc-service-namespace
-  //      D2.Edge.Api.Grpc.KeyCustodian — matching the committed production home —
+  //      DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian — matching the committed production home —
   //      delegating to the facade IKeyCustodianApi (<clients-ns>.Facade).
   //      Physical home: api/Grpc/KeyCustodian/ (ADR-0020 transport).
   //      Fixture gRPC services (SignFixture*, enum, predicate) stay excluded
@@ -337,10 +337,10 @@ const KEY_CUSTODIAN_COPY = [
   },
 
   // ---- Well-known route registrations (production home Edge.Api;
-  //      ns D2.Edge.Api.Routes.KeyCustodian via csharp-routes-namespace +
+  //      ns DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian via csharp-routes-namespace +
   //      process-kind-by-module KeyCustodian=edge-module; delegate to
   //      IKeyCustodianApi, both @d2Harmless GET). Tests ProjectReference
-  //      D2.Edge.Api — do NOT dual-home under tests/Generated (CS0433). ----
+  //      DcsvIo.D2.Private.Edge.Api — do NOT dual-home under tests/Generated (CS0433). ----
   {
     from: "GetJwksRouteRegistration.g.cs",
     to: "private/services/edge/api/Routes/KeyCustodian/GetJwksRouteRegistration.g.cs",
@@ -421,8 +421,8 @@ const KEY_CUSTODIAN_COPY = [
   // PredicateFixturesGrpcClientsGenerated, PlaceOrderV2ClientKeys, DeepNestClientKeys,
   // D2GeneratedBusinessRetrySignal), and proto files
   // (predicate_fixtures_orders_place_order.g.proto, predicate_fixtures_gizmos_deep_deep_nest.g.proto)
-  // are EXCLUDED — namespace mismatch (tsp compile emits D2.Edge.KeyCustodian.* namespaces;
-  // committed fixtures use D2.Edge.Tests.TypeSpecGrpcPredicate.Generated).
+  // are EXCLUDED — namespace mismatch (tsp compile emits DcsvIo.D2.Private.Edge.KeyCustodian.* namespaces;
+  // committed fixtures use DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated).
   // Handler interfaces and DTOs are governed by predicate-byte-parity.test.ts (which calls
   // emitHandlerInterface / emitCsharpDtos directly with the fixture namespace) and
   // nested-model-grpc-byte-parity.test.ts. Never scatter these from $onEmit output.
@@ -706,10 +706,10 @@ try {
   symlinkSync(EMITTERS_NM, JUNCTION_CONTRACTS_NM, "junction");
   junctionContractsNmCreated = true;
 
-  // ---- 2. Junction: emitters/node_modules/@d2/typespec-emitters → emitters/ ----
+  // ---- 2. Junction: emitters/node_modules/@dcsv-io/d2-typespec-emitters → emitters/ ----
   //
   // The emitter itself is a workspace package — it's not installed in its own
-  // node_modules/@d2/typespec-emitters/. tsp compile resolves the emitter
+  // node_modules/@dcsv-io/d2-typespec-emitters/. tsp compile resolves the emitter
   // declared in tspconfig.yaml's `emit:` array via normal module resolution, so
   // a self-referencing junction is required.
   const d2NmDir = join(EMITTERS_NM, "@d2");
@@ -747,5 +747,5 @@ console.log(
   `\n✓ Regenerated ${totalCopied} committed file${totalCopied === 1 ? "" : "s"} across ${PACKAGES.length} package${PACKAGES.length === 1 ? "" : "s"}.`,
 );
 console.log(
-  "  Run `pnpm --filter @d2/typespec-emitters test` to confirm byte-gate tests pass.",
+  "  Run `pnpm --filter @dcsv-io/d2-typespec-emitters test` to confirm byte-gate tests pass.",
 );

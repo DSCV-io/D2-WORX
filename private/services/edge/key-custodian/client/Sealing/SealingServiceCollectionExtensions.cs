@@ -4,21 +4,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 
 using System.Linq;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Private.Encryption;
-using D2.Shared.Auth.Events;
-using D2.Shared.Encryption;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Auth.Events;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Encryption;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using OwnSealPrivateKeyStub =
-    D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient;
+    global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianOwnSealPrivateKey.KeyCustodianOwnSealPrivateKeyClient;
 using SealPublicKeyStub =
-    D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient;
+    global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianSealPublicKey.KeyCustodianSealPublicKeyClient;
 
 /// <summary>
 /// The single spec-driven registration surface for the sealed (asymmetric) payload-encryption
@@ -184,7 +184,7 @@ public static class SealingServiceCollectionExtensions
 
     // Validate the bare lowercase [a-z0-9-]{1,64} workload-service-id grammar fail-loud at
     // registration (the same grammar SealedKeyringValidation enforces at keyring construction --
-    // duplicated inline because that validator is internal to D2.Shared.Encryption and the
+    // duplicated inline because that validator is internal to DcsvIo.D2.Encryption and the
     // client package cannot reach it; the keyring ctor re-checks at fetch time).
     private static void ValidateServiceIdGrammar(string serviceId, string paramName)
     {

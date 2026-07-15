@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
+namespace DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
 
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;

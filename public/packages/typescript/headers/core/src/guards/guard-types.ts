@@ -3,12 +3,12 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { IRequestContext } from "@d2/request-context-abstractions";
+import type { IRequestContext } from "@dcsv-io/d2-request-context-abstractions";
 import type { ProblemDetailsBody } from "../problem-details.js";
 
 /**
  * Minimal SvelteKit-compatible request-event shape. Defined locally so
- * `@d2/headers` does not depend on `@sveltejs/kit` directly — the BFF
+ * `@dcsv-io/d2-headers` does not depend on `@sveltejs/kit` directly — the BFF
  * passes its `RequestEvent`-typed value at the call site; structural
  * typing makes the SvelteKit type assignable to this one.
  */
@@ -22,7 +22,7 @@ export interface GuardRequestEvent {
 /**
  * Pluggable thrower contract. SvelteKit's `error()` / `redirect()` are
  * runtime functions that throw — they are not importable from
- * `@d2/headers` without taking on a SvelteKit dep. Consumers wire in
+ * `@dcsv-io/d2-headers` without taking on a SvelteKit dep. Consumers wire in
  * their own thrower (typically by re-exporting SvelteKit's helpers).
  *
  * BOTH methods MUST throw — they never return. The `never` return
@@ -30,7 +30,7 @@ export interface GuardRequestEvent {
  *
  * `throwError` is invoked by every guard with a `ProblemDetailsBody`
  * payload and the `application/problem+json` content type (re-exported
- * from `@d2/headers` as `PROBLEM_DETAILS_CONTENT_TYPE` — RFC 7807 §6.1
+ * from `@dcsv-io/d2-headers` as `PROBLEM_DETAILS_CONTENT_TYPE` — RFC 7807 §6.1
  * SHOULD compliance). Implementations MUST honor the supplied
  * `contentType` on the outbound response (e.g. by constructing a
  * SvelteKit `Response` with the header set) — defaulting to

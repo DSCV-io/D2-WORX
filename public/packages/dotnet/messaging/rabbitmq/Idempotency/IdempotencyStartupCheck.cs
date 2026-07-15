@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Idempotency;
+namespace DcsvIo.D2.Messaging.RabbitMq.Idempotency;
 
-using D2.Shared.Caching;
+using DcsvIo.D2.Caching;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

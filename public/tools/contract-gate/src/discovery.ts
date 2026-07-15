@@ -24,7 +24,7 @@ import { readdirSync, existsSync } from "node:fs";
 import type { Dirent } from "node:fs";
 import { basename, join, relative } from "node:path";
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 // ---------------------------------------------------------------------------
 // Skip set (canonical name list)

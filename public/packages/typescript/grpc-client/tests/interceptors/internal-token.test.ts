@@ -10,8 +10,8 @@ import {
   type InterceptorOptions,
   type StatusObject,
 } from "@grpc/grpc-js";
-import { ok } from "@d2/result";
-import { HttpHeaders } from "@d2/headers-http";
+import { ok } from "@dcsv-io/d2-result";
+import { HttpHeaders } from "@dcsv-io/d2-headers-http";
 import { InternalTokenCache } from "../../src/internal-token-cache.js";
 import { createInternalTokenInterceptor } from "../../src/interceptors/internal-token.js";
 import type { InternalTokenClient } from "../../src/internal-token-client.js";

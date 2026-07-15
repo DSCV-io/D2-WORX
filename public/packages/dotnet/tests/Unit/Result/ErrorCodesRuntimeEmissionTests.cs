@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Result;
+namespace DcsvIo.D2.Tests.Unit.Result;
 
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 using Xunit;
 
 /// <summary>

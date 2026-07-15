@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/grpc-client
+# @dcsv-io/d2-grpc-client
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
@@ -37,7 +37,7 @@ is an external client of Edge, so it acquires a `client_credentials` token
 
 ### gRPC result codec — `D2Result` ↔ `D2ResultProto` wire round-trip
 
-Mirrors .NET `D2.Shared.Result.Grpc.ProtoExtensions`. Every gRPC response
+Mirrors .NET `DcsvIo.D2.Result.Grpc.ProtoExtensions`. Every gRPC response
 message carries a `D2ResultProto result = N` envelope field; the typed
 payload rides in sibling fields. Business failures return a normal response
 (`success=false` in the envelope) — `RpcException` is reserved for
@@ -67,7 +67,7 @@ A `404` from a handler is a business result → `D2ResultProto{ success=false, s
 #### Call-site pattern
 
 ```ts
-import { getChannel, createInternalTokenInterceptor, handleGrpcCall, unaryCall } from "@d2/grpc-client";
+import { getChannel, createInternalTokenInterceptor, handleGrpcCall, unaryCall } from "@dcsv-io/d2-grpc-client";
 
 // One-time setup at composition root (unchanged from before).
 const channel = await getChannel();
@@ -115,10 +115,10 @@ a TK constant (`TK.common.errors.SERVICE_UNAVAILABLE` / `CANCELED` /
   On `UNAUTHENTICATED` response the interceptor CLEARS the cache so the NEXT
   call re-acquires fresh; the `@grpc/grpc-js` interceptor SPI does not
   support truly re-issuing the same call from inside the interceptor — the
-  retry layer (e.g. `@d2/resilience`'s `RetryHelper`) is responsible for the
+  retry layer (e.g. `@dcsv-io/d2-resilience`'s `RetryHelper`) is responsible for the
   second attempt.
 - **Singleflight dedup**: 100 concurrent gRPC calls all triggering a token
-  acquire result in ONE upstream OAuth call thanks to `@d2/resilience`'s
+  acquire result in ONE upstream OAuth call thanks to `@dcsv-io/d2-resilience`'s
   `Singleflight<TKey, TValue>` (inside `HttpInternalTokenClient`).
 
 ## Channel model
@@ -140,7 +140,7 @@ a TK constant (`TK.common.errors.SERVICE_UNAVAILABLE` / `CANCELED` /
 | --------------------------------- | ----- | ------------------------------------------------------- |
 | `grpc.max_send_message_length`    | 4 MB  | gRPC default (explicit pin so future change is visible) |
 | `grpc.max_receive_message_length` | 4 MB  | same                                                    |
-| `grpc.keepalive_time_ms`          | 10 s  | matches platform retry defaults from `@d2/resilience`   |
+| `grpc.keepalive_time_ms`          | 10 s  | matches platform retry defaults from `@dcsv-io/d2-resilience`   |
 | `grpc.keepalive_timeout_ms`       | 5 s   | gRPC HTTP/2 idle-tolerance defaults                     |
 
 ## Security: PII redaction in interceptor logs
@@ -153,30 +153,30 @@ log binding.
 
 ## Dependencies
 
-- `@d2/auth-abstractions` — `AuthFailures.jwksUnavailable` factory for
+- `@dcsv-io/d2-auth-abstractions` — `AuthFailures.jwksUnavailable` factory for
   token-endpoint-unreachable failures.
-- `@d2/error-category` — `ErrorCategory` union + `ALL_ERROR_CATEGORIES` for
+- `@dcsv-io/d2-error-category` — `ErrorCategory` union + `ALL_ERROR_CATEGORIES` for
   safe category parse on `d2ResultFromProto`.
-- `@d2/headers-common` — `PROPAGATED_CONTEXT` / `TRACEPARENT` /
+- `@dcsv-io/d2-headers-common` — `PROPAGATED_CONTEXT` / `TRACEPARENT` /
   `TRACESTATE` metadata keys (gRPC-applicable wire constants live in
-  `@d2/headers-common` and `@d2/headers-http`; the dedicated
-  `@d2/headers-grpc` package contains the same cross-transport entries
+  `@dcsv-io/d2-headers-common` and `@dcsv-io/d2-headers-http`; the dedicated
+  `@dcsv-io/d2-headers-grpc` package contains the same cross-transport entries
   inline and is not needed at this layer).
-- `@d2/headers-http` — `AUTHORIZATION` constant for the internal-token
+- `@dcsv-io/d2-headers-http` — `AUTHORIZATION` constant for the internal-token
   attach.
-- `@d2/i18n-abstractions` — `tk(key, params?)` factory used in
+- `@dcsv-io/d2-i18n-abstractions` — `tk(key, params?)` factory used in
   `d2ResultFromProto` to reconstruct `TKMessage` from proto fields.
-- `@d2/i18n-keys` — `TK.*` constants for transport-fault messages in
+- `@dcsv-io/d2-i18n-keys` — `TK.*` constants for transport-fault messages in
   `handleGrpcCall` (no raw error strings ever enter user-facing messages).
-- `@d2/logging` — `ILogger` interface for redaction-respecting diagnostic
+- `@dcsv-io/d2-logging` — `ILogger` interface for redaction-respecting diagnostic
   logs.
-- `@d2/protos` — `D2ResultProto` / `TKMessageProto` / `InputErrorProto`
+- `@dcsv-io/d2-protos` — `D2ResultProto` / `TKMessageProto` / `InputErrorProto`
   generated stubs (transitively pulls `@grpc/grpc-js@1.14.3`).
-- `@d2/request-context-abstractions` — `IPropagatedContext` shape +
+- `@dcsv-io/d2-request-context-abstractions` — `IPropagatedContext` shape +
   `PropagatedContextSerializer.serialize()`.
-- `@d2/resilience` — `Singleflight` for concurrent token-refresh dedup.
-- `@d2/result` — `D2Result` + semantic factory functions.
-- `@d2/utilities` — `falsey()` for input shape checks; `truthyOrUndefined()`
+- `@dcsv-io/d2-resilience` — `Singleflight` for concurrent token-refresh dedup.
+- `@dcsv-io/d2-result` — `D2Result` + semantic factory functions.
+- `@dcsv-io/d2-utilities` — `falsey()` for input shape checks; `truthyOrUndefined()`
   for proto optional-string rehydration.
 - `@grpc/grpc-js@1.14.3` — runtime gRPC implementation; pinned.
 
@@ -190,7 +190,7 @@ import {
   createContextPropagationInterceptor,
   HttpInternalTokenClient,
   InternalTokenCache,
-} from "@d2/grpc-client";
+} from "@dcsv-io/d2-grpc-client";
 
 // One-time setup at composition root.
 const cache = new InternalTokenCache();

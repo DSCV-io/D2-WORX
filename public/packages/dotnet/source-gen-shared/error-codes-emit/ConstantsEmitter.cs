@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.SourceGen;
 
 using System;
 using System.Collections.Generic;
@@ -12,8 +12,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using D2.Shared.SourceGen;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.SourceGen;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Shared logic for emitting the per-catalog constants static class source

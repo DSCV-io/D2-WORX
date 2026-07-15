@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.Entities;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Entities;
 
 /// <summary>
 /// A managed encryption key that has been marked compromised. This is a terminal

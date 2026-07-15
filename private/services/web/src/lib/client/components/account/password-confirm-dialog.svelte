@@ -12,7 +12,7 @@ Copyright (c) DCSV. All rights reserved.
   import { zod4Client as zodClient } from "sveltekit-superforms/adapters";
   import { z } from "zod";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
-  import type { D2Result } from "@d2/result";
+  import type { D2Result } from "@dcsv-io/d2-result";
   import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
 
   /**

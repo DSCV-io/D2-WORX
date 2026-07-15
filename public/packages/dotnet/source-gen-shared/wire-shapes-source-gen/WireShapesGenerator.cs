@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.WireShapes.SourceGen;
+namespace DcsvIo.D2.WireShapes.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -21,37 +21,37 @@ using Microsoft.CodeAnalysis.Text;
 /// Dispatches per consuming assembly:
 /// <list type="bullet">
 ///   <item>
-///     <c>D2.Shared.I18n.Abstractions</c> → reads
+///     <c>DcsvIo.D2.I18n.Abstractions</c> → reads
 ///     <c>tk-message.spec.json</c> → emits <c>TkMessageWireShape.g.cs</c>.
 ///   </item>
 ///   <item>
-///     <c>D2.Shared.Result</c> → reads <c>input-error.spec.json</c> →
+///     <c>DcsvIo.D2.Result</c> → reads <c>input-error.spec.json</c> →
 ///     emits <c>InputErrorWireShape.g.cs</c>.
 ///   </item>
 ///   <item>Anything else → emit nothing.</item>
 /// </list>
 /// One analyzer, one shared scaffolding (loader + emitter), multiple
-/// catalogs — same approach as <c>D2.Shared.Headers.SourceGen</c>'s
+/// catalogs — same approach as <c>DcsvIo.D2.Headers.SourceGen</c>'s
 /// per-transport dispatch.
 /// </summary>
 [Generator]
 public sealed class WireShapesGenerator : IIncrementalGenerator
 {
-    private const string _TK_MESSAGE_ASSEMBLY = "D2.Shared.I18n.Abstractions";
-    private const string _INPUT_ERROR_ASSEMBLY = "D2.Shared.Result";
+    private const string _TK_MESSAGE_ASSEMBLY = "DcsvIo.D2.I18n.Abstractions";
+    private const string _INPUT_ERROR_ASSEMBLY = "DcsvIo.D2.Result";
 
     private static readonly Dictionary<string, DispatchEntry> sr_dispatch =
         new(StringComparer.Ordinal)
         {
             [_TK_MESSAGE_ASSEMBLY] = new(
                 SpecFileName: "tk-message.spec.json",
-                NamespaceName: "D2.Shared.I18n",
+                NamespaceName: "DcsvIo.D2.I18n",
                 ClassName: "TkMessageWireShape",
                 CatalogDescription: "TKMessage",
                 SourceFileName: "TkMessageWireShape.g.cs"),
             [_INPUT_ERROR_ASSEMBLY] = new(
                 SpecFileName: "input-error.spec.json",
-                NamespaceName: "D2.Shared.Result",
+                NamespaceName: "DcsvIo.D2.Result",
                 ClassName: "InputErrorWireShape",
                 CatalogDescription: "InputError",
                 SourceFileName: "InputErrorWireShape.g.cs"),

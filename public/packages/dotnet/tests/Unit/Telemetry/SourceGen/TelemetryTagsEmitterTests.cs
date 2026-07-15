@@ -6,13 +6,13 @@
 
 extern alias TelemetryTagsSourceGen;
 
-namespace D2.Shared.Tests.Unit.Telemetry.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Telemetry.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.Telemetry.Tags.SourceGen;
+using DcsvIo.D2.Telemetry.Tags.SourceGen;
 using Xunit;
-using SpecFile = TelemetryTagsSourceGen::D2.Shared.SourceGen.SpecFile;
+using SpecFile = TelemetryTagsSourceGen::DcsvIo.D2.SourceGen.SpecFile;
 
 /// <summary>
 /// Pure-logic tests for the telemetry-tags emitter.
@@ -147,7 +147,7 @@ public sealed class TelemetryTagsEmitterTests
     [Fact]
     public void ResolveClassName_DerivesPascalCaseFromMeterLastSegment_WhenNoOverride()
     {
-        var meter = MakeMeter("D2.Shared.Auth", "Asm.A");
+        var meter = MakeMeter("DcsvIo.D2.Auth", "Asm.A");
 
         var name = TelemetryTagsEmitter.ResolveClassName(meter);
 
@@ -157,11 +157,11 @@ public sealed class TelemetryTagsEmitterTests
     [Fact]
     public void ResolveNamespace_DefaultsToConsumingAssemblyDotTelemetry_WhenNoOverride()
     {
-        var meter = MakeMeter("D2.Shared.Auth", "D2.Shared.Auth");
+        var meter = MakeMeter("DcsvIo.D2.Auth", "DcsvIo.D2.Auth");
 
         var ns = TelemetryTagsEmitter.ResolveNamespace(meter);
 
-        ns.Should().Be("D2.Shared.Auth.Telemetry");
+        ns.Should().Be("DcsvIo.D2.Auth.Telemetry");
     }
 
     private static MeterEntry MakeMeter(

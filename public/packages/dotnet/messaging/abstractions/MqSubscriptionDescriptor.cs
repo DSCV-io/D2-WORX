@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging;
+namespace DcsvIo.D2.Messaging;
 
 /// <summary>
 /// Fully-resolved subscription contract for one handler. Codegen-emitted
 /// from <c>contracts/mq-subscriptions/mq-subscriptions.spec.json</c> by
-/// <c>D2.Shared.Messaging.SourceGen</c>; one per <c>MqSubscriptions.X</c> constant.
+/// <c>DcsvIo.D2.Messaging.SourceGen</c>; one per <c>MqSubscriptions.X</c> constant.
 /// </summary>
 /// <param name="Constant">The string constant identifying this descriptor
 /// (matches the value of the corresponding <c>MqSubscriptions.X</c> field).</param>

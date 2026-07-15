@@ -3,8 +3,8 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n-keys";
-import { ErrorCodes, HttpStatusCode } from "@d2/result";
+import { TK } from "@dcsv-io/d2-i18n-keys";
+import { ErrorCodes, HttpStatusCode } from "@dcsv-io/d2-result";
 import { describe, expect, it } from "vitest";
 
 import { InputFailures } from "../src/index.js";

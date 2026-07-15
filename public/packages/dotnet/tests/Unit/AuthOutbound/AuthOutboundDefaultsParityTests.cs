@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Outbound;
+using DcsvIo.D2.Auth.Outbound;
 using Xunit;
 
 /// <summary>
 /// Drift-guard pinning the workload-leaf default tunables to their literal values.
-/// The Node twin pins the same three defaults in the <c>@d2/key-custodian-client</c>
+/// The Node twin pins the same three defaults in the <c>@dcsv-io/d2-private-key-custodian-client</c>
 /// package's <c>workload-leaf-defaults.test.ts</c> (constants
 /// <c>DEFAULT_REFRESH_MARGIN_MS</c> / <c>DEFAULT_FAILURE_THRESHOLD</c> /
 /// <c>DEFAULT_COOLDOWN_MS</c>). A change to either runtime's default reds that

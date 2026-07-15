@@ -3,15 +3,15 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { IPayloadCrypto, IPayloadSealer } from "@d2/encryption";
+import type { IPayloadCrypto, IPayloadSealer } from "@dcsv-io/d2-encryption";
 import type {
   EncryptionDomain,
   EncryptionDomainModes,
-} from "@d2/encryption-abstractions";
+} from "@dcsv-io/d2-encryption-abstractions";
 import type {
   MqMessageCatalogKey,
   MqMessagesCatalog,
-} from "@d2/messaging-abstractions";
+} from "@dcsv-io/d2-messaging-abstractions";
 
 /**
  * The compile-time type-witness that fuses publishing and encryption (the TS

@@ -3,12 +3,12 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { TKMessage } from "@d2/i18n-abstractions";
+import type { TKMessage } from "@dcsv-io/d2-i18n-abstractions";
 
 /**
  * A field-level validation error: the offending field name plus one or more
  * translation messages describing what's wrong with that field. Wire format
- * matches .NET `D2.Shared.Result.InputError` —
+ * matches .NET `DcsvIo.D2.Result.InputError` —
  * `{ field, errors: [{ key, params? }] }`.
  *
  * The JSON property names (`field`, `errors`) come from the spec-derived

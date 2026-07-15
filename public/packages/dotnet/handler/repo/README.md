@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Handler.Repo
+# DcsvIo.D2.Handler.Repo
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
-EF-flavored `BaseRepoHandler<TSelf, TInput, TOutput>` — sits on top of `BaseHandler` from `D2.Shared.Handler`. Overrides `HandleAsync` to convert any database exception captured during `ExecuteAsync` into a typed `D2Result` failure (concurrency conflict, unique violation, deadlock, connection failure, etc.) so callers can branch on what actually went wrong instead of getting a generic 500.
+EF-flavored `BaseRepoHandler<TSelf, TInput, TOutput>` — sits on top of `BaseHandler` from `DcsvIo.D2.Handler`. Overrides `HandleAsync` to convert any database exception captured during `ExecuteAsync` into a typed `D2Result` failure (concurrency conflict, unique violation, deadlock, connection failure, etc.) so callers can branch on what actually went wrong instead of getting a generic 500.
 
-Provider-agnostic by design: catches the BCL-typed `DbUpdateConcurrencyException` directly and routes everything else through an injected `IDbExceptionClassifier`. Provider-specific knowledge lives in sibling packages (e.g. `D2.Shared.Handler.Repo.Postgres`).
+Provider-agnostic by design: catches the BCL-typed `DbUpdateConcurrencyException` directly and routes everything else through an injected `IDbExceptionClassifier`. Provider-specific knowledge lives in sibling packages (e.g. `DcsvIo.D2.Handler.Repo.Postgres`).
 
 ---
 
@@ -16,7 +16,7 @@ Provider-agnostic by design: catches the BCL-typed `DbUpdateConcurrencyException
 
 | Path                            | Contents                                                                                                                                                                                                                                                                                           |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Handler.Repo.csproj` | csproj — refs `handler/core` + `handler/abstractions` + `handler/repo-abstractions` + `result` + `Microsoft.EntityFrameworkCore`. Zero provider deps.                                                                                                                                           |
+| `DcsvIo.D2.Handler.Repo.csproj` | csproj — refs `handler/core` + `handler/abstractions` + `handler/repo-abstractions` + `result` + `Microsoft.EntityFrameworkCore`. Zero provider deps.                                                                                                                                           |
 | `BaseRepoHandler.cs`            | Abstract `BaseRepoHandler<TSelf, TInput, TOutput> : BaseHandler<TSelf, TInput, TOutput>`. Constructor takes an injected `IDbExceptionClassifier`. Override `HandleAsync` calls `RunCorePipelineAsync` then dispatches the captured exception through the classifier to a typed `D2Result` factory. |
 
 ---
@@ -82,7 +82,7 @@ Returning `null` from the override means "use the default" — handlers only cus
 
 ## Caller-side discrimination
 
-Callers branch on the typed booleans from `D2.Shared.Handler.Repo.Abstractions`:
+Callers branch on the typed booleans from `DcsvIo.D2.Handler.Repo.Abstractions`:
 
 ```csharp
 var result = await createUser.HandleAsync(input);
@@ -118,10 +118,10 @@ Without a registered classifier, resolving any `BaseRepoHandler` subclass fails 
 
 Project references:
 
-- `D2.Shared.Handler` — base + `HandlerContext<T>`
-- `D2.Shared.Handler.Abstractions` — `IHandler`, `HandlerOptions`
-- `D2.Shared.Handler.Repo.Abstractions` — `IDbExceptionClassifier`, `DbFailureKind`, `D2Result.X` extension factories
-- `D2.Shared.Result` — base `D2Result`
+- `DcsvIo.D2.Handler` — base + `HandlerContext<T>`
+- `DcsvIo.D2.Handler.Abstractions` — `IHandler`, `HandlerOptions`
+- `DcsvIo.D2.Handler.Repo.Abstractions` — `IDbExceptionClassifier`, `DbFailureKind`, `D2Result.X` extension factories
+- `DcsvIo.D2.Result` — base `D2Result`
 
 Package references:
 
@@ -133,7 +133,7 @@ No `Npgsql`, no provider-specific deps.
 
 ## Reference
 
-- [`D2.Shared.Handler.Repo.Abstractions`](../repo-abstractions/README.md) — vocabulary + extension factories + booleans
-- [`D2.Shared.Handler.Repo.Postgres`](../repo-postgres/README.md) — PG classifier impl
-- [`D2.Shared.Handler`](../core/README.md) — base
+- [`DcsvIo.D2.Handler.Repo.Abstractions`](../repo-abstractions/README.md) — vocabulary + extension factories + booleans
+- [`DcsvIo.D2.Handler.Repo.Postgres`](../repo-postgres/README.md) — PG classifier impl
+- [`DcsvIo.D2.Handler`](../core/README.md) — base
 - [PostgreSQL error code reference](https://www.postgresql.org/docs/current/errcodes-appendix.html)

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
 
-using D2.Edge.KeyCustodian.App.Application.Sealing;
-using D2.Edge.KeyCustodian.Client.Sealing;
-using D2.Private.Auth;
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey.IGetOrLazyProvisionSealPublicKeyHandler;
-using I = D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput;
-using O = D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Sealing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey.IGetOrLazyProvisionSealPublicKeyHandler;
+using I = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput;
 
 /// <summary>
 /// Serves a target service's PUBLIC sealing keys (active + retiring SPKI public keys) so a
@@ -124,7 +124,7 @@ public sealed class GetOrLazyProvisionSealPublicKeyHandler(
     private D2Result<O?> DenyWithTelemetry(D2Result authResult, string? immediateCaller)
     {
         // Switch on the EMITTED error-code constants, never raw string literals (in scope via
-        // the app/GlobalUsings.cs D2.Edge.KeyCustodian.Domain.Errors global using). The uniform
+        // the app/GlobalUsings.cs DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors global using). The uniform
         // 403 SEAL_NOT_AUTHORIZED splits by deny arm for TELEMETRY ONLY â€” the wire code stays
         // uniform (no plane / service-existence oracle).
         var reason = authResult.ErrorCode switch

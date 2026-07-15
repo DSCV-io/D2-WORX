@@ -8,8 +8,8 @@ Encryption frame binary layout spec — the byte-offset positions and field leng
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/encryption/frame-source-gen/`](../../public/packages/dotnet/encryption/frame-source-gen/README.md) (Roslyn source-gen → `EncryptionFrameLayout` byte-offset + length constants in `D2.Shared.Encryption`)
-- **TypeScript** — [`tools/ts-codegen` › `encryption-frame-emit.ts`](../../tools/ts-codegen/README.md) (→ matching field-offset + byte-length constants in `@d2/encryption-abstractions` for ops tooling and TS frame readers)
+- **.NET** — [`public/packages/dotnet/encryption/frame-source-gen/`](../../public/packages/dotnet/encryption/frame-source-gen/README.md) (Roslyn source-gen → `EncryptionFrameLayout` byte-offset + length constants in `DcsvIo.D2.Encryption`)
+- **TypeScript** — [`tools/ts-codegen` › `encryption-frame-emit.ts`](../../tools/ts-codegen/README.md) (→ matching field-offset + byte-length constants in `@dcsv-io/d2-encryption-abstractions` for ops tooling and TS frame readers)
 
 ## See also
 

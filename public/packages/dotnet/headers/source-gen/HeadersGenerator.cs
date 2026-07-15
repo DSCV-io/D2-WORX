@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Headers.SourceGen;
+namespace DcsvIo.D2.Headers.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -20,19 +20,19 @@ using Microsoft.CodeAnalysis.Text;
 /// via <c>AdditionalFiles</c>. Dispatches per consuming assembly:
 /// <list type="bullet">
 ///   <item>
-///     <c>D2.Shared.Headers.Common</c> → <c>CommonHeaders.g.cs</c>
+///     <c>DcsvIo.D2.Headers.Common</c> → <c>CommonHeaders.g.cs</c>
 ///     (entries with applicability count &gt;= 2).
 ///   </item>
 ///   <item>
-///     <c>D2.Shared.Headers.Http</c> → <c>HttpHeaders.g.cs</c>
+///     <c>DcsvIo.D2.Headers.Http</c> → <c>HttpHeaders.g.cs</c>
 ///     (entries whose applicability includes <c>http</c>).
 ///   </item>
 ///   <item>
-///     <c>D2.Shared.Headers.Amqp</c> → <c>AmqpHeaders.g.cs</c>
+///     <c>DcsvIo.D2.Headers.Amqp</c> → <c>AmqpHeaders.g.cs</c>
 ///     (entries whose applicability includes <c>amqp</c>).
 ///   </item>
 ///   <item>
-///     <c>D2.Shared.Headers.Grpc</c> → <c>GrpcHeaders.g.cs</c>
+///     <c>DcsvIo.D2.Headers.Grpc</c> → <c>GrpcHeaders.g.cs</c>
 ///     (entries whose applicability includes <c>grpc</c>).
 ///   </item>
 ///   <item>Anything else → emit nothing.</item>
@@ -45,10 +45,10 @@ public sealed class HeadersGenerator : IIncrementalGenerator
 {
     private const string _SPEC_FILE_NAME = "headers.spec.json";
 
-    private const string _COMMON_ASSEMBLY = "D2.Shared.Headers.Common";
-    private const string _HTTP_ASSEMBLY = "D2.Shared.Headers.Http";
-    private const string _AMQP_ASSEMBLY = "D2.Shared.Headers.Amqp";
-    private const string _GRPC_ASSEMBLY = "D2.Shared.Headers.Grpc";
+    private const string _COMMON_ASSEMBLY = "DcsvIo.D2.Headers.Common";
+    private const string _HTTP_ASSEMBLY = "DcsvIo.D2.Headers.Http";
+    private const string _AMQP_ASSEMBLY = "DcsvIo.D2.Headers.Amqp";
+    private const string _GRPC_ASSEMBLY = "DcsvIo.D2.Headers.Grpc";
 
     private static readonly Dictionary<string, DispatchEntry> sr_dispatch =
         new(StringComparer.Ordinal)

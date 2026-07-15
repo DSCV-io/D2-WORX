@@ -2,9 +2,9 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Utilities — Diagnostics
+# DcsvIo.D2.Utilities — Diagnostics
 
-> Part of [`D2.Shared.Utilities`](../README.md).
+> Part of [`DcsvIo.D2.Utilities`](../README.md).
 
 PII-safe rendering primitives consumed by every lib whose `[LoggerMessage]` delegates carry exception-derived strings. Keeps `Exception.Message` (which can interpolate JWT bytes, AMQP URIs with passwords, request URIs, etc.) out of the log pipeline at the type level.
 
@@ -14,7 +14,7 @@ PII-safe rendering primitives consumed by every lib whose `[LoggerMessage]` dele
 
 ## `SanitizedExceptionRender` — PII-safe exception rendering
 
-`Diagnostics/SanitizedExceptionRender.cs` (namespace `D2.Shared.Utilities.Diagnostics`) is the canonical helper consumed by every lib whose `[LoggerMessage]` delegates carry exception-derived strings — pair with the no-`Exception`-parameter `[LoggerMessage]` contract (enforced by per-lib reflection-based contract tests across each log surface) to keep `Exception.Message` out of the log pipeline at the type level.
+`Diagnostics/SanitizedExceptionRender.cs` (namespace `DcsvIo.D2.Utilities.Diagnostics`) is the canonical helper consumed by every lib whose `[LoggerMessage]` delegates carry exception-derived strings — pair with the no-`Exception`-parameter `[LoggerMessage]` contract (enforced by per-lib reflection-based contract tests across each log surface) to keep `Exception.Message` out of the log pipeline at the type level.
 
 ```csharp
 catch (Exception ex)

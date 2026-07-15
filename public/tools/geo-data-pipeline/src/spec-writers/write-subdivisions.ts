@@ -181,7 +181,7 @@ export async function buildSubdivisionsSpec(): Promise<BuildSubdivisionsResult> 
     $schema: "./subdivisions.schema.json",
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
-      "codegen / D2.Shared.Geo.Default. A clean/transform pass to the sibling " +
+      "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
       "contracts/geo/subdivisions.spec.json (one level up) is a separate step. Sources: " +
       "debian/iso-codes iso_3166-2.json (LGPL — authoritative ISO 3166-2 current-codes list + " +
       "hierarchy: code/type/parent/order) joined with Wikidata SPARQL (CC0 — " +

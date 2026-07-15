@@ -3,20 +3,20 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { Country, Subdivision } from "@d2/geo-abstractions";
+import type { Country, Subdivision } from "@dcsv-io/d2-geo-abstractions";
 import {
   ALL_COUNTRY_CODE_SET,
   SUBDIVISION_CODE_SET,
-} from "@d2/geo-abstractions";
-import type { IRequestContext } from "@d2/request-context-abstractions";
-import { truthyOrUndefined } from "@d2/utilities";
+} from "@dcsv-io/d2-geo-abstractions";
+import type { IRequestContext } from "@dcsv-io/d2-request-context-abstractions";
+import { truthyOrUndefined } from "@dcsv-io/d2-utilities";
 
 import { CountryLookup } from "../countries.js";
 import { SubdivisionLookup } from "../subdivisions.js";
 
 /**
  * Default-layer record-returning helpers over `IRequestContext` geo
- * fields. Mirrors the .NET `D2.Shared.Geo.Default.Extensions.IRequestContextGeoExtensions`
+ * fields. Mirrors the .NET `DcsvIo.D2.Geo.Default.Extensions.IRequestContextGeoExtensions`
  * surface. Returns the full typed record (e.g. `Country`) instead of the
  * raw alpha-2 / `US-NY`-style string so callers can read nested data
  * (`countryFor(request)?.primaryLanguage?.displayName`) without a second

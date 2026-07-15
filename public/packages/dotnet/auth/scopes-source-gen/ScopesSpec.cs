@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Scopes.SourceGen;
+namespace DcsvIo.D2.Auth.Scopes.SourceGen;
 
 using System.Collections.Immutable;
 

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Jwks;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Jwks;
 
 using System;
 using System.Collections.Concurrent;
@@ -12,11 +12,11 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Jwks;
-using D2.Shared.Caching;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Jwks;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Result;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;

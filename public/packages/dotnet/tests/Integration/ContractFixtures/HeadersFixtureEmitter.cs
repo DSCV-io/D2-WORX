@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using D2.Shared.Headers.Amqp;
-using D2.Shared.Headers.Common;
-using D2.Shared.Headers.Grpc;
-using D2.Shared.Headers.Http;
+using DcsvIo.D2.Headers.Amqp;
+using DcsvIo.D2.Headers.Common;
+using DcsvIo.D2.Headers.Grpc;
+using DcsvIo.D2.Headers.Http;
 using Xunit;
 
 /// <summary>

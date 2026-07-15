@@ -1,6 +1,6 @@
 {
   "emittedBy": "private/services/edge/key-custodian/client-ts/scripts/emit-csr-fixtures.fixture.ts",
-  "regenerate": "pnpm --filter @d2/key-custodian-client emit-csr-fixtures",
+  "regenerate": "pnpm --filter @dcsv-io/d2-private-key-custodian-client emit-csr-fixtures",
   "note": "ECDSA signatures are randomized: regeneration produces new bytes with the same verdicts. The .NET NodeLeafClient tests drive the REAL CsrVerification + issuance rules over these files.",
   "fixtures": [
     {

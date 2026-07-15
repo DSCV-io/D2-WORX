@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation;
+namespace DcsvIo.D2.Validation;
 
 using System.Text.RegularExpressions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
+using DcsvIo.D2.Validation.Abstractions;
 
 /// <summary>
 /// Default <see cref="IPostalCodeValidator"/> — country-aware structural check
 /// using a per-country regex map ported from <c>postcode-validator@3.10.9</c>.
-/// Mirrors the TypeScript <c>@d2/validation</c> <c>DefaultPostalCodeValidator</c>
+/// Mirrors the TypeScript <c>@dcsv-io/d2-validation</c> <c>DefaultPostalCodeValidator</c>
 /// in contract and behavior.
 /// </summary>
 /// <remarks>

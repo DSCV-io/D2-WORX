@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Telemetry.Tags.SourceGen
+# DcsvIo.D2.Telemetry.Tags.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -44,9 +44,9 @@ When a tag declares `"valuesFromSpec": "auth-error-codes"` (instead of an inline
   "$schema": "./schema.json",
   "meters": [
     {
-      "meter": "D2.Shared.Auth",
-      "consumingAssembly": "D2.Shared.Auth",
-      "tagsNamespace": "D2.Shared.Auth.Telemetry",
+      "meter": "DcsvIo.D2.Auth",
+      "consumingAssembly": "DcsvIo.D2.Auth",
+      "tagsNamespace": "DcsvIo.D2.Auth.Telemetry",
       "tagsClassName": "AuthTelemetryTags",
       "instruments": [
         {
@@ -119,5 +119,5 @@ public static class AuthTelemetryTags
 - [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/telemetry/schema.json`](../../../../../contracts/telemetry/schema.json) — JSON Schema for the spec
 - [`contracts/telemetry/telemetry.spec.json`](../../../../../contracts/telemetry/telemetry.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Auth.ErrorCodes.SourceGen`](../../auth/error-codes-source-gen/README.md) — sibling SrcGen whose spec the cross-spec resolver consumes
-- [`D2.Shared.Auth.Scopes.SourceGen`](../../auth/scopes-source-gen/README.md) — sibling SrcGen this one mirrors (incremental-generator + diagnostic-split pattern)
+- [`DcsvIo.D2.Auth.ErrorCodes.SourceGen`](../../auth/error-codes-source-gen/README.md) — sibling SrcGen whose spec the cross-spec resolver consumes
+- [`DcsvIo.D2.Auth.Scopes.SourceGen`](../../auth/scopes-source-gen/README.md) — sibling SrcGen this one mirrors (incremental-generator + diagnostic-split pattern)

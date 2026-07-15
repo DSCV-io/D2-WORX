@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.DlqMetadata.SourceGen;
+namespace DcsvIo.D2.Messaging.DlqMetadata.SourceGen;
 
 using System;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -18,11 +18,11 @@ using Microsoft.CodeAnalysis.Text;
 /// catalog artifacts. Multi-target dispatch:
 /// <list type="bullet">
 ///   <item>
-///     <c>D2.Shared.Messaging.Abstractions</c> →
+///     <c>DcsvIo.D2.Messaging.Abstractions</c> →
 ///     <c>DlqFailureMetadataFields.g.cs</c> (Fields catalog).
 ///   </item>
 ///   <item>
-///     <c>D2.Shared.Messaging.RabbitMq</c> → <c>DlqFailureCauses.g.cs</c>
+///     <c>DcsvIo.D2.Messaging.RabbitMq</c> → <c>DlqFailureCauses.g.cs</c>
 ///     (Causes catalog, since <c>DlqFailureHeaderBuilder</c> lives there).
 ///   </item>
 ///   <item>Anything else → emit nothing.</item>
@@ -33,8 +33,8 @@ public sealed class DlqFailureMetadataGenerator : IIncrementalGenerator
 {
     private const string _SPEC_FILE_NAME = "dlq-failure-metadata.spec.json";
 
-    private const string _FIELDS_ASSEMBLY = "D2.Shared.Messaging.Abstractions";
-    private const string _CAUSES_ASSEMBLY = "D2.Shared.Messaging.RabbitMq";
+    private const string _FIELDS_ASSEMBLY = "DcsvIo.D2.Messaging.Abstractions";
+    private const string _CAUSES_ASSEMBLY = "DcsvIo.D2.Messaging.RabbitMq";
 
     private const string _FIELDS_SOURCE_NAME = "DlqFailureMetadataFields.g.cs";
     private const string _CAUSES_SOURCE_NAME = "DlqFailureCauses.g.cs";

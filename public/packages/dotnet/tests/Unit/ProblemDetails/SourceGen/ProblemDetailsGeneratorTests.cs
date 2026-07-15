@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.ProblemDetails.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.ProblemDetails.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.ProblemDetails.SourceGen;
+using DcsvIo.D2.ProblemDetails.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -23,7 +23,7 @@ using Xunit;
 /// </summary>
 public sealed class ProblemDetailsGeneratorTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.ProblemDetails.Abstractions";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.ProblemDetails.Abstractions";
 
     private const string _SAMPLE_SPEC = """
     {
@@ -82,10 +82,10 @@ public sealed class ProblemDetailsGeneratorTests
     public void Generator_AuthHttpAssembly_EmitsNothing()
     {
         // Routing β regression: prior implementation single-targeted on
-        // D2.Shared.Auth.Http; new shape targets the abstractions csproj
+        // DcsvIo.D2.Auth.Http; new shape targets the abstractions csproj
         // so this assembly name now produces no output.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Http",
+            assemblyName: "DcsvIo.D2.Auth.Http",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();

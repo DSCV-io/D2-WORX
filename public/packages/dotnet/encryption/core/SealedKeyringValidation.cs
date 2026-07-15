@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Encryption;
+namespace DcsvIo.D2.Encryption;
 
 using System.Text;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Shared constructor-time validation for the sealed recipient keyrings.

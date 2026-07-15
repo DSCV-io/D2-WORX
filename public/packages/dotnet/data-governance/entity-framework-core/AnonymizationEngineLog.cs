@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.EntityFrameworkCore;
+namespace DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 
 using Microsoft.Extensions.Logging;
 

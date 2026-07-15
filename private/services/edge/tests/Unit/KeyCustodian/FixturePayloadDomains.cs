@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
 
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
 
 /// <summary>
 /// Test-only symmetric AES-payload fixture domains. After the sealed-domain catalog removal

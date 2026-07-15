@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.JwtClaims.SourceGen;
+namespace DcsvIo.D2.Auth.JwtClaims.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by

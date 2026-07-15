@@ -21,7 +21,7 @@ export interface MutualTlsCredentialsInput {
 /**
  * Build mutual-TLS `ChannelCredentials` presenting the workload's leaf chain +
  * private key and pinning the fetched CA bundle. This is NET-NEW TS-side: the
- * shared `@d2/grpc-client` channel is server-TLS only
+ * shared `@dcsv-io/d2-grpc-client` channel is server-TLS only
  * (`ChannelCredentials.createSsl()` with no client material) — the workload-leaf
  * client presents a CLIENT certificate, which requires the private-key +
  * cert-chain overload here.

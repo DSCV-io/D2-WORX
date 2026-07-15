@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.RequestContext;
+namespace DcsvIo.D2.Tests.Unit.RequestContext;
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
 using Xunit;
 
 public sealed class PropagatedContextSerializerTests

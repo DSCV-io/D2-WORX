@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Unit.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.ServiceDefaults;
 using Xunit;
 
 /// <summary>
-/// Convention pins for <see cref="D2.Shared.ServiceDefaults"/> — sealed-by-default
+/// Convention pins for <see cref="DcsvIo.D2.ServiceDefaults"/> — sealed-by-default
 /// for non-static public types, static-by-convention for the extension classes
 /// + the empty constants placeholder.
 /// </summary>

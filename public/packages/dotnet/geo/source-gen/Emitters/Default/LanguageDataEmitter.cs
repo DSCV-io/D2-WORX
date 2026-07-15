@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Emitters.Default;
+namespace DcsvIo.D2.Geo.SourceGen.Emitters.Default;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
-using D2.Shared.Geo.SourceGen.Spec;
-using D2.Shared.SourceGen;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.Geo.SourceGen.Spec;
+using DcsvIo.D2.SourceGen;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Emits the per-language DATA — single shape per entity + cycle-resolution

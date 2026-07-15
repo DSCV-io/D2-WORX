@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Sessions;
+namespace DcsvIo.D2.Tests.Unit.Auth.Sessions;
 
 using System;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Result;
 using Xunit;
 
 /// <summary>

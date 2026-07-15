@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Encryption;
+namespace DcsvIo.D2.Encryption;
 
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Composition overlay for encryption-domain mode + sealed-consumer lookups.

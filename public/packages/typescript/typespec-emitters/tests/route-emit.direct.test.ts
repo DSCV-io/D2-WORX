@@ -46,7 +46,7 @@ import {
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
   D2_FIELD_KEY,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Module-level mock state — vi.mock is hoisted; factories cannot close over
@@ -611,7 +611,7 @@ describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
       "proto-csharp-namespace": "D2.Test.Protos.V1",
       "process-kind-by-module": { Sample: "edge-module" },
       "csharp-routes-namespace": {
-        Sample: "D2.Edge.Api.Routes.Sample",
+        Sample: "DcsvIo.D2.Private.Edge.Api.Routes.Sample",
       },
     });
     await $onEmit(ctx);
@@ -624,7 +624,7 @@ describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
     expect(routeFile!.content).toContain("ISampleApi");
     expect(routeFile!.content).not.toContain("SignerFacade");
     expect(routeFile!.content).toContain(
-      "namespace D2.Edge.Api.Routes.Sample;",
+      "namespace DcsvIo.D2.Private.Edge.Api.Routes.Sample;",
     );
   });
 });

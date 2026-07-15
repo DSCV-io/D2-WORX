@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey, parseEnvArray } from "@d2/utilities";
+import { falsey, parseEnvArray } from "@dcsv-io/d2-utilities";
 
 /**
  * Configuration for {@link SupportedLocales}. Pass either an explicit list
@@ -32,7 +32,7 @@ export function loadSupportedLocalesConfig(
 
 /**
  * BCP 47 supported-locale registry with canonical-casing and
- * language-fallback resolution. Mirrors .NET `D2.Shared.I18n.SupportedLocales`.
+ * language-fallback resolution. Mirrors .NET `DcsvIo.D2.I18n.SupportedLocales`.
  */
 export class SupportedLocales {
   /** Canonical-cased default locale. */

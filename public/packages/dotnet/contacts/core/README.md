@@ -2,29 +2,29 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Contacts
+# DcsvIo.D2.Contacts
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
 > **Audience**: Backend .NET service engineers attaching contact details (names, demographics, professional info, email, phone) to their own domain entities.
 
-> Composable, self-redacting PII value objects for handlers and service code. Six immutable `sealed record` building blocks — `Personal`, `NameAffixes`, `Demographics`, `Professional`, `EmailAddress`, `PhoneNumber` — each constructed through a `Create(...)` smart constructor returning `D2Result<T>`. The value objects fold into a host's own entities; the reusable Entity Framework Core mapping ships separately in `D2.Shared.Contacts.EntityFrameworkCore`.
+> Composable, self-redacting PII value objects for handlers and service code. Six immutable `sealed record` building blocks — `Personal`, `NameAffixes`, `Demographics`, `Professional`, `EmailAddress`, `PhoneNumber` — each constructed through a `Create(...)` smart constructor returning `D2Result<T>`. The value objects fold into a host's own entities; the reusable Entity Framework Core mapping ships separately in `DcsvIo.D2.Contacts.EntityFrameworkCore`.
 
 ## Purpose
 
 Each value object validates a dumb structural floor at the top of its `Create(...)` factory — length caps drawn from the shared `FieldConstraints` catalog plus shape / coherence rules — before constructing the record. Email and phone additionally accept an optional caller-injected smart validator (`IEmailValidator` / `IPhoneValidator`); when supplied the validator is the sole authority and its normalized output + failure messages are propagated verbatim, when omitted the structural floor applies. Every failure carries a `TK.*` translation key, never a bare string.
 
-Pure-domain layer policy: depends only on `D2.Shared.Result` (D2Result factories), `D2.Shared.Validation.Abstractions` (the `FieldConstraints` caps, the `NamePrefix` / `NameSuffix` / `BiologicalSex` taxonomy enums, and the validator contracts), `D2.Shared.Utilities` (boundary helpers + the `[RedactData]` attribute + the hash canonicalizer), and `D2.Shared.Geo.Abstractions` (the `CountryCode` forwarded to the phone validator). No infrastructure deps, no Entity Framework, no observability surface.
+Pure-domain layer policy: depends only on `DcsvIo.D2.Result` (D2Result factories), `DcsvIo.D2.Validation.Abstractions` (the `FieldConstraints` caps, the `NamePrefix` / `NameSuffix` / `BiologicalSex` taxonomy enums, and the validator contracts), `DcsvIo.D2.Utilities` (boundary helpers + the `[RedactData]` attribute + the hash canonicalizer), and `DcsvIo.D2.Geo.Abstractions` (the `CountryCode` forwarded to the phone validator). No infrastructure deps, no Entity Framework, no observability surface.
 
 ## Public API surface
 
-All six records live in `D2.Shared.Contacts.ValueObjects`; one record per file.
+All six records live in `DcsvIo.D2.Contacts.ValueObjects`; one record per file.
 
 - [`ValueObjects/Personal.cs`](ValueObjects/Personal.cs) — required `FirstName` plus optional `MiddleName`, `LastName`, `PreferredName`, each cleaned and length-capped. Carries a stable correlation `HashId` (`"v1." + SHA-256 hex`) derived from the first / middle / last names — the preferred name is excluded so a display-name change leaves the identity digest stable. Case-, diacritic-, and whitespace-equivalent inputs hash identically.
   - `Personal.Create(firstName, middleName?, lastName?, preferredName?)` → `D2Result<Personal>`.
 - [`ValueObjects/NameAffixes.cs`](ValueObjects/NameAffixes.cs) — optional honorific `Prefix` (`NamePrefix?`) + `Suffix` (`NameSuffix?`) drawn from closed taxonomies, each with an `Other` escape hatch backed by a custom free-text value. A custom value is required when (and only when) its enum is `Other`. The all-null record is rejected.
   - `NameAffixes.Create(prefix?, prefixCustom?, suffix?, suffixCustom?)` → `D2Result<NameAffixes>`.
-- [`ValueObjects/Demographics.cs`](ValueObjects/Demographics.cs) — optional `DateOfBirth` (`NodaTime.LocalDate?`, not in the future, not more than 150 years in the past) + `BiologicalSex` (`BiologicalSex?`). The all-null record is rejected. The date-of-birth bounds resolve "today" from an injectable `D2.Shared.Time.IClock` (defaults to `SystemClock`), via `clock.GetCurrentInstant().InUtc().Date`, so boundary behavior is deterministic under test.
+- [`ValueObjects/Demographics.cs`](ValueObjects/Demographics.cs) — optional `DateOfBirth` (`NodaTime.LocalDate?`, not in the future, not more than 150 years in the past) + `BiologicalSex` (`BiologicalSex?`). The all-null record is rejected. The date-of-birth bounds resolve "today" from an injectable `DcsvIo.D2.Time.IClock` (defaults to `SystemClock`), via `clock.GetCurrentInstant().InUtc().Date`, so boundary behavior is deterministic under test.
   - `Demographics.Create(dateOfBirth?, biologicalSex?, clock?)` → `D2Result<Demographics>`.
 - [`ValueObjects/Professional.cs`](ValueObjects/Professional.cs) — required `CompanyName` plus optional `JobTitle`, `Department`, and `CompanyWebsite`. The website is accepted as raw text and stored as an absolute `http` / `https` `Uri?` (raw input length-capped before parsing).
   - `Professional.Create(companyName, jobTitle?, department?, companyWebsite?)` → `D2Result<Professional>`.
@@ -66,9 +66,9 @@ N/A — no env vars, no appsettings, no Options record. The length caps come fro
 ## Usage examples
 
 ```csharp
-using D2.Shared.Contacts.ValueObjects;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Contacts.ValueObjects;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Validation.Abstractions;
 
 // 1. Personal — required first name; carries a correlation HashId.
 var personalResult = Personal.Create("John", middleName: "Quincy", lastName: "Adams");
@@ -88,7 +88,7 @@ var phoneResult = PhoneNumber.Create(
 
 ## Important / usage notes
 
-The value objects are immutable. Composition into a host entity + the reusable EF Core per-VO mapping helpers (complex-type and value-converter wiring, max-length application, anonymization defaults) ship separately in `D2.Shared.Contacts.EntityFrameworkCore`; this `core` library carries no Entity Framework dependency and no migrations.
+The value objects are immutable. Composition into a host entity + the reusable EF Core per-VO mapping helpers (complex-type and value-converter wiring, max-length application, anonymization defaults) ship separately in `DcsvIo.D2.Contacts.EntityFrameworkCore`; this `core` library carries no Entity Framework dependency and no migrations.
 
 `Personal.HashId` stability matters: it is a content digest, so a change to the normalization algorithm would silently shift the digest for previously-identical inputs. The `PersonalTests` suite pins determinism, case / diacritic / whitespace collapse, and the preferred-name-excluded invariant.
 

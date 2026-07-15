@@ -9,7 +9,7 @@
 // TOutput Model graph of the decorated operation.
 //
 // Why this lives here (NOT the emitter's walkModel):
-//   The emitter package (@d2/typespec-emitters) imports FROM this decorator
+//   The emitter package (@dcsv-io/d2-typespec-emitters) imports FROM this decorator
 //   package (it reads back D2_REDACT_KEY etc.). Importing the emitter's
 //   `walkModel` here would create a dependency cycle (decorators → emitter →
 //   decorators). So the decorator package walks the native @typespec/compiler

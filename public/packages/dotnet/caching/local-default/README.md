@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Caching.Local.Default
+# DcsvIo.D2.Caching.Local.Default
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -54,7 +54,7 @@ concurrency `ConcurrentDictionary` gives for free. Don't self-roll unless you ha
 reason.
 
 If we ever need strict LRU or strict FIFO, the abstraction is the seam: ship
-`D2.Shared.Caching.Local.Lru` as a sibling, swap the registration, zero call-site changes.
+`DcsvIo.D2.Caching.Local.Lru` as a sibling, swap the registration, zero call-site changes.
 
 ## The SizeLimit footgun, mitigated
 

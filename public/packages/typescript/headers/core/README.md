@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/headers
+# @dcsv-io/d2-headers
 
 > Parent: [`public/packages/typescript/`](../../README.md)
 
@@ -12,23 +12,23 @@ and exposes server-side route guards (`requireAuth`, `requireOrg`,
 `requireRole`, `requireScope`, `redirectIfAuthenticated`).
 
 This package does NOT re-export wire-protocol header constants — those
-live in `@d2/headers-common` / `@d2/headers-http` / `@d2/headers-grpc`
+live in `@dcsv-io/d2-headers-common` / `@dcsv-io/d2-headers-http` / `@dcsv-io/d2-headers-grpc`
 (codegen-emitted from `contracts/headers/headers.spec.json`). The BFF
 hook reads `Authorization` and `x-d2-context` directly via
-`@d2/headers-common`; HTTP-specific names are not needed at this layer.
+`@dcsv-io/d2-headers-common`; HTTP-specific names are not needed at this layer.
 
 ## Public API
 
 | Export                                           | Purpose                                                                                                                                                      |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `parseAuthHeader(authHeader, opts?)`             | Decode `Authorization: Bearer <jwt>` into a `JwtPayload` (re-exported from `@d2/auth-abstractions`). SHAPE-only validation; signature/expiry are Edge's job. |
+| `parseAuthHeader(authHeader, opts?)`             | Decode `Authorization: Bearer <jwt>` into a `JwtPayload` (re-exported from `@dcsv-io/d2-auth-abstractions`). SHAPE-only validation; signature/expiry are Edge's job. |
 | `parseRequestContextFromHeaders(headers, opts?)` | Decode Authorization + `x-d2-context` into an `IRequestContext` ready to assign to `event.locals.requestContext`.                                            |
 | `toProblemDetails(failure, opts)`                | RFC 7807 ProblemDetails builder; mirrors the .NET `D2ProblemDetailsExtensions` shape.                                                                        |
-| `PROBLEM_TYPE_URI_PREFIX`                        | Base URI for the RFC 7807 `type` field. Codegen-emitted into `@d2/problem-details-abstractions` from `contracts/problem-details/problem-details.spec.json`; re-exported from `@d2/headers` for compat. |
-| `ProblemDetailsExtensionKeys`                    | `as const` map of extension-key wire values (`ERROR_CODE`, `MESSAGES`, `INPUT_ERRORS`, `CATEGORY`, `TRACE_ID`, `CORRELATION_ID`). Codegen-emitted into `@d2/problem-details-abstractions` from the same spec; re-exported.   |
-| `ProblemDetailsTitles`                           | `as const` map of per-status human-readable titles (`UNAUTHORIZED`, `SERVICE_UNAVAILABLE`, etc.). Codegen-emitted into `@d2/problem-details-abstractions` from the same spec; re-exported.                |
-| `defaultTitleForStatus(status)`                  | Returns the spec-declared title for the given HTTP status code, or `REQUEST_FAILED` as fallback. Codegen-emitted into `@d2/problem-details-abstractions` from the same spec; re-exported.                 |
-| `PROBLEM_DETAILS_CONTENT_TYPE`                   | RFC 7807 §6.1 content-type wire value (`application/problem+json`). Codegen-emitted into `@d2/problem-details-abstractions` from the same spec; re-exported; consumed by guards on every rejection branch. |
+| `PROBLEM_TYPE_URI_PREFIX`                        | Base URI for the RFC 7807 `type` field. Codegen-emitted into `@dcsv-io/d2-problem-details-abstractions` from `contracts/problem-details/problem-details.spec.json`; re-exported from `@dcsv-io/d2-headers` for compat. |
+| `ProblemDetailsExtensionKeys`                    | `as const` map of extension-key wire values (`ERROR_CODE`, `MESSAGES`, `INPUT_ERRORS`, `CATEGORY`, `TRACE_ID`, `CORRELATION_ID`). Codegen-emitted into `@dcsv-io/d2-problem-details-abstractions` from the same spec; re-exported.   |
+| `ProblemDetailsTitles`                           | `as const` map of per-status human-readable titles (`UNAUTHORIZED`, `SERVICE_UNAVAILABLE`, etc.). Codegen-emitted into `@dcsv-io/d2-problem-details-abstractions` from the same spec; re-exported.                |
+| `defaultTitleForStatus(status)`                  | Returns the spec-declared title for the given HTTP status code, or `REQUEST_FAILED` as fallback. Codegen-emitted into `@dcsv-io/d2-problem-details-abstractions` from the same spec; re-exported.                 |
+| `PROBLEM_DETAILS_CONTENT_TYPE`                   | RFC 7807 §6.1 content-type wire value (`application/problem+json`). Codegen-emitted into `@dcsv-io/d2-problem-details-abstractions` from the same spec; re-exported; consumed by guards on every rejection branch. |
 | `requireAuth(event, throwers)`                   | Asserts authentication. Throws 401 ProblemDetails on failure.                                                                                                |
 | `requireOrg(event, throwers, ...types?)`         | Asserts auth + org context (optionally constrained to specific `OrgType`s). Throws 403.                                                                      |
 | `requireRole(event, throwers, ...roles?)`        | Asserts auth + non-empty role (optionally constrained). Throws 403.                                                                                          |
@@ -63,12 +63,12 @@ content discriminator.
 ## ProblemDetails wire contract
 
 Failure envelopes mirror the .NET
-`D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions` shape.
+`DcsvIo.D2.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions` shape.
 The wire-format catalog (`PROBLEM_TYPE_URI_PREFIX`,
 `ProblemDetailsExtensionKeys`, `ProblemDetailsTitles`,
 `defaultTitleForStatus`) is codegen-emitted from
 `contracts/problem-details/problem-details.spec.json` into
-`@d2/problem-details-abstractions` and re-exported from `@d2/headers`
+`@dcsv-io/d2-problem-details-abstractions` and re-exported from `@dcsv-io/d2-headers`
 for backward-compat. The SAME spec drives the .NET-side
 `D2ProblemDetailsExtensions` partial class, so cross-language drift is
 structurally impossible (verified by
@@ -88,29 +88,29 @@ structurally impossible (verified by
 
 ## Dependencies
 
-- `@d2/auth-abstractions` — `AuthFailures` semantic factories +
+- `@dcsv-io/d2-auth-abstractions` — `AuthFailures` semantic factories +
   `JwtClaimTypes` constants + `AuthErrorCodes` + `JwtPayload` typed
   shape (codegen-emitted from `contracts/jwt-claims/jwt-claims.spec.json`).
-- `@d2/auth-context-abstractions` — `OrgType` / `Role` enums.
-- `@d2/headers-common` — `AUTHORIZATION` / `PROPAGATED_CONTEXT` /
+- `@dcsv-io/d2-auth-context-abstractions` — `OrgType` / `Role` enums.
+- `@dcsv-io/d2-headers-common` — `AUTHORIZATION` / `PROPAGATED_CONTEXT` /
   `TRACEPARENT` / `TRACESTATE` wire-protocol names.
-- `@d2/problem-details-abstractions` — RFC 7807 ProblemDetails wire-format
+- `@dcsv-io/d2-problem-details-abstractions` — RFC 7807 ProblemDetails wire-format
   catalog (`PROBLEM_TYPE_URI_PREFIX`, `PROBLEM_DETAILS_CONTENT_TYPE`,
   `ProblemDetailsExtensionKeys`, `ProblemDetailsTitles`,
   `defaultTitleForStatus`). Zero-dep leaf; re-exported from this package.
-- `@d2/request-context-abstractions` — `IRequestContext` (extends
+- `@dcsv-io/d2-request-context-abstractions` — `IRequestContext` (extends
   `IAuthContext`, so all auth properties are present transitively) +
   `PropagatedContextSerializer.tryDecode()` + `ActorEntry` +
   `OrgType` / `Role` / `ActorKind` / `ImpersonationKind` enums
-  (re-exported from `@d2/auth-context-abstractions`).
-- `@d2/result` — `D2Result` envelope + `HttpStatusCode` constants +
+  (re-exported from `@dcsv-io/d2-auth-context-abstractions`).
+- `@dcsv-io/d2-result` — `D2Result` envelope + `HttpStatusCode` constants +
   `fail` / `forbidden` / `ok` factories.
-- `@d2/utilities` — `falsey()` for null/empty/whitespace checks.
+- `@dcsv-io/d2-utilities` — `falsey()` for null/empty/whitespace checks.
 
-The `@d2/i18n` Paraglide surface is NOT consumed here: ProblemDetails
+The `@dcsv-io/d2-i18n` Paraglide surface is NOT consumed here: ProblemDetails
 titles use the HTTP-protocol-canonical English phrases ("Unauthorized",
 "Forbidden", etc.) and `failure.messages` already carry `TKMessage[]`
-entries for client-side rendering. The `@d2/logging` `ILogger` is also
+entries for client-side rendering. The `@dcsv-io/d2-logging` `ILogger` is also
 not needed: guards never log — silence is the default; the consuming
 SvelteKit hook owns request-level diagnostic logs.
 
@@ -123,10 +123,10 @@ import {
   requireOrg,
   requireScope,
   type GuardThrowers,
-} from "@d2/headers";
+} from "@dcsv-io/d2-headers";
 import { error, redirect } from "@sveltejs/kit";
-import { Scopes } from "@d2/auth-abstractions";
-import { OrgType } from "@d2/auth-context-abstractions";
+import { Scopes } from "@dcsv-io/d2-auth-abstractions";
+import { OrgType } from "@dcsv-io/d2-auth-context-abstractions";
 
 // SvelteKit hook wiring — `error()` accepts a `Response` so the BFF can
 // surface the spec-driven `application/problem+json` content type that

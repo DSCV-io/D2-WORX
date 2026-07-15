@@ -12,11 +12,11 @@
 //   - a `create<Module>GrpcClient(stub)` factory injecting the REAL ts-proto
 //     grpc-js service stub (the buf/ts-proto output — the TS twin of Grpc.Tools).
 //   - per-op: a DTO→proto request mapper + a proto-data→DTO response mapper +
-//     the call body delegating to the REAL `@d2/grpc-client` seam
+//     the call body delegating to the REAL `@dcsv-io/d2-grpc-client` seam
 //     (`unaryCall` / `handleGrpcCall` / `d2ResultFromProto` / `isTransientGrpcError`).
 //   - for a @d2Resilience op: the predicate retry-arm (the TS analog of the .NET
 //     sentinel arm) folding the emitted TS `<op>RetryWhen` / `<op>FailWhen`
-//     twin into the retry decision over the EXISTING `@d2/resilience`
+//     twin into the retry decision over the EXISTING `@dcsv-io/d2-resilience`
 //     `ResilientPipeline` — NO new resilience-lib export. The module-local
 //     `D2GeneratedBusinessRetrySignal` (the TS twin of the C# sentinel) carries
 //     the captured business `D2Result` so the budget-exhaust restore is verbatim.
@@ -41,7 +41,7 @@
 //   imports that wire up only in a real consumer (the BFF SSR composition root).
 //   The emitted file is therefore plain runtime JS (annotations erased);
 //   the byte-gate pins the exact bytes and the behavioral test reconstructs the
-//   factory from the emitted text, driving it against the REAL `@d2/grpc-client`
+//   factory from the emitted text, driving it against the REAL `@dcsv-io/d2-grpc-client`
 //   seam + the REAL fixture ts-proto types (buf/ts-proto output) + a fake stub.
 //   `**/*.g.ts` is `.prettierignore`d → the emitter owns the formatting.
 //
@@ -53,7 +53,7 @@ import { buildBanner } from "./banner.js";
 import { toKebab, toPascal } from "./name-transforms.js";
 import type { FieldInfo } from "./model-walk.js";
 import type { EmittedTsFile } from "./ts-dto-emitter.js";
-import type { PredicateNode } from "@d2/typespec-decorators";
+import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -151,7 +151,7 @@ export function emitTsGrpcClient(
     "// Generated SSR gRPC client (the TS twin of the .NET <Module>GrpcClient). Delegates to the",
   );
   lines.push(
-    "// real @d2/grpc-client seam over the real ts-proto grpc-js stub. References module-relative",
+    "// real @dcsv-io/d2-grpc-client seam over the real ts-proto grpc-js stub. References module-relative",
   );
   lines.push(
     "// imports (proto stub + messages + DTOs" +
@@ -166,25 +166,25 @@ export function emitTsGrpcClient(
   );
   lines.push("");
 
-  // ---- imports — the seam (real @d2/grpc-client, a shipped shared lib) ----
+  // ---- imports — the seam (real @dcsv-io/d2-grpc-client, a shipped shared lib) ----
   const grpcClientImports = ["d2ResultFromProto", "handleGrpcCall"];
   if (anyRetryArm) grpcClientImports.push("isTransientGrpcError");
   grpcClientImports.push("unaryCall");
   lines.push(
-    `import { ${grpcClientImports.join(", ")} } from "@d2/grpc-client";`,
+    `import { ${grpcClientImports.join(", ")} } from "@dcsv-io/d2-grpc-client";`,
   );
 
   if (anyResponseEnum) {
     lines.push(
-      'import { type D2Result, ok, validationFailed } from "@d2/result";',
+      'import { type D2Result, ok, validationFailed } from "@dcsv-io/d2-result";',
     );
   } else {
-    lines.push('import type { D2Result } from "@d2/result";');
+    lines.push('import type { D2Result } from "@dcsv-io/d2-result";');
   }
 
   if (anyRetryArm) {
     lines.push(
-      'import { ResilientPipeline, ResilientPipelineBuilder } from "@d2/resilience";',
+      'import { ResilientPipeline, ResilientPipelineBuilder } from "@dcsv-io/d2-resilience";',
     );
   }
   lines.push("");

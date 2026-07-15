@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location.Encoding;
+namespace DcsvIo.D2.Location.Encoding;
 
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Internal Open Location Code (OLC / plus-code) encoder / decoder.

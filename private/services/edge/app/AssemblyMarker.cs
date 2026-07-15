@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.App;
+namespace DcsvIo.D2.Private.Edge.App;
 
 /// <summary>
 /// Assembly marker for the thin Edge host App shell. Empty shell for

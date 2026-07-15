@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
-using D2.Services.Protos.Common.V1;
-using D2.Services.Protos.SignFixtures.V2Alpha;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.Common.V1;
+using global::D2.Services.Protos.SignFixtures.V2Alpha;
 using Google.Protobuf;
-using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using DtoSignFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
 
 /// <summary>
 /// Validates that the committed proto fixture compiles correctly and the

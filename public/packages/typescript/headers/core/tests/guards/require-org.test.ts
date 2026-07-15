@@ -4,8 +4,8 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { AuthErrorCodes } from "@d2/auth-abstractions";
-import { OrgType } from "@d2/auth-context-abstractions";
+import { AuthErrorCodes } from "@dcsv-io/d2-auth-abstractions";
+import { OrgType } from "@dcsv-io/d2-auth-context-abstractions";
 import { requireOrg } from "../../src/guards/require-org.js";
 import { authenticatedCtx, makeEvent, makeThrowers } from "./helpers.js";
 

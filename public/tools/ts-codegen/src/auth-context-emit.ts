@@ -140,7 +140,7 @@ export function emitAuthContext(
     if (resolved === undefined) {
       const msg =
         `cannot resolve extends FQN '${spec.extends}' — only ` +
-        `'D2.Shared.<Pkg>.<Iface>' is supported`;
+        `'DcsvIo.D2.<Pkg>.<Iface>' is supported`;
       diagnostics.push(diagError(DiagnosticIds.CTX_EXTENDS_UNRESOLVED, msg));
     } else {
       resolvedExtends = resolved;
@@ -171,13 +171,13 @@ export function emitAuthContext(
 
 /**
  * Result of resolving a spec's `extends` FQN to a TS-side import target.
- * The resolver only supports the `D2.Shared.<Pkg>.<Iface>` shape — anything
+ * The resolver only supports the `DcsvIo.D2.<Pkg>.<Iface>` shape — anything
  * else surfaces a `CTX_EXTENDS_UNRESOLVED` diagnostic.
  */
 interface ResolvedExtends {
   /** Bare interface name (e.g. `IAuthContext`). */
   readonly interfaceName: string;
-  /** TS package import path (e.g. `@d2/auth-context-abstractions`). */
+  /** TS package import path (e.g. `@dcsv-io/d2-auth-context-abstractions`). */
   readonly packageName: string;
 }
 
@@ -185,19 +185,19 @@ interface ResolvedExtends {
  * Resolve a .NET fully-qualified interface name to a TS import target.
  *
  * Mapping rule (mirrors the .NET-side
- * `D2.Shared.<Pkg>.<Iface>` namespace convention):
- * - Strip the leading `D2.Shared.` prefix.
+ * `DcsvIo.D2.<Pkg>.<Iface>` namespace convention):
+ * - Strip the leading `DcsvIo.D2.` prefix.
  * - Take the dot-separated segments BEFORE the final `.` as the package
  *   path; convert each PascalCase segment to lowercase, joined by `-`.
  *   (e.g. `AuthContext.Abstractions` → `auth-context-abstractions`).
  * - The final segment is the bare interface name, unchanged.
- * - The package name is `@d2/<kebab>`.
+ * - The package name is `@dcsv-io/d2-<kebab>`.
  *
  * Returns `undefined` when the FQN does NOT match the supported shape so
  * the caller can surface a `CTX_EXTENDS_UNRESOLVED` diagnostic.
  */
 function resolveExtendsFqn(fqn: string): ResolvedExtends | undefined {
-  const PREFIX = "D2.Shared.";
+  const PREFIX = "DcsvIo.D2.";
   if (!fqn.startsWith(PREFIX)) return undefined;
   const rest = fqn.slice(PREFIX.length);
   const segments = rest.split(".");
@@ -207,7 +207,7 @@ function resolveExtendsFqn(fqn: string): ResolvedExtends | undefined {
   const pkgSegments = segments.slice(0, -1);
   const kebab = pkgSegments.map(pascalToKebab).join("-");
   if (kebab.length === 0) return undefined;
-  return { interfaceName, packageName: `@d2/${kebab}` };
+  return { interfaceName, packageName: `@dcsv-io/d2-${kebab}` };
 }
 
 /**
@@ -250,7 +250,7 @@ function emitEnumImports(
     if (used.size === 0) return;
     const list = [...used].sort().join(", ");
     sb.appendLine(
-      `import type { ${list} } from "@d2/auth-context-abstractions";`,
+      `import type { ${list} } from "@dcsv-io/d2-auth-context-abstractions";`,
     );
     sb.appendLine(`export type { ${list} };`);
     return;

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations.IRunDueRotationsHandler;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations.IRunDueRotationsHandler;
 using I = RunDueRotationsInput;
 using O = RunDueRotationsOutput;
 

@@ -5,4 +5,4 @@
 // -----------------------------------------------------------------------
 
 // ProductScopes.g.cs references OrgType / Role / ActionSensitivity without FQN.
-global using D2.Shared.Auth.Abstractions;
+global using DcsvIo.D2.Auth.Abstractions;

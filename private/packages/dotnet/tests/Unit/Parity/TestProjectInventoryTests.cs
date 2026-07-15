@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Parity;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Parity;
 
 using System.IO;
 using AwesomeAssertions;
@@ -18,13 +18,13 @@ public sealed class TestProjectInventoryTests
 {
     private static readonly string[] sr_mappedTestCsprojRelative =
     [
-        Path.Combine("public", "packages", "dotnet", "tests", "D2.Shared.Tests.csproj"),
-        Path.Combine("private", "services", "edge", "tests", "D2.Edge.Tests.csproj"),
-        Path.Combine("private", "services", "audit", "tests", "D2.Audit.Tests.csproj"),
+        Path.Combine("public", "packages", "dotnet", "tests", "DcsvIo.D2.Tests.csproj"),
+        Path.Combine("private", "services", "edge", "tests", "DcsvIo.D2.Private.Edge.Tests.csproj"),
+        Path.Combine("private", "services", "audit", "tests", "DcsvIo.D2.Private.Audit.Tests.csproj"),
     ];
 
     private static readonly string sr_privatePackagesTestsRelative =
-        Path.Combine("private", "packages", "dotnet", "tests", "D2.Private.Packages.Tests.csproj");
+        Path.Combine("private", "packages", "dotnet", "tests", "DcsvIo.D2.Private.Packages.Tests.csproj");
 
     [Fact]
     public void Shared_Edge_And_Audit_Test_Csproj_Files_Exist_At_Mapped_Homes()
@@ -47,16 +47,16 @@ public sealed class TestProjectInventoryTests
         var slnx = File.ReadAllText(Path.Combine(root, "D2.slnx"));
 
         slnx.Should().Contain(
-            "public/packages/dotnet/tests/D2.Shared.Tests.csproj",
+            "public/packages/dotnet/tests/DcsvIo.D2.Tests.csproj",
             "Shared.Tests must be in umbrella D2.slnx");
         slnx.Should().Contain(
-            "private/services/edge/tests/D2.Edge.Tests.csproj",
+            "private/services/edge/tests/DcsvIo.D2.Private.Edge.Tests.csproj",
             "Edge.Tests must be in umbrella D2.slnx");
         slnx.Should().Contain(
-            "private/services/audit/tests/D2.Audit.Tests.csproj",
+            "private/services/audit/tests/DcsvIo.D2.Private.Audit.Tests.csproj",
             "Audit.Tests must be in umbrella D2.slnx");
         slnx.Should().Contain(
-            "private/packages/dotnet/tests/D2.Private.Packages.Tests.csproj",
+            "private/packages/dotnet/tests/DcsvIo.D2.Private.Packages.Tests.csproj",
             "Private.Packages.Tests must be in umbrella D2.slnx");
     }
 
@@ -68,7 +68,7 @@ public sealed class TestProjectInventoryTests
             Path.Combine(root, "public", "D2.Public.slnx"));
 
         publicSlnx.Should().Contain(
-            "packages/dotnet/tests/D2.Shared.Tests.csproj",
+            "packages/dotnet/tests/DcsvIo.D2.Tests.csproj",
             "Shared.Tests must be in public/D2.Public.slnx");
         publicSlnx.Should().NotContain(
             "private/",

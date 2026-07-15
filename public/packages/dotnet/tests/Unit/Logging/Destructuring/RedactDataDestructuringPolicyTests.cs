@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Logging.Destructuring;
+namespace DcsvIo.D2.Tests.Unit.Logging.Destructuring;
 
 using AwesomeAssertions;
-using D2.Shared.Logging.Destructuring;
-using D2.Shared.Tests.Unit.Logging.Fixtures;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.Tests.Unit.Logging.Fixtures;
 using Serilog.Core;
 using Serilog.Events;
 using Xunit;

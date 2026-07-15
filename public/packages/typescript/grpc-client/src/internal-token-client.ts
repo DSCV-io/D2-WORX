@@ -3,15 +3,15 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { AuthFailures } from "@d2/auth-abstractions";
-import type { ILogger } from "@d2/logging";
+import { AuthFailures } from "@dcsv-io/d2-auth-abstractions";
+import type { ILogger } from "@dcsv-io/d2-logging";
 import {
   type ResilientPipeline,
   ResilientPipelineBuilder,
-} from "@d2/resilience";
-import type { D2Result } from "@d2/result";
-import { ok } from "@d2/result";
-import { falsey } from "@d2/utilities";
+} from "@dcsv-io/d2-resilience";
+import type { D2Result } from "@dcsv-io/d2-result";
+import { ok } from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
 import type { InternalTokenSnapshot } from "./types.js";
 
 /**
@@ -55,7 +55,7 @@ export interface InternalTokenClient {
  * (`grant_type=client_credentials`) to acquire the BFF's service-identity
  * JWT for use as `Authorization: Bearer <jwt>` on outbound gRPC calls.
  *
- * Resilience is composed from `@d2/resilience`: a Singleflight layer (so 100
+ * Resilience is composed from `@dcsv-io/d2-resilience`: a Singleflight layer (so 100
  * concurrent gRPC calls all force-refreshing after a 401 trigger ONLY ONE
  * upstream call) wraps a TimeoutLayer that bounds the request AND — via the
  * threaded `AbortSignal` passed into `fetch` — genuinely cancels it

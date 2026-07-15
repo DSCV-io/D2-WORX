@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
-using D2.Shared.Messaging;
+using DcsvIo.D2.Messaging;
 
 /// <summary>
 /// Hand-built <see cref="MqSubscriptionDescriptor"/> factory for integration

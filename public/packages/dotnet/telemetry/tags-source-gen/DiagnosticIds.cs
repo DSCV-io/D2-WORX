@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry.Tags.SourceGen;
+namespace DcsvIo.D2.Telemetry.Tags.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by

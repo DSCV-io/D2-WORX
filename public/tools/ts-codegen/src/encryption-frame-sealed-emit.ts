@@ -186,12 +186,12 @@ export function emitSealedFrame(spec: SealedFrameSpec): EmitResult {
     " * frame (version 2 — the asymmetric ECDH-ES hybrid). Mirrors .NET",
   );
   sb.appendLine(
-    " * D2.Shared.Encryption.SealedFrameLayout (same offsets and lengths",
+    " * DcsvIo.D2.Encryption.SealedFrameLayout (same offsets and lengths",
   );
   sb.appendLine(" * byte-for-byte).");
   sb.appendLine(" *");
   sb.appendLine(
-    " * Consumed by @d2/encryption-abstractions for on-wire sealed-frame reading.",
+    " * Consumed by @dcsv-io/d2-encryption-abstractions for on-wire sealed-frame reading.",
   );
   sb.appendLine(" */");
   sb.appendLine("export const SealedFrame = {");

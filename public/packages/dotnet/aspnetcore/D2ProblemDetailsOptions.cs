@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore;
+namespace DcsvIo.D2.AspNetCore;
 
-using D2.Shared.Headers.Http;
+using DcsvIo.D2.Headers.Http;
 
 /// <summary>
 /// Configuration for

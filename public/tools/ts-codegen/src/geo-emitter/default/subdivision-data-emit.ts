@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey, truthy } from "@d2/utilities";
+import { falsey, truthy } from "@dcsv-io/d2-utilities";
 
 import { buildHeader } from "../../lib/file-emit.js";
 import { StringBuilder } from "../../lib/string-builder.js";
@@ -80,9 +80,9 @@ export function emitSubdivisionData(context: GeoSpecContext): {
   appendEslintDisable(sb);
   sb.appendLine();
   sb.appendLine(
-    'import type { Subdivision, SubdivisionCode } from "@d2/geo-abstractions";',
+    'import type { Subdivision, SubdivisionCode } from "@dcsv-io/d2-geo-abstractions";',
   );
-  sb.appendLine('import { CountryCode } from "@d2/geo-abstractions";');
+  sb.appendLine('import { CountryCode } from "@dcsv-io/d2-geo-abstractions";');
   sb.appendLine();
   sb.appendLine('import { CountryLookup } from "./countries.g.js";');
   sb.appendLine();
@@ -193,7 +193,7 @@ export function emitSubdivisionData(context: GeoSpecContext): {
   sb.appendLine("/**");
   sb.appendLine(" * Nested accessor — `Subdivisions.US.NY` returns the typed");
   sb.appendLine(' * `SubdivisionCode` branded string `"US-NY"`. Mirrors .NET');
-  sb.appendLine(" * `D2.Shared.Geo.Default.Subdivisions.US.NY`.");
+  sb.appendLine(" * `DcsvIo.D2.Geo.Default.Subdivisions.US.NY`.");
   sb.appendLine(" */");
   sb.appendLine("export const Subdivisions = {");
   sb.increaseIndent();

@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults;
 
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
-using D2.Shared.Headers.Http;
-using D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Headers.Http;
+using DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.TestHost;
 using global::Microsoft.Extensions.DependencyInjection;

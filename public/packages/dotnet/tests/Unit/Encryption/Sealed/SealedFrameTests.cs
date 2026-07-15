@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption.Sealed;
+namespace DcsvIo.D2.Tests.Unit.Encryption.Sealed;
 
 using System.Buffers.Binary;
 using System.Text;
 using AwesomeAssertions;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 using Xunit;
 
 /// <summary>

@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/auth-abstractions
+# @dcsv-io/d2-auth-abstractions
 
 > Parent: [`public/packages/typescript/`](../../README.md)
 
 Auth-related constants for TS consumers — `Scopes` tree, `AuthErrorCodes`,
 `AuthFailures` factories, `JwtClaimTypes`. Mirrors
-`D2.Shared.Auth.Abstractions` + `D2.Shared.Auth.Errors` consolidated
+`DcsvIo.D2.Auth.Abstractions` + `DcsvIo.D2.Auth.Errors` consolidated
 (matches the .NET assembly placement).
 
 ## Public API
@@ -17,10 +17,10 @@ Auth-related constants for TS consumers — `Scopes` tree, `AuthErrorCodes`,
 | ------------------------------------------------------- | --------------------------------- | ------------------------------------------- |
 | `Scopes` (nested constants)                             | `scopes.g.ts` (codegen)           | `Scopes.*.*` (.NET)                         |
 | `ALL_SCOPES`                                            | `scopes.g.ts`                     | `Scopes.AllScopes`                          |
-| `AuthErrorCodes`                                        | `auth-error-codes.g.ts` (codegen) | `D2.Shared.Auth.Errors.AuthErrorCodes`      |
+| `AuthErrorCodes`                                        | `auth-error-codes.g.ts` (codegen) | `DcsvIo.D2.Auth.Errors.AuthErrorCodes`      |
 | `ALL_AUTH_ERROR_CODES` / `getAuthErrorHttpStatus(code)` | `auth-error-codes.g.ts`           | `AuthErrorCodes.AllCodes` / `GetHttpStatus` |
-| `AuthFailures.<factory>()`                              | `auth-failures.g.ts` (codegen)    | `D2.Shared.Auth.Errors.AuthFailures.*`      |
-| `JwtClaimTypes`                                         | `jwt-claim-types.g.ts` (codegen)  | `D2.Shared.Auth.Abstractions.JwtClaimTypes` |
+| `AuthFailures.<factory>()`                              | `auth-failures.g.ts` (codegen)    | `DcsvIo.D2.Auth.Errors.AuthFailures.*`      |
+| `JwtClaimTypes`                                         | `jwt-claim-types.g.ts` (codegen)  | `DcsvIo.D2.Auth.Abstractions.JwtClaimTypes` |
 | `JwtPayload`                                            | `jwt-payload.g.ts` (codegen)      | TS-only typed view over the same spec       |
 
 ## Codegen workflow
@@ -52,7 +52,7 @@ structurally impossible (single source).
 
 ## Dependencies
 
-- `@d2/result` — `D2Result` shape returned by `AuthFailures.*` factories.
+- `@dcsv-io/d2-result` — `D2Result` shape returned by `AuthFailures.*` factories.
 
 ## Usage example
 
@@ -62,8 +62,8 @@ import {
   AuthFailures,
   AuthErrorCodes,
   JwtClaimTypes,
-} from "@d2/auth-abstractions";
-import { HttpHeaders } from "@d2/headers-http";
+} from "@dcsv-io/d2-auth-abstractions";
+import { HttpHeaders } from "@dcsv-io/d2-headers-http";
 
 // Scope check.
 if (!ctx.scopes.has(Scopes.auth.user.impersonate.consent)) {
@@ -84,7 +84,7 @@ if (result.errorCode === AuthErrorCodes.AUTH_JWT_EXPIRED) {
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.Auth.Abstractions` + `D2.Shared.Auth.Errors`:
+Mirrors `DcsvIo.D2.Auth.Abstractions` + `DcsvIo.D2.Auth.Errors`:
 
 - `Scopes` tree — same dot-segmented spec names emitted as nested
   constants (e.g. `Scopes.auth.user.impersonate.consent`).

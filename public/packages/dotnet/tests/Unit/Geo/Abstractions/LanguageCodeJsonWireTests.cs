@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Geo.Abstractions;
+namespace DcsvIo.D2.Tests.Unit.Geo.Abstractions;
 
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions;
+using DcsvIo.D2.Geo.Abstractions;
 using Xunit;
 
 /// <summary>

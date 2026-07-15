@@ -4,8 +4,8 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { IAuthContextRedactPaths } from "@d2/auth-context-abstractions";
-import { IRequestContextRedactPaths } from "@d2/request-context-abstractions";
+import { IAuthContextRedactPaths } from "@dcsv-io/d2-auth-context-abstractions";
+import { IRequestContextRedactPaths } from "@dcsv-io/d2-request-context-abstractions";
 import { loadFixture } from "../src/index.js";
 
 interface RedactPathsPayload {

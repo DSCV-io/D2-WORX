@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Logging.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
 
 using System.Collections.Concurrent;
 using Serilog.Core;

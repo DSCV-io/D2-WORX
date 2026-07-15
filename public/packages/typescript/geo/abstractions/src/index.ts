@@ -78,7 +78,7 @@ export {
 
 // Spec-derived record shapes — single shape per entity. Recursive nav
 // refs populated in the wire-nav step of the data emitter under
-// @d2/geo-default.
+// @dcsv-io/d2-geo-default.
 export type {
   Country,
   CountryCurrencyAcceptance,

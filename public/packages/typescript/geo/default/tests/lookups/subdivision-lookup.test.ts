@@ -3,7 +3,10 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { CountryCode, type SubdivisionCode } from "@d2/geo-abstractions";
+import {
+  CountryCode,
+  type SubdivisionCode,
+} from "@dcsv-io/d2-geo-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { SubdivisionLookup } from "../../src/subdivisions.js";

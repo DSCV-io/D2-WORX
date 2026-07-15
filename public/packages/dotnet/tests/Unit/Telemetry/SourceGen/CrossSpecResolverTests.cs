@@ -6,13 +6,13 @@
 
 extern alias TelemetryTagsSourceGen;
 
-namespace D2.Shared.Tests.Unit.Telemetry.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Telemetry.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.Telemetry.Tags.SourceGen;
+using DcsvIo.D2.Telemetry.Tags.SourceGen;
 using Xunit;
-using SpecFile = TelemetryTagsSourceGen::D2.Shared.SourceGen.SpecFile;
+using SpecFile = TelemetryTagsSourceGen::DcsvIo.D2.SourceGen.SpecFile;
 
 /// <summary>
 /// Tests for <see cref="CrossSpecResolver"/> — the build-time cross-spec

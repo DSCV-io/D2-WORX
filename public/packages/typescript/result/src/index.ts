@@ -13,8 +13,8 @@ export {
 } from "./error-codes.g.js";
 export { type InputError, inputError } from "./input-error.js";
 export { InputErrorWireShape } from "./input-error.g.js";
-export { type TKMessage, tk } from "@d2/i18n-abstractions";
-export { TkMessageWireShape } from "@d2/i18n-abstractions";
+export { type TKMessage, tk } from "@dcsv-io/d2-i18n-abstractions";
+export { TkMessageWireShape } from "@dcsv-io/d2-i18n-abstractions";
 export {
   D2ResultEnvelopeFieldNames,
   type D2ResultEnvelopeFieldName,

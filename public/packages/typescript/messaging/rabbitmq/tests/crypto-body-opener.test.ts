@@ -12,8 +12,8 @@ import {
   PayloadSealer,
   RecipientPrivateKeyring,
   RecipientPublicKeyring,
-} from "@d2/encryption";
-import { DlqFailureCauses } from "@d2/messaging-abstractions";
+} from "@dcsv-io/d2-encryption";
+import { DlqFailureCauses } from "@dcsv-io/d2-messaging-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { PlaintextBodyOpener } from "../src/subscribing/body-opener.js";

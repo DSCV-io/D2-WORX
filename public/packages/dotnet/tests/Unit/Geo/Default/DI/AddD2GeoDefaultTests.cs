@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Geo.Default.DI;
+namespace DcsvIo.D2.Tests.Unit.Geo.Default.DI;
 
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions.NameResolution;
-using D2.Shared.Geo.Default;
-using D2.Shared.Geo.Default.NameResolution;
+using DcsvIo.D2.Geo.Abstractions.NameResolution;
+using DcsvIo.D2.Geo.Default;
+using DcsvIo.D2.Geo.Default.NameResolution;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

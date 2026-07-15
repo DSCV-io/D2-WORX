@@ -2,11 +2,11 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Handler
+# DcsvIo.D2.Handler
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
-`BaseHandler<TSelf, TInput, TOutput>` — the abstract base every handler in every service inherits (CQRS handlers, repo handlers, messaging consumers, scheduled jobs, anything handler-shaped). Provides per-handler scope pre-check, OTel activity + 4 metrics + log scope + stopwatch + universal try/catch around the subclass's `ExecuteAsync`. Sibling `D2.Shared.Handler.Repo` adds EF / PG exception → `D2Result` mapping on top.
+`BaseHandler<TSelf, TInput, TOutput>` — the abstract base every handler in every service inherits (CQRS handlers, repo handlers, messaging consumers, scheduled jobs, anything handler-shaped). Provides per-handler scope pre-check, OTel activity + 4 metrics + log scope + stopwatch + universal try/catch around the subclass's `ExecuteAsync`. Sibling `DcsvIo.D2.Handler.Repo` adds EF / PG exception → `D2Result` mapping on top.
 
 JWT signature / expiry / audience / fingerprint-binding validation is a transport-level concern handled by auth middleware (HTTP / gRPC / AMQP) BEFORE the handler runs. By the time a handler executes, the bearer token has already been validated for the host service.
 
@@ -26,7 +26,7 @@ If you can't guarantee the redaction policy is in place (e.g. a one-off tool, an
 
 | Path                                    | Contents                                                                                                                                                       |
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Handler.csproj`              | csproj — refs handler/abstractions + context/abstractions + result + DI/Logging.Abstractions                                                                   |
+| `DcsvIo.D2.Handler.csproj`              | csproj — refs handler/abstractions + context/abstractions + result + DI/Logging.Abstractions                                                                   |
 | `BaseHandler.cs`                        | Abstract base. Virtual `HandleAsync` (entry point) + non-virtual `RunCorePipelineAsync` (observability + try/catch) + abstract `ExecuteAsync` (subclass logic) |
 | `BaseHandler.Logging.cs`                | Source-generated `LoggerMessage` delegates for the pipeline                                                                                                    |
 | `HandlerContext.cs`                     | `HandlerContext<T>` — typed-logger context. Open-generic registration via `AddD2Handler`                                                                       |
@@ -114,7 +114,7 @@ Tests provide a `MutableRequestContext` test fixture builder.
 | `d2.handler.failed`    | Counter (long)     | `{calls}` | Handler invocations that returned `Success == false` OR threw |
 | `d2.handler.duration`  | Histogram (double) | `ms`      | Handler invocation wall-clock duration                        |
 
-All instruments tag with `d2.handler.name = typeof(TSelf).Name`. The `service-defaults` lib registers `MeterProvider` + `TracerProvider` to capture the `D2.Shared.Handler` source.
+All instruments tag with `d2.handler.name = typeof(TSelf).Name`. The `service-defaults` lib registers `MeterProvider` + `TracerProvider` to capture the `DcsvIo.D2.Handler` source.
 
 ---
 
@@ -150,7 +150,7 @@ Handler primary-constructor parameters do NOT take the `r_` prefix (carve-out fr
 
 ## Reference
 
-- [`D2.Shared.Handler.Abstractions`](../abstractions/README.md) — `IHandler` + `HandlerOptions` + `IHandlerContext`
-- [`D2.Shared.Handler.Repo`](../repo/README.md) — EF/PG exception remapping subclass
+- [`DcsvIo.D2.Handler.Abstractions`](../abstractions/README.md) — `IHandler` + `HandlerOptions` + `IHandlerContext`
+- [`DcsvIo.D2.Handler.Repo`](../repo/README.md) — EF/PG exception remapping subclass
 - [`docs/PATTERNS.md`](../../../../../docs/PATTERNS.md) "Handler" section — handler pattern, primary-constructor carve-out
 - [ADR-0020](../../../../../public/docs/adrs/0020-service-project-structure.md) — per-op handler folder structure (`Application/Handlers/{Commands,Queries}/<Op>/`)

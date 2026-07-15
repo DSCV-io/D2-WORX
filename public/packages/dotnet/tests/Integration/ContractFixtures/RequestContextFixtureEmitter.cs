@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using D2.Shared.AuthContext.Abstractions;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.AuthContext.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
 using Xunit;
 
 /// <summary>

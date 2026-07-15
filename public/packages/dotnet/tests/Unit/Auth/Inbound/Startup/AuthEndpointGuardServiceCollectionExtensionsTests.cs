@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Startup;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Startup;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Startup;
+using DcsvIo.D2.Auth.Startup;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

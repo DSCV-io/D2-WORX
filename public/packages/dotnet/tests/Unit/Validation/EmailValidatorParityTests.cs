@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation;
+namespace DcsvIo.D2.Tests.Unit.Validation;
 
 using AwesomeAssertions;
-using D2.Shared.Utilities.Extensions;
-using D2.Shared.Validation;
+using DcsvIo.D2.Utilities.Extensions;
+using DcsvIo.D2.Validation;
 using Xunit;
 
 /// <summary>
 /// Asserts the .NET <see cref="DefaultEmailValidator"/> produces the SAME
 /// verdict + normalized form as the hand-authored cross-language corpus at
 /// <c>contracts/validation/fixtures/email.json</c>. The TypeScript
-/// <c>@d2/validation</c> parity test asserts the identical corpus, so any
+/// <c>@dcsv-io/d2-validation</c> parity test asserts the identical corpus, so any
 /// behavioral drift between the two runtimes fails one side.
 /// </summary>
 public sealed class EmailValidatorParityTests

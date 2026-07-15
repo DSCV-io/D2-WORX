@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge.Domain
+# DcsvIo.D2.Private.Edge.Domain
 
 > Parent: [`../README.md`](../README.md)
 

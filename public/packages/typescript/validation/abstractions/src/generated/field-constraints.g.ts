@@ -11,7 +11,7 @@
 /**
  * Shared field-length / digit-count bounds enforced by the domain value
  * objects (contacts + Location), the FE/BFF Zod schemas, and arbitrary
- * backend modules. Mirrors .NET `D2.Shared.Validation.Abstractions.FieldConstraints`
+ * backend modules. Mirrors .NET `DcsvIo.D2.Validation.Abstractions.FieldConstraints`
  * byte-for-byte (single spec source emits both sides; cross-language drift
  * is structurally impossible).
  */

@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/auth-context-abstractions
+# @dcsv-io/d2-auth-context-abstractions
 
 > Parent: [`public/packages/typescript/`](../../README.md)
 
 `IAuthContext` interface + supporting enums/types. Emitted from
 `contracts/auth-context/IAuthContext.spec.json` via `tools/ts-codegen`.
-Mirrors `D2.Shared.AuthContext.Abstractions` (.NET).
+Mirrors `DcsvIo.D2.AuthContext.Abstractions` (.NET).
 
 ## Public API
 
@@ -38,12 +38,12 @@ None at the package level (interfaces only). The codegen runner
 ## Usage example
 
 ```ts
-import type { IAuthContext } from "@d2/auth-context-abstractions";
+import type { IAuthContext } from "@dcsv-io/d2-auth-context-abstractions";
 import {
   OrgType,
   IAuthContextRedactPaths,
-} from "@d2/auth-context-abstractions";
-import { setupLogger } from "@d2/logging";
+} from "@dcsv-io/d2-auth-context-abstractions";
+import { setupLogger } from "@dcsv-io/d2-logging";
 
 const log = setupLogger({
   serviceName: "edge",
@@ -59,14 +59,14 @@ function describe(ctx: IAuthContext): string {
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.AuthContext.Abstractions`:
+Mirrors `DcsvIo.D2.AuthContext.Abstractions`:
 
 - `IAuthContext` — same property set, camelCased per TS conventions.
 - `OrgType` / `Role` / `ImpersonationKind` / `ActorKind` — same wire
   values (string-literal unions).
 - `ActorEntry` — same field shape.
 
-The .NET-side codegen lives in `D2.Shared.Context.SourceGen` (Roslyn
+The .NET-side codegen lives in `DcsvIo.D2.Context.SourceGen` (Roslyn
 incremental generator); the TS-side codegen lives in `tools/ts-codegen`.
 Both consume the same `IAuthContext.spec.json`.
 
@@ -91,7 +91,7 @@ codebase's nullability rule. The spec's `?` suffix on a type entry
 
 - `IAuthContextRedactPaths` is empty when no spec entry carries
   `redact: true`. Hand-register additional paths via
-  `markRedactedFields()` from `@d2/logging` if needed.
+  `markRedactedFields()` from `@dcsv-io/d2-logging` if needed.
 - Generated files (`*.g.ts`) are committed to git so consumers don't
   pay a generate-on-first-build penalty.
 - `pnpm exec eslint` ignores generated files — formatting drift is

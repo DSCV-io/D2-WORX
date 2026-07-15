@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Repo.Postgres;
+namespace DcsvIo.D2.Handler.Repo.Postgres;
 
 using System;
 using Microsoft.EntityFrameworkCore;

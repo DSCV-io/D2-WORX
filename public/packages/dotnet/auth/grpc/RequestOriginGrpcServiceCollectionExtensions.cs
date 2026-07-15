@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc;
+namespace DcsvIo.D2.Auth.Grpc;
 
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Grpc.Interceptors;
-using D2.Shared.Time;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Grpc.Interceptors;
+using DcsvIo.D2.Time;
+using DcsvIo.D2.Utilities.Extensions;
 using global::Grpc.AspNetCore.Server;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Scopes.SourceGen;
+namespace DcsvIo.D2.Auth.Scopes.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Pure logic for parsing <c>scopes.spec.json</c> into a <see cref="ScopesSpec"/>

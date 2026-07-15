@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Private.Auth;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

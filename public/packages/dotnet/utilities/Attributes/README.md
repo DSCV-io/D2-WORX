@@ -2,19 +2,19 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Utilities — Attributes
+# DcsvIo.D2.Utilities — Attributes
 
-> Part of [`D2.Shared.Utilities`](../README.md).
+> Part of [`DcsvIo.D2.Utilities`](../README.md).
 
 Marker attributes consumed reflectively elsewhere in the stack. Zero behavior on their own — they exist to label types/members so other infrastructure (Serilog destructuring, codegen, contract tests) can pick them up.
 
 | File                     | Contents                                                                                                                                                                                                                   |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RedactDataAttribute.cs` | `[RedactData(Reason = ..., CustomReason = "...")]` — marker attribute consumed by the Serilog destructuring policy in `D2.Shared.ServiceDefaults`. Targets `AttributeTargets.All` (types, properties, fields, parameters). |
+| `RedactDataAttribute.cs` | `[RedactData(Reason = ..., CustomReason = "...")]` — marker attribute consumed by the Serilog destructuring policy in `DcsvIo.D2.ServiceDefaults`. Targets `AttributeTargets.All` (types, properties, fields, parameters). |
 
 ## `[RedactData]` attribute
 
-Marker attribute consumed by the Serilog destructuring policy in `D2.Shared.ServiceDefaults`. Apply to types, properties, fields, parameters — anywhere PII or secrets might leak into logs/spans/metrics.
+Marker attribute consumed by the Serilog destructuring policy in `DcsvIo.D2.ServiceDefaults`. Apply to types, properties, fields, parameters — anywhere PII or secrets might leak into logs/spans/metrics.
 
 ```csharp
 public sealed record User

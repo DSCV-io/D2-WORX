@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Audit.Tests.Unit.Host;
 
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using D2.Audit.Api.Mtls;
+using DcsvIo.D2.Private.Audit.Api.Mtls;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>
@@ -85,7 +85,7 @@ internal sealed class AuditHostTestKit : IDisposable
 
             if (Directory.Exists(fromAudit)
                 && File.Exists(
-                    Path.Combine(dir.FullName, "tests", "D2.Audit.Tests.csproj")))
+                    Path.Combine(dir.FullName, "tests", "DcsvIo.D2.Private.Audit.Tests.csproj")))
             {
                 return fromAudit;
             }
@@ -95,7 +95,7 @@ internal sealed class AuditHostTestKit : IDisposable
 
         throw new InvalidOperationException(
             "Audit.Api source root not found (sentinels: D2.slnx, D2.slnx, "
-            + "or audit/tests/D2.Audit.Tests.csproj).");
+            + "or audit/tests/DcsvIo.D2.Private.Audit.Tests.csproj).");
     }
 
     /// <summary>

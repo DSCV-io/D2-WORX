@@ -10,8 +10,8 @@ import {
   RedisCacheInvalidationBackplane,
   RedisDistributedCache,
   type RedisCacheOptions,
-} from "@d2/caching-distributed-redis";
-import { DefaultLocalCache } from "@d2/caching-local-default";
+} from "@dcsv-io/d2-caching-distributed-redis";
+import { DefaultLocalCache } from "@dcsv-io/d2-caching-local-default";
 import {
   RedisContainer,
   type StartedRedisContainer,

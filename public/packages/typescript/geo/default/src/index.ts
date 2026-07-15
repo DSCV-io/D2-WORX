@@ -5,7 +5,7 @@
 
 // Barrel re-export — convenience entrypoint for consumers that want every
 // catalog at once. Prefer the sub-path imports (e.g.
-// `@d2/geo-default/countries`) for bundle-friendliness. Each sub-path
+// `@dcsv-io/d2-geo-default/countries`) for bundle-friendliness. Each sub-path
 // already triggers the coordinator (wire-nav step) via side-effect import
 // on `./generated/geo-data-initializer.g.js`.
 

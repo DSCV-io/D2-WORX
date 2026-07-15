@@ -1,5 +1,5 @@
 {
-  "name": "@d2/validation-abstractions",
+  "name": "@dcsv-io/d2-validation-abstractions",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -21,12 +21,12 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/result": "workspace:*",
-    "@d2/geo-abstractions": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*",
+    "@dcsv-io/d2-geo-abstractions": "workspace:*",
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@d2/utilities": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*",
     "@vitest/coverage-v8": "4.0.18",
     "typescript": "5.9.3",
     "vitest": "4.0.18"

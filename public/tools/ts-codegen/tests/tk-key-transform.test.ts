@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { TK } from "@d2/i18n-keys";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import { parseTkKey } from "../src/lib/tk-key-transform.js";
 
 describe("parseTkKey — inverse KeyDecomposer", () => {
@@ -67,7 +67,7 @@ describe("parseTkKey — inverse KeyDecomposer", () => {
 // ---------------------------------------------------------------------------
 // Round-trip equivalence against the LIVE generated TK constants.
 // These tests verify that `parseTkKey` stays in sync with the generated TS
-// TK catalog (`@d2/i18n-keys`) — a string-pin alone would miss drift between
+// TK catalog (`@dcsv-io/d2-i18n-keys`) — a string-pin alone would miss drift between
 // the transform logic and the actual generated constant values.
 // ---------------------------------------------------------------------------
 

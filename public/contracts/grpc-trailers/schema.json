@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 gRPC trailers spec",
-  "description": "Schema for contracts/grpc-trailers/grpc-trailers.spec.json — the source-of-truth catalog of gRPC trailer keys emitted on auth-pipeline RpcException failures. D2.Shared.Grpc.Trailers.SourceGen reads it to emit D2GrpcTrailers into D2.Shared.Auth.Grpc; tools/ts-codegen/src/grpc-trailers-emit.ts reads it to emit grpc-trailers.g.ts into @d2/grpc-client. Both sides reference the spec-derived constants — wire-format drift on the trailer keys is structurally impossible.",
+  "description": "Schema for contracts/grpc-trailers/grpc-trailers.spec.json — the source-of-truth catalog of gRPC trailer keys emitted on auth-pipeline RpcException failures. DcsvIo.D2.Grpc.Trailers.SourceGen reads it to emit D2GrpcTrailers into DcsvIo.D2.Auth.Grpc; tools/ts-codegen/src/grpc-trailers-emit.ts reads it to emit grpc-trailers.g.ts into @dcsv-io/d2-grpc-client. Both sides reference the spec-derived constants — wire-format drift on the trailer keys is structurally impossible.",
   "type": "object",
   "required": ["trailers"],
   "additionalProperties": false,

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://d2-worx.dev/contracts/geo/currencies.schema.json",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/currencies.schema.json",
   "title": "Currency catalog (codegen-ready)",
   "description": "Tier 2 codegen-ready Currency catalog. Matches the CurrencySpec record shape consumed by .NET SourceGen + TS emitter. Includes both active and retired currencies per the deliberate design (consumers filter via isActive).",
   "type": "object",

@@ -12,7 +12,7 @@ The `sign` operation adds four more failures: `KEYCUSTODIAN_SIGNING_KEY_UNAVAILA
 
 ## Consumed by
 
-- **.NET** — [`private/services/edge/key-custodian/error-codes-source-gen/`](../../private/services/edge/key-custodian/error-codes-source-gen/README.md) (service-local Roslyn source-gen shell → `KeyCustodianErrorCodes` constants + `KeyCustodianFailures` typed `D2Result` factories in `D2.Edge.KeyCustodian.Domain`)
+- **.NET** — [`private/services/edge/key-custodian/error-codes-source-gen/`](../../private/services/edge/key-custodian/error-codes-source-gen/README.md) (service-local Roslyn source-gen shell → `KeyCustodianErrorCodes` constants + `KeyCustodianFailures` typed `D2Result` factories in `DcsvIo.D2.Private.Edge.KeyCustodian.Domain`)
 
 No `tools/ts-codegen` emitter consumes this catalog directly, but it is picked up by the merged cross-service error-code registry — see [`contracts/error-codes/`](../error-codes/README.md).
 

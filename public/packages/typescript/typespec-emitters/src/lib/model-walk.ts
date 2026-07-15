@@ -34,7 +34,7 @@ import type {
   Union,
 } from "@typespec/compiler";
 import { resolveEncodedName } from "@typespec/compiler";
-import { D2_FIELD_KEY, D2_REDACT_KEY } from "@d2/typespec-decorators";
+import { D2_FIELD_KEY, D2_REDACT_KEY } from "@dcsv-io/d2-typespec-decorators";
 import { resolveScalar } from "./scalar-registry.js";
 import { toPascal } from "./name-transforms.js";
 
@@ -128,7 +128,7 @@ export interface FieldInfo {
   /** True when the ModelProperty is marked optional (`?:`). */
   readonly optional: boolean;
   /**
-   * The redaction reason from @d2Redact — a `D2.Shared.Utilities.Enums.RedactReason`
+   * The redaction reason from @d2Redact — a `DcsvIo.D2.Utilities.Enums.RedactReason`
    * member name (e.g. "SecretInformation"). Present ONLY when the property carries
    * @d2Redact; undefined otherwise (so `redactReason !== undefined` is the redacted
    * predicate). The C# DTO emitter emits

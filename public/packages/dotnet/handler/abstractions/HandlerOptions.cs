@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Abstractions;
+namespace DcsvIo.D2.Handler.Abstractions;
 
 using System;
 

@@ -16,7 +16,7 @@
  *   GET /api/v1/files/:fileId/:variant/url → presigned GET URL for <img src>
  */
 import { env } from "$env/dynamic/public";
-import { HttpHeaders } from "@d2/headers-http";
+import { HttpHeaders } from "@dcsv-io/d2-headers-http";
 import * as m from "$lib/paraglide/messages.js";
 
 import { getToken } from "./gateway-client.js";

@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { truthy } from "@d2/utilities";
+import { truthy } from "@dcsv-io/d2-utilities";
 
 import { buildHeader } from "../../lib/file-emit.js";
 import { StringBuilder } from "../../lib/string-builder.js";
@@ -61,10 +61,10 @@ export function emitLocaleData(context: GeoSpecContext): {
   appendEslintDisable(sb);
   sb.appendLine();
   sb.appendLine(
-    'import type { Locale, LocaleCode } from "@d2/geo-abstractions";',
+    'import type { Locale, LocaleCode } from "@dcsv-io/d2-geo-abstractions";',
   );
   sb.appendLine(
-    'import { CountryCode, LanguageCode } from "@d2/geo-abstractions";',
+    'import { CountryCode, LanguageCode } from "@dcsv-io/d2-geo-abstractions";',
   );
   sb.appendLine();
   sb.appendLine('import { CountryLookup } from "./countries.g.js";');
@@ -282,7 +282,7 @@ function emitTrieNode(sb: StringBuilder, node: TrieNode): void {
   if (node.children.size === 0 && node.leafTag !== undefined) {
     sb.appendLine(
       `${safeKey(seg)}: "${escapeStringLiteral(node.leafTag)}"` +
-        ` as import("@d2/geo-abstractions").LocaleCode,`,
+        ` as import("@dcsv-io/d2-geo-abstractions").LocaleCode,`,
     );
     return;
   }

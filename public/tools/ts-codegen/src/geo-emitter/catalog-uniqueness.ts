@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 import {
   diagError,
@@ -24,7 +24,7 @@ import type { GeoSpecContext } from "./spec-types.js";
  * is enforced by the cross-language parity-test fixture: any drift between
  * this in-tree mirror and the runtime helper surfaces as a fixture mismatch.
  *
- * Once a shared helper package exists that both `@d2/geo-abstractions`
+ * Once a shared helper package exists that both `@dcsv-io/d2-geo-abstractions`
  * and `tools/ts-codegen` can consume without a circular dependency,
  * this mirror can be replaced with a single import.
  */
@@ -46,7 +46,7 @@ function normalize(input: string): string {
  * 2/3/4), never Pass-1 exact ambiguity.
  *
  * Uses the SAME `normalize()` pipeline as the runtime resolver, imported
- * directly from `@d2/geo-abstractions/src/name-resolution/name-normalizer.ts`
+ * directly from `@dcsv-io/d2-geo-abstractions/src/name-resolution/name-normalizer.ts`
  * so any future drift in the normalizer is caught instantly (the catalog
  * gets re-validated under the new normalization rules on every emit).
  *

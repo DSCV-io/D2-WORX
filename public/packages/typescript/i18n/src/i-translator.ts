@@ -3,10 +3,10 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { TKMessage } from "@d2/i18n-abstractions";
+import type { TKMessage } from "@dcsv-io/d2-i18n-abstractions";
 
 /**
- * Locale-aware translator. Mirrors the .NET `D2.Shared.I18n.ITranslator`
+ * Locale-aware translator. Mirrors the .NET `DcsvIo.D2.I18n.ITranslator`
  * shape — `t(locale, message)` resolves a `TKMessage` to its rendered
  * string for the given BCP 47 locale, falling back to the configured
  * default locale on miss + finally returning the key verbatim if no

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.SharedEntityFrameworkCore;
+namespace DcsvIo.D2.Tests.Integration.SharedEntityFrameworkCore;
 
-using D2.Shared.Location.EntityFrameworkCore;
-using D2.Shared.Location.ValueObjects;
+using DcsvIo.D2.Location.EntityFrameworkCore;
+using DcsvIo.D2.Location.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>

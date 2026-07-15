@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore.Mtls;
+namespace DcsvIo.D2.AspNetCore.Mtls;
 
 using Microsoft.AspNetCore.Http;
 
@@ -41,7 +41,7 @@ using Microsoft.AspNetCore.Http;
 /// <para>
 /// The gRPC-transport overload (a gRPC service reaching the same validated
 /// certificate via <c>ServerCallContext.GetHttpContext()</c>) lives in
-/// <c>D2.Shared.Auth.Grpc</c> — the gRPC-aware library — and delegates to this
+/// <c>DcsvIo.D2.Auth.Grpc</c> — the gRPC-aware library — and delegates to this
 /// <see cref="HttpContext"/> overload, so identity is derived in exactly ONE place
 /// across both transports.
 /// </para>

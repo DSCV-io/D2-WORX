@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Location;
+namespace DcsvIo.D2.Tests.Unit.Location;
 
 using System.Text.Json;
 

@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge
+# DcsvIo.D2.Private.Edge
 
 > Parent: [`private/services/`](../README.md)
 
 **Who / what:** Operators and host integrators — the unified Edge gateway process for D²-WORX (composition root + co-hosted KeyCustodian + placeholder module homes).
 
-> **Status: partially shipped** — KeyCustodian module is in-tree with unit + integration CI; **host composition root** (`D2.Edge.Api`) ships `AddD2EdgeHost` / `UseD2EdgePipeline` / `MapD2EdgeEndpoints` / three-bind Kestrel / well-known Map / six KC gRPC Maps / CSR outbound issuer / Audit HTTP→gRPC bridge + Compose multiproc stubs (`d2-edge` / `d2-audit`). Placeholder modules remain stubs.
+> **Status: partially shipped** — KeyCustodian module is in-tree with unit + integration CI; **host composition root** (`DcsvIo.D2.Private.Edge.Api`) ships `AddD2EdgeHost` / `UseD2EdgePipeline` / `MapD2EdgeEndpoints` / three-bind Kestrel / well-known Map / six KC gRPC Maps / CSR outbound issuer / Audit HTTP→gRPC bridge + Compose multiproc stubs (`d2-edge` / `d2-audit`). Placeholder modules remain stubs.
 
 ## Purpose
 
@@ -20,11 +20,11 @@ Edge is intentionally "thick" — middleware, routing, auth, real-time push, Who
 
 | Project | Role |
 | --- | --- |
-| [api/](api/README.md) | **Composition root** (`D2.Edge.Api`) — Program, DI, pipeline, three-bind, well-known routes, six KC gRPC Maps |
+| [api/](api/README.md) | **Composition root** (`DcsvIo.D2.Private.Edge.Api`) — Program, DI, pipeline, three-bind, well-known routes, six KC gRPC Maps |
 | [app/](app/README.md) | Thin host App shell (empty shell for host-module Application types) |
 | [domain/](domain/README.md) | Thin host Domain shell (empty shell for host-module pure domain) |
 | [infra/](infra/README.md) | Thin host Infra shell (empty shell for host-module adapters) |
-| [tests/README.md](tests/README.md) | `D2.Edge.Tests` — KC + host isolation |
+| [tests/README.md](tests/README.md) | `DcsvIo.D2.Private.Edge.Tests` — KC + host isolation |
 
 ## Modules
 

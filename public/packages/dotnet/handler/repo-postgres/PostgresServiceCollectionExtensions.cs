@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Repo.Postgres;
+namespace DcsvIo.D2.Handler.Repo.Postgres;
 
-using D2.Shared.Handler.Repo.Abstractions;
+using DcsvIo.D2.Handler.Repo.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

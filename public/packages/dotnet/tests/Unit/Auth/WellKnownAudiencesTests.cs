@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth;
+namespace DcsvIo.D2.Tests.Unit.Auth;
 
 using System;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 using Xunit;
 
 /// <summary>
@@ -181,7 +181,7 @@ public sealed class WellKnownAudiencesTests
     public void GeneratedConstants_ByteMatchTheTypeScriptProtocolAudiences()
     {
         // The TS const-object is emitted from the same spec into
-        // @d2/auth-abstractions. Assert each C# const value appears in the TS file
+        // @dcsv-io/d2-auth-abstractions. Assert each C# const value appears in the TS file
         // under the same SCREAMING_SNAKE name — cross-runtime byte identity.
         var spec = ReadProtocolAudiencesSpec();
         var tsPath = Path.Combine(

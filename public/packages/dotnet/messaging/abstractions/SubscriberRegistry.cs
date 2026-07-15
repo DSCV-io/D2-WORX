@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging;
+namespace DcsvIo.D2.Messaging;
 
 /// <summary>
 /// DI-singleton aggregating every <see cref="ISubscriberRegistration"/>

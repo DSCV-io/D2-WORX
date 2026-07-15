@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location.Encoding;
+namespace DcsvIo.D2.Location.Encoding;
 
 /// <summary>
 /// Internal geohash encoder / decoder using the Niemeyer base-32 alphabet.

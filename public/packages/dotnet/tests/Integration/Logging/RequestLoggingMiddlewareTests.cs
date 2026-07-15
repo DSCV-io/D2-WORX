@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Logging;
+namespace DcsvIo.D2.Tests.Integration.Logging;
 
 using AwesomeAssertions;
-using D2.Shared.Tests.Integration.Logging.Infrastructure;
+using DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
 using Microsoft.AspNetCore.TestHost;
 using Serilog.Events;
 using Xunit;

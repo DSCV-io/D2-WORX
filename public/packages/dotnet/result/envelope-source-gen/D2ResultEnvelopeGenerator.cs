@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result.Envelope.SourceGen;
+namespace DcsvIo.D2.Result.Envelope.SourceGen;
 
 using System;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits the
-/// <c>D2ResultEnvelopeFieldNames</c> catalog into <c>D2.Shared.Result</c>
+/// <c>D2ResultEnvelopeFieldNames</c> catalog into <c>DcsvIo.D2.Result</c>
 /// from <c>contracts/d2result-envelope/d2result-envelope.spec.json</c>.
 /// Single-target dispatch on assembly name — any other consumer emits
 /// nothing. The hand-written <c>D2Result</c> class consumes the emitted
@@ -27,7 +27,7 @@ public sealed class D2ResultEnvelopeGenerator : IIncrementalGenerator
 {
     private const string _SPEC_FILE_NAME = "d2result-envelope.spec.json";
 
-    private const string _TARGET_ASSEMBLY = "D2.Shared.Result";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.Result";
 
     private const string _SOURCE_NAME = "D2ResultEnvelopeFieldNames.g.cs";
 
@@ -48,7 +48,7 @@ public sealed class D2ResultEnvelopeGenerator : IIncrementalGenerator
             var (specFiles, compilation) = tuple;
             var assemblyName = compilation.AssemblyName ?? string.Empty;
 
-            // Single-target dispatch — anything other than the D2.Shared.Result
+            // Single-target dispatch — anything other than the DcsvIo.D2.Result
             // assembly emits nothing.
             if (!string.Equals(assemblyName, _TARGET_ASSEMBLY, StringComparison.Ordinal))
                 return;

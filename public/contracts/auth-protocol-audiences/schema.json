@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D² protocol-audiences spec",
-  "description": "Schema for contracts/auth-protocol-audiences/protocol-audiences.spec.json — the single source of truth for the PROTOCOL audiences (d2.internal, d2-edge). These are NOT token-exchange targets (those live in auth-audiences/audiences.spec.json as URL-shaped entries); they are bare-token protocol constants. The C# WellKnownAudiences.g.cs is emitted by D2.Shared.Auth.ProtocolAudiences.SourceGen; the TS ProtocolAudiences const-object is emitted by tools/ts-codegen. The @d2Audience validator accepts a value iff it appears here.",
+  "description": "Schema for contracts/auth-protocol-audiences/protocol-audiences.spec.json — the single source of truth for the PROTOCOL audiences (d2.internal, d2-edge). These are NOT token-exchange targets (those live in auth-audiences/audiences.spec.json as URL-shaped entries); they are bare-token protocol constants. The C# WellKnownAudiences.g.cs is emitted by DcsvIo.D2.Auth.ProtocolAudiences.SourceGen; the TS ProtocolAudiences const-object is emitted by tools/ts-codegen. The @d2Audience validator accepts a value iff it appears here.",
   "type": "object",
   "required": ["protocolAudiences"],
   "additionalProperties": false,

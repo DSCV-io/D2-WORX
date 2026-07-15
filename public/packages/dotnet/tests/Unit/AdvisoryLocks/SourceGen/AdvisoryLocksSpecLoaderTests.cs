@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AdvisoryLocks.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.AdvisoryLocks.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.AdvisoryLocks.SourceGen;
+using DcsvIo.D2.AdvisoryLocks.SourceGen;
 using Xunit;
 
 /// <summary>

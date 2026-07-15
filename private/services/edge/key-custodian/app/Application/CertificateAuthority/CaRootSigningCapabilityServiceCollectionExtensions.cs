@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
 
 /// <summary>
 /// DI registration for the dedicated CA-root-signing capability. Deliberately

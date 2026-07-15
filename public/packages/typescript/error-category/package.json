@@ -1,5 +1,5 @@
 {
-  "name": "@d2/error-category",
+  "name": "@dcsv-io/d2-error-category",
   "version": "0.1.0",
   "private": true,
   "type": "module",

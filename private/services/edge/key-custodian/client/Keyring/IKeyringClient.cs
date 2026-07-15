@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 
 /// <summary>
 /// The package-internal raw-keyring fetch seam. Fetches a domain's Active + Retiring

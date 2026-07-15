@@ -6,7 +6,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 /**
  * Options for {@link D2Env.load}. Used in tests to inject explicit

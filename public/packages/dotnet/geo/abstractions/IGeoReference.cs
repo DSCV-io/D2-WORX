@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Abstractions;
+namespace DcsvIo.D2.Geo.Abstractions;
 
 /// <summary>
 /// Strongly-typed lookup contract for the seven reference-data catalogs.

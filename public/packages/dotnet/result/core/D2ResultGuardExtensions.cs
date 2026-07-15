@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result;
+namespace DcsvIo.D2.Result;
 
 /// <summary>
 /// Guard extensions for the multi-value-threading pattern — the workhorse for command

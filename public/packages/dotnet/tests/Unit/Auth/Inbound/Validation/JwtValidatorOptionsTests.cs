@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Validation;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Validation;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Validation;
+using DcsvIo.D2.Auth.Validation;
 using Xunit;
 
 public sealed class JwtValidatorOptionsTests

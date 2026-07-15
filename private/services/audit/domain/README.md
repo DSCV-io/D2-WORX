@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Audit.Domain
+# DcsvIo.D2.Private.Audit.Domain
 
 > **Status: NOT IMPLEMENTED — tracked at [private/docs/v2/V2.md](../../../../private/docs/v2/V2.md) (product Audit domain)**
 

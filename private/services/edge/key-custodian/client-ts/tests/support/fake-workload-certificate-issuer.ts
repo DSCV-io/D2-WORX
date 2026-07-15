@@ -8,7 +8,7 @@
 // injected script. The authoritative replacement is the .NET file-based CSR
 // fixture harness (NodeLeafClient) driving the real CsrVerification + issuance.
 
-import { type D2Result, serviceUnavailable } from "@d2/result";
+import { type D2Result, serviceUnavailable } from "@dcsv-io/d2-result";
 import type { WorkloadCertificateIssuer } from "../../src/issuance/workload-certificate-issuer.js";
 import type {
   CaChainMaterial,

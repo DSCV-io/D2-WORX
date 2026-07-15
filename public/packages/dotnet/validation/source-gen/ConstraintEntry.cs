@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation.SourceGen;
+namespace DcsvIo.D2.Validation.SourceGen;
 
 /// <summary>
 /// One field-constraint integer constant parsed from

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Default.NameResolution;
+namespace DcsvIo.D2.Geo.Default.NameResolution;
 
 /// <summary>
 /// Cache-entry contract — both record-presence and ambiguity-flag fields

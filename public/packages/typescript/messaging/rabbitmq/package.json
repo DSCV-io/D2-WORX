@@ -1,5 +1,5 @@
 {
-  "name": "@d2/messaging-rabbitmq",
+  "name": "@dcsv-io/d2-messaging-rabbitmq",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,15 +22,15 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/encryption": "workspace:*",
-    "@d2/encryption-abstractions": "workspace:*",
-    "@d2/headers-amqp": "workspace:*",
-    "@d2/logging": "workspace:*",
-    "@d2/messaging-abstractions": "workspace:*",
-    "@d2/request-context-abstractions": "workspace:*",
-    "@d2/result": "workspace:*",
-    "@d2/telemetry": "workspace:*",
-    "@d2/utilities": "workspace:*",
+    "@dcsv-io/d2-encryption": "workspace:*",
+    "@dcsv-io/d2-encryption-abstractions": "workspace:*",
+    "@dcsv-io/d2-headers-amqp": "workspace:*",
+    "@dcsv-io/d2-logging": "workspace:*",
+    "@dcsv-io/d2-messaging-abstractions": "workspace:*",
+    "@dcsv-io/d2-request-context-abstractions": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*",
+    "@dcsv-io/d2-telemetry": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*",
     "@opentelemetry/api": "1.9.0",
     "rabbitmq-client": "5.0.8"
   },

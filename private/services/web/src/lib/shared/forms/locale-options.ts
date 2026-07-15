@@ -8,7 +8,7 @@
  * Uses `localesToOptions()` to enrich from Geo `LocaleDTO` ref data (endonym + country code).
  * Geo ref data is memory-cached after the first call, so subsequent layout loads are free.
  */
-import type { LocaleDTO } from "@d2/protos";
+import type { LocaleDTO } from "@dcsv-io/d2-protos";
 
 export interface LocaleOption {
   /** BCP 47 tag (e.g., "en-US"). */

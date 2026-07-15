@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Tests.Integration.Logging.Infrastructure;
-using D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
+using DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.TestHost;
 using global::Microsoft.Extensions.DependencyInjection;
@@ -318,7 +318,7 @@ public sealed class LoggingPipelineE2ETests
 
         var resolved = handle.Host.Services
             .GetRequiredService<global::Microsoft.Extensions.Options
-                .IOptions<D2.Shared.Logging.D2LoggingOptions>>()
+                .IOptions<DcsvIo.D2.Logging.D2LoggingOptions>>()
             .Value;
         resolved.ServiceName.Should().Be("service-defaults-tests");
     }

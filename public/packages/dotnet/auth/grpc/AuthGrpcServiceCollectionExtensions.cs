@@ -4,21 +4,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc;
+namespace DcsvIo.D2.Auth.Grpc;
 
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Grpc.Ambient;
-using D2.Shared.Auth.Grpc.Interceptors;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Grpc.Ambient;
+using DcsvIo.D2.Auth.Grpc.Interceptors;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Context.Abstractions;
 using global::Grpc.AspNetCore.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 /// <summary>
 /// DI registration entry point for the gRPC-transport binding of the inbound
-/// auth runtime. Companion to <c>D2.Shared.Auth.AddD2Auth</c> — that registers
+/// auth runtime. Companion to <c>DcsvIo.D2.Auth.AddD2Auth</c> — that registers
 /// the validator + liveness tracker; this registers the
 /// <see cref="JwtAuthInterceptor"/> + dual-path scoped
 /// <see cref="IRequestContext"/> resolver (same Items||Mutable contract as

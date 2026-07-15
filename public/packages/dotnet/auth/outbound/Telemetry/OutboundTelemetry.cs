@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.Telemetry;
+namespace DcsvIo.D2.Auth.Outbound.Telemetry;
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
 /// <summary>
 /// Telemetry surface for the outbound auth runtime — RFC-8693 token exchange.
-/// Separate from the inbound <c>D2.Shared.Auth</c> source (which lives in
+/// Separate from the inbound <c>DcsvIo.D2.Auth</c> source (which lives in
 /// <c>AuthTelemetry</c> in the inbound runtime lib): different SLOs, different
 /// operational dashboards, different alert thresholds.
 /// </summary>
@@ -22,13 +22,13 @@ public static class OutboundTelemetry
     /// to their <c>OpenTelemetryBuilder</c> via
     /// <c>.WithTracing(t => t.AddSource(OutboundTelemetry.ACTIVITY_SOURCE_NAME))</c>.
     /// </summary>
-    public const string ACTIVITY_SOURCE_NAME = "D2.Shared.Auth.Outbound";
+    public const string ACTIVITY_SOURCE_NAME = "DcsvIo.D2.Auth.Outbound";
 
     /// <summary>
     /// The OpenTelemetry <see cref="Meter"/> name. Hosts add this via
     /// <c>.WithMetrics(m => m.AddMeter(OutboundTelemetry.METER_NAME))</c>.
     /// </summary>
-    public const string METER_NAME = "D2.Shared.Auth.Outbound";
+    public const string METER_NAME = "DcsvIo.D2.Auth.Outbound";
 
     /// <summary>The shared <see cref="ActivitySource"/> for this lib.</summary>
     public static readonly ActivitySource SR_Activity = new(ACTIVITY_SOURCE_NAME);

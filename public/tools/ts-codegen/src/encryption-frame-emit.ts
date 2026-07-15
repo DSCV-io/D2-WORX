@@ -124,12 +124,12 @@ export function emitEncryptionFrame(spec: EncryptionFrameSpec): EmitResult {
     " * Spec-derived binary-layout constants for the D2 on-wire encryption frame.",
   );
   sb.appendLine(
-    " * Mirrors .NET D2.Shared.Encryption.EncryptionFrameLayout (same offsets",
+    " * Mirrors .NET DcsvIo.D2.Encryption.EncryptionFrameLayout (same offsets",
   );
   sb.appendLine(" * and lengths byte-for-byte).");
   sb.appendLine(" *");
   sb.appendLine(
-    " * Consumed by @d2/encryption-abstractions for on-wire encryption-frame decoding.",
+    " * Consumed by @dcsv-io/d2-encryption-abstractions for on-wire encryption-frame decoding.",
   );
   sb.appendLine(" */");
   sb.appendLine("export const EncryptionFrame = {");

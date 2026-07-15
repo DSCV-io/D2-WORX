@@ -1,7 +1,7 @@
 {
   "$comment": "Synthetic fixture-only key material; no real PII. TS-produced symmetric frames decrypted by the .NET TsCryptoInterop suite.",
   "emittedBy": "public/packages/typescript/encryption/scripts/emit-symmetric-frames.fixture.ts",
-  "regenerate": "pnpm --filter @d2/encryption emit-crypto-fixtures",
+  "regenerate": "pnpm --filter @dcsv-io/d2-encryption emit-crypto-fixtures",
   "kid": "ts-sym-kid",
   "keyBase64": "I11WiSZHSLmD3hmr8qE8+X3etzMPfB7Z/Kkjvocmbjo=",
   "aadContextBase64": "ZDIvYXVkaXQtcGF5bG9hZA==",

@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.HandlerRepo.Abstractions;
+namespace DcsvIo.D2.Tests.Unit.HandlerRepo.Abstractions;
 
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Handler.Repo.Abstractions;
+using DcsvIo.D2.Handler.Repo.Abstractions;
 using Xunit;
 
 /// <summary>
 /// Pinning tests for <see cref="DbErrorCodes"/> — the constants are part of
 /// the public wire contract (booleans match by string equality, not by symbol
 /// reference). A silent rename would break consumers that hand-craft results
-/// with these codes (middleware emitting from <see cref="D2.Shared.Result.D2Result.Fail"/>
+/// with these codes (middleware emitting from <see cref="DcsvIo.D2.Result.D2Result.Fail"/>
 /// without referencing the abstractions package).
 /// </summary>
 public sealed class DbErrorCodesTests

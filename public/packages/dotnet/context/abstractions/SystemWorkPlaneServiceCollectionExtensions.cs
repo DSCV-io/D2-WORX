@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.Abstractions;
+namespace DcsvIo.D2.Context.Abstractions;
 
-using D2.Shared.Time;
+using DcsvIo.D2.Time;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

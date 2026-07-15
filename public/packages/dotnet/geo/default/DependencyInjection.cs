@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Default;
+namespace DcsvIo.D2.Geo.Default;
 
-using D2.Shared.Geo.Abstractions.NameResolution;
-using D2.Shared.Geo.Default.NameResolution;
+using DcsvIo.D2.Geo.Abstractions.NameResolution;
+using DcsvIo.D2.Geo.Default.NameResolution;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// DI registration entry point for <c>D2.Shared.Geo.Default</c>.
+/// DI registration entry point for <c>DcsvIo.D2.Geo.Default</c>.
 /// </summary>
 public static class DependencyInjection
 {

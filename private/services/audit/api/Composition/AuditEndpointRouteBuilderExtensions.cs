@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Api.Composition;
+namespace DcsvIo.D2.Private.Audit.Api.Composition;
 
-using D2.Audit.Api.Grpc;
-using D2.Audit.Api.Kestrel;
-using D2.Private.Auth;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Private.Audit.Api.Grpc;
+using DcsvIo.D2.Private.Audit.Api.Kestrel;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 

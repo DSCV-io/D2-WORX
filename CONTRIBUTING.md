@@ -97,7 +97,7 @@ for local invocation.
 
 ## Per-package versioning
 
-Every consumable library (`D2.Shared.*` for .NET, `@d2/*` for npm) carries its own
+Every consumable library (`DcsvIo.D2.*` for .NET, `@dcsv-io/d2-*` for npm) carries its own
 `MAJOR.MINOR.PATCH` version and its own `CHANGELOG.md`. Services version as deployables
 and are not covered here.
 
@@ -179,7 +179,7 @@ pnpm --filter release-runner exec tsx src/cli.ts --against <baseline>
 **Restrict to one package:**
 
 ```bash
-pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --package D2.Shared.Result
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --package DcsvIo.D2.Result
 ```
 
 **Apply bumps and write changelogs:**

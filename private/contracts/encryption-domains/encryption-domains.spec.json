@@ -6,7 +6,7 @@
       "value": "audit",
       "mode": "sealed",
       "consumerService": "audit",
-      "doc": "Audit events. All services publish; D2.Audit consumes. Carries actor + actee identities, action descriptors, IPs, and fingerprints â€” fully PII-bearing on every event. SEALED: every service seals to the audit service\u0027s public key; only D2.Audit opens."
+      "doc": "Audit events. All services publish; DcsvIo.D2.Private.Audit consumes. Carries actor + actee identities, action descriptors, IPs, and fingerprints â€” fully PII-bearing on every event. SEALED: every service seals to the audit service\u0027s public key; only DcsvIo.D2.Private.Audit opens."
     },
     {
       "constName": "NOTIFICATIONS",

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Utilities.Extensions;
+namespace DcsvIo.D2.Utilities.Extensions;
 
 using System.Text;
 using System.Text.RegularExpressions;
-using D2.Shared.I18n;
-using D2.Shared.Result;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Extension methods for <see cref="string"/> covering boundary checks

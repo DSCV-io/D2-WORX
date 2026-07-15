@@ -2,20 +2,20 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.ProblemDetails.SourceGen
+# DcsvIo.D2.ProblemDetails.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
 **Input contract:** [`contracts/problem-details/`](../../../../../contracts/problem-details/README.md)
 
-Roslyn incremental source generator that emits the static class `D2.Shared.ProblemDetails.D2ProblemDetailsKeys` carrying the RFC 7807 ProblemDetails wire-format catalog — `TYPE_URI_PREFIX`, `CONTENT_TYPE`, `EXTENSION_*` extension-key constants, `TITLE_*` per-HTTP-status title constants, and the `TitleFor` switch — into [`D2.Shared.ProblemDetails.Abstractions`](../abstractions/README.md) by reading `contracts/problem-details/problem-details.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.ProblemDetails.Abstractions`.
+Roslyn incremental source generator that emits the static class `DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys` carrying the RFC 7807 ProblemDetails wire-format catalog — `TYPE_URI_PREFIX`, `CONTENT_TYPE`, `EXTENSION_*` extension-key constants, `TITLE_*` per-HTTP-status title constants, and the `TitleFor` switch — into [`DcsvIo.D2.ProblemDetails.Abstractions`](../abstractions/README.md) by reading `contracts/problem-details/problem-details.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `DcsvIo.D2.ProblemDetails.Abstractions`.
 
 The spec file is the single source of truth for the RFC 7807 wire shape emitted by every .NET ProblemDetails site:
 
-- `D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.ToProblemDetails` (auth-middleware emit path A)
-- `D2.Shared.AspNetCore.Internal.D2ProblemDetailsCustomizer.Apply` (ASP.NET Core `IProblemDetailsService` pipeline emit path B)
+- `DcsvIo.D2.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.ToProblemDetails` (auth-middleware emit path A)
+- `DcsvIo.D2.AspNetCore.Internal.D2ProblemDetailsCustomizer.Apply` (ASP.NET Core `IProblemDetailsService` pipeline emit path B)
 
-The same spec drives the TS-side `@d2/problem-details-abstractions` catalog (re-exported from `@d2/headers` for compatibility) via `tools/ts-codegen/src/problem-details-emit.ts`, so cross-language drift on the URI prefix, content type, extension keys, and per-status titles is structurally impossible.
+The same spec drives the TS-side `@dcsv-io/d2-problem-details-abstractions` catalog (re-exported from `@dcsv-io/d2-headers` for compatibility) via `tools/ts-codegen/src/problem-details-emit.ts`, so cross-language drift on the URI prefix, content type, extension keys, and per-status titles is structurally impossible.
 
 **Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
@@ -79,9 +79,9 @@ The same spec drives the TS-side `@d2/problem-details-abstractions` catalog (re-
 
 ## Emitted output
 
-One `.g.cs` file emitted into the consuming assembly (`D2.Shared.ProblemDetails.Abstractions`):
+One `.g.cs` file emitted into the consuming assembly (`DcsvIo.D2.ProblemDetails.Abstractions`):
 
-**`D2ProblemDetailsKeys.g.cs`** — `D2.Shared.ProblemDetails.D2ProblemDetailsKeys` static class with:
+**`D2ProblemDetailsKeys.g.cs`** — `DcsvIo.D2.ProblemDetails.D2ProblemDetailsKeys` static class with:
 
 - One `public const string TYPE_URI_PREFIX` declaration.
 - One `public const string CONTENT_TYPE` declaration.
@@ -89,7 +89,7 @@ One `.g.cs` file emitted into the consuming assembly (`D2.Shared.ProblemDetails.
 - One `public const string TITLE_*` per title entry.
 - One `public static string TitleFor(HttpStatusCode statusCode)` switch helper.
 
-The abstractions csproj is referenced by both `D2.Shared.Auth.Http` (path A) and `D2.Shared.AspNetCore` (path B Customizer); both transport-binding csprojs share a single emitted constant set.
+The abstractions csproj is referenced by both `DcsvIo.D2.Auth.Http` (path A) and `DcsvIo.D2.AspNetCore` (path B Customizer); both transport-binding csprojs share a single emitted constant set.
 
 ---
 
@@ -98,7 +98,7 @@ The abstractions csproj is referenced by both `D2.Shared.Auth.Http` (path A) and
 - [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/problem-details/schema.json`](../../../../../contracts/problem-details/schema.json) — JSON Schema for the spec
 - [`contracts/problem-details/problem-details.spec.json`](../../../../../contracts/problem-details/problem-details.spec.json) — the source-of-truth catalog
-- [`D2.Shared.ProblemDetails.Abstractions`](../abstractions/README.md) — the consuming csproj (single emit target)
-- [`D2.Shared.Auth.ErrorCodes.SourceGen`](../../auth/error-codes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`DcsvIo.D2.ProblemDetails.Abstractions`](../abstractions/README.md) — the consuming csproj (single emit target)
+- [`DcsvIo.D2.Auth.ErrorCodes.SourceGen`](../../auth/error-codes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
 - [`tools/ts-codegen/src/problem-details-emit.ts`](../../../../../tools/ts-codegen/src/problem-details-emit.ts) — TS-side emitter consuming the same spec
 - [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) — Problem Details for HTTP APIs

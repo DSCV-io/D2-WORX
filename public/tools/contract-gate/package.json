@@ -18,8 +18,8 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/typespec-emitters": "workspace:*",
-    "@d2/utilities": "workspace:*"
+    "@dcsv-io/d2-typespec-emitters": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*"
   },
   "devDependencies": {
     "@bufbuild/buf": "1.65.0",

@@ -3,13 +3,13 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 /**
  * Naming-convention-driven classification of geo spec fields into one of four
  * categories — primitive, foreign-key code, M:M list of codes, or
  * (effectively-)primitive when no rule applies. Mirrors the .NET
- * `D2.Shared.Geo.SourceGen.FkDetector.Classify` rule set byte-for-byte so
+ * `DcsvIo.D2.Geo.SourceGen.FkDetector.Classify` rule set byte-for-byte so
  * cross-runtime emitters classify identical field names identically.
  *
  * Rules:

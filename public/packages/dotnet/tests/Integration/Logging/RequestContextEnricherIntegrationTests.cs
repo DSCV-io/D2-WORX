@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Logging;
+namespace DcsvIo.D2.Tests.Integration.Logging;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Tests.Integration.Logging.Infrastructure;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

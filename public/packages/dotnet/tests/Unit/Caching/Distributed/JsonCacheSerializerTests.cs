@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Caching.Distributed;
+namespace DcsvIo.D2.Tests.Unit.Caching.Distributed;
 
 using AwesomeAssertions;
-using D2.Shared.Caching.Distributed.Redis;
-using D2.Shared.Result;
+using DcsvIo.D2.Caching.Distributed.Redis;
+using DcsvIo.D2.Result;
 using JetBrains.Annotations;
 using Xunit;
 

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
+using DcsvIo.D2.Utilities.Attributes;
+using DcsvIo.D2.Utilities.Enums;
 
 /// <summary>
 /// Type-level <c>[RedactData]</c> fixture used by the composed-pipeline

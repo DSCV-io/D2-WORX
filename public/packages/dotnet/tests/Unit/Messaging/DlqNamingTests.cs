@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging;
+namespace DcsvIo.D2.Tests.Unit.Messaging;
 
 using AwesomeAssertions;
-using D2.Shared.Messaging.RabbitMq.Topology;
+using DcsvIo.D2.Messaging.RabbitMq.Topology;
 using Xunit;
 
 public sealed class DlqNamingTests

@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Unit.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
-using D2.Shared.Auth;
-using D2.Shared.Caching;
-using D2.Shared.Logging;
-using D2.Shared.ServiceDefaults;
-using D2.Shared.Telemetry;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Logging;
+using DcsvIo.D2.ServiceDefaults;
+using DcsvIo.D2.Telemetry;
 using Xunit;
 
 public sealed class D2ServiceDefaultsOptionsTests

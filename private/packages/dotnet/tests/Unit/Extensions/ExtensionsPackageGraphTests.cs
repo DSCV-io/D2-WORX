@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Extensions;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Extensions;
 
 using System.IO;
 using System.Linq;
@@ -26,12 +26,12 @@ public sealed class ExtensionsPackageGraphTests
         var xml = File.ReadAllText(HostPath(
             "auth",
             "abstractions-extensions",
-            "D2.Shared.Auth.Abstractions.Extensions.csproj"));
+            "DcsvIo.D2.Private.Auth.Abstractions.Extensions.csproj"));
 
         ExtensionsCsprojLaw.HasProperty(
                 xml,
                 "AssemblyName",
-                "D2.Shared.Auth.Abstractions.Extensions")
+                "DcsvIo.D2.Private.Auth.Abstractions.Extensions")
             .Should().BeTrue();
         ExtensionsCsprojLaw.HasProperty(xml, "EmitCompilerGeneratedFiles", "true")
             .Should().BeTrue();
@@ -40,7 +40,7 @@ public sealed class ExtensionsPackageGraphTests
         ExtensionsCsprojLaw.HasCompileRemoveGenerated(xml).Should().BeTrue();
         ExtensionsCsprojLaw.HasTwinProjectReference(
                 xml,
-                @"auth\abstractions\D2.Shared.Auth.Abstractions.csproj")
+                @"auth\abstractions\DcsvIo.D2.Auth.Abstractions.csproj")
             .Should().BeTrue("public twin ProjectReference is mandatory");
         ExtensionsCsprojLaw.IsAnalyzerProjectReference(xml, "scopes-source-gen")
             .Should().BeTrue();
@@ -64,19 +64,19 @@ public sealed class ExtensionsPackageGraphTests
         var xml = File.ReadAllText(HostPath(
             "encryption",
             "extensions",
-            "D2.Shared.Encryption.Extensions.csproj"));
+            "DcsvIo.D2.Private.Encryption.Extensions.csproj"));
 
         ExtensionsCsprojLaw.HasProperty(
                 xml,
                 "AssemblyName",
-                "D2.Shared.Encryption.Extensions")
+                "DcsvIo.D2.Private.Encryption.Extensions")
             .Should().BeTrue();
         ExtensionsCsprojLaw.HasProperty(xml, "EmitCompilerGeneratedFiles", "true")
             .Should().BeTrue();
         ExtensionsCsprojLaw.HasCompileRemoveGenerated(xml).Should().BeTrue();
         ExtensionsCsprojLaw.HasTwinProjectReference(
                 xml,
-                @"encryption\core\D2.Shared.Encryption.csproj")
+                @"encryption\core\DcsvIo.D2.Encryption.csproj")
             .Should().BeTrue();
         ExtensionsCsprojLaw.IsAnalyzerProjectReference(xml, "domains-source-gen")
             .Should().BeTrue();
@@ -94,19 +94,19 @@ public sealed class ExtensionsPackageGraphTests
         var xml = File.ReadAllText(HostPath(
             "i18n",
             "keys-extensions",
-            "D2.Shared.I18n.Keys.Extensions.csproj"));
+            "DcsvIo.D2.Private.I18n.Keys.Extensions.csproj"));
 
         ExtensionsCsprojLaw.HasProperty(
                 xml,
                 "AssemblyName",
-                "D2.Shared.I18n.Keys.Extensions")
+                "DcsvIo.D2.Private.I18n.Keys.Extensions")
             .Should().BeTrue();
         ExtensionsCsprojLaw.HasProperty(xml, "EmitCompilerGeneratedFiles", "true")
             .Should().BeTrue();
         ExtensionsCsprojLaw.HasCompileRemoveGenerated(xml).Should().BeTrue();
         ExtensionsCsprojLaw.HasTwinProjectReference(
                 xml,
-                @"i18n\keys\D2.Shared.I18n.Keys.csproj")
+                @"i18n\keys\DcsvIo.D2.I18n.Keys.csproj")
             .Should().BeTrue();
         ExtensionsCsprojLaw.IsAnalyzerProjectReference(xml, "source-gen")
             .Should().BeTrue();

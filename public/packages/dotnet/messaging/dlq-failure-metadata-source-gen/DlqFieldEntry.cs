@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.DlqMetadata.SourceGen;
+namespace DcsvIo.D2.Messaging.DlqMetadata.SourceGen;
 
 /// <summary>
 /// One field-name entry from the <c>fields[]</c> sub-catalog of

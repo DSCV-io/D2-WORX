@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry;
+namespace DcsvIo.D2.Telemetry;
 
-using D2.Shared.AspNetCore;
+using DcsvIo.D2.AspNetCore;
 
 /// <summary>
 /// Configuration for
@@ -90,7 +90,7 @@ public sealed record D2TelemetryOptions
     /// <summary>
     /// Gets or sets the OTLP logs endpoint URI. When falsey, the logs OTLP
     /// exporter is NOT registered — logs still flow through other MEL
-    /// providers (e.g. console sink wired by <c>D2.Shared.Logging</c>).
+    /// providers (e.g. console sink wired by <c>DcsvIo.D2.Logging</c>).
     /// Defaults to the
     /// <see cref="D2TelemetryConstants.OTLP_LOGS_ENDPOINT_CONFIG_KEY"/>
     /// config value. URI-shape validation runs at startup when truthy.
@@ -110,7 +110,7 @@ public sealed record D2TelemetryOptions
     /// Gets the names of additional <c>ActivitySource</c>s registered with
     /// the tracer provider on top of the standard aggregation set
     /// (Handler, Auth, Auth.Outbound, Messaging.RabbitMq). Use for
-    /// service-specific spans (e.g. <c>"D2.Edge"</c>). Validated per-entry
+    /// service-specific spans (e.g. <c>"DcsvIo.D2.Private.Edge"</c>). Validated per-entry
     /// non-empty / non-whitespace at startup when populated.
     /// </summary>
     public IReadOnlyList<string> AdditionalActivitySources { get; init; } = [];

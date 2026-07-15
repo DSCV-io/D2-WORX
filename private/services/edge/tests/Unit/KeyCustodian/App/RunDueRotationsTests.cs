@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Collections.Concurrent;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
-using D2.Shared.Handler.Abstractions;
+using DcsvIo.D2.Handler.Abstractions;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -501,7 +501,7 @@ public sealed class RunDueRotationsTests
 
         // The real bootstrap map (excludes CA domains).
         var input = new RunDueRotationsInput(
-            D2.Edge.KeyCustodian.Infra.Scheduling.Hosted.KeyRotationService.BuildBootstrapKeyTypes());
+            DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Scheduling.Hosted.KeyRotationService.BuildBootstrapKeyTypes());
 
         var result = await Build(db, clock).HandleAsync(input);
 

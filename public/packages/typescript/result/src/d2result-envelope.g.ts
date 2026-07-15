@@ -11,7 +11,7 @@
 /**
  * Spec-derived JSON property-name catalog for the D2Result Shape B
  * wire envelope (the BFF gateway response shape that every frontend
- * reads). Mirrors .NET D2.Shared.Result.D2ResultEnvelopeFieldNames
+ * reads). Mirrors .NET DcsvIo.D2.Result.D2ResultEnvelopeFieldNames
  * (same wire values). Every JSON serializer / deserializer references
  * these constants for property names instead of inline string literals
  * — cross-language wire drift on these field names is structurally

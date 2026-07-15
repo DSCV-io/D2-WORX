@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Utilities.Extensions;
+namespace DcsvIo.D2.Tests.Unit.Utilities.Extensions;
 
 using AwesomeAssertions;
-using D2.Shared.I18n;
-using D2.Shared.Location.ValueObjects;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Location.ValueObjects;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using Xunit;
 
 public sealed class StringExtensionsTests

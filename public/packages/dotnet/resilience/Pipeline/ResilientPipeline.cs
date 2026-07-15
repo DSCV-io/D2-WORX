@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Pipeline;
+namespace DcsvIo.D2.Resilience.Pipeline;
 
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Resilience.RateLimiting;
-using D2.Shared.Resilience.Retry;
-using D2.Shared.Result;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.RateLimiting;
+using DcsvIo.D2.Resilience.Retry;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Composes <see cref="IResilientLayer{TKey, TValue}"/> layers into a single

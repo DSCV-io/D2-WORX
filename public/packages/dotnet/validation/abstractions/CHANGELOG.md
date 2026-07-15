@@ -1,4 +1,4 @@
-# Changelog — D2.Shared.Validation.Abstractions
+# Changelog — DcsvIo.D2.Validation.Abstractions
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.

@@ -4,52 +4,52 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian.NodeLeafClient;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian.NodeLeafClient;
 
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading.Tasks;
-using D2.Edge.Api.Grpc.KeyCustodian;
-using D2.Edge.KeyCustodian.Client.Facade;
-using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Services.Protos.SignFixtures.V2Alpha;
-using D2.Shared.AspNetCore.Mtls;
-using D2.Shared.Auth.Grpc.Mtls;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.AspNetCore.Mtls;
+using DcsvIo.D2.Auth.Grpc.Mtls;
+using DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using DcsvIo.D2.Utilities.Extensions;
+using global::D2.Services.Protos.SignFixtures.V2Alpha;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using CaCertIn = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput;
-using CaCertOut = D2.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
-using ClientGetJwksIn = D2.Edge.KeyCustodian.Client.Jwks.GetJwksInput;
-using ClientGetJwksOut = D2.Edge.KeyCustodian.Client.Jwks.GetJwksOutput;
-using ClientGetKeyringIn = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringInput;
-using ClientGetKeyringOut = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
-using ClientSignIn = D2.Edge.KeyCustodian.Client.Signing.SignInput;
-using ClientSignOut = D2.Edge.KeyCustodian.Client.Signing.SignOutput;
-using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
-using IssueLeafIn = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput;
-using IssueLeafOut = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
-using OidcConfigIn = D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput;
-using OidcConfigOut = D2.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput;
+using CaCertIn = DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateInput;
+using CaCertOut = DcsvIo.D2.Private.Edge.KeyCustodian.Client.CaCertificate.GetCaCertificateOutput;
+using ClientGetJwksIn = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks.GetJwksInput;
+using ClientGetJwksOut = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks.GetJwksOutput;
+using ClientGetKeyringIn = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.GetKeyringInput;
+using ClientGetKeyringOut = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
+using ClientSignIn = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing.SignInput;
+using ClientSignOut = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing.SignOutput;
+using DtoSignFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using IssueLeafIn = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafInput;
+using IssueLeafOut = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
+using OidcConfigIn = DcsvIo.D2.Private.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationInput;
+using OidcConfigOut = DcsvIo.D2.Private.Edge.KeyCustodian.Client.OidcConfiguration.GetOidcConfigurationOutput;
 using OwnSealPrivIn =
-    D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput;
+    DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput;
 using OwnSealPrivOut =
-    D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput;
+    DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput;
 using SealPubKeyIn =
-    D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput;
+    DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyInput;
 using SealPubKeyOut =
-    D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput;
+    DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionSealPublicKeyOutput;
 
 /// <summary>
 /// The LIVE loopback mutual-TLS handshake harness for the Node workload-leaf
 /// client — the twin of <see cref="MutualTlsSignerHarnessTests"/>, with the Node
-/// production client (built <c>@d2/key-custodian-client</c> dist) in the client
+/// production client (built <c>@dcsv-io/d2-private-key-custodian-client</c> dist) in the client
 /// role. It stands up TWO real Kestrel HTTPS hosts: a server-TLS KeyCustodian
 /// ISSUANCE host (the emitted TS gRPC client rides the REAL wire to obtain its
 /// leaf) and a mutual-TLS-REQUIRED business host wired with the shipped
@@ -413,8 +413,8 @@ public sealed class NodeLeafClientMutualTlsHarnessTests
             + "harness requires a Node runtime; the file-based CSR gate is unconditional.");
         Assert.SkipUnless(
             File.Exists(ProbeDistIndex()),
-            "The @d2/key-custodian-client dist is not built (run "
-            + "`pnpm --filter @d2/key-custodian-client build`). The file-based CSR gate is unconditional.");
+            "The @dcsv-io/d2-private-key-custodian-client dist is not built (run "
+            + "`pnpm --filter @dcsv-io/d2-private-key-custodian-client build`). The file-based CSR gate is unconditional.");
     }
 
     private static async Task<JsonDocument> RunProbeAsync(string mode, params string[] args)
@@ -428,7 +428,7 @@ public sealed class NodeLeafClientMutualTlsHarnessTests
         // Working directory MUST be the package root (client-ts/), not scripts/.
         // Under a pnpm filter install on CI, workspace packages resolve via
         // client-ts/node_modules; a scripts/ cwd walks past the package and
-        // fails to resolve @d2/* / @grpc/proto-loader → one live case fails.
+        // fails to resolve @dcsv-io/d2-* / @grpc/proto-loader → one live case fails.
         var packageRoot = ClientTsDir();
         var psi = new ProcessStartInfo
         {

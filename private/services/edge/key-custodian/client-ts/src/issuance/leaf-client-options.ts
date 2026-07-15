@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import type { ILogger } from "@d2/logging";
+import type { ILogger } from "@dcsv-io/d2-logging";
 
 /**
  * Tunables for {@link WorkloadLeafClient}. All optional — the defaults mirror the

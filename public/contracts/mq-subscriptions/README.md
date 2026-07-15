@@ -8,7 +8,7 @@ MQ subscription registry — the closed set of RabbitMQ queue bindings with thei
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/messaging/source-gen/`](../../public/packages/dotnet/messaging/source-gen/README.md) (Roslyn `MqGenerator` → `MqSubscriptions` subscription descriptor registrations in `D2.Shared.Messaging.Abstractions`)
+- **.NET** — [`public/packages/dotnet/messaging/source-gen/`](../../public/packages/dotnet/messaging/source-gen/README.md) (Roslyn `MqGenerator` → `MqSubscriptions` subscription descriptor registrations in `DcsvIo.D2.Messaging.Abstractions`)
 
 No `tools/ts-codegen` emitter consumes this catalog — subscription binding is a .NET-side messaging concern.
 

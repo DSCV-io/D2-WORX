@@ -17,7 +17,7 @@ import type { PackageDescriptor } from "./types.js";
 
 /** A single entry in the --list JSON output. */
 export interface ListEntry {
-  /** Package name (e.g. "@d2/result", "D2.Shared.Result"). */
+  /** Package name (e.g. "@dcsv-io/d2-result", "DcsvIo.D2.Result"). */
   readonly name: string;
   /** Ecosystem discriminator. */
   readonly ecosystem: "npm" | "nuget";

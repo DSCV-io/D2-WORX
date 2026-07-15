@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
 /// <summary>
 /// Tests for <see cref="GetRotationPlanHandler"/>: domain classification (bootstrap /

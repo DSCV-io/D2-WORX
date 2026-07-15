@@ -5,7 +5,7 @@
 
 /**
  * Queue durability / exclusivity pattern. Byte-identical member names to the
- * .NET `D2.Shared.Messaging.QueuePattern` enum so a subscription's declared
+ * .NET `DcsvIo.D2.Messaging.QueuePattern` enum so a subscription's declared
  * pattern reads the same on both runtimes.
  */
 export enum QueuePattern {

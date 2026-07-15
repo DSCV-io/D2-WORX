@@ -10,7 +10,12 @@
 
 import { describe, expect, it } from "vitest";
 import { Temporal } from "temporal-polyfill";
-import { type D2Result, ok, forbidden, serviceUnavailable } from "@d2/result";
+import {
+  type D2Result,
+  ok,
+  forbidden,
+  serviceUnavailable,
+} from "@dcsv-io/d2-result";
 import { GrpcWorkloadCertificateIssuer } from "../src/issuance/grpc-issuer-adapter.js";
 import type { KeyCustodianGrpcClient } from "../src/facade/key-custodian-grpc-client.g.js";
 import type {

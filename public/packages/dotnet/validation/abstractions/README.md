@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Validation.Abstractions
+# DcsvIo.D2.Validation.Abstractions
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 >
@@ -33,8 +33,8 @@ on failure.
 ## Field-constraints catalog (codegen-emitted)
 
 Spec-driven from `contracts/validation/field-constraints.spec.json` via
-`D2.Shared.Validation.SourceGen` — emitted at build time into `Generated/` (committed,
-`linguist-generated`). The same spec drives the TS-side `@d2/validation-abstractions`
+`DcsvIo.D2.Validation.SourceGen` — emitted at build time into `Generated/` (committed,
+`linguist-generated`). The same spec drives the TS-side `@dcsv-io/d2-validation-abstractions`
 catalog, so cross-language drift is structurally impossible.
 
 ### `FieldConstraints` (static class of `public const int`)
@@ -71,28 +71,28 @@ FE labels route through i18n `TK.*` keys if a picker needs them.
 
 ## Consumers
 
-- **.NET services** — inject via DI; implementations live in `D2.Shared.Validation`.
-- **Frontend parity** — the TypeScript mirror package `@d2/validation-abstractions`
+- **.NET services** — inject via DI; implementations live in `DcsvIo.D2.Validation`.
+- **Frontend parity** — the TypeScript mirror package `@dcsv-io/d2-validation-abstractions`
   defines the equivalent interfaces AND the same codegen-emitted `FieldConstraints` + taxonomy
   enums (with Zod schemas) so client-side validation stays structurally in sync with the
   server.
 
 ## The postal-code twin
 
-`D2.Shared.Validation.Abstractions.IPostalCodeValidator` (this package) is the
+`DcsvIo.D2.Validation.Abstractions.IPostalCodeValidator` (this package) is the
 **country-aware** validator — it accepts a `CountryCode` and applies country-specific
 format rules. A deliberately distinct twin exists at
-`D2.Shared.Location.IPostalCodeValidator`: that is the **country-blind** boundary
+`DcsvIo.D2.Location.IPostalCodeValidator`: that is the **country-blind** boundary
 validator used by value-object construction (global-range regex only). The two share
 a short name but are namespace-distinct by design. Consumers needing both may alias
 one with a `using` directive.
 
 ## Dependencies
 
-- `D2.Shared.Result` — `D2Result<string>` return type for all three interfaces.
-- `D2.Shared.Geo.Abstractions` — `CountryCode` parameter on `IPhoneValidator` and
+- `DcsvIo.D2.Result` — `D2Result<string>` return type for all three interfaces.
+- `DcsvIo.D2.Geo.Abstractions` — `CountryCode` parameter on `IPhoneValidator` and
   `IPostalCodeValidator`.
-- `D2.Shared.Validation.SourceGen` (analyzer; `ReferenceOutputAssembly="false"`,
+- `DcsvIo.D2.Validation.SourceGen` (analyzer; `ReferenceOutputAssembly="false"`,
   `PrivateAssets="all"`) — emits the `FieldConstraints` + taxonomy catalog at build time;
   no runtime closure impact.
 

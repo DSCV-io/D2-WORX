@@ -6,18 +6,18 @@
 
 extern alias RegistrySourceGen;
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using RegistrySourceGen::D2.Shared.ErrorCodes.Registry.SourceGen;
+using RegistrySourceGen::DcsvIo.D2.ErrorCodes.Registry.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -30,7 +30,7 @@ using Xunit;
 /// </summary>
 public sealed class ErrorCodeRegistryOutputParityTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.ErrorCodes.Registry";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.ErrorCodes.Registry";
 
     private static readonly string sr_generatedBase =
         Path.Combine(
@@ -41,8 +41,8 @@ public sealed class ErrorCodeRegistryOutputParityTests
             "error-codes",
             "registry",
             "Generated",
-            "D2.Shared.ErrorCodes.Registry.SourceGen",
-            "D2.Shared.ErrorCodes.Registry.SourceGen.RegistryGenerator");
+            "DcsvIo.D2.ErrorCodes.Registry.SourceGen",
+            "DcsvIo.D2.ErrorCodes.Registry.SourceGen.RegistryGenerator");
 
     [Fact]
     public void ErrorCodeRegistry_RegeneratedOutput_MatchesCommittedFile()

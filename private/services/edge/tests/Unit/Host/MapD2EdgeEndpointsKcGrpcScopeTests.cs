@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
-using D2.Edge.Api.Grpc.KeyCustodian;
-using D2.Private.Auth;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian;
 
 /// <summary>
 /// Source-level pins: each production KC gRPC service Map binds the correct

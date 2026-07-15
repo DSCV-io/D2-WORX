@@ -16,7 +16,7 @@ import type { DeprecationInfo } from "../deprecation-info.js";
 /**
  * `Currency` record. Reverse-nav `acceptedInCountries` populated
  * in the wire-nav step from every country's `currencies` list.
- * Mirrors .NET `D2.Shared.Geo.Abstractions.Currency` field-for-field.
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.Currency` field-for-field.
  */
 export interface Currency {
   readonly iso4217AlphaCode: CurrencyCode;

@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepoRoot } from "./repo-root.js";
 import type { Model, ModelProperty, Program, Scalar } from "@typespec/compiler";
-import { D2_REDACT_KEY } from "@d2/typespec-decorators";
+import { D2_REDACT_KEY } from "@dcsv-io/d2-typespec-decorators";
 import { walkModel } from "../src/lib/model-walk.js";
 import { emitCsharpDtos } from "../src/lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "../src/lib/ts-dto-emitter.js";
@@ -246,7 +246,7 @@ describe("byteParity_GetJwksInput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetJwksInputWalk();
     const [inputFile] = emitCsharpDtos(
       "getJwks",
-      "D2.Edge.KeyCustodian.Client.Jwks",
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks",
       "contracts/typespec/key-custodian/key-custodian.tsp",
       fields,
       [],
@@ -267,7 +267,7 @@ describe("byteParity_GetJwksInput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetJwksInputWalk();
     const [inputFile] = emitCsharpDtos(
       "getJwks",
-      "D2.Edge.KeyCustodian.Client.Jwks",
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks",
       "contracts/typespec/key-custodian/key-custodian.tsp",
       fields,
       [],
@@ -284,7 +284,7 @@ describe("byteParity_GetJwksOutput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetJwksOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "getJwks",
-      "D2.Edge.KeyCustodian.Client.Jwks",
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks",
       "contracts/typespec/key-custodian/key-custodian.tsp",
       [],
       fields,
@@ -305,7 +305,7 @@ describe("byteParity_GetJwksOutput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetJwksOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "getJwks",
-      "D2.Edge.KeyCustodian.Client.Jwks",
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks",
       "contracts/typespec/key-custodian/key-custodian.tsp",
       [],
       fields,
@@ -322,7 +322,7 @@ describe("byteParity_SignFixtureInput_CommittedFixtureIdentical", () => {
     const { walk } = buildSignFixtureInputWalk();
     const [inputFile] = emitCsharpDtos(
       "signFixture",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       "contracts/typespec/fixtures/sign-shaped.tsp",
       walk.fields,
       [],
@@ -343,7 +343,7 @@ describe("byteParity_SignFixtureInput_CommittedFixtureIdentical", () => {
     const { walk } = buildSignFixtureInputWalk();
     const [inputFile] = emitCsharpDtos(
       "signFixture",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       "contracts/typespec/fixtures/sign-shaped.tsp",
       walk.fields,
       [],
@@ -374,7 +374,7 @@ describe("byteParity_SignFixtureOutput_CommittedFixtureIdentical", () => {
     const outputWalk = buildSignFixtureOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "signFixture",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       "contracts/typespec/fixtures/sign-shaped.tsp",
       [],
       outputWalk.fields,
@@ -393,7 +393,7 @@ describe("byteParity_SignFixtureOutput_CommittedFixtureIdentical", () => {
     const outputWalk = buildSignFixtureOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "signFixture",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       "contracts/typespec/fixtures/sign-shaped.tsp",
       [],
       outputWalk.fields,
@@ -465,7 +465,7 @@ describe("byteParity_GetKeyringInput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetKeyringInputWalk();
     const [inputFile] = emitCsharpDtos(
       "getKeyring",
-      "D2.Edge.KeyCustodian.Client.Keyring",
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring",
       KC_SPEC,
       fields,
       [],
@@ -483,7 +483,7 @@ describe("byteParity_GetKeyringOutput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetKeyringOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "getKeyring",
-      "D2.Edge.KeyCustodian.Client.Keyring",
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring",
       KC_SPEC,
       [],
       fields,
@@ -509,7 +509,7 @@ describe("byteParity_GetKeyringOutput_CommittedFixtureIdentical", () => {
     const { fields, nestedModels } = buildGetKeyringOutputWalk();
     const [, outputFile] = emitCsharpDtos(
       "getKeyring",
-      "D2.Edge.KeyCustodian.Client.Keyring",
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring",
       KC_SPEC,
       [],
       fields,
@@ -525,7 +525,7 @@ describe("byteParity_TemporalFixtureInput_CommittedFixtureIdentical", () => {
     const { input, output } = buildTemporalWalks();
     const [inputFile] = emitCsharpDtos(
       "temporalFixture",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       "contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
@@ -549,7 +549,7 @@ describe("byteParity_TemporalFixtureInput_CommittedFixtureIdentical", () => {
     const { input, output } = buildTemporalWalks();
     const [inputFile] = emitCsharpDtos(
       "temporalFixture",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       "contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
@@ -565,7 +565,7 @@ describe("byteParity_TemporalFixtureOutput_CommittedFixtureIdentical", () => {
     const { input, output } = buildTemporalWalks();
     const [, outputFile] = emitCsharpDtos(
       "temporalFixture",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       "contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
@@ -589,7 +589,7 @@ describe("byteParity_TemporalFixtureOutput_CommittedFixtureIdentical", () => {
     const { input, output } = buildTemporalWalks();
     const [, outputFile] = emitCsharpDtos(
       "temporalFixture",
-      "D2.Edge.Tests.TypeSpecDto.Generated",
+      "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
       "contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
@@ -691,7 +691,7 @@ describe("byteParity_GetJwksDto_TsFile", () => {
 // ---------------------------------------------------------------------------
 
 const ENUM_SHAPED_SRC = "contracts/typespec/fixtures/enum-shaped.tsp";
-const ENUM_DTO_NS = "D2.Edge.Tests.TypeSpecDto.Generated";
+const ENUM_DTO_NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated";
 
 // The enum-shaped `enums` op model (Input mirrors Output) — synthetic stubs that
 // produce the SAME walk result the real .tsp compile produces.
@@ -869,7 +869,7 @@ describe("byteParity_EnumsDto_CommittedFixtures", () => {
 // gRPC enum byte-gates (proto string-field + transport mapper enum bridge)
 // ---------------------------------------------------------------------------
 
-const GRPC_ENUM_NS = "D2.Edge.Tests.TypeSpecGrpcEnum.Generated";
+const GRPC_ENUM_NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Generated";
 const ENUM_PROTO_NS = "D2.Services.Protos.EnumFixtures.V1";
 
 const SIGN_WITH_KIND_KEY_KIND: NestedEnum = {
@@ -1041,7 +1041,8 @@ describe("byteParity_SignWithKindEnumGrpc_CommittedFixtures", () => {
 // parse (To<Output>() returns D2Result<<Output>> + the impl surfaces a parse
 // failure via BubbleFail). Pin them byte-identical so the committed fixtures stay
 // emitter-determined (never hand-edited, §26.5).
-const GRPC_ENUM_CLIENTS_NS = "D2.Edge.Tests.TypeSpecGrpcEnum.Clients";
+const GRPC_ENUM_CLIENTS_NS =
+  "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Clients";
 
 function signWithKindClientOp() {
   return {

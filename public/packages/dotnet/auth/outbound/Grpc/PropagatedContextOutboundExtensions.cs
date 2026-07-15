@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.Grpc;
+namespace DcsvIo.D2.Auth.Outbound.Grpc;
 
 using System;
 using global::Grpc.Net.ClientFactory;
@@ -20,7 +20,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 /// The generated gRPC-client DI extension auto-chains <c>.AddD2PropagatedContext()</c>
 /// alongside <c>.AddD2ForwardedJwt().AddD2WorkloadCertificate()</c> on every internal
 /// client, so a host never calls the per-channel extension directly. The
-/// <see cref="D2.Shared.Auth.Abstractions.IAmbientRequestScopeAccessor"/> the interceptor
+/// <see cref="DcsvIo.D2.Auth.Abstractions.IAmbientRequestScopeAccessor"/> the interceptor
 /// reads is registered by the
 /// inbound transport (<c>AddD2AuthHttp()</c> / <c>AddD2AuthGrpc()</c>) — a forwarding
 /// host is by definition an inbound host — so this surface registers neither it nor any
@@ -56,7 +56,7 @@ public static class PropagatedContextOutboundExtensions
         /// <summary>
         /// Registers the <see cref="PropagatedContextClientInterceptor"/> (singleton) so
         /// the per-channel <c>.AddD2PropagatedContext()</c> can resolve it. Idempotent.
-        /// The <see cref="D2.Shared.Auth.Abstractions.IAmbientRequestScopeAccessor"/> the
+        /// The <see cref="DcsvIo.D2.Auth.Abstractions.IAmbientRequestScopeAccessor"/> the
         /// interceptor depends on is
         /// supplied by the inbound transport, mirroring <c>AddD2ForwardedJwtOutbound()</c>.
         /// </summary>

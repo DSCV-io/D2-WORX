@@ -14,9 +14,9 @@ Copyright (c) DCSV. All rights reserved.
     <Authors>DCSV</Authors>
     <Company>DCSV</Company>
     <Product>D2</Product>
-    <RepositoryUrl>https://github.com/DCSV-io/d2-public</RepositoryUrl>
+    <RepositoryUrl>https://github.com/dcsv-io/d2-public</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>https://github.com/DCSV-io/d2-public</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/dcsv-io/d2-public</PackageProjectUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

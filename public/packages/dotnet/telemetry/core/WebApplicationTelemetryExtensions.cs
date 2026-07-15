@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry;
+namespace DcsvIo.D2.Telemetry;
 
-using D2.Shared.Telemetry.Internal;
+using DcsvIo.D2.Telemetry.Internal;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
 /// <summary>
 /// ASP.NET Core endpoint-routing extensions for
-/// <see cref="D2.Shared.Telemetry"/> — maps the in-process Prometheus
+/// <see cref="DcsvIo.D2.Telemetry"/> — maps the in-process Prometheus
 /// scraping endpoint at
 /// <see cref="D2TelemetryConstants.PROMETHEUS_ENDPOINT_PATH"/> with an
 /// IP-allow-list endpoint filter that restricts access to loopback +

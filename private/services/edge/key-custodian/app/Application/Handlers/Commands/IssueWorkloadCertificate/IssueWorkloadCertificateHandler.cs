@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
 
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Private.Auth;
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate.IIssueWorkloadCertificateHandler;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate.IIssueWorkloadCertificateHandler;
 using I = IssueWorkloadCertificateInput;
 using O = IssueWorkloadCertificateOutput;
 
@@ -167,7 +167,7 @@ public sealed class IssueWorkloadCertificateHandler(
     private D2Result<O?> DenyWithTelemetry(D2Result authResult, string? immediateCaller)
     {
         // Switch on the EMITTED error-code constants, never raw string literals (in
-        // scope via the app/GlobalUsings.cs D2.Edge.KeyCustodian.Domain.Errors global
+        // scope via the app/GlobalUsings.cs DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors global
         // using). The uniform 403 ISSUANCE_NOT_AUTHORIZED splits by deny arm for
         // TELEMETRY ONLY â€” the wire code stays uniform (no plane-probing signal).
         var reason = authResult.ErrorCode switch

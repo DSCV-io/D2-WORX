@@ -3,15 +3,15 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { ICacheSerializer } from "@d2/caching-abstractions";
-import { TK } from "@d2/i18n-keys";
+import type { ICacheSerializer } from "@dcsv-io/d2-caching-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import {
   ErrorCodes,
   fail,
   HttpStatusCode,
   ok,
   type D2Result,
-} from "@d2/result";
+} from "@dcsv-io/d2-result";
 
 const TEXT_ENCODER = new TextEncoder();
 const TEXT_DECODER = new TextDecoder();

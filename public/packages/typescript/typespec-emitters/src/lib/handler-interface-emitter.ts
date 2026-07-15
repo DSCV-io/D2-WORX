@@ -15,7 +15,7 @@
 //   - `public interface I<Op>Handler : IHandler<<Op>Input, <Op>Output>;`
 //   - One-line extends declaration (bare interface, no body members).
 //   - Auto-generated banner, #nullable enable, namespace BEFORE using.
-//   - The `using D2.Shared.Handler.Abstractions;` using is CONDITIONAL on
+//   - The `using DcsvIo.D2.Handler.Abstractions;` using is CONDITIONAL on
 //     `emitUsing`:
 //       false → the consuming app project supplies it via GlobalUsings.cs
 //                (KC real app); no per-file using emitted.
@@ -39,11 +39,11 @@ import { toPascal } from "./name-transforms.js";
  *
  * @param opName         - Operation name in lowerCamelCase (e.g. "getJwks", "sign").
  * @param namespace      - Target C# namespace for the emitted interface file.
- *                         For real KC app: `D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks`.
- *                         For fixtures: `D2.Edge.Tests.TypeSpecGrpc.Generated`.
+ *                         For real KC app: `DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks`.
+ *                         For fixtures: `DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated`.
  * @param inputTypeName  - Name of the input DTO type (e.g. "GetJwksInput").
  * @param outputTypeName - Name of the output DTO type (e.g. "GetJwksOutput").
- * @param emitUsing      - Whether to emit `using D2.Shared.Handler.Abstractions;`
+ * @param emitUsing      - Whether to emit `using DcsvIo.D2.Handler.Abstractions;`
  *                         (true for fixture namespaces; false when the app GlobalUsings
  *                         already supplies the import).
  * @param sourceSpec     - Relative path to the .tsp spec file (interpolated into banner).
@@ -96,7 +96,7 @@ export function emitHandlerInterface(
 
   // Conditional per-file using for IHandler<,>.
   if (emitUsing) {
-    lines.push("using D2.Shared.Handler.Abstractions;");
+    lines.push("using DcsvIo.D2.Handler.Abstractions;");
     if (!needsDtoUsing) lines.push("");
   }
 

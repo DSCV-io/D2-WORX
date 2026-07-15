@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Mtls;
+namespace DcsvIo.D2.Tests.Unit.Mtls;
 
 using System;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.AspNetCore.Mtls;
+using DcsvIo.D2.AspNetCore.Mtls;
 using Xunit;
 
 /// <summary>
@@ -21,7 +21,7 @@ using Xunit;
 /// as a separate string instead.
 /// </summary>
 /// <remarks>
-/// Mirrors <c>D2.Shared.Tests.Unit.AuthOutbound.Telemetry.OutboundLogDelegateContractTests</c>.
+/// Mirrors <c>DcsvIo.D2.Tests.Unit.AuthOutbound.Telemetry.OutboundLogDelegateContractTests</c>.
 /// Same enforcement pattern across every <c>[LoggerMessage]</c> surface in the codebase.
 /// </remarks>
 [Trait("Category", "Unit")]
@@ -33,7 +33,7 @@ public sealed class MtlsLogDelegateContractTests
         var mtlsLogType = typeof(SpiffeSanPeerValidator).Assembly
             .GetTypes()
             .Single(t => t.Name == "MtlsLog"
-                && t.Namespace == "D2.Shared.AspNetCore.Mtls");
+                && t.Namespace == "DcsvIo.D2.AspNetCore.Mtls");
 
         var leakProneMethods = mtlsLogType
             .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic)

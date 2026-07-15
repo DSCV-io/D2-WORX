@@ -1,5 +1,5 @@
 {
-  "name": "@d2/error-codes-registry",
+  "name": "@dcsv-io/d2-error-codes-registry",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,9 +22,9 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/error-category": "workspace:*",
-    "@d2/i18n-abstractions": "workspace:*",
-    "@d2/i18n-keys": "workspace:*"
+    "@dcsv-io/d2-error-category": "workspace:*",
+    "@dcsv-io/d2-i18n-abstractions": "workspace:*",
+    "@dcsv-io/d2-i18n-keys": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.0.18",

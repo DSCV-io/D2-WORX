@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler;
+namespace DcsvIo.D2.Handler;
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Shared.Handler.Abstractions;
-using D2.Shared.Result;
+using DcsvIo.D2.Handler.Abstractions;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Abstract base for every handler in the platform — CQRS handlers, repo

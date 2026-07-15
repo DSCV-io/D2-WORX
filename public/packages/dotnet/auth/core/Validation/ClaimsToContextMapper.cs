@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Validation;
+namespace DcsvIo.D2.Auth.Validation;
 
 using System.Security.Claims;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
 
 /// <summary>
 /// Translates a validated <see cref="ClaimsPrincipal"/> (the output of

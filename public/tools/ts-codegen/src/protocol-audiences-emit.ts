@@ -117,10 +117,10 @@ function emitConstObject(
     " * bare-token aud values (d2.internal, d2-edge) — NOT the URL-shaped",
   );
   sb.appendLine(
-    " * token-exchange targets in @d2/auth-abstractions' Audiences catalog. Mirrors",
+    " * token-exchange targets in @dcsv-io/d2-auth-abstractions' Audiences catalog. Mirrors",
   );
   sb.appendLine(
-    " * the .NET D2.Shared.Auth.Abstractions.WellKnownAudiences constants.",
+    " * the .NET DcsvIo.D2.Auth.Abstractions.WellKnownAudiences constants.",
   );
   sb.appendLine(" */");
   sb.appendLine("export const ProtocolAudiences = {");

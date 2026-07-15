@@ -45,7 +45,7 @@ const PUSH_TARGETS = new Set(["user", "session"]);
 const CSRF_POSTURES = new Set(["required", "exempt"]);
 const IDEMPOTENT_KEY_SOURCES = new Set(["header", "derived"]);
 
-// Mirrors the member names of D2.Shared.Utilities.Enums.RedactReason. The C#
+// Mirrors the member names of DcsvIo.D2.Utilities.Enums.RedactReason. The C#
 // enum is the single source of truth for the data-class taxonomy; this set is
 // the TypeSpec-side gate so the emitter can map a validated reason to
 // RedactReason.<value> and never default a secret-adjacent field to

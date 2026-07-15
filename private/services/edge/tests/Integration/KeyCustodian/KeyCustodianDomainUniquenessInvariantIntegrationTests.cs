@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian;
 
-using D2.Shared.Handler.Repo.Abstractions;
-using D2.Shared.Handler.Repo.Postgres;
+using DcsvIo.D2.Handler.Repo.Abstractions;
+using DcsvIo.D2.Handler.Repo.Postgres;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>

@@ -1,153 +1,153 @@
 #nullable enable
-D2.Shared.Messaging.DlqFailureMetadata
-D2.Shared.Messaging.DlqFailureMetadata.<Clone>$() -> D2.Shared.Messaging.DlqFailureMetadata!
-D2.Shared.Messaging.DlqFailureMetadata.AttemptCount.get -> int
-D2.Shared.Messaging.DlqFailureMetadata.AttemptCount.init -> void
-D2.Shared.Messaging.DlqFailureMetadata.Cause.get -> string!
-D2.Shared.Messaging.DlqFailureMetadata.Cause.init -> void
-D2.Shared.Messaging.DlqFailureMetadata.Detail.get -> string?
-D2.Shared.Messaging.DlqFailureMetadata.Detail.init -> void
-D2.Shared.Messaging.DlqFailureMetadata.DlqFailureMetadata() -> void
-D2.Shared.Messaging.DlqFailureMetadata.Equals(D2.Shared.Messaging.DlqFailureMetadata? other) -> bool
-D2.Shared.Messaging.DlqFailureMetadata.ErrorCode.get -> string!
-D2.Shared.Messaging.DlqFailureMetadata.ErrorCode.init -> void
-D2.Shared.Messaging.DlqFailureMetadata.NackedBy.get -> string?
-D2.Shared.Messaging.DlqFailureMetadata.NackedBy.init -> void
-D2.Shared.Messaging.DlqFailureMetadata.TraceId.get -> string?
-D2.Shared.Messaging.DlqFailureMetadata.TraceId.init -> void
-D2.Shared.Messaging.DlqFailureMetadataFields
-D2.Shared.Messaging.IMessageBus
-D2.Shared.Messaging.IMessageBus.PublishAsync<TMessage>(TMessage! message, D2.Shared.Messaging.PublisherOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
-D2.Shared.Messaging.IMessageBus.WaitForReadyAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
-D2.Shared.Messaging.IMessageIdempotencyStore
-D2.Shared.Messaging.IMessageIdempotencyStore.HasSeenAsync(string! messageId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result<bool>!>
-D2.Shared.Messaging.IMessageIdempotencyStore.MarkSeenAsync(string! messageId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<D2.Shared.Result.D2Result!>
-D2.Shared.Messaging.ISubscriberRegistration
-D2.Shared.Messaging.ISubscriberRegistration.Descriptor.get -> D2.Shared.Messaging.MqSubscriptionDescriptor!
-D2.Shared.Messaging.ISubscriberRegistration.HandlerType.get -> System.Type!
-D2.Shared.Messaging.ISubscriberRegistration.MessageType.get -> System.Type!
-D2.Shared.Messaging.ISubscriberRegistration.ResolvedQueueName.get -> string!
-D2.Shared.Messaging.MessagingFailures
-D2.Shared.Messaging.MessagingJsonOptions
-D2.Shared.Messaging.MessagingServiceCollectionExtensions
-D2.Shared.Messaging.MessagingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
-D2.Shared.Messaging.MessagingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Subscriber<THandler, TMessage>(D2.Shared.Messaging.MqSubscriptionDescriptor! descriptor) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-D2.Shared.Messaging.MessagingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SubscribersFromAssembly(params System.Reflection.Assembly![]! assemblies) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-D2.Shared.Messaging.MqMessageDescriptor
-D2.Shared.Messaging.MqMessageDescriptor.<Clone>$() -> D2.Shared.Messaging.MqMessageDescriptor!
-D2.Shared.Messaging.MqMessageDescriptor.Constant.get -> string!
-D2.Shared.Messaging.MqMessageDescriptor.Constant.init -> void
-D2.Shared.Messaging.MqMessageDescriptor.ConsumerService.get -> string?
-D2.Shared.Messaging.MqMessageDescriptor.Deconstruct(out string! Constant, out string! MessageTypeName, out string! Exchange, out string! ExchangeType, out string! Encryption, out string? EncryptionReason, out string? DefaultRoutingKey) -> void
-D2.Shared.Messaging.MqMessageDescriptor.DefaultRoutingKey.get -> string?
-D2.Shared.Messaging.MqMessageDescriptor.DefaultRoutingKey.init -> void
-D2.Shared.Messaging.MqMessageDescriptor.Encryption.get -> string!
-D2.Shared.Messaging.MqMessageDescriptor.Encryption.init -> void
-D2.Shared.Messaging.MqMessageDescriptor.EncryptionReason.get -> string?
-D2.Shared.Messaging.MqMessageDescriptor.EncryptionReason.init -> void
-D2.Shared.Messaging.MqMessageDescriptor.Equals(D2.Shared.Messaging.MqMessageDescriptor? other) -> bool
-D2.Shared.Messaging.MqMessageDescriptor.Exchange.get -> string!
-D2.Shared.Messaging.MqMessageDescriptor.Exchange.init -> void
-D2.Shared.Messaging.MqMessageDescriptor.ExchangeType.get -> string!
-D2.Shared.Messaging.MqMessageDescriptor.ExchangeType.init -> void
-D2.Shared.Messaging.MqMessageDescriptor.IsPlaintext.get -> bool
-D2.Shared.Messaging.MqMessageDescriptor.IsSealed.get -> bool
-D2.Shared.Messaging.MqMessageDescriptor.MessageTypeName.get -> string!
-D2.Shared.Messaging.MqMessageDescriptor.MessageTypeName.init -> void
-D2.Shared.Messaging.MqMessageDescriptor.MqMessageDescriptor(string! Constant, string! MessageTypeName, string! Exchange, string! ExchangeType, string! Encryption, string? EncryptionReason, string? DefaultRoutingKey) -> void
-D2.Shared.Messaging.MqMessages
-D2.Shared.Messaging.MqMessagesRegistry
-D2.Shared.Messaging.MqPubAttribute
-D2.Shared.Messaging.MqPubAttribute.Constant.get -> string!
-D2.Shared.Messaging.MqPubAttribute.MqPubAttribute(string! constant) -> void
-D2.Shared.Messaging.MqSubAttribute
-D2.Shared.Messaging.MqSubAttribute.Constant.get -> string!
-D2.Shared.Messaging.MqSubAttribute.MqSubAttribute(string! constant) -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor
-D2.Shared.Messaging.MqSubscriptionDescriptor.<Clone>$() -> D2.Shared.Messaging.MqSubscriptionDescriptor!
-D2.Shared.Messaging.MqSubscriptionDescriptor.Constant.get -> string!
-D2.Shared.Messaging.MqSubscriptionDescriptor.Constant.init -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor.Deconstruct(out string! Constant, out string! MessageTypeName, out string! QueueName, out D2.Shared.Messaging.QueuePattern Pattern, out string! RoutingKeyBinding, out int Prefetch, out bool Idempotency, out D2.Shared.Messaging.TieredRetryDescriptor? TieredRetry) -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor.Equals(D2.Shared.Messaging.MqSubscriptionDescriptor? other) -> bool
-D2.Shared.Messaging.MqSubscriptionDescriptor.Idempotency.get -> bool
-D2.Shared.Messaging.MqSubscriptionDescriptor.Idempotency.init -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor.MessageTypeName.get -> string!
-D2.Shared.Messaging.MqSubscriptionDescriptor.MessageTypeName.init -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor.MqSubscriptionDescriptor(string! Constant, string! MessageTypeName, string! QueueName, D2.Shared.Messaging.QueuePattern Pattern, string! RoutingKeyBinding, int Prefetch, bool Idempotency, D2.Shared.Messaging.TieredRetryDescriptor? TieredRetry) -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor.Pattern.get -> D2.Shared.Messaging.QueuePattern
-D2.Shared.Messaging.MqSubscriptionDescriptor.Pattern.init -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor.Prefetch.get -> int
-D2.Shared.Messaging.MqSubscriptionDescriptor.Prefetch.init -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor.QueueName.get -> string!
-D2.Shared.Messaging.MqSubscriptionDescriptor.QueueName.init -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor.RoutingKeyBinding.get -> string!
-D2.Shared.Messaging.MqSubscriptionDescriptor.RoutingKeyBinding.init -> void
-D2.Shared.Messaging.MqSubscriptionDescriptor.TieredRetry.get -> D2.Shared.Messaging.TieredRetryDescriptor?
-D2.Shared.Messaging.MqSubscriptionDescriptor.TieredRetry.init -> void
-D2.Shared.Messaging.MqSubscriptions
-D2.Shared.Messaging.MqSubscriptionsRegistry
-D2.Shared.Messaging.PublisherOptions
-D2.Shared.Messaging.PublisherOptions.ConfirmTimeout.get -> System.TimeSpan?
-D2.Shared.Messaging.PublisherOptions.ConfirmTimeout.set -> void
-D2.Shared.Messaging.PublisherOptions.Exchange.get -> string?
-D2.Shared.Messaging.PublisherOptions.Exchange.set -> void
-D2.Shared.Messaging.PublisherOptions.MaxAttempts.get -> int?
-D2.Shared.Messaging.PublisherOptions.MaxAttempts.set -> void
-D2.Shared.Messaging.PublisherOptions.PublisherOptions() -> void
-D2.Shared.Messaging.PublisherOptions.RoutingKey.get -> string?
-D2.Shared.Messaging.PublisherOptions.RoutingKey.set -> void
-D2.Shared.Messaging.PublisherOptions.WaitForConfirm.get -> bool?
-D2.Shared.Messaging.PublisherOptions.WaitForConfirm.set -> void
-D2.Shared.Messaging.QueuePattern
-D2.Shared.Messaging.QueuePattern.CompetingConsumer = 0 -> D2.Shared.Messaging.QueuePattern
-D2.Shared.Messaging.QueuePattern.DurableShared = 2 -> D2.Shared.Messaging.QueuePattern
-D2.Shared.Messaging.QueuePattern.FanoutExclusiveAutoDelete = 1 -> D2.Shared.Messaging.QueuePattern
-D2.Shared.Messaging.SubscriberRegistry
-D2.Shared.Messaging.SubscriberRegistry.All.get -> System.Collections.Generic.IReadOnlyList<D2.Shared.Messaging.ISubscriberRegistration!>!
-D2.Shared.Messaging.SubscriberRegistry.SubscriberRegistry(System.Collections.Generic.IEnumerable<D2.Shared.Messaging.ISubscriberRegistration!>! registrations) -> void
-D2.Shared.Messaging.TieredRetryDescriptor
-D2.Shared.Messaging.TieredRetryDescriptor.<Clone>$() -> D2.Shared.Messaging.TieredRetryDescriptor!
-D2.Shared.Messaging.TieredRetryDescriptor.Deconstruct(out System.TimeSpan[]! Tiers, out int MaxAttempts) -> void
-D2.Shared.Messaging.TieredRetryDescriptor.Equals(D2.Shared.Messaging.TieredRetryDescriptor? other) -> bool
-D2.Shared.Messaging.TieredRetryDescriptor.MaxAttempts.get -> int
-D2.Shared.Messaging.TieredRetryDescriptor.MaxAttempts.init -> void
-D2.Shared.Messaging.TieredRetryDescriptor.TieredRetryDescriptor(System.TimeSpan[]! Tiers, int MaxAttempts) -> void
-D2.Shared.Messaging.TieredRetryDescriptor.Tiers.get -> System.TimeSpan[]!
-D2.Shared.Messaging.TieredRetryDescriptor.Tiers.init -> void
-const D2.Shared.Messaging.DlqFailureMetadataFields.ATTEMPT_COUNT = "attemptCount" -> string!
-const D2.Shared.Messaging.DlqFailureMetadataFields.CAUSE = "cause" -> string!
-const D2.Shared.Messaging.DlqFailureMetadataFields.DETAIL = "detail" -> string!
-const D2.Shared.Messaging.DlqFailureMetadataFields.ERROR_CODE = "errorCode" -> string!
-const D2.Shared.Messaging.DlqFailureMetadataFields.NACKED_BY = "nackedBy" -> string!
-const D2.Shared.Messaging.DlqFailureMetadataFields.TRACE_ID = "traceId" -> string!
-const D2.Shared.Messaging.MqMessageDescriptor.PLAINTEXT = "plaintext" -> string!
-const D2.Shared.Messaging.MqMessages.AuthKeyRotated = "AuthKeyRotated" -> string!
-const D2.Shared.Messaging.MqSubscriptions.KeyringRefresh = "KeyringRefresh" -> string!
-override D2.Shared.Messaging.DlqFailureMetadata.Equals(object? obj) -> bool
-override D2.Shared.Messaging.DlqFailureMetadata.GetHashCode() -> int
-override D2.Shared.Messaging.DlqFailureMetadata.ToString() -> string!
-override D2.Shared.Messaging.MqMessageDescriptor.Equals(object? obj) -> bool
-override D2.Shared.Messaging.MqMessageDescriptor.GetHashCode() -> int
-override D2.Shared.Messaging.MqMessageDescriptor.ToString() -> string!
-override D2.Shared.Messaging.MqSubscriptionDescriptor.Equals(object? obj) -> bool
-override D2.Shared.Messaging.MqSubscriptionDescriptor.GetHashCode() -> int
-override D2.Shared.Messaging.MqSubscriptionDescriptor.ToString() -> string!
-override D2.Shared.Messaging.TieredRetryDescriptor.Equals(object? obj) -> bool
-override D2.Shared.Messaging.TieredRetryDescriptor.GetHashCode() -> int
-override D2.Shared.Messaging.TieredRetryDescriptor.ToString() -> string!
-static D2.Shared.Messaging.DlqFailureMetadata.operator !=(D2.Shared.Messaging.DlqFailureMetadata? left, D2.Shared.Messaging.DlqFailureMetadata? right) -> bool
-static D2.Shared.Messaging.DlqFailureMetadata.operator ==(D2.Shared.Messaging.DlqFailureMetadata? left, D2.Shared.Messaging.DlqFailureMetadata? right) -> bool
-static D2.Shared.Messaging.DlqFailureMetadataFields.AllFields.get -> System.Collections.Generic.IReadOnlyList<string!>!
-static D2.Shared.Messaging.MessagingFailures.Required(string! paramName) -> D2.Shared.Result.D2Result!
-static D2.Shared.Messaging.MessagingFailures.Required<T>(string! paramName) -> D2.Shared.Result.D2Result<T>!
-static D2.Shared.Messaging.MessagingServiceCollectionExtensions.AddD2Subscriber<THandler, TMessage>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, D2.Shared.Messaging.MqSubscriptionDescriptor! descriptor) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static D2.Shared.Messaging.MessagingServiceCollectionExtensions.AddD2SubscribersFromAssembly(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, params System.Reflection.Assembly![]! assemblies) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static D2.Shared.Messaging.MqMessageDescriptor.operator !=(D2.Shared.Messaging.MqMessageDescriptor? left, D2.Shared.Messaging.MqMessageDescriptor? right) -> bool
-static D2.Shared.Messaging.MqMessageDescriptor.operator ==(D2.Shared.Messaging.MqMessageDescriptor? left, D2.Shared.Messaging.MqMessageDescriptor? right) -> bool
-static D2.Shared.Messaging.MqSubscriptionDescriptor.operator !=(D2.Shared.Messaging.MqSubscriptionDescriptor? left, D2.Shared.Messaging.MqSubscriptionDescriptor? right) -> bool
-static D2.Shared.Messaging.MqSubscriptionDescriptor.operator ==(D2.Shared.Messaging.MqSubscriptionDescriptor? left, D2.Shared.Messaging.MqSubscriptionDescriptor? right) -> bool
-static D2.Shared.Messaging.TieredRetryDescriptor.operator !=(D2.Shared.Messaging.TieredRetryDescriptor? left, D2.Shared.Messaging.TieredRetryDescriptor? right) -> bool
-static D2.Shared.Messaging.TieredRetryDescriptor.operator ==(D2.Shared.Messaging.TieredRetryDescriptor? left, D2.Shared.Messaging.TieredRetryDescriptor? right) -> bool
-static readonly D2.Shared.Messaging.MessagingJsonOptions.Options -> System.Text.Json.JsonSerializerOptions!
-static readonly D2.Shared.Messaging.MqMessagesRegistry.ByConstant -> System.Collections.Generic.IReadOnlyDictionary<string!, D2.Shared.Messaging.MqMessageDescriptor!>!
-static readonly D2.Shared.Messaging.MqSubscriptionsRegistry.ByConstant -> System.Collections.Generic.IReadOnlyDictionary<string!, D2.Shared.Messaging.MqSubscriptionDescriptor!>!
+DcsvIo.D2.Messaging.DlqFailureMetadata
+DcsvIo.D2.Messaging.DlqFailureMetadata.<Clone>$() -> DcsvIo.D2.Messaging.DlqFailureMetadata!
+DcsvIo.D2.Messaging.DlqFailureMetadata.AttemptCount.get -> int
+DcsvIo.D2.Messaging.DlqFailureMetadata.AttemptCount.init -> void
+DcsvIo.D2.Messaging.DlqFailureMetadata.Cause.get -> string!
+DcsvIo.D2.Messaging.DlqFailureMetadata.Cause.init -> void
+DcsvIo.D2.Messaging.DlqFailureMetadata.Detail.get -> string?
+DcsvIo.D2.Messaging.DlqFailureMetadata.Detail.init -> void
+DcsvIo.D2.Messaging.DlqFailureMetadata.DlqFailureMetadata() -> void
+DcsvIo.D2.Messaging.DlqFailureMetadata.Equals(DcsvIo.D2.Messaging.DlqFailureMetadata? other) -> bool
+DcsvIo.D2.Messaging.DlqFailureMetadata.ErrorCode.get -> string!
+DcsvIo.D2.Messaging.DlqFailureMetadata.ErrorCode.init -> void
+DcsvIo.D2.Messaging.DlqFailureMetadata.NackedBy.get -> string?
+DcsvIo.D2.Messaging.DlqFailureMetadata.NackedBy.init -> void
+DcsvIo.D2.Messaging.DlqFailureMetadata.TraceId.get -> string?
+DcsvIo.D2.Messaging.DlqFailureMetadata.TraceId.init -> void
+DcsvIo.D2.Messaging.DlqFailureMetadataFields
+DcsvIo.D2.Messaging.IMessageBus
+DcsvIo.D2.Messaging.IMessageBus.PublishAsync<TMessage>(TMessage! message, DcsvIo.D2.Messaging.PublisherOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Messaging.IMessageBus.WaitForReadyAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+DcsvIo.D2.Messaging.IMessageIdempotencyStore
+DcsvIo.D2.Messaging.IMessageIdempotencyStore.HasSeenAsync(string! messageId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Messaging.IMessageIdempotencyStore.MarkSeenAsync(string! messageId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Messaging.ISubscriberRegistration
+DcsvIo.D2.Messaging.ISubscriberRegistration.Descriptor.get -> DcsvIo.D2.Messaging.MqSubscriptionDescriptor!
+DcsvIo.D2.Messaging.ISubscriberRegistration.HandlerType.get -> System.Type!
+DcsvIo.D2.Messaging.ISubscriberRegistration.MessageType.get -> System.Type!
+DcsvIo.D2.Messaging.ISubscriberRegistration.ResolvedQueueName.get -> string!
+DcsvIo.D2.Messaging.MessagingFailures
+DcsvIo.D2.Messaging.MessagingJsonOptions
+DcsvIo.D2.Messaging.MessagingServiceCollectionExtensions
+DcsvIo.D2.Messaging.MessagingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Messaging.MessagingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Subscriber<THandler, TMessage>(DcsvIo.D2.Messaging.MqSubscriptionDescriptor! descriptor) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Messaging.MessagingServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SubscribersFromAssembly(params System.Reflection.Assembly![]! assemblies) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Messaging.MqMessageDescriptor
+DcsvIo.D2.Messaging.MqMessageDescriptor.<Clone>$() -> DcsvIo.D2.Messaging.MqMessageDescriptor!
+DcsvIo.D2.Messaging.MqMessageDescriptor.Constant.get -> string!
+DcsvIo.D2.Messaging.MqMessageDescriptor.Constant.init -> void
+DcsvIo.D2.Messaging.MqMessageDescriptor.ConsumerService.get -> string?
+DcsvIo.D2.Messaging.MqMessageDescriptor.Deconstruct(out string! Constant, out string! MessageTypeName, out string! Exchange, out string! ExchangeType, out string! Encryption, out string? EncryptionReason, out string? DefaultRoutingKey) -> void
+DcsvIo.D2.Messaging.MqMessageDescriptor.DefaultRoutingKey.get -> string?
+DcsvIo.D2.Messaging.MqMessageDescriptor.DefaultRoutingKey.init -> void
+DcsvIo.D2.Messaging.MqMessageDescriptor.Encryption.get -> string!
+DcsvIo.D2.Messaging.MqMessageDescriptor.Encryption.init -> void
+DcsvIo.D2.Messaging.MqMessageDescriptor.EncryptionReason.get -> string?
+DcsvIo.D2.Messaging.MqMessageDescriptor.EncryptionReason.init -> void
+DcsvIo.D2.Messaging.MqMessageDescriptor.Equals(DcsvIo.D2.Messaging.MqMessageDescriptor? other) -> bool
+DcsvIo.D2.Messaging.MqMessageDescriptor.Exchange.get -> string!
+DcsvIo.D2.Messaging.MqMessageDescriptor.Exchange.init -> void
+DcsvIo.D2.Messaging.MqMessageDescriptor.ExchangeType.get -> string!
+DcsvIo.D2.Messaging.MqMessageDescriptor.ExchangeType.init -> void
+DcsvIo.D2.Messaging.MqMessageDescriptor.IsPlaintext.get -> bool
+DcsvIo.D2.Messaging.MqMessageDescriptor.IsSealed.get -> bool
+DcsvIo.D2.Messaging.MqMessageDescriptor.MessageTypeName.get -> string!
+DcsvIo.D2.Messaging.MqMessageDescriptor.MessageTypeName.init -> void
+DcsvIo.D2.Messaging.MqMessageDescriptor.MqMessageDescriptor(string! Constant, string! MessageTypeName, string! Exchange, string! ExchangeType, string! Encryption, string? EncryptionReason, string? DefaultRoutingKey) -> void
+DcsvIo.D2.Messaging.MqMessages
+DcsvIo.D2.Messaging.MqMessagesRegistry
+DcsvIo.D2.Messaging.MqPubAttribute
+DcsvIo.D2.Messaging.MqPubAttribute.Constant.get -> string!
+DcsvIo.D2.Messaging.MqPubAttribute.MqPubAttribute(string! constant) -> void
+DcsvIo.D2.Messaging.MqSubAttribute
+DcsvIo.D2.Messaging.MqSubAttribute.Constant.get -> string!
+DcsvIo.D2.Messaging.MqSubAttribute.MqSubAttribute(string! constant) -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.<Clone>$() -> DcsvIo.D2.Messaging.MqSubscriptionDescriptor!
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Constant.get -> string!
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Constant.init -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Deconstruct(out string! Constant, out string! MessageTypeName, out string! QueueName, out DcsvIo.D2.Messaging.QueuePattern Pattern, out string! RoutingKeyBinding, out int Prefetch, out bool Idempotency, out DcsvIo.D2.Messaging.TieredRetryDescriptor? TieredRetry) -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Equals(DcsvIo.D2.Messaging.MqSubscriptionDescriptor? other) -> bool
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Idempotency.get -> bool
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Idempotency.init -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.MessageTypeName.get -> string!
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.MessageTypeName.init -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.MqSubscriptionDescriptor(string! Constant, string! MessageTypeName, string! QueueName, DcsvIo.D2.Messaging.QueuePattern Pattern, string! RoutingKeyBinding, int Prefetch, bool Idempotency, DcsvIo.D2.Messaging.TieredRetryDescriptor? TieredRetry) -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Pattern.get -> DcsvIo.D2.Messaging.QueuePattern
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Pattern.init -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Prefetch.get -> int
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Prefetch.init -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.QueueName.get -> string!
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.QueueName.init -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.RoutingKeyBinding.get -> string!
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.RoutingKeyBinding.init -> void
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.TieredRetry.get -> DcsvIo.D2.Messaging.TieredRetryDescriptor?
+DcsvIo.D2.Messaging.MqSubscriptionDescriptor.TieredRetry.init -> void
+DcsvIo.D2.Messaging.MqSubscriptions
+DcsvIo.D2.Messaging.MqSubscriptionsRegistry
+DcsvIo.D2.Messaging.PublisherOptions
+DcsvIo.D2.Messaging.PublisherOptions.ConfirmTimeout.get -> System.TimeSpan?
+DcsvIo.D2.Messaging.PublisherOptions.ConfirmTimeout.set -> void
+DcsvIo.D2.Messaging.PublisherOptions.Exchange.get -> string?
+DcsvIo.D2.Messaging.PublisherOptions.Exchange.set -> void
+DcsvIo.D2.Messaging.PublisherOptions.MaxAttempts.get -> int?
+DcsvIo.D2.Messaging.PublisherOptions.MaxAttempts.set -> void
+DcsvIo.D2.Messaging.PublisherOptions.PublisherOptions() -> void
+DcsvIo.D2.Messaging.PublisherOptions.RoutingKey.get -> string?
+DcsvIo.D2.Messaging.PublisherOptions.RoutingKey.set -> void
+DcsvIo.D2.Messaging.PublisherOptions.WaitForConfirm.get -> bool?
+DcsvIo.D2.Messaging.PublisherOptions.WaitForConfirm.set -> void
+DcsvIo.D2.Messaging.QueuePattern
+DcsvIo.D2.Messaging.QueuePattern.CompetingConsumer = 0 -> DcsvIo.D2.Messaging.QueuePattern
+DcsvIo.D2.Messaging.QueuePattern.DurableShared = 2 -> DcsvIo.D2.Messaging.QueuePattern
+DcsvIo.D2.Messaging.QueuePattern.FanoutExclusiveAutoDelete = 1 -> DcsvIo.D2.Messaging.QueuePattern
+DcsvIo.D2.Messaging.SubscriberRegistry
+DcsvIo.D2.Messaging.SubscriberRegistry.All.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Messaging.ISubscriberRegistration!>!
+DcsvIo.D2.Messaging.SubscriberRegistry.SubscriberRegistry(System.Collections.Generic.IEnumerable<DcsvIo.D2.Messaging.ISubscriberRegistration!>! registrations) -> void
+DcsvIo.D2.Messaging.TieredRetryDescriptor
+DcsvIo.D2.Messaging.TieredRetryDescriptor.<Clone>$() -> DcsvIo.D2.Messaging.TieredRetryDescriptor!
+DcsvIo.D2.Messaging.TieredRetryDescriptor.Deconstruct(out System.TimeSpan[]! Tiers, out int MaxAttempts) -> void
+DcsvIo.D2.Messaging.TieredRetryDescriptor.Equals(DcsvIo.D2.Messaging.TieredRetryDescriptor? other) -> bool
+DcsvIo.D2.Messaging.TieredRetryDescriptor.MaxAttempts.get -> int
+DcsvIo.D2.Messaging.TieredRetryDescriptor.MaxAttempts.init -> void
+DcsvIo.D2.Messaging.TieredRetryDescriptor.TieredRetryDescriptor(System.TimeSpan[]! Tiers, int MaxAttempts) -> void
+DcsvIo.D2.Messaging.TieredRetryDescriptor.Tiers.get -> System.TimeSpan[]!
+DcsvIo.D2.Messaging.TieredRetryDescriptor.Tiers.init -> void
+const DcsvIo.D2.Messaging.DlqFailureMetadataFields.ATTEMPT_COUNT = "attemptCount" -> string!
+const DcsvIo.D2.Messaging.DlqFailureMetadataFields.CAUSE = "cause" -> string!
+const DcsvIo.D2.Messaging.DlqFailureMetadataFields.DETAIL = "detail" -> string!
+const DcsvIo.D2.Messaging.DlqFailureMetadataFields.ERROR_CODE = "errorCode" -> string!
+const DcsvIo.D2.Messaging.DlqFailureMetadataFields.NACKED_BY = "nackedBy" -> string!
+const DcsvIo.D2.Messaging.DlqFailureMetadataFields.TRACE_ID = "traceId" -> string!
+const DcsvIo.D2.Messaging.MqMessageDescriptor.PLAINTEXT = "plaintext" -> string!
+const DcsvIo.D2.Messaging.MqMessages.AuthKeyRotated = "AuthKeyRotated" -> string!
+const DcsvIo.D2.Messaging.MqSubscriptions.KeyringRefresh = "KeyringRefresh" -> string!
+override DcsvIo.D2.Messaging.DlqFailureMetadata.Equals(object? obj) -> bool
+override DcsvIo.D2.Messaging.DlqFailureMetadata.GetHashCode() -> int
+override DcsvIo.D2.Messaging.DlqFailureMetadata.ToString() -> string!
+override DcsvIo.D2.Messaging.MqMessageDescriptor.Equals(object? obj) -> bool
+override DcsvIo.D2.Messaging.MqMessageDescriptor.GetHashCode() -> int
+override DcsvIo.D2.Messaging.MqMessageDescriptor.ToString() -> string!
+override DcsvIo.D2.Messaging.MqSubscriptionDescriptor.Equals(object? obj) -> bool
+override DcsvIo.D2.Messaging.MqSubscriptionDescriptor.GetHashCode() -> int
+override DcsvIo.D2.Messaging.MqSubscriptionDescriptor.ToString() -> string!
+override DcsvIo.D2.Messaging.TieredRetryDescriptor.Equals(object? obj) -> bool
+override DcsvIo.D2.Messaging.TieredRetryDescriptor.GetHashCode() -> int
+override DcsvIo.D2.Messaging.TieredRetryDescriptor.ToString() -> string!
+static DcsvIo.D2.Messaging.DlqFailureMetadata.operator !=(DcsvIo.D2.Messaging.DlqFailureMetadata? left, DcsvIo.D2.Messaging.DlqFailureMetadata? right) -> bool
+static DcsvIo.D2.Messaging.DlqFailureMetadata.operator ==(DcsvIo.D2.Messaging.DlqFailureMetadata? left, DcsvIo.D2.Messaging.DlqFailureMetadata? right) -> bool
+static DcsvIo.D2.Messaging.DlqFailureMetadataFields.AllFields.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static DcsvIo.D2.Messaging.MessagingFailures.Required(string! paramName) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Messaging.MessagingFailures.Required<T>(string! paramName) -> DcsvIo.D2.Result.D2Result<T>!
+static DcsvIo.D2.Messaging.MessagingServiceCollectionExtensions.AddD2Subscriber<THandler, TMessage>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, DcsvIo.D2.Messaging.MqSubscriptionDescriptor! descriptor) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Messaging.MessagingServiceCollectionExtensions.AddD2SubscribersFromAssembly(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, params System.Reflection.Assembly![]! assemblies) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Messaging.MqMessageDescriptor.operator !=(DcsvIo.D2.Messaging.MqMessageDescriptor? left, DcsvIo.D2.Messaging.MqMessageDescriptor? right) -> bool
+static DcsvIo.D2.Messaging.MqMessageDescriptor.operator ==(DcsvIo.D2.Messaging.MqMessageDescriptor? left, DcsvIo.D2.Messaging.MqMessageDescriptor? right) -> bool
+static DcsvIo.D2.Messaging.MqSubscriptionDescriptor.operator !=(DcsvIo.D2.Messaging.MqSubscriptionDescriptor? left, DcsvIo.D2.Messaging.MqSubscriptionDescriptor? right) -> bool
+static DcsvIo.D2.Messaging.MqSubscriptionDescriptor.operator ==(DcsvIo.D2.Messaging.MqSubscriptionDescriptor? left, DcsvIo.D2.Messaging.MqSubscriptionDescriptor? right) -> bool
+static DcsvIo.D2.Messaging.TieredRetryDescriptor.operator !=(DcsvIo.D2.Messaging.TieredRetryDescriptor? left, DcsvIo.D2.Messaging.TieredRetryDescriptor? right) -> bool
+static DcsvIo.D2.Messaging.TieredRetryDescriptor.operator ==(DcsvIo.D2.Messaging.TieredRetryDescriptor? left, DcsvIo.D2.Messaging.TieredRetryDescriptor? right) -> bool
+static readonly DcsvIo.D2.Messaging.MessagingJsonOptions.Options -> System.Text.Json.JsonSerializerOptions!
+static readonly DcsvIo.D2.Messaging.MqMessagesRegistry.ByConstant -> System.Collections.Generic.IReadOnlyDictionary<string!, DcsvIo.D2.Messaging.MqMessageDescriptor!>!
+static readonly DcsvIo.D2.Messaging.MqSubscriptionsRegistry.ByConstant -> System.Collections.Generic.IReadOnlyDictionary<string!, DcsvIo.D2.Messaging.MqSubscriptionDescriptor!>!

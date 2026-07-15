@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Pipeline;
+namespace DcsvIo.D2.Resilience.Pipeline;
 
-using D2.Shared.Resilience.RateLimiting;
+using DcsvIo.D2.Resilience.RateLimiting;
 
 /// <summary>
 /// Pipeline layer bounding the number of concurrent in-flight operations via a

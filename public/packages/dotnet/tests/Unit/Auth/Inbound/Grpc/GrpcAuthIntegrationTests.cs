@@ -4,21 +4,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc;
 
 using System.Collections.Generic;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Grpc;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Grpc.Status;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Result;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Protos;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Grpc;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Grpc.Status;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Protos;
 using global::Grpc.Core;
 using global::Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -32,7 +32,7 @@ using Xunit;
 using GrpcStatusCode = global::Grpc.Core.StatusCode;
 
 /// <summary>
-/// End-to-end pipeline-position smoke tests for <c>D2.Shared.Auth.Grpc</c>:
+/// End-to-end pipeline-position smoke tests for <c>DcsvIo.D2.Auth.Grpc</c>:
 /// hosts a real ASP.NET Core gRPC server via <see cref="TestServer"/>, wires
 /// the <c>JwtAuthInterceptor</c> through the host's <c>AddGrpc()</c> /
 /// <c>MapGrpcService&lt;T&gt;()</c> pipeline (NOT a hand-driven interceptor
@@ -268,14 +268,14 @@ public sealed class GrpcAuthIntegrationTests
 
                         // Swap the network-touching JwksProvider for the in-
                         // memory fake (mirrors the AspNetCore-side host setup).
-                        services.RemoveAll<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>();
-                        services.RemoveAll<D2.Shared.Auth.Jwks.HttpJwksProvider>();
-                        services.AddSingleton<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(
+                        services.RemoveAll<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>();
+                        services.RemoveAll<DcsvIo.D2.Auth.Jwks.HttpJwksProvider>();
+                        services.AddSingleton<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(
                             new FakeJwksProvider(jwtBuilder.PublicKey));
                         services.RemoveAll<JwtValidator>();
                         services.AddSingleton(sp => new JwtValidator(
                             sp.GetRequiredService<
-                                D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(),
+                                DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(),
                             sp.GetRequiredService<IOptions<AuthOptions>>(),
                             sp.GetRequiredService<ClaimsToContextMapper>(),
                             Microsoft.Extensions.Logging.Abstractions
@@ -326,14 +326,14 @@ public sealed class GrpcAuthIntegrationTests
                             opts.Audience = _AUDIENCE;
                         });
 
-                        services.RemoveAll<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>();
-                        services.RemoveAll<D2.Shared.Auth.Jwks.HttpJwksProvider>();
-                        services.AddSingleton<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(
+                        services.RemoveAll<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>();
+                        services.RemoveAll<DcsvIo.D2.Auth.Jwks.HttpJwksProvider>();
+                        services.AddSingleton<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(
                             new FakeJwksProvider(jwtBuilder.PublicKey));
                         services.RemoveAll<JwtValidator>();
                         services.AddSingleton(sp => new JwtValidator(
                             sp.GetRequiredService<
-                                D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(),
+                                DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(),
                             sp.GetRequiredService<IOptions<AuthOptions>>(),
                             sp.GetRequiredService<ClaimsToContextMapper>(),
                             Microsoft.Extensions.Logging.Abstractions

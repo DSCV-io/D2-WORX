@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 D2Result envelope spec",
-  "description": "Schema for contracts/d2result-envelope/d2result-envelope.spec.json — the source-of-truth catalog of JSON property names for the D2Result Shape B wire envelope (the BFF gateway response shape that every frontend reads). D2.Shared.Result.Envelope.SourceGen emits D2ResultEnvelopeFieldNames into D2.Shared.Result; tools/ts-codegen emits the same catalog into @d2/result. Both sides reference the codegen-emitted constants for the wire property names — the .NET D2Result properties carry [JsonPropertyName(D2ResultEnvelopeFieldNames.*)] attributes, and the TS gateway parser reads via the same camelCase constants. Cross-language wire drift is structurally impossible.",
+  "description": "Schema for contracts/d2result-envelope/d2result-envelope.spec.json — the source-of-truth catalog of JSON property names for the D2Result Shape B wire envelope (the BFF gateway response shape that every frontend reads). DcsvIo.D2.Result.Envelope.SourceGen emits D2ResultEnvelopeFieldNames into DcsvIo.D2.Result; tools/ts-codegen emits the same catalog into @dcsv-io/d2-result. Both sides reference the codegen-emitted constants for the wire property names — the .NET D2Result properties carry [JsonPropertyName(D2ResultEnvelopeFieldNames.*)] attributes, and the TS gateway parser reads via the same camelCase constants. Cross-language wire drift is structurally impossible.",
   "type": "object",
   "required": ["fields"],
   "additionalProperties": false,

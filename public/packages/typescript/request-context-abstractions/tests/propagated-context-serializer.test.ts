@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { CallPathKind } from "@d2/auth-context-abstractions";
+import { CallPathKind } from "@dcsv-io/d2-auth-context-abstractions";
 import { PropagatedContextSerializer } from "../src/PropagatedContextSerializer.g.js";
 import type { IPropagatedContext } from "../src/IPropagatedContext.g.js";
 import { IRequestContextRedactPaths } from "../src/IRequestContext.g.js";

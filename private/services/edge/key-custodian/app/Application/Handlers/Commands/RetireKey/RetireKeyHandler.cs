@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey.IRetireKeyHandler;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey.IRetireKeyHandler;
 using I = RetireKeyInput;
-using O = D2.Edge.KeyCustodian.Domain.Rules.KeySummary;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules.KeySummary;
 
 /// <summary>
 /// Retires a retiring key once its grace window has elapsed.

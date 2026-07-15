@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
 // d2_test_auth.proto — minimal gRPC services used exclusively by
-// GrpcAuthIntegrationTests in D2.Shared.Tests. NOT a wire contract; not
+// GrpcAuthIntegrationTests in DcsvIo.D2.Tests. NOT a wire contract; not
 // referenced by any production service. Two distinct services exercise the
 // auth pipeline through the fluent-metadata path:
 //
@@ -17,7 +17,7 @@ syntax = "proto3";
 
 package d2.test.auth;
 
-option csharp_namespace = "D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Protos";
+option csharp_namespace = "DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Protos";
 
 service TestEcho {
   rpc Echo(EchoRequest) returns (EchoReply);

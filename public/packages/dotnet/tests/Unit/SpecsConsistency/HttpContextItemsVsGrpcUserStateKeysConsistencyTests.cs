@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.IO;
@@ -12,8 +12,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Xunit;
 
 /// <summary>
@@ -21,7 +21,7 @@ using Xunit;
 /// <c>contracts/in-process-keys/keys.spec.json</c> with both <c>http</c> and
 /// <c>grpc</c> bindings must appear in BOTH catalogs at IDENTICAL wire values.
 /// The HTTP catalog (<see cref="D2HttpContextItems"/>) is public; the gRPC
-/// catalog (<c>D2.Shared.Auth.Grpc.Interceptors.D2GrpcUserStateKeys</c>) is
+/// catalog (<c>DcsvIo.D2.Auth.Grpc.Interceptors.D2GrpcUserStateKeys</c>) is
 /// internal — accessed here via reflection across the InternalsVisibleTo seam.
 /// </summary>
 public sealed class HttpContextItemsVsGrpcUserStateKeysConsistencyTests
@@ -107,12 +107,12 @@ public sealed class HttpContextItemsVsGrpcUserStateKeysConsistencyTests
 
     private static System.Type ResolveGrpcUserStateKeysType()
     {
-        // Internal type lives in D2.Shared.Auth.Grpc.Interceptors;
-        // InternalsVisibleTo "D2.Shared.Tests" lets us reflect against it.
-        var asm = Assembly.Load("D2.Shared.Auth.Grpc");
-        var t = asm.GetType("D2.Shared.Auth.Grpc.Interceptors.D2GrpcUserStateKeys");
+        // Internal type lives in DcsvIo.D2.Auth.Grpc.Interceptors;
+        // InternalsVisibleTo "DcsvIo.D2.Tests" lets us reflect against it.
+        var asm = Assembly.Load("DcsvIo.D2.Auth.Grpc");
+        var t = asm.GetType("DcsvIo.D2.Auth.Grpc.Interceptors.D2GrpcUserStateKeys");
         t.Should().NotBeNull(
-            "D2GrpcUserStateKeys must be present in D2.Shared.Auth.Grpc");
+            "D2GrpcUserStateKeys must be present in DcsvIo.D2.Auth.Grpc");
         return t;
     }
 

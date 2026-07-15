@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.Abstractions;
+namespace DcsvIo.D2.DataGovernance.Abstractions;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Engine seam — the single entry point for triggering a GDPR erasure sweep over all
 /// registered entity types. The concrete implementation lives in
-/// <c>D2.Shared.DataGovernance.EntityFrameworkCore</c>; domain and host code
+/// <c>DcsvIo.D2.DataGovernance.EntityFrameworkCore</c>; domain and host code
 /// depend on this interface without pulling in EF Core.
 /// </summary>
 /// <remarks>

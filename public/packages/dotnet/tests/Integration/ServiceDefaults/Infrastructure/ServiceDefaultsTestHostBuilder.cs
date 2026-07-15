@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 
 using System.Collections.Generic;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;

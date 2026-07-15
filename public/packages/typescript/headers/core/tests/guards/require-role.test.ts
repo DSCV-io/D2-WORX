@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { Role } from "@d2/auth-context-abstractions";
+import { Role } from "@dcsv-io/d2-auth-context-abstractions";
 import { requireRole } from "../../src/guards/require-role.js";
 import { authenticatedCtx, makeEvent, makeThrowers } from "./helpers.js";
 

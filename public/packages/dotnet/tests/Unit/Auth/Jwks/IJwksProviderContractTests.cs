@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Jwks;
+namespace DcsvIo.D2.Tests.Unit.Auth.Jwks;
 
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Result;
 using Xunit;
 
 /// <summary>

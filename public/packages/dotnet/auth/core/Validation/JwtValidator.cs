@@ -4,22 +4,22 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Validation;
+namespace DcsvIo.D2.Auth.Validation;
 
 using System.Diagnostics;
 using System.Security.Claims;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using JwtOutcome = D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome;
+using JwtOutcome = DcsvIo.D2.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome;
 
 /// <summary>
 /// JWT signature + standard-claim validator. Wraps
@@ -53,7 +53,7 @@ using JwtOutcome = D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Out
 /// <strong>Reactive-refresh discipline</strong> — when the handler reports
 /// signature key not found (typical kid-rotation gap), the validator forces
 /// ONE JWKS refresh and retries ONCE. The
-/// <see cref="D2.Shared.Auth.Jwks.HttpJwksProvider"/>'s Singleflight +
+/// <see cref="DcsvIo.D2.Auth.Jwks.HttpJwksProvider"/>'s Singleflight +
 /// cooldown gates prevent multi-caller stampedes. After the single retry,
 /// persistent failure surfaces as <see cref="AuthFailures.JwtKidNotFound"/>
 /// (401, not 503 — the JWT itself is suspect, not the upstream JWKS).
@@ -62,7 +62,7 @@ using JwtOutcome = D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Out
 /// <strong>PII discipline</strong> — JWT bytes, claim values, and <c>kid</c>
 /// strings NEVER reach logs / span attributes / metric tags / exception
 /// renderings. Logged outcomes are from a closed enumeration; exception
-/// renderings flow through <see cref="D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender"/>.
+/// renderings flow through <see cref="DcsvIo.D2.Utilities.Diagnostics.SanitizedExceptionRender"/>.
 /// </para>
 /// <para>
 /// <strong>Thread-safety</strong> — registered as a singleton.

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using D2.Edge.Api.Composition;
-using D2.Edge.Api.Pipeline;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.Private.Edge.Api.Composition;
+using DcsvIo.D2.Private.Edge.Api.Pipeline;
+using DcsvIo.D2.ServiceDefaults;
 
 // Edge composition root. Exclusive Listen* owns 8080/8443/9443 —
 // clear inherited multi-URL binds so ASPNETCORE_URLS does not double-bind.

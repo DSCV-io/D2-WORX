@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Emitters;
+namespace DcsvIo.D2.Geo.SourceGen.Emitters;
 
 using System.Collections.Immutable;
 using System.Text;
-using D2.Shared.Geo.SourceGen.Spec;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.Geo.SourceGen.Spec;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Emits a single denormalized record per geo catalog: Country,
@@ -30,10 +30,10 @@ using D2.Shared.SourceGen;
 /// Nav properties on every record use <c>get; internal set;</c> with
 /// sensible defaults (<c>null</c> for nullable single primaries; empty
 /// frozen sets / empty arrays for collections) — the friend assembly
-/// <c>D2.Shared.Geo.Default</c> mutates them in the wire-nav step of the
+/// <c>DcsvIo.D2.Geo.Default</c> mutates them in the wire-nav step of the
 /// two-pass populate pattern. Scalar required fields stay
 /// <c>required init</c>. From any assembly other than
-/// <c>D2.Shared.Geo.Default</c>, nav properties are compile-time
+/// <c>DcsvIo.D2.Geo.Default</c>, nav properties are compile-time
 /// unwritable so record immutability holds.
 /// </remarks>
 internal static class RecordShapeEmitter
@@ -49,7 +49,7 @@ internal static class RecordShapeEmitter
     /// <param name="context">The aggregate spec context (unused — the
     /// record SHAPES are spec-shape-only, independent of per-entry data;
     /// the per-instance data emission lives in the data emitters under
-    /// <c>D2.Shared.Geo.Default</c>).</param>
+    /// <c>DcsvIo.D2.Geo.Default</c>).</param>
     /// <returns>The per-record emit results.</returns>
     public static ImmutableArray<EmitResult> EmitAll(GeoSpecContext context)
     {

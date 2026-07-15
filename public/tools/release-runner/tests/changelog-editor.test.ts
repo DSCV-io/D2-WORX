@@ -18,7 +18,7 @@ import type { BumpPlan, PackageDescriptor } from "../src/types.js";
 // Test fixtures
 // ---------------------------------------------------------------------------
 
-const SEEDED_CHANGELOG = `# Changelog — @d2/result
+const SEEDED_CHANGELOG = `# Changelog — @dcsv-io/d2-result
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.
@@ -33,7 +33,7 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
 
 ### Fixed`;
 
-function makePkg(name = "@d2/result"): PackageDescriptor {
+function makePkg(name = "@dcsv-io/d2-result"): PackageDescriptor {
   return {
     name,
     ecosystem: "npm",
@@ -97,7 +97,7 @@ describe("buildPromotedText — basic promotion", () => {
   it("preserves the header paragraph above [Unreleased]", () => {
     const plan = makePlan();
     const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
-    expect(result).toContain("# Changelog — @d2/result");
+    expect(result).toContain("# Changelog — @dcsv-io/d2-result");
     expect(result).toContain("All notable changes to this package");
   });
 });
@@ -210,14 +210,14 @@ describe("buildPromotedText — fail-loud on missing [Unreleased]", () => {
       buildPromotedText("no unreleased here", plan, "2026-06-24");
       expect.fail("should have thrown");
     } catch (err) {
-      expect(String(err)).toContain("@d2/result");
+      expect(String(err)).toContain("@dcsv-io/d2-result");
     }
   });
 });
 
 describe("buildPromotedText — CHANGELOG with existing versioned entries", () => {
   it("preserves existing versioned sections below the new versioned section", () => {
-    const changelogWithHistory = `# Changelog — @d2/result
+    const changelogWithHistory = `# Changelog — @dcsv-io/d2-result
 
 All changes documented here.
 
@@ -255,7 +255,7 @@ All changes documented here.
 
 describe("buildPromotedText — ### Changed dependency-update section", () => {
   it("dependency entries render under ### Changed in versioned section", () => {
-    const plan = makePlan({ dependencyEntries: ["@d2/utilities"] });
+    const plan = makePlan({ dependencyEntries: ["@dcsv-io/d2-utilities"] });
     const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
 
     const versionedIdx = result.indexOf("## 0.2.0 - 2026-06-24");
@@ -263,18 +263,18 @@ describe("buildPromotedText — ### Changed dependency-update section", () => {
 
     expect(afterVersioned).toContain("### Changed");
     expect(afterVersioned).toContain(
-      "- Dependency update: @d2/utilities bumped.",
+      "- Dependency update: @dcsv-io/d2-utilities bumped.",
     );
   });
 
   it("multiple dependency entries produce multiple bullets", () => {
     const plan = makePlan({
-      dependencyEntries: ["@d2/a", "@d2/b"],
+      dependencyEntries: ["@dcsv-io/d2-a", "@dcsv-io/d2-b"],
     });
     const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
 
-    expect(result).toContain("- Dependency update: @d2/a bumped.");
-    expect(result).toContain("- Dependency update: @d2/b bumped.");
+    expect(result).toContain("- Dependency update: @dcsv-io/d2-a bumped.");
+    expect(result).toContain("- Dependency update: @dcsv-io/d2-b bumped.");
   });
 
   it("empty dependencyEntries omits ### Changed from versioned section", () => {
@@ -293,7 +293,7 @@ describe("buildPromotedText — ### Changed dependency-update section", () => {
   it("### Changed appears between ### Added and ### Fixed in section order", () => {
     const plan = makePlan({
       addedEntries: ["new feature"],
-      dependencyEntries: ["@d2/upstream"],
+      dependencyEntries: ["@dcsv-io/d2-upstream"],
       fixedEntries: ["bug fix"],
     });
     const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
@@ -308,7 +308,7 @@ describe("buildPromotedText — ### Changed dependency-update section", () => {
 
   it("fresh [Unreleased] block after promotion contains ### Changed", () => {
     // The empty Unreleased block template now includes ### Changed.
-    const plan = makePlan({ dependencyEntries: ["@d2/x"] });
+    const plan = makePlan({ dependencyEntries: ["@dcsv-io/d2-x"] });
     const result = buildPromotedText(SEEDED_CHANGELOG, plan, "2026-06-24");
 
     // The fresh [Unreleased] block appears before the versioned section.
@@ -332,13 +332,13 @@ describe("buildPromotedText — ### Changed dependency-update section", () => {
 
 ### Fixed`;
 
-    const plan = makePlan({ dependencyEntries: ["@d2/upstream"] });
+    const plan = makePlan({ dependencyEntries: ["@dcsv-io/d2-upstream"] });
     const result = buildPromotedText(OLD_SEEDED, plan, "2026-06-24");
 
     // Promotion must succeed.
     expect(result).toContain("## 0.2.0 - 2026-06-24");
     // ### Changed appears in the versioned section (dependency entry).
-    expect(result).toContain("Dependency update: @d2/upstream bumped.");
+    expect(result).toContain("Dependency update: @dcsv-io/d2-upstream bumped.");
     // The fresh block (inserted by the promoter) carries ### Changed.
     const unreleasedIdx = result.indexOf("## [Unreleased]");
     const versionedIdx = result.indexOf("## 0.2.0 - 2026-06-24");

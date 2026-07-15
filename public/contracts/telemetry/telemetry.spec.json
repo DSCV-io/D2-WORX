@@ -2,9 +2,9 @@
   "$schema": "./schema.json",
   "meters": [
     {
-      "meter": "D2.Shared.Auth",
-      "consumingAssembly": "D2.Shared.Auth",
-      "tagsNamespace": "D2.Shared.Auth.Telemetry",
+      "meter": "DcsvIo.D2.Auth",
+      "consumingAssembly": "DcsvIo.D2.Auth",
+      "tagsNamespace": "DcsvIo.D2.Auth.Telemetry",
       "tagsClassName": "AuthTelemetryTags",
       "instruments": [
         {
@@ -153,9 +153,9 @@
       ]
     },
     {
-      "meter": "D2.Shared.Auth.Outbound",
-      "consumingAssembly": "D2.Shared.Auth.Outbound",
-      "tagsNamespace": "D2.Shared.Auth.Outbound.Telemetry",
+      "meter": "DcsvIo.D2.Auth.Outbound",
+      "consumingAssembly": "DcsvIo.D2.Auth.Outbound",
+      "tagsNamespace": "DcsvIo.D2.Auth.Outbound.Telemetry",
       "tagsClassName": "OutboundTelemetryTags",
       "instruments": [
         {
@@ -193,9 +193,9 @@
       ]
     },
     {
-      "meter": "D2.Shared.Handler",
-      "consumingAssembly": "D2.Shared.Handler",
-      "tagsNamespace": "D2.Shared.Handler",
+      "meter": "DcsvIo.D2.Handler",
+      "consumingAssembly": "DcsvIo.D2.Handler",
+      "tagsNamespace": "DcsvIo.D2.Handler",
       "tagsClassName": "HandlerTelemetryTags",
       "instruments": [
         {
@@ -229,9 +229,9 @@
       ]
     },
     {
-      "meter": "D2.Shared.Messaging.RabbitMq",
-      "consumingAssembly": "D2.Shared.Messaging.RabbitMq",
-      "tagsNamespace": "D2.Shared.Messaging.RabbitMq.Telemetry",
+      "meter": "DcsvIo.D2.Messaging.RabbitMq",
+      "consumingAssembly": "DcsvIo.D2.Messaging.RabbitMq",
+      "tagsNamespace": "DcsvIo.D2.Messaging.RabbitMq.Telemetry",
       "tagsClassName": "MessagingTelemetryTags",
       "instruments": [
         {
@@ -279,9 +279,9 @@
       ]
     },
     {
-      "meter": "D2.Shared.Caching.Distributed.Redis",
-      "consumingAssembly": "D2.Shared.Caching.Distributed.Redis",
-      "tagsNamespace": "D2.Shared.Caching.Distributed.Redis",
+      "meter": "DcsvIo.D2.Caching.Distributed.Redis",
+      "consumingAssembly": "DcsvIo.D2.Caching.Distributed.Redis",
+      "tagsNamespace": "DcsvIo.D2.Caching.Distributed.Redis",
       "tagsClassName": "RedisCacheTelemetryTags",
       "instruments": [
         {
@@ -323,9 +323,9 @@
       ]
     },
     {
-      "meter": "D2.Shared.Caching.Local",
-      "consumingAssembly": "D2.Shared.Caching.Local.Default",
-      "tagsNamespace": "D2.Shared.Caching.Local.Default",
+      "meter": "DcsvIo.D2.Caching.Local",
+      "consumingAssembly": "DcsvIo.D2.Caching.Local.Default",
+      "tagsNamespace": "DcsvIo.D2.Caching.Local.Default",
       "tagsClassName": "LocalCacheTelemetryTags",
       "instruments": [
         {

@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Headers.SourceGen;
+namespace DcsvIo.D2.Headers.SourceGen;
 
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Topic-specific factory helpers that produce
 /// <see cref="EmitDiagnostic"/> instances with headers-source-gen
 /// descriptor IDs (<c>D2HDR*</c>). The diagnostic record itself lives in
-/// <c>D2.Shared.SourceGen</c> (shared across every source generator); only
+/// <c>DcsvIo.D2.SourceGen</c> (shared across every source generator); only
 /// the per-topic factory shape lives here.
 /// </summary>
 internal static class EmitDiagnostics

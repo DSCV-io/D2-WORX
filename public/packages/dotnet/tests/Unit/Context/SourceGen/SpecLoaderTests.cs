@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Context.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Context.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.Context.SourceGen;
+using DcsvIo.D2.Context.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -28,7 +28,7 @@ public sealed class SpecLoaderTests
         const string json = """
         {
           "name": "IAuthContext",
-          "namespace": "D2.Shared.AuthContext.Abstractions",
+          "namespace": "DcsvIo.D2.AuthContext.Abstractions",
           "description": "Test description",
           "extends": null,
           "sections": [
@@ -54,7 +54,7 @@ public sealed class SpecLoaderTests
 
         var spec = result.Spec!;
         spec.Name.Should().Be("IAuthContext");
-        spec.Namespace.Should().Be("D2.Shared.AuthContext.Abstractions");
+        spec.Namespace.Should().Be("DcsvIo.D2.AuthContext.Abstractions");
         spec.Description.Should().Be("Test description");
         spec.Extends.Should().BeNull();
         spec.Sections.Should().HaveCount(1);

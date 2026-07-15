@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.ErrorCodes.Category
+# DcsvIo.D2.ErrorCodes.Category
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -32,15 +32,15 @@ JsonSerializer.Serialize(ErrorCategory.RateLimited);   // "rate_limited"
 ## Dependency edge
 
 ```
-D2.Shared.ErrorCodes.Category   (BCL-only — no project references)
+DcsvIo.D2.ErrorCodes.Category   (BCL-only — no project references)
                 ▲
                 ├── ErrorCodes.Registry   (references ErrorCategory downward)
                 └── Result (result-core)   (D2Result.Category is a typed ErrorCategory?)
 ```
 
-`ErrorCategory.g.cs` is emitted by the sibling `D2.Shared.ErrorCodes.Category.SourceGen` analyzer (referenced build-only, no runtime dll). The registry references this leaf instead of emitting the enum itself, and result-core references it so `D2Result.Category` is a typed `ErrorCategory?` — both arrows point _downward_ into this zero-dep sink, so the references stay acyclic.
+`ErrorCategory.g.cs` is emitted by the sibling `DcsvIo.D2.ErrorCodes.Category.SourceGen` analyzer (referenced build-only, no runtime dll). The registry references this leaf instead of emitting the enum itself, and result-core references it so `D2Result.Category` is a typed `ErrorCategory?` — both arrows point _downward_ into this zero-dep sink, so the references stay acyclic.
 
-The TS side mirrors this exactly: `@d2/error-category` is the zero-dep leaf whose `ErrorCategory` string-union is generated from the same `error-category.spec.json`. A cross-runtime parity fixture asserts the .NET wire set ≡ the TS union ≡ the spec.
+The TS side mirrors this exactly: `@dcsv-io/d2-error-category` is the zero-dep leaf whose `ErrorCategory` string-union is generated from the same `error-category.spec.json`. A cross-runtime parity fixture asserts the .NET wire set ≡ the TS union ≡ the spec.
 
 ---
 

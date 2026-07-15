@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D² messaging — subscriptions spec",
-  "description": "Schema for contracts/mq-subscriptions/mq-subscriptions.spec.json — the source-of-truth catalog of every subscription D² services declare. D2.Shared.Mq.SourceGen reads this to emit the MqSubscriptions static class (string constants) + the runtime registry (constant → MqSubscriptionDescriptor) into D2.Shared.Messaging.Abstractions. Each entry pairs one consumer service's subscription with its target message type: queue name, pattern, binding, prefetch, idempotency, optional retry. The consuming service owns its entries.",
+  "description": "Schema for contracts/mq-subscriptions/mq-subscriptions.spec.json — the source-of-truth catalog of every subscription D² services declare. DcsvIo.D2.Mq.SourceGen reads this to emit the MqSubscriptions static class (string constants) + the runtime registry (constant → MqSubscriptionDescriptor) into DcsvIo.D2.Messaging.Abstractions. Each entry pairs one consumer service's subscription with its target message type: queue name, pattern, binding, prefetch, idempotency, optional retry. The consuming service owns its entries.",
   "type": "object",
   "required": ["subscriptions"],
   "additionalProperties": false,

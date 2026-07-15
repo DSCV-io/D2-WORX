@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.RateLimiting;
+namespace DcsvIo.D2.Tests.Unit.Resilience.RateLimiting;
 
 using AwesomeAssertions;
-using D2.Shared.Resilience.RateLimiting;
+using DcsvIo.D2.Resilience.RateLimiting;
 using Xunit;
 
 public sealed class RateLimiterTests

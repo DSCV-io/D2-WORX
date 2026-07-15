@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Abstractions;
+namespace DcsvIo.D2.Tests.Unit.Auth.Abstractions;
 
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 using Xunit;
 
 /// <summary>
 /// Reflection-based name + count pins for <see cref="ScopeMatch"/>.
 /// Mirrors the <c>HandlerScopeMatch</c> pins in
-/// <c>D2.Shared.Tests.Unit.Handler.ScopeRequirementTests</c>. Member names
+/// <c>DcsvIo.D2.Tests.Unit.Handler.ScopeRequirementTests</c>. Member names
 /// and the count are load-bearing: the auth middleware, fluent-extension
 /// callers, and generated analyzer output branch on them. A rename must
 /// trip an obvious test failure.

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Api.Composition;
+namespace DcsvIo.D2.Private.Edge.Api.Composition;
 
 /// <summary>
 /// Edge host workload identity constants (ServiceId for establishment + self-issue SAN).

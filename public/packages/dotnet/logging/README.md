@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Logging
+# DcsvIo.D2.Logging
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
@@ -234,7 +234,7 @@ app.UseD2RequestLogging(opts =>
 
 ## Destructuring discipline
 
-`RedactDataDestructuringPolicy` enforces the `[RedactData]` attribute defined in `D2.Shared.Utilities.Attributes`. It runs on every `@`-captured object in every `ILogger.Log*` call across every service that wires `AddD2Logging`. Three rules to know:
+`RedactDataDestructuringPolicy` enforces the `[RedactData]` attribute defined in `DcsvIo.D2.Utilities.Attributes`. It runs on every `@`-captured object in every `ILogger.Log*` call across every service that wires `AddD2Logging`. Three rules to know:
 
 1. **Capture mode matters.** Serilog's `@`-prefix invokes destructuring; the policy fires. The default `{prop}` capture (without `@`) calls `.ToString()` on the value and bypasses destructuring entirely. If you have `[RedactData]` on a record and write `logger.Information("user {User}", user)`, the record's default `ToString()` includes property values verbatim — leaks the PII the attribute was supposed to redact.
 2. **Field-level `[RedactData]` is silently ignored.** The policy reflects over `BindingFlags.Public | Instance` PROPERTIES only — no fields. Use property syntax for redaction.
@@ -254,7 +254,7 @@ Reason rendering uses the enum name (`PersonalInformation`, `FinancialInformatio
 
 | File                                             | Role                                                                                                                  |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Logging.csproj`                       | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. ProjectReferences to `utilities/` + `context/abstractions/`. |
+| `DcsvIo.D2.Logging.csproj`                       | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. ProjectReferences to `utilities/` + `context/abstractions/`. |
 | `D2LoggingOptions.cs`                            | Sealed record — Options-pattern config.                                                                               |
 | `D2LoggingConstants.cs`                          | Public constants (`OTEL_SERVICE_NAME_CONFIG_KEY`).                                                                    |
 | `LoggingServiceCollectionExtensions.cs`          | Public DI extension: `AddD2Logging`.                                                                                  |
@@ -274,14 +274,14 @@ Reason rendering uses the enum name (`PersonalInformation`, `FinancialInformatio
 
 | Project reference                | Why                                                                                                                                                                                                                                                          |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `D2.Shared.Utilities`            | `[RedactData]` attribute + `RedactReason` enum + `Falsey()` / `Truthy()` extensions.                                                                                                                                                                         |
-| `D2.Shared.Context.Abstractions` | `IRequestContext` interface (the strongly-typed enricher dep).                                                                                                                                                                                               |
-| `D2.Shared.AspNetCore`           | Canonical `InfrastructurePathMatcher` consumed by `UseD2RequestLogging`'s level callback to demote infrastructure-path request-completion logs to `Verbose`. Single source of truth shared with `D2.Shared.Telemetry`'s AspNetCore-instrumentation `Filter`. |
+| `DcsvIo.D2.Utilities`            | `[RedactData]` attribute + `RedactReason` enum + `Falsey()` / `Truthy()` extensions.                                                                                                                                                                         |
+| `DcsvIo.D2.Context.Abstractions` | `IRequestContext` interface (the strongly-typed enricher dep).                                                                                                                                                                                               |
+| `DcsvIo.D2.AspNetCore`           | Canonical `InfrastructurePathMatcher` consumed by `UseD2RequestLogging`'s level callback to demote infrastructure-path request-completion logs to `Verbose`. Single source of truth shared with `DcsvIo.D2.Telemetry`'s AspNetCore-instrumentation `Filter`. |
 
 ## Edge cases / gotchas
 
 - **`Log.Logger` is a process-global static.** `AddD2Logging` SETS it. Tests that build multiple hosts in one process see the LATEST host's logger on the static. The lib's integration tests pin this behavior with `[Collection("LogLoggerStaticState")]` to serialize against any other test that touches the static.
-- **`Microsoft.NET.Sdk.Web` defaults `OutputType` to `Exe`.** This csproj overrides to `Library` explicitly — same shape as sibling `D2.Shared.Auth.Http`.
+- **`Microsoft.NET.Sdk.Web` defaults `OutputType` to `Exe`.** This csproj overrides to `Library` explicitly — same shape as sibling `DcsvIo.D2.Auth.Http`.
 - **No `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` PackageReferences.** The framework reference (`Microsoft.AspNetCore.App`) ships them; explicit references would trigger NU1510 ("will not be pruned"). Versions remain pinned via `Directory.Packages.props`.
-- **`InfrastructurePathMatcher` lives in `D2.Shared.AspNetCore` — single source of truth.** `UseD2RequestLogging`'s level callback consumes the public matcher; `D2.Shared.Telemetry`'s AspNetCore-instrumentation `Filter` consumes the same one. The path set (`/health`, `/alive`, `/metrics`, `/.well-known`) stays aligned across the two consumers without per-lib duplication.
+- **`InfrastructurePathMatcher` lives in `DcsvIo.D2.AspNetCore` — single source of truth.** `UseD2RequestLogging`'s level callback consumes the public matcher; `DcsvIo.D2.Telemetry`'s AspNetCore-instrumentation `Filter` consumes the same one. The path set (`/health`, `/alive`, `/metrics`, `/.well-known`) stays aligned across the two consumers without per-lib duplication.
 - **The integration-test contract pins the absent PII fields.** `RequestContextEnricherIntegrationTests` enumerates every `IRequestContext` NOT-LOGGED field (the 8 enumerated above: `ClientIp`, `City`, `Region`, `SubdivisionCode`, `PostalCode`, `Latitude`, `Longitude`, `Geohash`) and asserts NONE appear in the rendered JSON output. Adding a new PII field to the spec without a coverage update is a contract failure that surfaces at test time.

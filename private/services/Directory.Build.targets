@@ -10,11 +10,11 @@ Copyright (c) DCSV. All rights reserved.
        keep explicit usings. The netstandard2.0 condition excludes any source-gen shell
        under a service (e.g. a key-custodian error-codes generator). -->
   <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
-    <Using Include="D2.Shared.Result" />
-    <Using Include="D2.Shared.Utilities.Extensions" />
-    <Using Include="D2.Shared.Utilities.Attributes" />
-    <Using Include="D2.Shared.Utilities.Enums" />
-    <Using Include="D2.Shared.I18n" />
+    <Using Include="DcsvIo.D2.Result" />
+    <Using Include="DcsvIo.D2.Utilities.Extensions" />
+    <Using Include="DcsvIo.D2.Utilities.Attributes" />
+    <Using Include="DcsvIo.D2.Utilities.Enums" />
+    <Using Include="DcsvIo.D2.I18n" />
   </ItemGroup>
 
 </Project>

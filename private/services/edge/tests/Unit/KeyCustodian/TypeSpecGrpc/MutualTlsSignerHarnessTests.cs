@@ -4,31 +4,31 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Services.Protos.SignFixtures.V2Alpha;
-using D2.Shared.AspNetCore.Mtls;
-using D2.Shared.Auth.Grpc.Mtls;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Auth.Outbound.Grpc;
-using D2.Shared.Auth.Outbound.WorkloadCertificate;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.AspNetCore.Mtls;
+using DcsvIo.D2.Auth.Grpc.Mtls;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Auth.Outbound.Grpc;
+using DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.SignFixtures.V2Alpha;
 using Google.Protobuf;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
-using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
+using DtoSignFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using ProtoSignFixtureOutput = global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
 
 /// <summary>
 /// The end-to-end mutual-TLS harness proof. A real Kestrel HTTPS

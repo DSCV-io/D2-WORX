@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Endpoints;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Endpoints;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
 using Xunit;
 
 public sealed class MethodScopeMetadataTests

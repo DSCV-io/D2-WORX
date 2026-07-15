@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound;
 
 using System;
 using AwesomeAssertions;
-using D2.Shared.Auth;
+using DcsvIo.D2.Auth;
 using Xunit;
 
 public sealed class AuthOptionsTests

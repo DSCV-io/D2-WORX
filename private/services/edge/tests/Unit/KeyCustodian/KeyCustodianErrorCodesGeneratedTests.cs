@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
 
-using D2.Private.I18n;
+using DcsvIo.D2.Private.I18n;
 
 /// <summary>
 /// First-pass coverage for the generated <see cref="KeyCustodianErrorCodes"/>

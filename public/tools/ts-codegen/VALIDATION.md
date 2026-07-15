@@ -28,7 +28,7 @@ This ledger names every emitter module in `src/`, what each is validated against
 | `encryption-frame-emit.ts` | _(no dedicated test yet — tracked below)_ | — | Replace double when encryption-frame consumer is wired |
 | `encryption-domains-emit.ts` | _(no dedicated test yet — tracked below)_ | — | Replace double when encryption-domains consumer is wired |
 | `tk-keys-emit.ts` | `tk-keys-emit.test.ts` | Synthetic fixtures | N/A — no doubles |
-| `mq-messages-emit.ts` | `mq-messages-emit.test.ts`; `mq-messages.parity.test.ts` (`@d2/contract-tests`) | Synthetic `MqMessagesSpec` fixtures + the `D2MQ001–006` validation diagnostics (unit — `mq-messages-emit.test.ts`, mirroring the `.NET` `D2.Shared.Messaging.SourceGen.MqGenerator` predicate surface); real `contracts/mq-messages/mq-messages.spec.json` via the two-sided `.NET`↔TS parity test (`.NET` `MqMessagesFixtureEmitter` → `fixtures/mq-messages/registry.json` ↔ TS `MqMessagesRegistry`: membership + per-descriptor field-by-field + whole-registry canonical byte-equality); no test doubles | N/A — no doubles |
+| `mq-messages-emit.ts` | `mq-messages-emit.test.ts`; `mq-messages.parity.test.ts` (`@dcsv-io/d2-contract-tests`) | Synthetic `MqMessagesSpec` fixtures + the `D2MQ001–006` validation diagnostics (unit — `mq-messages-emit.test.ts`, mirroring the `.NET` `DcsvIo.D2.Messaging.SourceGen.MqGenerator` predicate surface); real `contracts/mq-messages/mq-messages.spec.json` via the two-sided `.NET`↔TS parity test (`.NET` `MqMessagesFixtureEmitter` → `fixtures/mq-messages/registry.json` ↔ TS `MqMessagesRegistry`: membership + per-descriptor field-by-field + whole-registry canonical byte-equality); no test doubles | N/A — no doubles |
 | `orchestrator.ts` | _(integration — driven indirectly by byte-parity tests)_ | Real spec files via the byte-parity golden suite | N/A |
 
 ### Geo sub-emitters (`src/geo-emitter/`)
@@ -83,7 +83,7 @@ The following emitters are committed without a standalone test file. Each is exe
 
 | Emitter | Gap | Replace-trigger |
 |---------|-----|-----------------|
-| `grpc-trailers-emit.ts` | No `grpc-trailers-emit.test.ts` | Add test when D2.Shared.Grpc.Trailers source-gen consumer is wired in Edge |
+| `grpc-trailers-emit.ts` | No `grpc-trailers-emit.test.ts` | Add test when DcsvIo.D2.Grpc.Trailers source-gen consumer is wired in Edge |
 | `otel-messaging-tags-emit.ts` | No `otel-messaging-tags-emit.test.ts` | Add test when OTel messaging consumer is wired |
 | `dlq-failure-metadata-emit.ts` | No `dlq-failure-metadata-emit.test.ts` | Add test when DLQ metadata consumer is wired |
 | `encryption-frame-emit.ts` | No `encryption-frame-emit.test.ts` | Add test when encryption-frame consumer is wired |

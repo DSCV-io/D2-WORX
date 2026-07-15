@@ -11,7 +11,7 @@ import {
   type ErrorCodeInfo,
 } from "../src/error-code-registry.js";
 import { errorCodeRegistry } from "../src/generated/error-code-registry.g.js";
-import { TK } from "@d2/i18n-keys";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 
 // ---------------------------------------------------------------------------
 // buildRegistry — unit tests

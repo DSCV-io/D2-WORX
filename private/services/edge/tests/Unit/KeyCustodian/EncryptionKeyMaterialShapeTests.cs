@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
 /// Tests that enforce the per-type material shape invariant and the
@@ -238,7 +238,7 @@ public sealed class EncryptionKeyMaterialShapeTests
     }
 
     private static void AssertPreconditionViolated(
-        D2.Shared.Result.D2Result<PendingKey> result)
+        DcsvIo.D2.Result.D2Result<PendingKey> result)
     {
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);

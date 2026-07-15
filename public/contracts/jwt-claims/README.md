@@ -8,8 +8,8 @@ JWT claim-name catalog — the closed set of standard and `d2_`-prefixed custom 
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/auth/jwt-claims-source-gen/`](../../public/packages/dotnet/auth/jwt-claims-source-gen/README.md) (Roslyn source-gen → `JwtClaimTypes` constants in `D2.Shared.Auth.Abstractions`)
-- **TypeScript** — [`tools/ts-codegen` › `jwt-claims-emit.ts`](../../tools/ts-codegen/README.md) (→ matching `JwtClaimTypes` constants + the `JwtPayload` typed-shape interface in `@d2/auth-abstractions`)
+- **.NET** — [`public/packages/dotnet/auth/jwt-claims-source-gen/`](../../public/packages/dotnet/auth/jwt-claims-source-gen/README.md) (Roslyn source-gen → `JwtClaimTypes` constants in `DcsvIo.D2.Auth.Abstractions`)
+- **TypeScript** — [`tools/ts-codegen` › `jwt-claims-emit.ts`](../../tools/ts-codegen/README.md) (→ matching `JwtClaimTypes` constants + the `JwtPayload` typed-shape interface in `@dcsv-io/d2-auth-abstractions`)
 
 ## See also
 

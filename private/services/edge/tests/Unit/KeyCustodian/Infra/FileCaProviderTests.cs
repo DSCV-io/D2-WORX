@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Edge.KeyCustodian.Infra.Configuration;
-using D2.Edge.KeyCustodian.Infra.Vault.File;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Vault.File;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NodaTime;
-using IClock = D2.Shared.Time.IClock;
-using TestClock = D2.Shared.Time.TestClock;
+using IClock = DcsvIo.D2.Time.IClock;
+using TestClock = DcsvIo.D2.Time.TestClock;
 
 /// <summary>
 /// Adversarial tests for <see cref="FileCaProvider"/>: a valid PEM chain loads +

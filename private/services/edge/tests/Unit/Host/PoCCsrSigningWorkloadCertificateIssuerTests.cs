@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.Host;
 
-using D2.Edge.Api.Outbound;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Edge.Tests.Unit.KeyCustodian.App;
+using DcsvIo.D2.Private.Edge.Api.Outbound;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 

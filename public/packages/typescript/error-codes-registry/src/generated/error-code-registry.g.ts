@@ -8,7 +8,7 @@
 
 /* eslint-disable */
 
-import { TK } from "@d2/i18n-keys";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import { buildRegistry, type ErrorCodeInfo } from "../error-code-registry.js";
 
 /**

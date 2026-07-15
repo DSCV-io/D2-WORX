@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Telemetry;
+namespace DcsvIo.D2.Tests.Integration.Telemetry;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.Tests.Integration.Telemetry.Infrastructure;
+using DcsvIo.D2.Tests.Integration.Telemetry.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Xunit;

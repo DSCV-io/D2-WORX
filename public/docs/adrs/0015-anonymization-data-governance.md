@@ -5,11 +5,11 @@ Copyright (c) DCSV. All rights reserved.
 
 > **Visibility: PUBLIC** — ships with the open surface (`public/`).  
 > Do not add product IP, private paths, or non-exportable runbooks.
-# ADR-0015: Anonymization / data-governance architecture — `D2.Shared.DataGovernance`
+# ADR-0015: Anonymization / data-governance architecture — `DcsvIo.D2.DataGovernance`
 
 - **Status**: Accepted
 - **Date**: 2026-06-01
-- **Deliverable**: `D2.Shared.DataGovernance` libraries (cross-cutting anonymization foundation, a prerequisite to the Contacts library)
+- **Deliverable**: `DcsvIo.D2.DataGovernance` libraries (cross-cutting anonymization foundation, a prerequisite to the Contacts library)
 
 ## Context
 
@@ -23,9 +23,9 @@ ADR-0001 committed the Contacts library to an "annotation-driven sweep over the 
 
 ### 1. Two-library abstractions/implementation split (ADR-0006)
 
-`D2.Shared.DataGovernance.Abstractions` — pure, zero EF Core, zero DI, zero Utilities: ownership markers + the `[Anonymizable]` attribute + engine seam interfaces. Domain and host code reference this slice to declare governance intent without pulling in EF Core.
+`DcsvIo.D2.DataGovernance.Abstractions` — pure, zero EF Core, zero DI, zero Utilities: ownership markers + the `[Anonymizable]` attribute + engine seam interfaces. Domain and host code reference this slice to declare governance intent without pulling in EF Core.
 
-`D2.Shared.DataGovernance.EntityFrameworkCore` — references Abstractions + EF Core 10: the `[Anonymizable]` EF model convention, fluent decoration API, tiered anonymization engine, startup model-validation guard, `AnonymizationEngineOptions`, and DI registration (`AddD2DataGovernance`).
+`DcsvIo.D2.DataGovernance.EntityFrameworkCore` — references Abstractions + EF Core 10: the `[Anonymizable]` EF model convention, fluent decoration API, tiered anonymization engine, startup model-validation guard, `AnonymizationEngineOptions`, and DI registration (`AddD2DataGovernance`).
 
 Both libraries ship zero migrations, zero `DbContext`, and zero database schema.
 
@@ -58,7 +58,7 @@ The EF Core engine reads only the `D2:Anonymize` model annotation at runtime —
 
 **Attribute path.** An `IModelFinalizingConvention` reads `[Anonymizable]` off CLR properties — entity scalars and the properties of consumer-owned value objects / owned types / complex types — and writes the annotation. Activated by `modelBuilder.ApplyAnonymizationConventions()`. An `[Anonymizable]` on a CLR property without that call is detected by the startup guard as a configuration error.
 
-**Fluent path (universal).** C# 14 block-form extensions on `PropertyBuilder<T>`, `OwnedNavigationBuilder<,>`, and `ComplexPropertyBuilder<>` — `.Anonymize(value)` / `.AnonymizeNull()` / `.AnonymizeTemplate("...")` / `ownedB.Anonymize(o => o.SubField, value)` — write the same annotation. This is the only path for **foreign value objects** the consumer composes but does not own (e.g. `D2.Shared.Contacts` VOs, `D2.Shared.Location` types) — those types carry no `[Anonymizable]` by design.
+**Fluent path (universal).** C# 14 block-form extensions on `PropertyBuilder<T>`, `OwnedNavigationBuilder<,>`, and `ComplexPropertyBuilder<>` — `.Anonymize(value)` / `.AnonymizeNull()` / `.AnonymizeTemplate("...")` / `ownedB.Anonymize(o => o.SubField, value)` — write the same annotation. This is the only path for **foreign value objects** the consumer composes but does not own (e.g. `DcsvIo.D2.Contacts` VOs, `DcsvIo.D2.Location` types) — those types carry no `[Anonymizable]` by design.
 
 On the same property, fluent wins over the attribute (standard EF Core Fluent > Data-Annotation precedence). **Decoration is purely opt-in per field.** A PII field with no rule is not anonymized; the startup guard does not cross-check `[RedactData(PersonalInformation)]` for completeness — governance is fully decoupled from log-masking.
 

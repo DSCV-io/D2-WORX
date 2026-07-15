@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcPredicate;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcPredicate;
 
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Edge.Tests.TypeSpecGrpcPredicate.Generated;
-using D2.Services.Protos.PredicateFixturesV2.V1;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Resilience.Retry;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated;
+using DcsvIo.D2.Resilience.Pipeline;
+using DcsvIo.D2.Resilience.Retry;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.PredicateFixturesV2.V1;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -24,20 +24,20 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoOrderFixtureLine = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureLine;
-using DtoOrderV2Customer = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureCustomer;
-using DtoOrderV2Input = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureInput;
-using DtoOrderV2Output = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureOutput;
-using ProtoOrderFixtureLine = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderFixtureLine;
-using ProtoOrderV2Customer = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2FixtureCustomer;
-using ProtoOrderV2Output = D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2FixtureOutput;
+using DtoOrderFixtureLine = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureLine;
+using DtoOrderV2Customer = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureCustomer;
+using DtoOrderV2Input = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureInput;
+using DtoOrderV2Output = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderV2FixtureOutput;
+using ProtoOrderFixtureLine = global::D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderFixtureLine;
+using ProtoOrderV2Customer = global::D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2FixtureCustomer;
+using ProtoOrderV2Output = global::D2.Services.Protos.PredicateFixturesV2.V1.PlaceOrderV2FixtureOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="PredicateFixturesV2GrpcClient"/> — the
 /// NESTED-MODEL + array-of-MODEL transport-mapper wire path. Hosts a concrete shim extending
 /// <see cref="PredicateFixturesOrdersV2.PredicateFixturesOrdersV2Base"/> via an in-process
 /// <see cref="TestServer"/> + <see cref="GrpcChannel"/> (no sockets) against the REAL
-/// <see cref="D2.Shared.Resilience"/> keyed pipeline + the REAL envelope mapper + the REAL
+/// <see cref="DcsvIo.D2.Resilience"/> keyed pipeline + the REAL envelope mapper + the REAL
 /// generated nested sub-mappers, proving an optional nested model (<c>customer</c>) + an
 /// array-of-MODEL (<c>lines</c>) survive proto ↔ DTO with full fidelity:
 /// <list type="bullet">

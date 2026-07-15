@@ -47,7 +47,7 @@ describe("readNpmVersion", () => {
     const path = writeTempFile(
       "package.json",
       `{
-  "name": "@d2/result",
+  "name": "@dcsv-io/d2-result",
   "version": "0.1.0",
   "private": true
 }`,
@@ -59,7 +59,7 @@ describe("readNpmVersion", () => {
     const path = writeTempFile(
       "package.json",
       `{
-  "name": "@d2/foo",
+  "name": "@dcsv-io/d2-foo",
   "description": "A package",
   "version": "2.3.4",
   "type": "module"
@@ -69,7 +69,7 @@ describe("readNpmVersion", () => {
   });
 
   it("throws when version field is absent", () => {
-    const path = writeTempFile("package.json", `{ "name": "@d2/bar" }`);
+    const path = writeTempFile("package.json", `{ "name": "@dcsv-io/d2-bar" }`);
     expect(() => readNpmVersion(path)).toThrow(/version/);
   });
 });
@@ -81,7 +81,7 @@ describe("readNpmVersion", () => {
 describe("writeNpmVersion", () => {
   it("updates the version field and preserves surrounding content", () => {
     const original = `{
-  "name": "@d2/result",
+  "name": "@dcsv-io/d2-result",
   "version": "0.1.0",
   "private": true,
   "type": "module"
@@ -90,13 +90,13 @@ describe("writeNpmVersion", () => {
     writeNpmVersion(path, "0.2.0");
     const updated = readFileSync(path, "utf-8");
     expect(updated).toContain('"version": "0.2.0"');
-    expect(updated).toContain('"name": "@d2/result"');
+    expect(updated).toContain('"name": "@dcsv-io/d2-result"');
     expect(updated).toContain('"private": true');
   });
 
   it("preserves key order and formatting (no JSON re-serialization)", () => {
     const original = `{
-  "name": "@d2/foo",
+  "name": "@dcsv-io/d2-foo",
   "version": "1.0.0"
 }`;
     const path = writeTempFile("package.json", original);
@@ -109,7 +109,7 @@ describe("writeNpmVersion", () => {
   });
 
   it("throws when version field is absent", () => {
-    const path = writeTempFile("package.json", `{ "name": "@d2/bar" }`);
+    const path = writeTempFile("package.json", `{ "name": "@dcsv-io/d2-bar" }`);
     expect(() => writeNpmVersion(path, "0.2.0")).toThrow(/version/);
   });
 
@@ -127,11 +127,11 @@ describe("writeNpmVersion", () => {
 describe("readNugetVersion", () => {
   it("reads <Version> from a standard csproj", () => {
     const path = writeTempFile(
-      "D2.Shared.Result.csproj",
+      "DcsvIo.D2.Result.csproj",
       `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>0.1.0</Version>
-    <PackageId>D2.Shared.Result</PackageId>
+    <PackageId>DcsvIo.D2.Result</PackageId>
   </PropertyGroup>
 </Project>`,
     );
@@ -168,15 +168,15 @@ describe("writeNugetVersion", () => {
     const original = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>0.1.0</Version>
-    <PackageId>D2.Shared.Result</PackageId>
+    <PackageId>DcsvIo.D2.Result</PackageId>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 </Project>`;
-    const path = writeTempFile("D2.Shared.Result.csproj", original);
+    const path = writeTempFile("DcsvIo.D2.Result.csproj", original);
     writeNugetVersion(path, "0.2.0");
     const updated = readFileSync(path, "utf-8");
     expect(updated).toContain("<Version>0.2.0</Version>");
-    expect(updated).toContain("<PackageId>D2.Shared.Result</PackageId>");
+    expect(updated).toContain("<PackageId>DcsvIo.D2.Result</PackageId>");
     expect(updated).toContain("<IsPackable>true</IsPackable>");
   });
 

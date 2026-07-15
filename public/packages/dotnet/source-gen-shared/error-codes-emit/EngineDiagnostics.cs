@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.SourceGen;
 
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Factory helpers producing <see cref="EmitDiagnostic"/> instances for the
 /// catalog-neutral engine diagnostics (<c>D2ERC*</c>). The diagnostic record
-/// itself lives in <c>D2.Shared.SourceGen</c> (shared across every source
+/// itself lives in <c>DcsvIo.D2.SourceGen</c> (shared across every source
 /// generator); only the engine-specific factory shape lives here.
 /// </summary>
 internal static class EngineDiagnostics

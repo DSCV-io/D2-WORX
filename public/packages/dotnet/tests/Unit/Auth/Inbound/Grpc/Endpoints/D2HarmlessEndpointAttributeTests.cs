@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Endpoints;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Endpoints;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
 using Xunit;
 
 public sealed class D2HarmlessEndpointAttributeTests
@@ -77,7 +77,7 @@ public sealed class D2HarmlessEndpointAttributeTests
         // test-run time instead.
         typeof(D2HarmlessEndpointAttribute).Name.Should().Be("D2HarmlessEndpointAttribute");
         typeof(D2HarmlessEndpointAttribute).FullName.Should().Be(
-            "D2.Shared.Auth.Grpc.Endpoints.D2HarmlessEndpointAttribute");
+            "DcsvIo.D2.Auth.Grpc.Endpoints.D2HarmlessEndpointAttribute");
     }
 
     [D2RequireAnyScope("svc.scope")]

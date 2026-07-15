@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Tests.Unit.Auth;
-using D2.Shared.WireShapes.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
+using DcsvIo.D2.WireShapes.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -29,16 +29,16 @@ using Xunit;
 /// </summary>
 /// <remarks>
 /// <see cref="WireShapesGenerator"/> dispatches by assembly name: the
-/// <c>D2.Shared.I18n.Abstractions</c> assembly receives
+/// <c>DcsvIo.D2.I18n.Abstractions</c> assembly receives
 /// <c>TkMessageWireShape.g.cs</c> from <c>tk-message.spec.json</c>, and the
-/// <c>D2.Shared.Result</c> assembly receives <c>InputErrorWireShape.g.cs</c>
+/// <c>DcsvIo.D2.Result</c> assembly receives <c>InputErrorWireShape.g.cs</c>
 /// from <c>input-error.spec.json</c>. Each target requires a separate driver
 /// invocation.
 /// </remarks>
 public sealed class WireShapesOutputParityTests
 {
-    private const string _TK_MESSAGE_ASSEMBLY = "D2.Shared.I18n.Abstractions";
-    private const string _INPUT_ERROR_ASSEMBLY = "D2.Shared.Result";
+    private const string _TK_MESSAGE_ASSEMBLY = "DcsvIo.D2.I18n.Abstractions";
+    private const string _INPUT_ERROR_ASSEMBLY = "DcsvIo.D2.Result";
 
     private static readonly string sr_i18nGeneratedBase =
         Path.Combine(
@@ -49,8 +49,8 @@ public sealed class WireShapesOutputParityTests
             "i18n",
             "abstractions",
             "Generated",
-            "D2.Shared.WireShapes.SourceGen",
-            "D2.Shared.WireShapes.SourceGen.WireShapesGenerator");
+            "DcsvIo.D2.WireShapes.SourceGen",
+            "DcsvIo.D2.WireShapes.SourceGen.WireShapesGenerator");
 
     private static readonly string sr_resultGeneratedBase =
         Path.Combine(
@@ -61,8 +61,8 @@ public sealed class WireShapesOutputParityTests
             "result",
             "core",
             "Generated",
-            "D2.Shared.WireShapes.SourceGen",
-            "D2.Shared.WireShapes.SourceGen.WireShapesGenerator");
+            "DcsvIo.D2.WireShapes.SourceGen",
+            "DcsvIo.D2.WireShapes.SourceGen.WireShapesGenerator");
 
     [Fact]
     public void TkMessageWireShape_RegeneratedOutput_MatchesCommittedFile()

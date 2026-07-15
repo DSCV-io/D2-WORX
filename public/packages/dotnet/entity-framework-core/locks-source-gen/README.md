@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.AdvisoryLocks.SourceGen
+# DcsvIo.D2.AdvisoryLocks.SourceGen
 
 > Parent: [`public/packages/dotnet/entity-framework-core/`](../README.md)
 
@@ -17,7 +17,7 @@ the spec-driven registry of PostgreSQL session advisory lock keys — from
 
 ## What this emits
 
-**Current sole destination:** `D2.Edge.KeyCustodian.Infra` (single-target dispatch on
+**Current sole destination:** `DcsvIo.D2.Private.Edge.KeyCustodian.Infra` (single-target dispatch on
 assembly name). Shared Postgres owns the **mechanism** only (`PgAdvisoryLock`,
 migrator); domain lock-key catalogs live with the owning module.
 
@@ -26,7 +26,7 @@ When the consuming assembly matches the target, the generator emits
 each holding `public const long` members per declared lock.
 
 ```csharp
-// namespace D2.Edge.KeyCustodian.Infra;
+// namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra;
 public static class AdvisoryLocks
 {
     /// <summary>Advisory locks owned by d2-keycustodian.</summary>

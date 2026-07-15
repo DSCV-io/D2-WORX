@@ -168,10 +168,10 @@ export function emitDlqFailureMetadata(
   sb.appendLine("/**");
   sb.appendLine(" * Spec-derived DLQ failure-metadata wire-shape catalogs.");
   sb.appendLine(
-    " * Mirrors .NET D2.Shared.Messaging.DlqFailureMetadataFields and",
+    " * Mirrors .NET DcsvIo.D2.Messaging.DlqFailureMetadataFields and",
   );
   sb.appendLine(
-    " * D2.Shared.Messaging.RabbitMq.Subscribing.DlqFailureCauses (same wire values).",
+    " * DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses (same wire values).",
   );
   sb.appendLine(" */");
   sb.appendLine();

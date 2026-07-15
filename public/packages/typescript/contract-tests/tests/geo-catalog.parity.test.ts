@@ -5,7 +5,10 @@
 
 import { describe, expect, it } from "vitest";
 
-import { CATALOG_PUBLISHED_AT, CATALOG_VERSION } from "@d2/geo-abstractions";
+import {
+  CATALOG_PUBLISHED_AT,
+  CATALOG_VERSION,
+} from "@dcsv-io/d2-geo-abstractions";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

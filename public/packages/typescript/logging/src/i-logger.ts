@@ -12,7 +12,7 @@
 export type LogBindings = Readonly<Record<string, unknown>>;
 
 /**
- * Structured logger interface. Mirrors the .NET `D2.Shared.Logging.ILogger`
+ * Structured logger interface. Mirrors the .NET `DcsvIo.D2.Logging.ILogger`
  * shape: per-level methods accepting `(message, bindings?)` — no
  * `Error`-typed parameter (PII safety; matches .NET's
  * `LoggerMessageDelegateSafetyTests.cs` rule that `[LoggerMessage]` partial

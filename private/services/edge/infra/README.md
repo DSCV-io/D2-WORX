@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge.Infra
+# DcsvIo.D2.Private.Edge.Infra
 
 > Parent: [`../README.md`](../README.md)
 
@@ -12,7 +12,7 @@ Thin **host** Infra shell for Edge process-level adapters. **Not** KeyCustodian 
 
 ## Purpose
 
-Empty shell for host-module vendor adapters. Modules remain placeholders. Only **`D2.Edge.Api`** may reference this project (ADR-0020).
+Empty shell for host-module vendor adapters. Modules remain placeholders. Only **`DcsvIo.D2.Private.Edge.Api`** may reference this project (ADR-0020).
 
 ## §11.15 section N/A (shell assembly)
 

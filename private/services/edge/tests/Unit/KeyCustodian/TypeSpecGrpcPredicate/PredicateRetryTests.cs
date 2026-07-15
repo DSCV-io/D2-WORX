@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcPredicate;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcPredicate;
 
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Edge.Tests.TypeSpecGrpcPredicate.Generated;
-using D2.Services.Protos.PredicateFixtures.V1;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound;
-using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Resilience.Retry;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated;
+using DcsvIo.D2.Resilience.Pipeline;
+using DcsvIo.D2.Resilience.Retry;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.PredicateFixtures.V1;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -24,16 +24,16 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoPlaceOrderFixtureInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureInput;
-using DtoPlaceOrderFixtureOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureOutput;
-using ProtoPlaceOrderFixtureOutput = D2.Services.Protos.PredicateFixtures.V1.PlaceOrderFixtureOutput;
+using DtoPlaceOrderFixtureInput = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureInput;
+using DtoPlaceOrderFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureOutput;
+using ProtoPlaceOrderFixtureOutput = global::D2.Services.Protos.PredicateFixtures.V1.PlaceOrderFixtureOutput;
 
 /// <summary>
 /// In-memory harness tests for the generated <see cref="PredicateFixturesGrpcClient"/> — the
 /// @d2Resilience <c>retryWhen</c> / <c>failWhen</c> custom-predicate integration. Hosts concrete
 /// shims extending <see cref="PredicateFixturesOrders.PredicateFixturesOrdersBase"/> via an
 /// in-process <see cref="TestServer"/> + <see cref="GrpcChannel"/> (no sockets) against the REAL
-/// <see cref="D2.Shared.Resilience"/> keyed pipeline + the REAL envelope mapper, to pin the
+/// <see cref="DcsvIo.D2.Resilience"/> keyed pipeline + the REAL envelope mapper, to pin the
 /// emitter-owned <see cref="D2GeneratedBusinessRetrySignal"/> mechanism:
 /// <list type="bullet">
 ///   <item><c>retryWhen</c> opts a BUSINESS result into the retry decision — the closure throws

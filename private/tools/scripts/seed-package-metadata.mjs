@@ -26,177 +26,177 @@ const INITIAL_VERSION = "0.1.0";
 
 /** @type {Record<string, string>} */
 const DOTNET_DESCRIPTIONS = {
-  "D2.Shared.AspNetCore":
+  "DcsvIo.D2.AspNetCore":
     "Cross-cutting ASP.NET Core middleware and endpoint primitives for D2-WORX service composition roots (security headers, CORS, health endpoints, ProblemDetails, mTLS, infrastructure-path matching).",
-  "D2.Shared.Auth.Abstractions":
+  "DcsvIo.D2.Auth.Abstractions":
     "Identity and authorization vocabulary plus consumer-side runtime contracts for D2-WORX inbound auth — value types, constants, and read-only interfaces.",
-  "D2.Shared.AuthContext.Abstractions":
+  "DcsvIo.D2.AuthContext.Abstractions":
     "Read-only IAuthContext interface for reasoning about caller identity, organization, scopes, and impersonation context in D2-WORX.",
-  "D2.Shared.Auth":
+  "DcsvIo.D2.Auth":
     "Inbound auth runtime for D2-WORX — JWT validation, JWKS snapshot management, session-liveness checking, and the DI composition root.",
-  "D2.Shared.Auth.Events":
+  "DcsvIo.D2.Auth.Events":
     "Cross-service auth-lifecycle event DTOs for D2-WORX — the published message types one service emits and others consume to refresh in-process state.",
-  "D2.Shared.Auth.Grpc":
+  "DcsvIo.D2.Auth.Grpc":
     "gRPC-transport binding for D2-WORX inbound auth — a server-side interceptor running JWT validation, session liveness, and per-method scope enforcement.",
-  "D2.Shared.Auth.Http":
+  "DcsvIo.D2.Auth.Http":
     "HTTP-transport binding for D2-WORX inbound auth — convention-based middleware running JWT validation, session liveness, RFC 7807 ProblemDetails, and per-endpoint scopes.",
-  "D2.Shared.Auth.Outbound":
+  "DcsvIo.D2.Auth.Outbound":
     "Caller-side outbound auth for D2-WORX cross-process calls — forwarded transaction tokens, mTLS workload certificates, and RFC 8693 token exchange.",
-  "D2.Shared.Auth.Startup":
+  "DcsvIo.D2.Auth.Startup":
     "Deny-by-default auth endpoint boot guard for D2-WORX — fails host startup when any mapped endpoint lacks a declared auth intent.",
-  "D2.Shared.Caching.Abstractions":
+  "DcsvIo.D2.Caching.Abstractions":
     "Shared abstractions for the D2-WORX cache stack — the ILocalCache / IDistributedCache / ITieredCache marker interfaces and the invalidation backplane contract.",
-  "D2.Shared.Caching.Distributed.Redis":
+  "DcsvIo.D2.Caching.Distributed.Redis":
     "Redis-backed IDistributedCache and cache-invalidation backplane implementation for D2-WORX, wrapping StackExchange.Redis.",
-  "D2.Shared.Caching.Local.Default":
+  "DcsvIo.D2.Caching.Local.Default":
     "Default per-process ILocalCache implementation for D2-WORX, wrapping Microsoft.Extensions.Caching.Memory with in-process lock state.",
-  "D2.Shared.Caching.Tiered":
+  "DcsvIo.D2.Caching.Tiered":
     "Two-tier cache for D2-WORX composing an L1 ILocalCache and an L2 IDistributedCache into the ITieredCache interface.",
-  "D2.Shared.Contacts":
+  "DcsvIo.D2.Contacts":
     "Composable, self-redacting PII value objects for D2-WORX — immutable Create-constructed building blocks (name, demographics, professional, email, phone) that fold into host entities.",
-  "D2.Shared.Contacts.EntityFrameworkCore":
-    "Reusable Entity Framework Core mapping for the D2.Shared.Contacts value objects, applied via infra IEntityTypeConfiguration.",
-  "D2.Shared.Context.Abstractions":
+  "DcsvIo.D2.Contacts.EntityFrameworkCore":
+    "Reusable Entity Framework Core mapping for the DcsvIo.D2.Contacts value objects, applied via infra IEntityTypeConfiguration.",
+  "DcsvIo.D2.Context.Abstractions":
     "Spec-driven request-context primitives for D2-WORX — IRequestContext, MutableRequestContext, and the cross-hop propagation codecs.",
-  "D2.Shared.DataGovernance.Abstractions":
+  "DcsvIo.D2.DataGovernance.Abstractions":
     "GDPR anonymization markers and the engine seam for D2-WORX entity models — domain-safe, without EF Core or DI.",
-  "D2.Shared.DataGovernance.EntityFrameworkCore":
+  "DcsvIo.D2.DataGovernance.EntityFrameworkCore":
     "EF Core wiring for D2-WORX GDPR anonymization — the fluent .Anonymize* API, the engine registration, and the startup model guard.",
-  "D2.Shared.Encryption":
+  "DcsvIo.D2.Encryption":
     "AES-256-GCM payload encryption with a JWKS-style multi-kid keyring for D2-WORX — a pure crypto primitive decoupled from key sources.",
-  "D2.Shared.EntityFrameworkCore":
+  "DcsvIo.D2.EntityFrameworkCore":
     "EF Core migration helpers for D2-WORX — declaring indexes on ComplexProperty member columns.",
-  "D2.Shared.EntityFrameworkCore.Postgres":
+  "DcsvIo.D2.EntityFrameworkCore.Postgres":
     "PostgreSQL-backed EF Core DbContext wiring for D2-WORX with advisory-lock-guarded migrations and startup validation.",
-  "D2.Shared.ErrorCodes.Category":
+  "DcsvIo.D2.ErrorCodes.Category":
     "Foundational zero-dependency leaf exposing the closed ErrorCategory classification carried by every D2Result and error code in D2-WORX.",
-  "D2.Shared.ErrorCodes.Registry":
+  "DcsvIo.D2.ErrorCodes.Registry":
     "Merged cross-catalog error-code registry for D2-WORX — a frozen code-to-metadata lookup aggregating every error-code spec.",
-  "D2.Shared.Geo.Abstractions":
+  "DcsvIo.D2.Geo.Abstractions":
     "Strongly-typed ISO geo reference-data type surface for D2-WORX (countries, subdivisions, currencies, languages, locales, timezones) without catalog data.",
-  "D2.Shared.Geo.Default":
+  "DcsvIo.D2.Geo.Default":
     "The D2-WORX geo catalog data — per-entity instances, lookup tables, and nested static hierarchies bound into memory at process start.",
-  "D2.Shared.Handler.Abstractions":
+  "DcsvIo.D2.Handler.Abstractions":
     "Domain-safe slice of the D2-WORX handler stack — IHandler, IHandlerContext, and HandlerOptions.",
-  "D2.Shared.Handler":
+  "DcsvIo.D2.Handler":
     "BaseHandler for D2-WORX — the abstract base every handler inherits, providing scope pre-checks, OpenTelemetry activity and metrics, log scope, and a universal try/catch.",
-  "D2.Shared.Handler.Repo":
+  "DcsvIo.D2.Handler.Repo":
     "EF-flavored BaseRepoHandler for D2-WORX — converts database exceptions captured during execution into typed D2Result failures.",
-  "D2.Shared.Handler.Repo.Abstractions":
+  "DcsvIo.D2.Handler.Repo.Abstractions":
     "Vocabulary for repo-flavored D2-WORX handlers — the database-failure discrimination contract (unique, FK, deadlock, concurrency, connection), zero infrastructure dependencies.",
-  "D2.Shared.Handler.Repo.Postgres":
+  "DcsvIo.D2.Handler.Repo.Postgres":
     "PostgreSQL IDbExceptionClassifier implementation for D2-WORX, plugging Npgsql failure classification into BaseRepoHandler.",
-  "D2.Shared.Headers.Amqp":
+  "DcsvIo.D2.Headers.Amqp":
     "D2-WORX wire-protocol header constants applicable to the AMQP transport, code-generated from the shared headers spec.",
-  "D2.Shared.Headers.Common":
+  "DcsvIo.D2.Headers.Common":
     "Cross-transport D2-WORX wire-protocol header constants (headers that appear identically on multiple transports), code-generated from the shared headers spec.",
-  "D2.Shared.Headers.Grpc":
+  "DcsvIo.D2.Headers.Grpc":
     "D2-WORX wire-protocol header constants applicable to the gRPC transport, code-generated from the shared headers spec.",
-  "D2.Shared.Headers.Http":
+  "DcsvIo.D2.Headers.Http":
     "D2-WORX wire-protocol header constants applicable to the HTTP transport, code-generated from the shared headers spec.",
-  "D2.Shared.I18n.Abstractions":
+  "DcsvIo.D2.I18n.Abstractions":
     "Domain-safe i18n slice for D2-WORX — the TKMessage primitive and the ITranslator interface, with zero external dependencies.",
-  "D2.Shared.I18n":
+  "DcsvIo.D2.I18n":
     "Runtime translation library for D2-WORX — Translator, the env-driven SupportedLocales registry, and the AddD2I18n DI extension.",
-  "D2.Shared.I18n.Keys":
+  "DcsvIo.D2.I18n.Keys":
     "Type-safe TK constants catalog for D2-WORX — one TKMessage per translation key, code-generated from the message catalog.",
-  "D2.Shared.Location":
+  "DcsvIo.D2.Location":
     "Hash-deduplicatable geographic value objects for D2-WORX — coordinates, street and admin addresses, deterministic identity hashes, and the postal-code validator contract.",
-  "D2.Shared.Location.EntityFrameworkCore":
-    "Reusable Entity Framework Core mapping for the D2.Shared.Location value objects, applied via infra IEntityTypeConfiguration.",
-  "D2.Shared.Logging":
+  "DcsvIo.D2.Location.EntityFrameworkCore":
+    "Reusable Entity Framework Core mapping for the DcsvIo.D2.Location value objects, applied via infra IEntityTypeConfiguration.",
+  "DcsvIo.D2.Logging":
     "Serilog configuration, the [RedactData] PII-enforcement layer, and request-logging middleware for D2-WORX services.",
-  "D2.Shared.Messaging.Abstractions":
+  "DcsvIo.D2.Messaging.Abstractions":
     "Transport-agnostic messaging abstractions for D2-WORX — the [MqPub] / [MqSub] vocabulary, the message-bus contract, and DLQ failure-metadata wire shapes.",
-  "D2.Shared.Messaging.RabbitMq":
+  "DcsvIo.D2.Messaging.RabbitMq":
     "Default RabbitMQ implementation of the D2-WORX messaging abstractions — publishing, subscribing, encryption frames, and dead-letter handling.",
-  "D2.Shared.ProblemDetails.Abstractions":
+  "DcsvIo.D2.ProblemDetails.Abstractions":
     "RFC 7807 ProblemDetails wire-format catalog for D2-WORX — type-URI prefix, extension keys, per-status titles, and the TitleFor helper.",
-  "D2.Shared.Resilience":
+  "DcsvIo.D2.Resilience":
     "The D2-WORX resilience pipeline — retry, circuit breaker, singleflight, timeout, and concurrency rate-limiting as composable, caller-side, opt-in layers.",
-  "D2.Shared.Result":
+  "DcsvIo.D2.Result":
     "D2Result — the errors-as-values pattern for D2-WORX, replacing exception-based control flow with TKMessage-typed user-facing messages.",
-  "D2.Shared.Result.Grpc":
+  "DcsvIo.D2.Result.Grpc":
     "Faithful in-memory to wire to in-memory D2Result round-trip for D2-WORX over the gRPC D2ResultProto response envelope.",
-  "D2.Shared.ServiceDefaults":
+  "DcsvIo.D2.ServiceDefaults":
     "Composition-root aggregator for D2-WORX — wires every shared library into AddD2ServiceDefaults / UseD2DefaultPipeline / MapD2DefaultEndpoints / RunD2ServiceAsync.",
-  "D2.Shared.Telemetry":
+  "DcsvIo.D2.Telemetry":
     "OpenTelemetry SDK setup for D2-WORX — traces, metrics, logs, OTLP exporters, an IP-restricted Prometheus endpoint, and aggregation of every shared library's ActivitySource and Meter.",
-  "D2.Shared.Time":
+  "DcsvIo.D2.Time":
     "Deterministic timestamp handling for D2-WORX — a dependency-injected clock seam, temporal storage types, and NodaTime to PostgreSQL EF Core wiring.",
-  "D2.Shared.Utilities":
+  "DcsvIo.D2.Utilities":
     "Foundational boundary helpers for D2-WORX — Falsey/Truthy semantics, string cleaning, parse-or-default extensions, indexed env-var parsing, and JSON-cycle-safe serialization.",
-  "D2.Shared.Validation.Abstractions":
+  "DcsvIo.D2.Validation.Abstractions":
     "Validation contract surface for D2-WORX — email, phone, and postal-code validator interfaces, shared field-length bounds, and the name/sex taxonomy enums.",
-  "D2.Shared.Validation":
+  "DcsvIo.D2.Validation":
     "Default validators for D2-WORX — email, phone, and postal-code validation backed by libphonenumber-csharp and a ported postcode dataset.",
-  "D2.Shared.WorkloadIdentity":
+  "DcsvIo.D2.Spiffe":
     "SPIFFE workload-identity value object and peer validator for D2-WORX mTLS — the subject-alternative-name a leaf certificate carries and the trust-domain grammar.",
   // The in-process KeyCustodian client (outside the shared tree).
-  "D2.Edge.KeyCustodian.Client":
+  "DcsvIo.D2.Private.Edge.KeyCustodian.Client":
     "In-process KeyCustodian client surface for D2-WORX — the transport DTOs and the IKeyCustodianApi module facade.",
 };
 
 /** @type {Record<string, string>} */
 const TS_DESCRIPTIONS = {
-  "@d2/auth-abstractions":
-    "Auth-related constants for D2-WORX TypeScript consumers — the Scopes tree, AuthErrorCodes, AuthFailures factories, and JwtClaimTypes. Mirrors D2.Shared.Auth.Abstractions (.NET).",
-  "@d2/auth-context-abstractions":
-    "IAuthContext interface and supporting types for D2-WORX, code-generated from the auth-context spec. Mirrors D2.Shared.AuthContext.Abstractions (.NET).",
-  "@d2/encryption-abstractions":
-    "D2-WORX encryption-domain identifiers and encryption-frame binary-layout constants. Mirrors D2.Shared.Encryption (.NET), spec-driven.",
-  "@d2/error-category":
-    "Foundational zero-dependency leaf exporting the closed ErrorCategory classification carried by every D2Result and error code. Mirrors D2.Shared.ErrorCodes.Category (.NET).",
-  "@d2/error-codes-registry":
-    "Merged cross-catalog error-code registry for D2-WORX — a frozen code-to-metadata lookup aggregating every error-code spec. Mirrors D2.Shared.ErrorCodes.Registry (.NET).",
-  "@d2/geo-abstractions":
-    "Data-free ISO geo reference-data type surface for D2-WORX — interfaces, meta-records, and name-resolution primitives. Mirrors D2.Shared.Geo.Abstractions (.NET).",
-  "@d2/geo-default":
-    "The D2-WORX geo catalog data for TypeScript — per-entity records, lookup maps, and nested objects bound at process start. Mirrors D2.Shared.Geo.Default (.NET).",
-  "@d2/grpc-client":
+  "@dcsv-io/d2-auth-abstractions":
+    "Auth-related constants for D2-WORX TypeScript consumers — the Scopes tree, AuthErrorCodes, AuthFailures factories, and JwtClaimTypes. Mirrors DcsvIo.D2.Auth.Abstractions (.NET).",
+  "@dcsv-io/d2-auth-context-abstractions":
+    "IAuthContext interface and supporting types for D2-WORX, code-generated from the auth-context spec. Mirrors DcsvIo.D2.AuthContext.Abstractions (.NET).",
+  "@dcsv-io/d2-encryption-abstractions":
+    "D2-WORX encryption-domain identifiers and encryption-frame binary-layout constants. Mirrors DcsvIo.D2.Encryption (.NET), spec-driven.",
+  "@dcsv-io/d2-error-category":
+    "Foundational zero-dependency leaf exporting the closed ErrorCategory classification carried by every D2Result and error code. Mirrors DcsvIo.D2.ErrorCodes.Category (.NET).",
+  "@dcsv-io/d2-error-codes-registry":
+    "Merged cross-catalog error-code registry for D2-WORX — a frozen code-to-metadata lookup aggregating every error-code spec. Mirrors DcsvIo.D2.ErrorCodes.Registry (.NET).",
+  "@dcsv-io/d2-geo-abstractions":
+    "Data-free ISO geo reference-data type surface for D2-WORX — interfaces, meta-records, and name-resolution primitives. Mirrors DcsvIo.D2.Geo.Abstractions (.NET).",
+  "@dcsv-io/d2-geo-default":
+    "The D2-WORX geo catalog data for TypeScript — per-entity records, lookup maps, and nested objects bound at process start. Mirrors DcsvIo.D2.Geo.Default (.NET).",
+  "@dcsv-io/d2-grpc-client":
     "Singleton-per-process gRPC channel from the SvelteKit BFF to Edge for D2-WORX, with context-propagation and auth interceptors.",
-  "@d2/headers-amqp":
-    "D2-WORX wire-protocol header constants applicable to the AMQP transport. Mirrors D2.Shared.Headers.Amqp (.NET) at byte-equal wire values.",
-  "@d2/headers-common":
-    "Cross-transport D2-WORX wire-protocol header constants. Mirrors D2.Shared.Headers.Common (.NET) at byte-equal wire values.",
-  "@d2/headers":
+  "@dcsv-io/d2-headers-amqp":
+    "D2-WORX wire-protocol header constants applicable to the AMQP transport. Mirrors DcsvIo.D2.Headers.Amqp (.NET) at byte-equal wire values.",
+  "@dcsv-io/d2-headers-common":
+    "Cross-transport D2-WORX wire-protocol header constants. Mirrors DcsvIo.D2.Headers.Common (.NET) at byte-equal wire values.",
+  "@dcsv-io/d2-headers":
     "SvelteKit BFF-side glue for the D2-WORX BFF-to-Edge boundary — reads inbound headers into an IRequestContext and applies the route guards.",
-  "@d2/headers-grpc":
-    "D2-WORX wire-protocol header constants applicable to the gRPC transport. Mirrors D2.Shared.Headers.Grpc (.NET) at byte-equal wire values.",
-  "@d2/headers-http":
-    "D2-WORX wire-protocol header constants applicable to the HTTP transport. Mirrors D2.Shared.Headers.Http (.NET) at byte-equal wire values.",
-  "@d2/i18n":
-    "ITranslator interface, SupportedLocales registry, and the default Translator implementation for D2-WORX. Mirrors D2.Shared.I18n (.NET).",
-  "@d2/i18n-abstractions":
-    "Foundational zero-dependency i18n primitives for D2-WORX — the TKMessage shape and the tk() factory. Mirrors D2.Shared.I18n.Abstractions (.NET).",
-  "@d2/i18n-keys":
-    "Type-safe TK constants catalog for D2-WORX TypeScript consumers. Mirrors D2.Shared.I18n.Keys (.NET).",
-  "@d2/logging":
-    "Pino-backed ILogger interface, the markRedactedFields() PII helper, and sanitizedErrorRender() for D2-WORX. Mirrors D2.Shared.Logging (.NET).",
-  "@d2/messaging-abstractions":
-    "D2-WORX messaging-protocol wire identifiers — the DLQ failure-metadata shape and the closed cause-string catalog. Mirrors D2.Shared.Messaging.Abstractions (.NET).",
-  "@d2/problem-details-abstractions":
-    "Foundational zero-dependency RFC 7807 ProblemDetails wire-format catalog for D2-WORX. Mirrors D2.Shared.ProblemDetails.Abstractions (.NET).",
-  "@d2/protos":
-    "Buf-generated TypeScript modules and gRPC client stubs from the D2-WORX shared protos. Mirrors D2.Shared.Protos (.NET).",
-  "@d2/request-context-abstractions":
-    "IRequestContext interface, the cross-hop IPropagatedContext subset, and the propagation round-trip serializer for D2-WORX. Mirrors D2.Shared.Context.Abstractions (.NET).",
-  "@d2/resilience":
-    "Retry, circuit breaker, singleflight, timeout, rate-limiter, and composable pipeline for D2-WORX TypeScript. Mirrors D2.Shared.Resilience (.NET).",
-  "@d2/result":
-    "D2Result with semantic factories and combine/bubble helpers for D2-WORX TypeScript. Mirrors D2.Shared.Result (.NET) at a byte-identical wire.",
-  "@d2/service-defaults":
-    "One-call bundle composing @d2/logging, @d2/telemetry, and the D2Env loader for D2-WORX Node services. Mirrors D2.Shared.ServiceDefaults (.NET).",
-  "@d2/telemetry":
-    "One-call OpenTelemetry SDK bootstrap for D2-WORX Node services — traces, metrics, logs, OTLP exporters, and the W3C propagator stack. Mirrors D2.Shared.Telemetry (.NET).",
-  "@d2/time":
-    "Deterministic clock seam and temporal storage types for D2-WORX TypeScript. Mirrors D2.Shared.Time (.NET).",
-  "@d2/utilities":
-    "Boundary helpers for D2-WORX TypeScript — falsey/truthy semantics, string cleaning, parse-or-undefined helpers, indexed env-var array parsing, and regex guards. Mirrors D2.Shared.Utilities (.NET).",
-  "@d2/validation-abstractions":
-    "Validator contract surface for D2-WORX TypeScript — email, phone, and postal-code validator interfaces and the shared field-constraints catalog. Mirrors D2.Shared.Validation.Abstractions (.NET).",
-  "@d2/validation":
-    "Default validators for D2-WORX TypeScript — email, phone, and postal-code validation and normalization matching the .NET rules. Mirrors D2.Shared.Validation (.NET).",
+  "@dcsv-io/d2-headers-grpc":
+    "D2-WORX wire-protocol header constants applicable to the gRPC transport. Mirrors DcsvIo.D2.Headers.Grpc (.NET) at byte-equal wire values.",
+  "@dcsv-io/d2-headers-http":
+    "D2-WORX wire-protocol header constants applicable to the HTTP transport. Mirrors DcsvIo.D2.Headers.Http (.NET) at byte-equal wire values.",
+  "@dcsv-io/d2-i18n":
+    "ITranslator interface, SupportedLocales registry, and the default Translator implementation for D2-WORX. Mirrors DcsvIo.D2.I18n (.NET).",
+  "@dcsv-io/d2-i18n-abstractions":
+    "Foundational zero-dependency i18n primitives for D2-WORX — the TKMessage shape and the tk() factory. Mirrors DcsvIo.D2.I18n.Abstractions (.NET).",
+  "@dcsv-io/d2-i18n-keys":
+    "Type-safe TK constants catalog for D2-WORX TypeScript consumers. Mirrors DcsvIo.D2.I18n.Keys (.NET).",
+  "@dcsv-io/d2-logging":
+    "Pino-backed ILogger interface, the markRedactedFields() PII helper, and sanitizedErrorRender() for D2-WORX. Mirrors DcsvIo.D2.Logging (.NET).",
+  "@dcsv-io/d2-messaging-abstractions":
+    "D2-WORX messaging-protocol wire identifiers — the DLQ failure-metadata shape and the closed cause-string catalog. Mirrors DcsvIo.D2.Messaging.Abstractions (.NET).",
+  "@dcsv-io/d2-problem-details-abstractions":
+    "Foundational zero-dependency RFC 7807 ProblemDetails wire-format catalog for D2-WORX. Mirrors DcsvIo.D2.ProblemDetails.Abstractions (.NET).",
+  "@dcsv-io/d2-protos":
+    "Buf-generated TypeScript modules and gRPC client stubs from the D2-WORX shared protos. Mirrors DcsvIo.D2.Protos (.NET).",
+  "@dcsv-io/d2-request-context-abstractions":
+    "IRequestContext interface, the cross-hop IPropagatedContext subset, and the propagation round-trip serializer for D2-WORX. Mirrors DcsvIo.D2.Context.Abstractions (.NET).",
+  "@dcsv-io/d2-resilience":
+    "Retry, circuit breaker, singleflight, timeout, rate-limiter, and composable pipeline for D2-WORX TypeScript. Mirrors DcsvIo.D2.Resilience (.NET).",
+  "@dcsv-io/d2-result":
+    "D2Result with semantic factories and combine/bubble helpers for D2-WORX TypeScript. Mirrors DcsvIo.D2.Result (.NET) at a byte-identical wire.",
+  "@dcsv-io/d2-service-defaults":
+    "One-call bundle composing @dcsv-io/d2-logging, @dcsv-io/d2-telemetry, and the D2Env loader for D2-WORX Node services. Mirrors DcsvIo.D2.ServiceDefaults (.NET).",
+  "@dcsv-io/d2-telemetry":
+    "One-call OpenTelemetry SDK bootstrap for D2-WORX Node services — traces, metrics, logs, OTLP exporters, and the W3C propagator stack. Mirrors DcsvIo.D2.Telemetry (.NET).",
+  "@dcsv-io/d2-time":
+    "Deterministic clock seam and temporal storage types for D2-WORX TypeScript. Mirrors DcsvIo.D2.Time (.NET).",
+  "@dcsv-io/d2-utilities":
+    "Boundary helpers for D2-WORX TypeScript — falsey/truthy semantics, string cleaning, parse-or-undefined helpers, indexed env-var array parsing, and regex guards. Mirrors DcsvIo.D2.Utilities (.NET).",
+  "@dcsv-io/d2-validation-abstractions":
+    "Validator contract surface for D2-WORX TypeScript — email, phone, and postal-code validator interfaces and the shared field-constraints catalog. Mirrors DcsvIo.D2.Validation.Abstractions (.NET).",
+  "@dcsv-io/d2-validation":
+    "Default validators for D2-WORX TypeScript — email, phone, and postal-code validation and normalization matching the .NET rules. Mirrors DcsvIo.D2.Validation (.NET).",
 };
 
 // ---------------------------------------------------------------------------
@@ -237,7 +237,7 @@ const tsFiles = walk(path.join(REPO_ROOT, "server", "shared", "typescript"));
 const dotnetConsumables = dotnetFiles
   .filter((f) => f.endsWith(".csproj"))
   .filter((f) => !f.endsWith("SourceGen.csproj"))
-  .filter((f) => !/D2\.Shared\.Tests\.csproj$/.test(f));
+  .filter((f) => !/DcsvIo\.D2\.Tests\.csproj$/.test(f));
 
 const kcClient = path.join(
   REPO_ROOT,
@@ -246,7 +246,7 @@ const kcClient = path.join(
   "edge",
   "key-custodian",
   "client",
-  "D2.Edge.KeyCustodian.Client.csproj",
+  "DcsvIo.D2.Private.Edge.KeyCustodian.Client.csproj",
 );
 
 const tsConsumables = tsFiles
@@ -332,11 +332,11 @@ function seedCsproj(
     propLines.push("    <Company>DCSV</Company>");
     propLines.push("    <Product>D2-WORX</Product>");
     propLines.push(
-      "    <RepositoryUrl>https://github.com/DCSV-io/D2-WORX</RepositoryUrl>",
+      "    <RepositoryUrl>https://github.com/dcsv-io/D2-WORX</RepositoryUrl>",
     );
     propLines.push("    <RepositoryType>git</RepositoryType>");
     propLines.push(
-      "    <PackageProjectUrl>https://github.com/DCSV-io/D2-WORX</PackageProjectUrl>",
+      "    <PackageProjectUrl>https://github.com/dcsv-io/D2-WORX</PackageProjectUrl>",
     );
     propLines.push("    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>");
   }
@@ -454,7 +454,7 @@ for (const csprojPath of dotnetConsumables) {
 
 // KeyCustodian client — inline shared metadata (outside the shared-props tree).
 {
-  const packageId = "D2.Edge.KeyCustodian.Client";
+  const packageId = "DcsvIo.D2.Private.Edge.KeyCustodian.Client";
   const description = DOTNET_DESCRIPTIONS[packageId];
 
   if (

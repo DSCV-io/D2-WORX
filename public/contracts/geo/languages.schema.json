@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://d2-worx.dev/contracts/geo/languages.schema.json",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/languages.schema.json",
   "title": "Language catalog (codegen-ready)",
   "description": "Tier 2 codegen-ready Language catalog. Matches the LanguageSpec record shape consumed by .NET SourceGen + TS emitter.",
   "type": "object",

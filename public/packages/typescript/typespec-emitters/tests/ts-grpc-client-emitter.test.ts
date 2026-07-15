@@ -6,9 +6,9 @@
 // Behavioral + structural coverage for ts-grpc-client-emitter.ts.
 //
 // THE LOAD-BEARING VALIDATION (the real proto pipeline):
-//   The emitted SSR gRPC client is driven against the REAL @d2/grpc-client seam
+//   The emitted SSR gRPC client is driven against the REAL @dcsv-io/d2-grpc-client seam
 //   (handleGrpcCall / unaryCall / d2ResultFromProto / isTransientGrpcError), the
-//   REAL @d2/resilience ResilientPipeline, the REAL fixture ts-proto types (the
+//   REAL @dcsv-io/d2-resilience ResilientPipeline, the REAL fixture ts-proto types (the
 //   buf/ts-proto output — the TS twin of Grpc.Tools), and the REAL emitted
 //   predicate twin. A FAKE grpc-js stub (a typed object implementing the real
 //   ts-proto <Service>Client interface) drives the callback path. This is NOT a
@@ -48,17 +48,20 @@ import {
   handleGrpcCall,
   isTransientGrpcError,
   unaryCall,
-} from "@d2/grpc-client";
-import { ResilientPipeline, ResilientPipelineBuilder } from "@d2/resilience";
-import { ok, validationFailed } from "@d2/result";
-import type { D2Result } from "@d2/result";
+} from "@dcsv-io/d2-grpc-client";
+import {
+  ResilientPipeline,
+  ResilientPipelineBuilder,
+} from "@dcsv-io/d2-resilience";
+import { ok, validationFailed } from "@dcsv-io/d2-result";
+import type { D2Result } from "@dcsv-io/d2-result";
 import {
   emitTsGrpcClient,
   type TsGrpcClientOp,
 } from "../src/lib/ts-grpc-client-emitter.js";
-import { parseResultPredicate } from "@d2/typespec-decorators";
+import { parseResultPredicate } from "@dcsv-io/d2-typespec-decorators";
 import type { FieldInfo } from "../src/lib/model-walk.js";
-import type { PredicateNode } from "@d2/typespec-decorators";
+import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 
 /** Parse a result-predicate expression to its AST, failing the test on a parse error. */
 function parsePred(expr: string): PredicateNode {
@@ -412,10 +415,10 @@ function runRealBufTsProto(): string {
       "      - useExactTypes=false",
       "      - oneof=unions",
       "      - useOptionals=messages",
-      "      - Mcommon/v1/d2_result.proto=@d2/protos",
+      "      - Mcommon/v1/d2_result.proto=@dcsv-io/d2-protos",
     ].join("\n"),
   );
-  // Run buf from the @d2/protos package dir so `pnpm exec protoc-gen-ts_proto` resolves.
+  // Run buf from the @dcsv-io/d2-protos package dir so `pnpm exec protoc-gen-ts_proto` resolves.
   const protosDir = join(repoRoot, "server", "shared", "typescript", "protos");
   execFileSync(
     "pnpm",
@@ -447,7 +450,9 @@ describe("tsGrpcClient_FixtureProtoByteGate", () => {
     // carrying result (D2ResultProto) + data. This is what the emitted client binds to.
     expect(protoTs).toContain("export const PredicateFixturesOrdersClient");
     expect(protoTs).toContain("export interface PlaceOrderFixtureResponse");
-    expect(protoTs).toContain('import { D2ResultProto } from "@d2/protos";');
+    expect(protoTs).toContain(
+      'import { D2ResultProto } from "@dcsv-io/d2-protos";',
+    );
   });
 });
 
@@ -485,10 +490,10 @@ function runRealBufTsProtoSign(): string {
       "      - useExactTypes=false",
       "      - oneof=unions",
       "      - useOptionals=messages",
-      "      - Mcommon/v1/d2_result.proto=@d2/protos",
+      "      - Mcommon/v1/d2_result.proto=@dcsv-io/d2-protos",
     ].join("\n"),
   );
-  // Run buf from the @d2/protos package dir so `pnpm exec protoc-gen-ts_proto` resolves.
+  // Run buf from the @dcsv-io/d2-protos package dir so `pnpm exec protoc-gen-ts_proto` resolves.
   const protosDir = join(repoRoot, "server", "shared", "typescript", "protos");
   execFileSync(
     "pnpm",
@@ -533,7 +538,9 @@ describe("tsGrpcClient_RealBufTsProtoSignPipelineByteGate", () => {
     // D2ResultProto-enveloped response. Package must be v2alpha (not the retired v1).
     expect(protoTs).toContain("export const SignFixtureSignerClient");
     expect(protoTs).toContain("export interface SignFixtureResponse");
-    expect(protoTs).toContain('import { D2ResultProto } from "@d2/protos";');
+    expect(protoTs).toContain(
+      'import { D2ResultProto } from "@dcsv-io/d2-protos";',
+    );
     expect(protoTs).toContain(
       'export const protobufPackage = "d2.signfixtures.v2alpha"',
     );

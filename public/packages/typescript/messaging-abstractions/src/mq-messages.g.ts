@@ -10,12 +10,12 @@
 
 /**
  * Spec-derived RabbitMQ message-descriptor mirror. Mirrors .NET
- * D2.Shared.Messaging.MqMessages (string constants) +
- * D2.Shared.Messaging.MqMessagesRegistry.ByConstant (constant → descriptor)
- * + the D2.Shared.Messaging.MqMessageDescriptor record shape.
+ * DcsvIo.D2.Messaging.MqMessages (string constants) +
+ * DcsvIo.D2.Messaging.MqMessagesRegistry.ByConstant (constant → descriptor)
+ * + the DcsvIo.D2.Messaging.MqMessageDescriptor record shape.
  *
  * Cross-language parity: the SAME spec drives the .NET-side catalog via
- * D2.Shared.Messaging.SourceGen. Both sides emit identical constants +
+ * DcsvIo.D2.Messaging.SourceGen. Both sides emit identical constants +
  * descriptor field values; cross-language wire drift is impossible.
  */
 
@@ -46,7 +46,7 @@ export interface MqMessageDescriptor {
  */
 export const MqMessages = {
   /**
-   * Publisher contract for D2.Shared.Auth.Events.KeyRotatedEvent.
+   * Publisher contract for DcsvIo.D2.Auth.Events.KeyRotatedEvent.
    */
   AuthKeyRotated: "AuthKeyRotated",
 } as const;
@@ -61,7 +61,7 @@ export type MqMessage =
 export const MqMessagesRegistry: Readonly<Record<string, MqMessageDescriptor>> = {
   AuthKeyRotated: {
     constant: "AuthKeyRotated",
-    messageType: "D2.Shared.Auth.Events.KeyRotatedEvent",
+    messageType: "DcsvIo.D2.Auth.Events.KeyRotatedEvent",
     exchange: "d2.security.key-rotated",
     exchangeType: "fanout",
     encryption: "plaintext",
@@ -72,13 +72,13 @@ export const MqMessagesRegistry: Readonly<Record<string, MqMessageDescriptor>> =
 
 /**
  * Literal-typed (`as const`) per-message catalog — the compile-time
- * type-witness input for the @d2/messaging-rabbitmq publisher. Same data
+ * type-witness input for the @dcsv-io/d2-messaging-rabbitmq publisher. Same data
  * as MqMessagesRegistry, but each `encryption` keeps its literal type.
  */
 export const MqMessagesCatalog = {
   AuthKeyRotated: {
     constant: "AuthKeyRotated",
-    messageType: "D2.Shared.Auth.Events.KeyRotatedEvent",
+    messageType: "DcsvIo.D2.Auth.Events.KeyRotatedEvent",
     exchange: "d2.security.key-rotated",
     exchangeType: "fanout",
     encryption: "plaintext",

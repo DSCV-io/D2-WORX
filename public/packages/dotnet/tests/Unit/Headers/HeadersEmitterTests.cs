@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Headers;
+namespace DcsvIo.D2.Tests.Unit.Headers;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.Headers.SourceGen;
+using DcsvIo.D2.Headers.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -33,7 +33,7 @@ public sealed class HeadersEmitterTests
         var result = HeadersEmitter.Emit(
             spec,
             HeadersEmitter.CatalogFilter.Http,
-            targetNamespace: "D2.Shared.Headers.Http",
+            targetNamespace: "DcsvIo.D2.Headers.Http",
             className: "HttpHeaders");
 
         result.Diagnostics.Should().BeEmpty();

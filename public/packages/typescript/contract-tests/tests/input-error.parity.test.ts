@@ -5,7 +5,11 @@
 
 import { describe, expect, it } from "vitest";
 
-import { InputErrorWireShape, inputError, type InputError } from "@d2/result";
+import {
+  InputErrorWireShape,
+  inputError,
+  type InputError,
+} from "@dcsv-io/d2-result";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

@@ -38,7 +38,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import {
   diffShippedLines,
   fingerprintBaselinePath,
@@ -162,7 +162,7 @@ export function buildNugetManifestMeta(
 }
 
 /**
- * Substitute each `@d2/*` dependency's `workspace:*` (or any) version literal
+ * Substitute each `@dcsv-io/d2-*` dependency's `workspace:*` (or any) version literal
  * with its resolved version from `resolvedVersions`, then serialize the
  * deterministic DEPS JSON for a TS package. A non-consumable or unresolved
  * dependency keeps its original literal. This is what makes a dependency bump

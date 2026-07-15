@@ -11,7 +11,7 @@
 //   inside SvelteKit; the real wiring is the host-gated BFF composition root). So the emitted REST
 //   client is driven against a FAITHFUL test-double of apiCall / apiCallAnon —
 //   same signature (`<TData>(path, ApiCallOptions): Promise<D2Result<TData>>`),
-//   returning the REAL @d2/result D2Result shape, recording path / method / body /
+//   returning the REAL @dcsv-io/d2-result D2Result shape, recording path / method / body /
 //   idempotencyKey. The double exercises the exact delegation contract: correct
 //   path, verb, body, idempotency-key threading, and success+failure forwarding.
 //
@@ -22,8 +22,8 @@
 
 import { describe, it, expect } from "vitest";
 import ts from "typescript";
-import { ok, validationFailed, serviceUnavailable } from "@d2/result";
-import type { D2Result } from "@d2/result";
+import { ok, validationFailed, serviceUnavailable } from "@dcsv-io/d2-result";
+import type { D2Result } from "@dcsv-io/d2-result";
 import {
   emitTsRestClient,
   type TsRestClientOp,

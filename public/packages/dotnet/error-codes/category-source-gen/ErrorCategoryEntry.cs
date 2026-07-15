@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.Category.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.Category.SourceGen;
 
 /// <summary>
 /// One error-category entry parsed from

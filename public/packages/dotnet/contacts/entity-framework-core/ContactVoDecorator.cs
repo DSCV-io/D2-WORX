@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Contacts.EntityFrameworkCore;
+namespace DcsvIo.D2.Contacts.EntityFrameworkCore;
 
 using System;
 using System.Security.Cryptography;
-using D2.Shared.Contacts.ValueObjects;
-using D2.Shared.DataGovernance.EntityFrameworkCore;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Contacts.ValueObjects;
+using DcsvIo.D2.DataGovernance.EntityFrameworkCore;
+using DcsvIo.D2.Validation.Abstractions;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 /// <summary>
@@ -20,7 +20,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 /// </summary>
 /// <remarks>
 /// Per-field anonymize defaults are written via the
-/// <c>D2.Shared.DataGovernance.EntityFrameworkCore</c> fluent <c>.Anonymize*</c> API
+/// <c>DcsvIo.D2.DataGovernance.EntityFrameworkCore</c> fluent <c>.Anonymize*</c> API
 /// on <c>ComplexTypePropertyBuilder&lt;T&gt;</c> (returned by <c>cp.Property(lambda)</c>).
 /// </remarks>
 internal static class ContactVoDecorator

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions;
+namespace DcsvIo.D2.Auth.Abstractions;
 
 /// <summary>
 /// Default <see cref="IForwardedJwtAccessor"/> implementation — a plain
@@ -21,7 +21,7 @@ namespace D2.Shared.Auth.Abstractions;
 /// </para>
 /// <para>
 /// Public because the DI registration sites live in the separate transport
-/// assemblies (<c>D2.Shared.Auth.Http</c> / <c>D2.Shared.Auth.Grpc</c>) — the
+/// assemblies (<c>DcsvIo.D2.Auth.Http</c> / <c>DcsvIo.D2.Auth.Grpc</c>) — the
 /// same cross-assembly-registration reason the analogous request-context
 /// concrete impl is public. Consumers depend on <see cref="IForwardedJwtAccessor"/>,
 /// not this type.

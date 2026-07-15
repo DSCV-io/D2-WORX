@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Handler;
+namespace DcsvIo.D2.Tests.Unit.Handler;
 
 using System;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Handler;
+using DcsvIo.D2.Handler;
 using Xunit;
 
 /// <summary>
@@ -22,8 +22,8 @@ using Xunit;
 /// + <c>FirstFrame(ex)</c> as separate strings instead.
 /// </summary>
 /// <remarks>
-/// Mirrors <c>D2.Shared.Tests.Unit.Auth.Inbound.Telemetry.AuthLogDelegateContractTests</c>
-/// and <c>D2.Shared.Tests.Unit.AuthOutbound.Telemetry.OutboundLogDelegateContractTests</c>.
+/// Mirrors <c>DcsvIo.D2.Tests.Unit.Auth.Inbound.Telemetry.AuthLogDelegateContractTests</c>
+/// and <c>DcsvIo.D2.Tests.Unit.AuthOutbound.Telemetry.OutboundLogDelegateContractTests</c>.
 /// Same enforcement pattern across every log surface in the codebase.
 /// </remarks>
 public sealed class HandlerLogDelegateContractTests
@@ -33,7 +33,7 @@ public sealed class HandlerLogDelegateContractTests
     {
         var baseHandlerLogType = typeof(HandlerTelemetry).Assembly
             .GetTypes()
-            .Single(t => t.Name == "BaseHandlerLog" && t.Namespace == "D2.Shared.Handler");
+            .Single(t => t.Name == "BaseHandlerLog" && t.Namespace == "DcsvIo.D2.Handler");
 
         var leakProneMethods = baseHandlerLogType
             .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic)

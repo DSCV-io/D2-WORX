@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { PayloadOpener, RecipientPrivateKeyring } from "@d2/encryption";
+import { PayloadOpener, RecipientPrivateKeyring } from "@dcsv-io/d2-encryption";
 import { loadFixture } from "../src/index.js";
 
 // The .NET → TS sealed golden-MESSAGE gate. The fixture body is a REAL sealed
@@ -13,12 +13,12 @@ import { loadFixture } from "../src/index.js";
 // it here proves the TS consumer decodes a genuinely .NET-composed sealed body — the
 // message-layer twin of the sealed-crypto-kat raw-frame gate.
 //
-// It opens through the exact production consume path @d2/messaging-rabbitmq's
+// It opens through the exact production consume path @dcsv-io/d2-messaging-rabbitmq's
 // CryptoBodyOpener runs (PayloadOpener.open → UTF-8 → JSON.parse); the wrapper is
-// replicated inline (not imported) because contract-tests depends on @d2/encryption
-// but not @d2/messaging-rabbitmq, keeping this suite dependency-faithful to its
+// replicated inline (not imported) because contract-tests depends on @dcsv-io/d2-encryption
+// but not @dcsv-io/d2-messaging-rabbitmq, keeping this suite dependency-faithful to its
 // sealed-crypto-kat sibling. CryptoBodyOpener itself is covered in
-// @d2/messaging-rabbitmq's own crypto-body-opener.test.ts.
+// @dcsv-io/d2-messaging-rabbitmq's own crypto-body-opener.test.ts.
 interface SealedGoldenMessage {
   readonly domain: string;
   readonly consumerService: string;

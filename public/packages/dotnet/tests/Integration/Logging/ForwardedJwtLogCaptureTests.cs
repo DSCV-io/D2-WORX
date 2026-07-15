@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Logging;
+namespace DcsvIo.D2.Tests.Integration.Logging;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Logging.Destructuring;
-using D2.Shared.Tests.Integration.Logging.Infrastructure;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
 using Serilog;
 using Serilog.Events;
 using Xunit;
@@ -73,7 +73,7 @@ public sealed class ForwardedJwtLogCaptureTests
         // And the placeholder DOES appear (absence of bytes is redaction, not
         // a no-op): the structural path emits the policy placeholder, the plain
         // + interpolation paths emit the wrapper's ToString placeholder.
-        rendered.Should().Contain($"[REDACTED: {D2.Shared.Utilities.Enums.RedactReason.SecretInformation}]");
+        rendered.Should().Contain($"[REDACTED: {DcsvIo.D2.Utilities.Enums.RedactReason.SecretInformation}]");
         rendered.Should().Contain(ForwardedJwt.REDACTION_PLACEHOLDER);
     }
 

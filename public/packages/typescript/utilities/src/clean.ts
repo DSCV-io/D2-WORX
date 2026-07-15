@@ -8,7 +8,7 @@ import { falsey } from "./falsey.js";
 /**
  * Behavior controlling how {@link clean} handles a null/empty input or a
  * post-clean empty result. Mirrors the .NET
- * `D2.Shared.Utilities.Extensions.CleanEnumEmptyBehavior` enum so the two
+ * `DcsvIo.D2.Utilities.Extensions.CleanEnumEmptyBehavior` enum so the two
  * languages reach the same outcome on identical inputs.
  */
 export type CleanEnumEmptyBehavior = "ReturnEmpty" | "ReturnNull" | "Throw";
@@ -16,7 +16,7 @@ export type CleanEnumEmptyBehavior = "ReturnEmpty" | "ReturnNull" | "Throw";
 /**
  * Behavior controlling how {@link clean} reacts to a per-element cleaner
  * result of `null` (or `undefined`). Mirrors
- * `D2.Shared.Utilities.Extensions.CleanValueNullBehavior`.
+ * `DcsvIo.D2.Utilities.Extensions.CleanValueNullBehavior`.
  */
 export type CleanValueNullBehavior = "RemoveNulls" | "ThrowOnNull";
 

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Encryption;
+namespace DcsvIo.D2.Encryption;
 
 /// <summary>
 /// Decoded view over a sealed (version-2) frame buffer. All spans alias the

@@ -4,11 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey.ICompromiseKeyHandler;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey.ICompromiseKeyHandler;
 using I = CompromiseKeyInput;
 using O = CompromiseKeyOutput;
 

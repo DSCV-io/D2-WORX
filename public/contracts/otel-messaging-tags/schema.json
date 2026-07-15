@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 OTel messaging activity tags spec",
-  "description": "Schema for contracts/otel-messaging-tags/otel-messaging-tags.spec.json — the source-of-truth catalog of OTel semantic-convention attribute names (and a small set of D2-specific d2.* attributes) emitted on RabbitMQ publisher + consumer spans. D2.Shared.OtelMessagingTags.SourceGen reads it to emit MessagingActivityTags into D2.Shared.Messaging.RabbitMq; tools/ts-codegen/src/otel-messaging-tags-emit.ts reads it to emit otel-messaging-tags.g.ts into @d2/telemetry. Spec-driving the catalog structurally prevents the kind of drift bug where the consumer side wrote 'messaging.operation' while the publisher correctly wrote 'messaging.operation.type'.",
+  "description": "Schema for contracts/otel-messaging-tags/otel-messaging-tags.spec.json — the source-of-truth catalog of OTel semantic-convention attribute names (and a small set of D2-specific d2.* attributes) emitted on RabbitMQ publisher + consumer spans. DcsvIo.D2.OtelMessagingTags.SourceGen reads it to emit MessagingActivityTags into DcsvIo.D2.Messaging.RabbitMq; tools/ts-codegen/src/otel-messaging-tags-emit.ts reads it to emit otel-messaging-tags.g.ts into @dcsv-io/d2-telemetry. Spec-driving the catalog structurally prevents the kind of drift bug where the consumer side wrote 'messaging.operation' while the publisher correctly wrote 'messaging.operation.type'.",
   "type": "object",
   "required": ["tags"],
   "additionalProperties": false,

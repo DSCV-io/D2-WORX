@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/validation-abstractions
+# @dcsv-io/d2-validation-abstractions
 
 > Parent: [`public/packages/typescript/`](../../README.md)
 >
@@ -10,29 +10,29 @@ Copyright (c) DCSV. All rights reserved.
 > the validator contract surface — email, phone, and postal-code validator
 > interfaces — or the shared field-constraints catalog (field-length bounds +
 > name/sex taxonomy enums) — without dragging in the default implementations
-> (`@d2/validation`).
+> (`@dcsv-io/d2-validation`).
 
 Hand-written validator contract interfaces **plus the codegen-emitted shared
 field-constraints catalog** (field-length / digit-count constants + closed-list
-taxonomy enums). Mirrors `D2.Shared.Validation.Abstractions` (.NET).
+taxonomy enums). Mirrors `DcsvIo.D2.Validation.Abstractions` (.NET).
 
 ## Overview
 
 The validation layer ships in two TS packages:
 
-- **`@d2/validation-abstractions`** — this package. The three validator
+- **`@dcsv-io/d2-validation-abstractions`** — this package. The three validator
   contract interfaces (`IEmailValidator`, `IPhoneValidator`,
   `IPostalCodeValidator`) AND the codegen-emitted `FieldConstraints` bounds +
   `NamePrefix` / `NameSuffix` / `BiologicalSex` taxonomy enums (with Zod
   schemas). The interfaces are pure types (near-zero runtime payload); the
   emitted catalog carries the const objects + Zod schemas (a small `zod`
   runtime dependency).
-- **`@d2/validation`** — the default implementations backed by the standard
+- **`@dcsv-io/d2-validation`** — the default implementations backed by the standard
   normalization rules. Depends on this package.
 
 Domain code that depends on a validator imports the interface from
-`@d2/validation-abstractions`; only composition-root code wires the concrete
-implementation from `@d2/validation`. Code that needs the shared field bounds
+`@dcsv-io/d2-validation-abstractions`; only composition-root code wires the concrete
+implementation from `@dcsv-io/d2-validation`. Code that needs the shared field bounds
 or taxonomy enums imports `FieldConstraints` / `NamePrefix` / etc. directly.
 
 ## Field-constraints catalog (codegen-emitted)
@@ -40,7 +40,7 @@ or taxonomy enums imports `FieldConstraints` / `NamePrefix` / etc. directly.
 Spec-driven from `contracts/validation/field-constraints.spec.json` via
 `tools/ts-codegen/src/field-constraints-emit.ts` — emitted into
 `src/generated/` (committed, `linguist-generated`). The same spec drives the
-.NET-side `D2.Shared.Validation.Abstractions` catalog, so cross-language drift
+.NET-side `DcsvIo.D2.Validation.Abstractions` catalog, so cross-language drift
 is structurally impossible.
 
 - **`FieldConstraints`** (`field-constraints.g.ts`) — a plain numeric
@@ -88,12 +88,12 @@ persist the canonical form directly without a second normalization pass.
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.Validation.Abstractions`:
+Mirrors `DcsvIo.D2.Validation.Abstractions`:
 
-- `IEmailValidator` ↔ `D2.Shared.Validation.Abstractions.IEmailValidator`.
-- `IPhoneValidator` ↔ `D2.Shared.Validation.Abstractions.IPhoneValidator`.
+- `IEmailValidator` ↔ `DcsvIo.D2.Validation.Abstractions.IEmailValidator`.
+- `IPhoneValidator` ↔ `DcsvIo.D2.Validation.Abstractions.IPhoneValidator`.
 - `IPostalCodeValidator` ↔
-  `D2.Shared.Validation.Abstractions.IPostalCodeValidator`.
+  `DcsvIo.D2.Validation.Abstractions.IPostalCodeValidator`.
 
 Each interface exposes the same single `validate(...)` method returning
 `D2Result<string>` with the same normalization semantics and the same
@@ -105,11 +105,11 @@ the deserialization boundary.
 
 ## Dependencies
 
-- `@d2/result` — `D2Result<string>` return type.
-- `@d2/geo-abstractions` — `CountryCode` for the phone default-region and
+- `@dcsv-io/d2-result` — `D2Result<string>` return type.
+- `@dcsv-io/d2-geo-abstractions` — `CountryCode` for the phone default-region and
   postal-code country parameters.
 - `zod` — the emitted taxonomy `*Schema` exports are `z.enum([...])` schemas
-  (pinned to the same version `@d2/geo-abstractions` uses). The validator
+  (pinned to the same version `@dcsv-io/d2-geo-abstractions` uses). The validator
   interfaces themselves carry no runtime; the dependency is the catalog's.
 
 ## Telemetry

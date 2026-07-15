@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result;
+namespace DcsvIo.D2.Result;
 
 using System.Net;
 using System.Text.Json.Serialization;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.I18n;
 
 /// <summary>
 /// Represents the result of an operation that produces a payload of type

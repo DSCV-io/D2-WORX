@@ -29,7 +29,7 @@ All expected operation outcomes are modeled as `D2Result` / `D2Result<TData>` va
 
 **`ErrorCodes`** is codegen-emitted from `public/contracts/error-codes/error-codes.spec.json` (each code with a declared HTTP status). The same spec drives the TypeScript side via `public/tools/ts-codegen`. Hand-written constants are forbidden; cross-language drift is structurally impossible.
 
-**`Messages` and `InputErrors` are typed as `IReadOnlyList<TKMessage>` and `IReadOnlyList<InputError>`** respectively. `TKMessage` has an `internal` constructor in `D2.Shared.I18n.Abstractions`; the only way to produce one is via the SrcGen-emitted `TK.*` constants (ADR-0004). An untranslated literal in `D2Result.Messages` is structurally unrepresentable — the constraint is enforced by the type system at compile time, not by linter or convention.
+**`Messages` and `InputErrors` are typed as `IReadOnlyList<TKMessage>` and `IReadOnlyList<InputError>`** respectively. `TKMessage` has an `internal` constructor in `DcsvIo.D2.I18n.Abstractions`; the only way to produce one is via the SrcGen-emitted `TK.*` constants (ADR-0004). An untranslated literal in `D2Result.Messages` is structurally unrepresentable — the constraint is enforced by the type system at compile time, not by linter or convention.
 
 **`TraceId` is auto-injected** at every handler boundary by the handler pipeline (ADR-0005) via `result.WithTraceId(traceId)`. Handlers do not thread trace context manually.
 
@@ -39,7 +39,7 @@ All expected operation outcomes are modeled as `D2Result` / `D2Result<TData>` va
 
 **Per-code boolean discriminators** (`D2Result.Booleans.cs`) carry `[JsonIgnore]` and never appear on the wire. `IsTransientRetryable` explicitly excludes `IsUnhandledException` — unknown system state is never auto-retried.
 
-**TypeScript mirror** (`public/packages/typescript/result/`, package `@d2/result`): `D2Result<T>` class (`src/d2-result.ts`), factory functions mirroring the .NET factory surface (`src/factories.ts`), `bubbleFail` / `bubble` propagation (`src/bubble.ts`), and the `TKMessage` interface (`src/tk-message.ts`) — same envelope, same `ErrorCodes` catalog (generated from the same spec). Wire round-trips are byte-identical and parity-tested.
+**TypeScript mirror** (`public/packages/typescript/result/`, package `@dcsv-io/d2-result`): `D2Result<T>` class (`src/d2-result.ts`), factory functions mirroring the .NET factory surface (`src/factories.ts`), `bubbleFail` / `bubble` propagation (`src/bubble.ts`), and the `TKMessage` interface (`src/tk-message.ts`) — same envelope, same `ErrorCodes` catalog (generated from the same spec). Wire round-trips are byte-identical and parity-tested.
 
 ## Consequences
 

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.Abstractions;
+namespace DcsvIo.D2.DataGovernance.Abstractions;
 
 /// <summary>
 /// Discriminator sentinel used by the third <see cref="AnonymizableAttribute"/> constructor

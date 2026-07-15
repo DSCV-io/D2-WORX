@@ -4,22 +4,22 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EncryptionDomains.SourceGen;
+namespace DcsvIo.D2.EncryptionDomains.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits encryption-domain catalogs.
-/// Dual-target: public assembly <c>D2.Shared.Encryption</c> → <c>EncryptionDomains</c>
+/// Dual-target: public assembly <c>DcsvIo.D2.Encryption</c> → <c>EncryptionDomains</c>
 /// (public values only); private Extensions assembly
-/// <c>D2.Shared.Encryption.Extensions</c> → <c>ProductEncryptionDomains</c>
-/// (public∪private values, distinct FQN under <c>D2.Private.Encryption</c>).
+/// <c>DcsvIo.D2.Private.Encryption.Extensions</c> → <c>ProductEncryptionDomains</c>
+/// (public∪private values, distinct FQN under <c>DcsvIo.D2.Private.Encryption</c>).
 /// </summary>
 [Generator]
 public sealed class EncryptionDomainsGenerator : IIncrementalGenerator
@@ -27,10 +27,10 @@ public sealed class EncryptionDomainsGenerator : IIncrementalGenerator
     private const string _SOURCE_NAME = "EncryptionDomains.g.cs";
     private const string _PRIVATE_SOURCE_NAME = "ProductEncryptionDomains.g.cs";
     private const string _SPEC_FILE_NAME = "encryption-domains.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.Encryption";
-    private const string _PRIVATE_TARGET_ASSEMBLY_NAME = "D2.Shared.Encryption.Extensions";
-    private const string _PUBLIC_ROOT_NAMESPACE = "D2.Shared.Encryption";
-    private const string _PRIVATE_ROOT_NAMESPACE = "D2.Private.Encryption";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Encryption";
+    private const string _PRIVATE_TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Private.Encryption.Extensions";
+    private const string _PUBLIC_ROOT_NAMESPACE = "DcsvIo.D2.Encryption";
+    private const string _PRIVATE_ROOT_NAMESPACE = "DcsvIo.D2.Private.Encryption";
     private const string _PUBLIC_CLASS_NAME = "EncryptionDomains";
     private const string _PRIVATE_CLASS_NAME = "ProductEncryptionDomains";
     private const string _PUBLIC_MODE_ENUM = "EncryptionDomainMode";

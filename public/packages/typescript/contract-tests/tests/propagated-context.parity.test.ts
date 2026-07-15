@@ -8,7 +8,7 @@ import {
   CallPathKind,
   type IPropagatedContext,
   PropagatedContextSerializer,
-} from "@d2/request-context-abstractions";
+} from "@dcsv-io/d2-request-context-abstractions";
 import { canonicalize, loadFixture } from "../src/index.js";
 
 interface CallPathEntryShape {

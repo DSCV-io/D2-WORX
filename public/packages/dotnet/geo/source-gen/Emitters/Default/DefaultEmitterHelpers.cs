@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Emitters.Default;
+namespace DcsvIo.D2.Geo.SourceGen.Emitters.Default;
 
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Shared helpers used by every per-catalog DATA emitter in this directory.
@@ -21,13 +21,13 @@ using D2.Shared.SourceGen.Polyfills;
 internal static class DefaultEmitterHelpers
 {
     /// <summary>
-    /// The <c>D2.Shared.Geo.Default</c> namespace every emitted data file
+    /// The <c>DcsvIo.D2.Geo.Default</c> namespace every emitted data file
     /// uses. Matches the assembly's <c>RootNamespace</c>.
     /// </summary>
-    public const string DefaultNamespace = "D2.Shared.Geo.Default";
+    public const string DefaultNamespace = "DcsvIo.D2.Geo.Default";
 
     /// <summary>
-    /// The <c>D2.Shared.Geo.Abstractions</c> namespace used in <c>using</c>
+    /// The <c>DcsvIo.D2.Geo.Abstractions</c> namespace used in <c>using</c>
     /// directives in every emitted file so the data values can reference
     /// the spec-derived types (<c>Country</c> record, <c>CountryCode</c>
     /// enum, <c>SubdivisionCode</c> wrapper struct, etc.).

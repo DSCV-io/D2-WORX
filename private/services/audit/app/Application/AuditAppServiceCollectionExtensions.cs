@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.App.Application;
+namespace DcsvIo.D2.Private.Audit.App.Application;
 
-using D2.Audit.App.Application.Handlers.Queries.PingAudit;
+using DcsvIo.D2.Private.Audit.App.Application.Handlers.Queries.PingAudit;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>

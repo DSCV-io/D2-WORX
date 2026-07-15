@@ -2,12 +2,12 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/service-defaults
+# @dcsv-io/d2-service-defaults
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
-One-call bundle that composes `@d2/logging` + `@d2/telemetry` plus the
-`D2Env.load()` env loader. Mirrors `D2.Shared.ServiceDefaults` (.NET) at
+One-call bundle that composes `@dcsv-io/d2-logging` + `@dcsv-io/d2-telemetry` plus the
+`D2Env.load()` env loader. Mirrors `DcsvIo.D2.ServiceDefaults` (.NET) at
 the composition role — narrower scope: no middleware aggregator, no auth
 aggregator, no local-cache. The BFF is zero-privilege, so middleware
 composition lives in the SvelteKit hook.
@@ -25,14 +25,14 @@ composition lives in the SvelteKit hook.
 
 ## Dependencies
 
-- `@d2/utilities` (boundary helpers)
-- `@d2/logging` (the bundle includes its `setupLogger`)
-- `@d2/telemetry` (the bundle includes its `setupTelemetry`)
+- `@dcsv-io/d2-utilities` (boundary helpers)
+- `@dcsv-io/d2-logging` (the bundle includes its `setupLogger`)
+- `@dcsv-io/d2-telemetry` (the bundle includes its `setupTelemetry`)
 
 ## Usage example
 
 ```ts
-import { D2Env, setupServiceDefaults } from "@d2/service-defaults";
+import { D2Env, setupServiceDefaults } from "@dcsv-io/d2-service-defaults";
 
 const env = D2Env.load();
 const handle = setupServiceDefaults({
@@ -56,7 +56,7 @@ process.on("SIGTERM", async () => {
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.ServiceDefaults`:
+Mirrors `DcsvIo.D2.ServiceDefaults`:
 
 - `setupServiceDefaults` ↔ `services.AddD2ServiceDefaults(options)` —
   same composition role, narrower scope (Node-side has no DI container in

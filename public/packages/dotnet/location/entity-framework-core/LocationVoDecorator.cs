@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location.EntityFrameworkCore;
+namespace DcsvIo.D2.Location.EntityFrameworkCore;
 
 using System.Security.Cryptography;
-using D2.Shared.DataGovernance.EntityFrameworkCore;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Location.ValueObjects;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.DataGovernance.EntityFrameworkCore;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Location.ValueObjects;
+using DcsvIo.D2.Validation.Abstractions;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 /// <summary>

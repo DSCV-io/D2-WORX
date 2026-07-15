@@ -6,14 +6,14 @@
 
 extern alias ResultErrorCodesSourceGen;
 
-namespace D2.Shared.Tests.Unit.Result.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Result.SourceGen;
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
 using Xunit;
-using DiagnosticIds = ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.DiagnosticIds;
+using DiagnosticIds = ResultErrorCodesSourceGen::DcsvIo.D2.ResultErrorCodes.SourceGen.DiagnosticIds;
 
 /// <summary>
 /// Pins every <see cref="DiagnosticIds"/> constant in the generic

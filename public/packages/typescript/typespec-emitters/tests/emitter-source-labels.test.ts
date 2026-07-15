@@ -169,7 +169,7 @@ const PHASE_LABEL = /\bPhase\s+\d+\b/;
 //   SC1, SC2, SC3      (session-scoped shorthand tokens)
 //
 // Excluded from the pattern (false-positive suppressions):
-//   "D2" — the product name ("D2.Shared", "using D2", "real D2 auth"). The
+//   "D2" — the product name ("DcsvIo.D2", "using D2", "real D2 auth"). The
 //          pattern uses \bD[3-9]\d*\b|\bD[12]\d+\b to match D3–D9 and D10+
 //          without ever matching the two-character token "D2".
 //   Proto field numbers (e.g. "field 1") — no letter prefix.

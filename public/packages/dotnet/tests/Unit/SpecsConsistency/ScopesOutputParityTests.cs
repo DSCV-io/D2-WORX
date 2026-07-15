@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.Scopes.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Auth.Scopes.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -29,7 +29,7 @@ using Xunit;
 /// </summary>
 public sealed class ScopesOutputParityTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.Auth.Abstractions";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.Auth.Abstractions";
     private const string _SPEC_FILE_NAME = "scopes.spec.json";
 
     private static readonly string sr_generatedBase =
@@ -41,8 +41,8 @@ public sealed class ScopesOutputParityTests
             "auth",
             "abstractions",
             "Generated",
-            "D2.Shared.Auth.Scopes.SourceGen",
-            "D2.Shared.Auth.Scopes.SourceGen.ScopesGenerator");
+            "DcsvIo.D2.Auth.Scopes.SourceGen",
+            "DcsvIo.D2.Auth.Scopes.SourceGen.ScopesGenerator");
 
     private static readonly string sr_authAbstractionsBase =
         Path.Combine(

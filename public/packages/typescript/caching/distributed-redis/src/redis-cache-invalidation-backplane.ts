@@ -6,10 +6,15 @@
 import {
   InputFailures,
   type ICacheInvalidationBackplane,
-} from "@d2/caching-abstractions";
-import type { ILogger } from "@d2/logging";
-import { sanitizedErrorRender } from "@d2/logging";
-import { canceled, ok, serviceUnavailable, type D2Result } from "@d2/result";
+} from "@dcsv-io/d2-caching-abstractions";
+import type { ILogger } from "@dcsv-io/d2-logging";
+import { sanitizedErrorRender } from "@dcsv-io/d2-logging";
+import {
+  canceled,
+  ok,
+  serviceUnavailable,
+  type D2Result,
+} from "@dcsv-io/d2-result";
 
 /**
  * Closed-set backplane operation names for warn bindings (§21.11).
@@ -21,7 +26,7 @@ export const BackplaneOp = {
 
 /** Closed-set type for {@link BackplaneOp} values. */
 export type BackplaneOpName = (typeof BackplaneOp)[keyof typeof BackplaneOp];
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import type Redis from "ioredis";
 import { randomUUID } from "node:crypto";
 

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
 
 using System.Security.Cryptography;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 
 /// <summary>
 /// Shared sealing test material: a fixture recipient service id, two P-256 sealing keypairs,

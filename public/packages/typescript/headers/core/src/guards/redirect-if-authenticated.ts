@@ -3,9 +3,9 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { fail, HttpStatusCode } from "@d2/result";
-import { falsey } from "@d2/utilities";
-import { PROBLEM_DETAILS_CONTENT_TYPE } from "@d2/problem-details-abstractions";
+import { fail, HttpStatusCode } from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "@dcsv-io/d2-problem-details-abstractions";
 import { toProblemDetails } from "../problem-details.js";
 import type { GuardRequestEvent, GuardThrowers } from "./guard-types.js";
 

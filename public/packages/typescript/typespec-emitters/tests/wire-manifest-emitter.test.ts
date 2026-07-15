@@ -84,7 +84,7 @@ describe("emitWireIdentityManifest_AlphaChannel_RecordsIdentityFacts", () => {
       ALPHA_CHANNEL,
     );
     const parsed = JSON.parse(file.content) as Record<string, unknown>;
-    expect(parsed["x-d2-generated-by"]).toBe("@d2/typespec-emitters");
+    expect(parsed["x-d2-generated-by"]).toBe("@dcsv-io/d2-typespec-emitters");
   });
 });
 

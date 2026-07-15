@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Default.NameResolution;
+namespace DcsvIo.D2.Geo.Default.NameResolution;
 
-using D2.Shared.Geo.Abstractions;
+using DcsvIo.D2.Geo.Abstractions;
 
 /// <summary>
 /// Single dictionary value for the per-country subdivision name cache.

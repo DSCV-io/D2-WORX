@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.TokenExchange;
+namespace DcsvIo.D2.Auth.Outbound.TokenExchange;
 
 /// <summary>
 /// Thrown by the internal fetch path when the OAuth token-exchange response
 /// is structurally invalid. Distinct from transport errors so the
 /// <c>HttpTokenExchangeClient</c> can map structural failures and transport
-/// failures to different <see cref="D2.Shared.Result.D2Result"/> shapes.
+/// failures to different <see cref="DcsvIo.D2.Result.D2Result"/> shapes.
 /// </summary>
 internal sealed class TokenExchangeException : Exception
 {

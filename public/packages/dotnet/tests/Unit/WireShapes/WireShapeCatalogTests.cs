@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.WireShapes;
+namespace DcsvIo.D2.Tests.Unit.WireShapes;
 
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Serialization;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Serialization;
 using Xunit;
 
 /// <summary>

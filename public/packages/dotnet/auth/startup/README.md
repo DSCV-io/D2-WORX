@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Auth.Startup
+# DcsvIo.D2.Auth.Startup
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -16,7 +16,7 @@ Every D² service endpoint must explicitly declare what it requires from callers
 
 ### Composition
 
-The guard is wired automatically when using `D2.Shared.ServiceDefaults` — see [`../../../service-defaults/README.md`](../../../service-defaults/README.md). For direct registration:
+The guard is wired automatically when using `DcsvIo.D2.ServiceDefaults` — see [`../../../service-defaults/README.md`](../../../service-defaults/README.md). For direct registration:
 
 ```csharp
 services.AddD2AuthEndpointGuard();
@@ -88,9 +88,9 @@ Note: `SkipAuthEndpointGuard` only takes effect when `SkipAuthAutoWiring = false
 
 | Project reference | Why |
 | --- | --- |
-| `D2.Shared.Auth.Http` | `EndpointScopeMetadata` — HTTP declared-intent type. |
-| `D2.Shared.Auth.Grpc` | `MethodScopeMetadata`, `D2RequireAnyScopeAttribute`, `D2RequireAllScopesAttribute`, `D2HarmlessEndpointAttribute` — gRPC declared-intent types. |
-| `D2.Shared.AspNetCore` | `D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS` (infra-path list) + `InfrastructurePathMatcher`. |
+| `DcsvIo.D2.Auth.Http` | `EndpointScopeMetadata` — HTTP declared-intent type. |
+| `DcsvIo.D2.Auth.Grpc` | `MethodScopeMetadata`, `D2RequireAnyScopeAttribute`, `D2RequireAllScopesAttribute`, `D2HarmlessEndpointAttribute` — gRPC declared-intent types. |
+| `DcsvIo.D2.AspNetCore` | `D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS` (infra-path list) + `InfrastructurePathMatcher`. |
 | `Microsoft.AspNetCore.App` (framework ref) | `IStartupFilter`, `IApplicationBuilder`, `EndpointDataSource`, `RouteEndpoint`. |
 | `Microsoft.Extensions.{DependencyInjection,Logging}.Abstractions` | DI / logging. |
 

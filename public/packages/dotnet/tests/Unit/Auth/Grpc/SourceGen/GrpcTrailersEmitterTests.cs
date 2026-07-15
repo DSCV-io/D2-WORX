@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Grpc.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.Grpc.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.Grpc.Trailers.SourceGen;
+using DcsvIo.D2.Grpc.Trailers.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -29,7 +29,7 @@ public sealed class GrpcTrailersEmitterTests
         result.GeneratedSource.Should()
             .Contain("public const string ERROR_CODE = \"d2_error_code\";");
         result.GeneratedSource.Should()
-            .Contain("namespace D2.Shared.Auth.Grpc.Status;");
+            .Contain("namespace DcsvIo.D2.Auth.Grpc.Status;");
         result.GeneratedSource.Should().Contain("public static class D2GrpcTrailers");
         result.GeneratedSource.Should()
             .Contain("public static IReadOnlyList<string> AllTrailers => sr_allTrailers;");

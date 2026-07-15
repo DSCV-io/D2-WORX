@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.SourceGen;
 
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.ErrorCodes.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.ErrorCodes.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Xunit;
 
 /// <summary>

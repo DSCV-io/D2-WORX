@@ -10,7 +10,7 @@
 
 /**
  * Spec-derived closed catalog of encryption-domain identifiers.
- * Mirrors .NET D2.Shared.Encryption.EncryptionDomains (same wire values).
+ * Mirrors .NET DcsvIo.D2.Encryption.EncryptionDomains (same wire values).
  *
  * Use these constants instead of raw strings so a typo can't silently
  * route a message to a non-existent keyring. The PLAINTEXT sentinel is

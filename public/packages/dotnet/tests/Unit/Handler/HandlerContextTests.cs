@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Handler;
+namespace DcsvIo.D2.Tests.Unit.Handler;
 
 using AwesomeAssertions;
-using D2.Shared.Handler;
-using D2.Shared.Handler.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Handler.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

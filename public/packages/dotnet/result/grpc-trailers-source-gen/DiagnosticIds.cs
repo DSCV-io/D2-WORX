@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Grpc.Trailers.SourceGen;
+namespace DcsvIo.D2.Grpc.Trailers.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by

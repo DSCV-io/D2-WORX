@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Encryption;
+namespace DcsvIo.D2.Messaging.RabbitMq.Encryption;
 
 using System;
 using System.Collections.Concurrent;
 using System.Reflection;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Messaging;
 
 /// <summary>
 /// Resolves a message <see cref="Type"/> to its <see cref="MqMessageDescriptor"/>

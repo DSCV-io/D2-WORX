@@ -197,7 +197,7 @@ export async function buildLanguagesSpec(): Promise<LanguagesSpec> {
     $schema: "./languages.schema.json",
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
-      "codegen / D2.Shared.Geo.Default. A clean/transform pass to the sibling " +
+      "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
       "contracts/geo/languages.spec.json (one level up) is a separate step. Sources: " +
       "datasets/language-codes (PDDL — alpha2 + English name) + Wikidata SPARQL (CC0 — " +
       "endonyms via P218 in own language) + CLDR cldr-core scriptMetadata + languageData " +

@@ -9,7 +9,7 @@
 //   (d) the in-process leaf owner annotation
 //
 // Sections:
-//   1. Decorator declarations (would live in @d2/typespec-decorators package)
+//   1. Decorator declarations (would live in @dcsv-io/d2-typespec-decorators package)
 //   2. Model definitions (SignInput, SignOutput)
 //   3. The Sign operation — dual-bound, scoped, owner-declared
 //   4. Companion gRPC service declaration (the gRPC surface of the same op)
@@ -257,7 +257,7 @@ model D2ErrorResponse {
 //
 //   // GENERATED — do not edit
 //   // Source: contracts/keycustodian-ops/sign.tsp
-//   namespace D2.Edge.KeyCustodian.App;
+//   namespace DcsvIo.D2.Private.Edge.KeyCustodian.App;
 //
 //   /// <summary>
 //   /// In-process leaf interface for KeyCustodian operations consumed by
@@ -270,7 +270,7 @@ model D2ErrorResponse {
 //   }
 //
 // The Auth module's handler receives IKeyCustodianInternalApi via DI
-// (registered in D2.Edge.KeyCustodian.App's AddD2KeyCustodianApp()).
+// (registered in DcsvIo.D2.Private.Edge.KeyCustodian.App's AddD2KeyCustodianApp()).
 // The implementation is the hand-written SignHandler bound to the contract.
 //
 // The forwarding emitter generates the Edge route glue:
@@ -296,7 +296,7 @@ model D2ErrorResponse {
 //
 //   syntax = "proto3";
 //   package d2.keycustodian.internal.v1;
-//   option csharp_namespace = "D2.Edge.KeyCustodian.Grpc.Internal.V1";
+//   option csharp_namespace = "DcsvIo.D2.Private.Edge.KeyCustodian.Grpc.Internal.V1";
 //
 //   service KeyCustodianInternal {
 //     rpc Sign(SignRequest) returns (SignResponse);

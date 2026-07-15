@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation;
+namespace DcsvIo.D2.Tests.Unit.Validation;
 
 using AwesomeAssertions;
-using D2.Shared.Validation;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Validation;
+using DcsvIo.D2.Validation.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
@@ -200,23 +200,23 @@ public sealed class DependencyInjectionTests
 
     private sealed class StubEmailValidator : IEmailValidator
     {
-        public D2.Shared.Result.D2Result<string> Validate(string? email) =>
-            D2.Shared.Result.D2Result<string>.Ok(email ?? string.Empty);
+        public DcsvIo.D2.Result.D2Result<string> Validate(string? email) =>
+            DcsvIo.D2.Result.D2Result<string>.Ok(email ?? string.Empty);
     }
 
     private sealed class StubPhoneValidator : IPhoneValidator
     {
-        public D2.Shared.Result.D2Result<string> Validate(
+        public DcsvIo.D2.Result.D2Result<string> Validate(
             string? phone,
-            D2.Shared.Geo.Abstractions.CountryCode? defaultRegion = null) =>
-                D2.Shared.Result.D2Result<string>.Ok(phone ?? string.Empty);
+            DcsvIo.D2.Geo.Abstractions.CountryCode? defaultRegion = null) =>
+                DcsvIo.D2.Result.D2Result<string>.Ok(phone ?? string.Empty);
     }
 
     private sealed class StubPostalCodeValidator : IPostalCodeValidator
     {
-        public D2.Shared.Result.D2Result<string> Validate(
+        public DcsvIo.D2.Result.D2Result<string> Validate(
             string? postalCode,
-            D2.Shared.Geo.Abstractions.CountryCode? countryCode = null) =>
-                D2.Shared.Result.D2Result<string>.Ok(postalCode ?? string.Empty);
+            DcsvIo.D2.Geo.Abstractions.CountryCode? countryCode = null) =>
+                DcsvIo.D2.Result.D2Result<string>.Ok(postalCode ?? string.Empty);
     }
 }

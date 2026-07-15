@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Contacts.EntityFrameworkCore;
+namespace DcsvIo.D2.Contacts.EntityFrameworkCore;
 
-using D2.Shared.Contacts.ValueObjects;
+using DcsvIo.D2.Contacts.ValueObjects;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 /// <summary>
-/// Per-VO complex-type mapping helpers for the D2.Shared.Contacts value objects. Called
+/// Per-VO complex-type mapping helpers for the DcsvIo.D2.Contacts value objects. Called
 /// from the host's <c>IEntityTypeConfiguration&lt;T&gt;</c> inside a
 /// <c>b.ComplexProperty</c> callback. Each helper: wires <c>HasMaxLength</c> from
 /// <c>FieldConstraints.*</c>, applies any necessary value converters (Uri), and writes the

@@ -8,8 +8,8 @@
 
 /* eslint-disable */
 
-import type { Country, GeopoliticalEntity } from "@d2/geo-abstractions";
-import { CountryCode, GeopoliticalEntityCode, GeopoliticalEntityType } from "@d2/geo-abstractions";
+import type { Country, GeopoliticalEntity } from "@dcsv-io/d2-geo-abstractions";
+import { CountryCode, GeopoliticalEntityCode, GeopoliticalEntityType } from "@dcsv-io/d2-geo-abstractions";
 
 import { CountryLookup } from "./countries.g.js";
 

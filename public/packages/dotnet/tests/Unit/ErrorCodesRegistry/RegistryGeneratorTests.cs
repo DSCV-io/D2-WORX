@@ -6,7 +6,7 @@
 
 extern alias RegistrySourceGen;
 
-namespace D2.Shared.Tests.Unit.ErrorCodesRegistry;
+namespace DcsvIo.D2.Tests.Unit.ErrorCodesRegistry;
 
 using System.Collections.Immutable;
 using System.IO;
@@ -15,7 +15,7 @@ using AwesomeAssertions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using RegistrySourceGen::D2.Shared.ErrorCodes.Registry.SourceGen;
+using RegistrySourceGen::DcsvIo.D2.ErrorCodes.Registry.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -39,7 +39,7 @@ using Xunit;
 /// </summary>
 public sealed class RegistryGeneratorTests
 {
-    private const string _TARGET_ASSEMBLY = "D2.Shared.ErrorCodes.Registry";
+    private const string _TARGET_ASSEMBLY = "DcsvIo.D2.ErrorCodes.Registry";
 
     // Minimal valid generic spec (unprefixed codes, common domain).
     private const string _GENERIC_SPEC = """

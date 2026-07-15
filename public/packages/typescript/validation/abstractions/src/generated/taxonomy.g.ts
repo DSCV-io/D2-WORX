@@ -12,7 +12,7 @@ import { z } from "zod";
 
 /**
  * Closed list of personal-name prefixes (honorifics / titles). The Other member is the escape hatch backed by a custom free-text value.
- * Mirrors .NET `D2.Shared.Validation.Abstractions.NamePrefix` byte-for-byte
+ * Mirrors .NET `DcsvIo.D2.Validation.Abstractions.NamePrefix` byte-for-byte
  * over the wire (string-encoded member name in both runtimes).
  */
 export const NamePrefix = {
@@ -96,7 +96,7 @@ export const NamePrefixSchema = z.enum([
 
 /**
  * Closed list of personal-name suffixes (generational and ordinal). The Other member is the escape hatch backed by a custom free-text value.
- * Mirrors .NET `D2.Shared.Validation.Abstractions.NameSuffix` byte-for-byte
+ * Mirrors .NET `DcsvIo.D2.Validation.Abstractions.NameSuffix` byte-for-byte
  * over the wire (string-encoded member name in both runtimes).
  */
 export const NameSuffix = {
@@ -164,7 +164,7 @@ export const NameSuffixSchema = z.enum([
 
 /**
  * Closed list of biological-sex classifications. Unspecified is the absence sentinel; there is no Other member.
- * Mirrors .NET `D2.Shared.Validation.Abstractions.BiologicalSex` byte-for-byte
+ * Mirrors .NET `DcsvIo.D2.Validation.Abstractions.BiologicalSex` byte-for-byte
  * over the wire (string-encoded member name in both runtimes).
  */
 export const BiologicalSex = {

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound;
 
 using Xunit;
 
 /// <summary>
 /// xUnit collection definition that serializes the test classes that attach
 /// <see cref="System.Diagnostics.Metrics.MeterListener"/> instances to
-/// <c>OutboundTelemetry.SR_Meter</c> (<c>"D2.Shared.Auth.Outbound"</c>) and assert
+/// <c>OutboundTelemetry.SR_Meter</c> (<c>"DcsvIo.D2.Auth.Outbound"</c>) and assert
 /// measurement counts or tag values.
 /// <para>
 /// <c>OutboundTelemetry.SR_Meter</c> is a process-global static

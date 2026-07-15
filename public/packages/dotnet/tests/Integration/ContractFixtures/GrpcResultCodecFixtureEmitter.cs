@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using DcsvIo.D2.Utilities.Extensions;
 using Google.Protobuf;
 using Xunit;
 

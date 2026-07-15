@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 
 using Microsoft.Extensions.Logging;
 

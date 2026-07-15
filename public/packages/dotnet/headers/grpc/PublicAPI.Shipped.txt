@@ -1,7 +1,7 @@
 #nullable enable
-D2.Shared.Headers.Grpc.GrpcHeaders
-const D2.Shared.Headers.Grpc.GrpcHeaders.AUTHORIZATION = "Authorization" -> string!
-const D2.Shared.Headers.Grpc.GrpcHeaders.PROPAGATED_CONTEXT = "x-d2-context" -> string!
-const D2.Shared.Headers.Grpc.GrpcHeaders.TRACEPARENT = "traceparent" -> string!
-const D2.Shared.Headers.Grpc.GrpcHeaders.TRACESTATE = "tracestate" -> string!
-static D2.Shared.Headers.Grpc.GrpcHeaders.AllGrpcHeaders.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.Headers.Grpc.GrpcHeaders
+const DcsvIo.D2.Headers.Grpc.GrpcHeaders.AUTHORIZATION = "Authorization" -> string!
+const DcsvIo.D2.Headers.Grpc.GrpcHeaders.PROPAGATED_CONTEXT = "x-d2-context" -> string!
+const DcsvIo.D2.Headers.Grpc.GrpcHeaders.TRACEPARENT = "traceparent" -> string!
+const DcsvIo.D2.Headers.Grpc.GrpcHeaders.TRACESTATE = "tracestate" -> string!
+static DcsvIo.D2.Headers.Grpc.GrpcHeaders.AllGrpcHeaders.get -> System.Collections.Generic.IReadOnlyList<string!>!

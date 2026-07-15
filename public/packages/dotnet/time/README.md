@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Time
+# DcsvIo.D2.Time
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 >
@@ -58,7 +58,7 @@ and unambiguous.
 DST ambiguity (Category 3 only): call `LocalAnchoredEvent.ComputeNextFire()`,
 which applies NodaTime's `Resolvers.LenientResolver` — deterministic, never
 throws (spring-forward skipped → maps forward; fall-back ambiguous → picks
-earlier instant). The TS-side `@d2/time` mirrors this via Temporal's
+earlier instant). The TS-side `@dcsv-io/d2-time` mirrors this via Temporal's
 `disambiguation: "compatible"`. Cross-language wire parity is enforced by
 the fixtures at `contracts/temporal/temporal-adversarial.fixture.json`,
 which both .NET and TS test packages load and assert against.
@@ -97,7 +97,7 @@ Call `AddD2NodaTime()` inside the Npgsql configuration lambda passed to
 `UseNpgsql()`:
 
 ```csharp
-using D2.Shared.Time.EfCore;
+using DcsvIo.D2.Time.EfCore;
 
 services.AddDbContext<MyDbContext>(opts =>
     opts.UseNpgsql(
@@ -112,7 +112,7 @@ extension is idempotent — calling it twice on the same builder is safe.
 ## TestClock usage
 
 ```csharp
-using D2.Shared.Time;
+using DcsvIo.D2.Time;
 using NodaTime;
 
 var clock = new TestClock(Instant.FromUtc(2026, 1, 15, 12, 0));
@@ -135,17 +135,17 @@ The following NodaTime types appear on this lib's public surface or are
 recommended for production use: `Instant`, `LocalDateTime`, `LocalDate`,
 `LocalTime`, `ZonedDateTime`, `DateTimeZone`, `Duration`, `Period`,
 `OffsetDateTime`, `Resolvers`. Consumers `using NodaTime;` to access them
-after taking a `<ProjectReference>` to `D2.Shared.Time`.
+after taking a `<ProjectReference>` to `DcsvIo.D2.Time`.
 
-**Naming collision note**: consumers using both `D2.Shared.Time` and
+**Naming collision note**: consumers using both `DcsvIo.D2.Time` and
 `NodaTime` simultaneously (e.g., for `Duration` / `Instant` types) will hit
 CS0104 ambiguous reference on `IClock` and `SystemClock` (NodaTime ships its
 own `NodaTime.IClock` interface and `NodaTime.SystemClock` class). Add
 per-file aliases at the top of the consuming file:
 
 ```csharp
-using IClock = D2.Shared.Time.IClock;
-using SystemClock = D2.Shared.Time.SystemClock;
+using IClock = DcsvIo.D2.Time.IClock;
+using SystemClock = DcsvIo.D2.Time.SystemClock;
 ```
 
 ## Telemetry
@@ -163,6 +163,6 @@ No configuration — zero-config; consumers register `IClock → SystemClock` th
 
 D2 project references (smart-constructor pattern surfaces them transitively):
 
-- `D2.Shared.Result` — `D2Result<T>` + `InputError` shapes returned by `Create` factories.
-- `D2.Shared.I18n.Abstractions` — `TK.Common.Time.*` translation key constants referenced by the `Create` validation failures.
-- `D2.Shared.Utilities` — `Falsey()` extension for the IANA null/empty/whitespace guard.
+- `DcsvIo.D2.Result` — `D2Result<T>` + `InputError` shapes returned by `Create` factories.
+- `DcsvIo.D2.I18n.Abstractions` — `TK.Common.Time.*` translation key constants referenced by the `Create` validation failures.
+- `DcsvIo.D2.Utilities` — `Falsey()` extension for the IANA null/empty/whitespace guard.

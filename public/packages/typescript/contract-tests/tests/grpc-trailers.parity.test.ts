@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { D2GrpcTrailers } from "@d2/grpc-client";
+import { D2GrpcTrailers } from "@dcsv-io/d2-grpc-client";
 import { canonicalize, loadFixture } from "../src/index.js";
 
 interface CatalogMap {

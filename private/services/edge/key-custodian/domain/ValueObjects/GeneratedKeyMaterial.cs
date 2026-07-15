@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
 
 /// <summary>
 /// Short-lived carrier for freshly-generated key material before it is

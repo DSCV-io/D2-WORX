@@ -38,7 +38,7 @@ import {
   D2_COMMAND_KEY,
   D2_SERVER_PUSH_KEY,
   D2_GRPC_METHOD_KEY,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Module-level mock state — vi.mock is hoisted; factories cannot close over
@@ -152,7 +152,7 @@ function makeBaseContext(
 }
 
 const FIXTURE_OPTS = {
-  "csharp-namespace": "D2.Edge.Tests.TypeSpecSse.Generated",
+  "csharp-namespace": "DcsvIo.D2.Private.Edge.Tests.TypeSpecSse.Generated",
 };
 
 function find(name: string): { path: string; content: string } | undefined {

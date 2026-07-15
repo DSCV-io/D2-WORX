@@ -2,14 +2,14 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/i18n-abstractions
+# @dcsv-io/d2-i18n-abstractions
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
 Foundational, zero-dependency package that declares the i18n primitive types:
 the `TKMessage` translation-message shape, the `tk()` factory that constructs
 one, and the spec-derived `TkMessageWireShape` property-name catalog. Mirrors
-`D2.Shared.I18n.Abstractions` on the .NET side — a leaf package with no outbound
+`DcsvIo.D2.I18n.Abstractions` on the .NET side — a leaf package with no outbound
 dependencies, so any package in the graph can import these primitives without
 risking a circular dependency.
 
@@ -32,7 +32,7 @@ None. Zero runtime deps — this is a foundational leaf in the dependency graph.
 ## Usage example
 
 ```ts
-import { tk, type TKMessage } from "@d2/i18n-abstractions";
+import { tk, type TKMessage } from "@dcsv-io/d2-i18n-abstractions";
 
 const message: TKMessage = tk("common_errors_NOT_FOUND");
 // message === { key: "common_errors_NOT_FOUND" }
@@ -43,16 +43,16 @@ const withParams = tk("common_errors_LIMIT_EXCEEDED", { maxLength: 256 });
 
 ## Why a separate package
 
-`TKMessage` is the shared currency of the result + i18n surfaces: `@d2/result`
-carries `TKMessage[]` on every `D2Result`, `@d2/i18n-keys` exposes the `TK`
-constants as `TKMessage` instances, and `@d2/i18n` renders them. Placing the
+`TKMessage` is the shared currency of the result + i18n surfaces: `@dcsv-io/d2-result`
+carries `TKMessage[]` on every `D2Result`, `@dcsv-io/d2-i18n-keys` exposes the `TK`
+constants as `TKMessage` instances, and `@dcsv-io/d2-i18n` renders them. Placing the
 type and its factory in a zero-dependency leaf lets all three depend on it
-without forming a cycle, and keeps `@d2/result` focused on the result envelope
+without forming a cycle, and keeps `@dcsv-io/d2-result` focused on the result envelope
 rather than owning an i18n primitive.
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.I18n.Abstractions` — both declare `TKMessage` plus the
+Mirrors `DcsvIo.D2.I18n.Abstractions` — both declare `TKMessage` plus the
 spec-derived wire-shape property names, generated from the same
 `contracts/tk-message/tk-message.spec.json` source. Single spec, two emitters,
 cross-language wire drift structurally impossible.

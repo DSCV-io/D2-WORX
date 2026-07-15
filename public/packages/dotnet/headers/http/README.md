@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Headers.Http
+# DcsvIo.D2.Headers.Http
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
-> **Duplicated from [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — update both in lockstep.** This catalog mirrors its TS sibling [`@d2/headers-http`](../../typescript/headers/http/README.md) at byte-equal wire values per the cross-language parity contract documented in [`docs/PARITY.md`](../../../../docs/PARITY.md). Both sides emit from the same spec; physical dedup across .NET ↔ TS is not feasible. Parity is asserted by `HeaderCatalogConsistencyTests` (.NET) and `contract-tests/headers.parity.test.ts` (TS).
+> **Duplicated from [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — update both in lockstep.** This catalog mirrors its TS sibling [`@dcsv-io/d2-headers-http`](../../typescript/headers/http/README.md) at byte-equal wire values per the cross-language parity contract documented in [`docs/PARITY.md`](../../../../docs/PARITY.md). Both sides emit from the same spec; physical dedup across .NET ↔ TS is not feasible. Parity is asserted by `HeaderCatalogConsistencyTests` (.NET) and `contract-tests/headers.parity.test.ts` (TS).
 
-D2 wire-protocol headers applicable to the HTTP transport. Includes HTTP-only entries (`Authorization`, `Idempotency-Key`, `X-D2-Client-Fingerprint`, `X-D2-Internal-Token`) AND cross-transport entries (`x-d2-context`, `traceparent`, `tracestate`) at identical wire values. Codegen-emitted from `contracts/headers/headers.spec.json` via `D2.Shared.Headers.SourceGen` (filtered with `applicability.Contains("http")`). Mirrors TS `@d2/headers-http`.
+D2 wire-protocol headers applicable to the HTTP transport. Includes HTTP-only entries (`Authorization`, `Idempotency-Key`, `X-D2-Client-Fingerprint`, `X-D2-Internal-Token`) AND cross-transport entries (`x-d2-context`, `traceparent`, `tracestate`) at identical wire values. Codegen-emitted from `contracts/headers/headers.spec.json` via `DcsvIo.D2.Headers.SourceGen` (filtered with `applicability.Contains("http")`). Mirrors TS `@dcsv-io/d2-headers-http`.
 
 ---
 
@@ -29,25 +29,25 @@ D2 wire-protocol headers applicable to the HTTP transport. Includes HTTP-only en
 
 ## When to reach for this catalog
 
-Use `D2.Shared.Headers.Http` from any HTTP-context consumer — `auth/http` middleware, `auth/outbound`'s retained RFC 8693 token-exchange client, ASP.NET CORS configuration, idempotency middleware. The catalog includes BOTH the HTTP-only entries AND the cross-transport entries that an HTTP pipeline can encounter; one `using` covers everything.
+Use `DcsvIo.D2.Headers.Http` from any HTTP-context consumer — `auth/http` middleware, `auth/outbound`'s retained RFC 8693 token-exchange client, ASP.NET CORS configuration, idempotency middleware. The catalog includes BOTH the HTTP-only entries AND the cross-transport entries that an HTTP pipeline can encounter; one `using` covers everything.
 
 ---
 
 ## Spec contract
 
-`contracts/headers/headers.spec.json` is the single source of truth. Every entry whose `applicability` array contains `"http"` lives in this catalog. Cross-transport entries also live in `D2.Shared.Headers.Common` AND every other transport catalog they apply to, all at identical wire values (codegen-guaranteed and verified by `HeaderCatalogConsistencyTests`).
+`contracts/headers/headers.spec.json` is the single source of truth. Every entry whose `applicability` array contains `"http"` lives in this catalog. Cross-transport entries also live in `DcsvIo.D2.Headers.Common` AND every other transport catalog they apply to, all at identical wire values (codegen-guaranteed and verified by `HeaderCatalogConsistencyTests`).
 
 ---
 
 ## Build-time diagnostics + generated output
 
-> Diagnostic IDs `D2HDR001`–`D2HDR007` and the generated-file path convention (`Generated/D2.Shared.Headers.SourceGen/.../<Catalog>Headers.g.cs`) are documented at [`../source-gen/README.md` § Build-time diagnostics](../source-gen/README.md#build-time-diagnostics) and [§ Generated output convention](../source-gen/README.md#generated-output-convention).
+> Diagnostic IDs `D2HDR001`–`D2HDR007` and the generated-file path convention (`Generated/DcsvIo.D2.Headers.SourceGen/.../<Catalog>Headers.g.cs`) are documented at [`../source-gen/README.md` § Build-time diagnostics](../source-gen/README.md#build-time-diagnostics) and [§ Generated output convention](../source-gen/README.md#generated-output-convention).
 
 ---
 
 ## Dependencies
 
-- `D2.Shared.Headers.SourceGen` (build-time analyzer)
+- `DcsvIo.D2.Headers.SourceGen` (build-time analyzer)
 
 No runtime dependencies — pure constants.
 
@@ -56,7 +56,7 @@ No runtime dependencies — pure constants.
 ## Reference
 
 - [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — source spec
-- [`D2.Shared.Headers.SourceGen`](../source-gen/README.md) — emitter
-- [`D2.Shared.Headers.Common`](../common/README.md) — cross-transport subset
-- [`D2.Shared.Headers.Amqp`](../amqp/README.md) — AMQP-applicable subset
-- [`D2.Shared.Headers.Grpc`](../grpc/README.md) — gRPC-applicable subset
+- [`DcsvIo.D2.Headers.SourceGen`](../source-gen/README.md) — emitter
+- [`DcsvIo.D2.Headers.Common`](../common/README.md) — cross-transport subset
+- [`DcsvIo.D2.Headers.Amqp`](../amqp/README.md) — AMQP-applicable subset
+- [`DcsvIo.D2.Headers.Grpc`](../grpc/README.md) — gRPC-applicable subset

@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { ICacheSet, ITieredCache } from "@d2/caching-abstractions";
+import type { ICacheSet, ITieredCache } from "@dcsv-io/d2-caching-abstractions";
 import { describe, expect, it } from "vitest";
 
 import * as barrel from "../src/index.js";

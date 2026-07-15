@@ -3,14 +3,14 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { CountryCode } from "@d2/geo-abstractions";
-import type { D2Result } from "@d2/result";
+import type { CountryCode } from "@dcsv-io/d2-geo-abstractions";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 /**
- * Mirror of .NET `D2.Shared.Validation.Abstractions.IPhoneValidator` —
+ * Mirror of .NET `DcsvIo.D2.Validation.Abstractions.IPhoneValidator` —
  * validates a phone number and returns a normalized E.164 form on success.
  *
- * Implementations live in `@d2/validation` backed by the default
+ * Implementations live in `@dcsv-io/d2-validation` backed by the default
  * normalization rules; tests can supply ad-hoc fixtures by implementing
  * this interface directly.
  */

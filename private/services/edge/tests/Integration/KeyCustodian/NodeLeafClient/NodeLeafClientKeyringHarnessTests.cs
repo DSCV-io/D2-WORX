@@ -4,50 +4,50 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian.NodeLeafClient;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian.NodeLeafClient;
 
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
-using D2.Edge.Api.Grpc.KeyCustodian;
-using D2.Edge.KeyCustodian.App.Application;
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
-using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
-using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
-using D2.Edge.Tests.Unit.KeyCustodian;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
-using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
-using D2.Private.Auth;
-using D2.Services.Protos.KeyCustodian.V2Alpha;
-using D2.Shared.AspNetCore.Mtls;
-using D2.Shared.Auth.Grpc.Mtls;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.EntityFrameworkCore.Postgres;
-using D2.Shared.Handler;
-using D2.Shared.Handler.Repo.Postgres;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.AspNetCore.Mtls;
+using DcsvIo.D2.Auth.Grpc.Mtls;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Handler.Repo.Postgres;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Messaging;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecRoute.Generated.Facade;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
+using global::D2.Services.Protos.KeyCustodian.V2Alpha;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using ClientKeyringOutput = D2.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
-using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using ClientKeyringOutput = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.GetKeyringOutput;
+using DtoSignFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
 
 /// <summary>
 /// The LIVE loopback mutual-TLS proof for the TypeScript <c>getKeyring</c> consumer
-/// runtime: the shipped <c>@d2/key-custodian-client</c> <c>GrpcKeyringClient</c> dials a
+/// runtime: the shipped <c>@dcsv-io/d2-private-key-custodian-client</c> <c>GrpcKeyringClient</c> dials a
 /// real Kestrel HTTPS KeyCustodian host over a genuine mutual-TLS socket, fetches a payload
 /// keyring served by the REAL <see cref="GetKeyringHandler"/> over a Testcontainers
 /// PostgreSQL database, and the returned material round-trips through the shipped TS
-/// <c>@d2/encryption</c> <c>PayloadCrypto</c> by decrypting a frame the .NET
+/// <c>@dcsv-io/d2-encryption</c> <c>PayloadCrypto</c> by decrypting a frame the .NET
 /// <c>PayloadCrypto</c> produced under the SAME keyring ΓÇö a cross-runtime,
 /// over-the-wire end-to-end pin.
 /// </summary>
@@ -69,7 +69,7 @@ using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutp
 /// fetch runs the real <see cref="GetKeyringHandler"/> authority rule
 /// (<c>WorkloadCapabilityAuthority.AuthorizeKeyringFetch</c>), the real root-unwrap, and the
 /// real overlap partition ΓÇö the same graph the
-/// <see cref="D2.Edge.Tests.Integration.KeyCustodian.KeyCustodianKeyringDistributionIntegrationTests"/>
+/// <see cref="DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian.KeyCustodianKeyringDistributionIntegrationTests"/>
 /// in-process test exercises, here driven over a socket by the shipped TS client.
 /// </para>
 /// <para>
@@ -395,8 +395,8 @@ public sealed class NodeLeafClientKeyringHarnessTests(KeyCustodianPostgresFixtur
             + "harness requires a Node runtime; the file-based crypto KAT gate is unconditional.");
         Assert.SkipUnless(
             File.Exists(ProbeDistIndex()),
-            "The @d2/key-custodian-client dist is not built (run "
-            + "`pnpm --filter @d2/key-custodian-client build`). The file-based crypto KAT gate is unconditional.");
+            "The @dcsv-io/d2-private-key-custodian-client dist is not built (run "
+            + "`pnpm --filter @dcsv-io/d2-private-key-custodian-client build`). The file-based crypto KAT gate is unconditional.");
     }
 
     private static async Task<JsonDocument> RunProbeAsync(string mode, params string[] args)
@@ -410,7 +410,7 @@ public sealed class NodeLeafClientKeyringHarnessTests(KeyCustodianPostgresFixtur
         // Working directory MUST be the package root (client-ts/), not scripts/.
         // Under a pnpm filter install on CI, workspace packages resolve via
         // client-ts/node_modules; a scripts/ cwd walks past the package and
-        // fails to resolve @d2/* / @grpc/proto-loader â†’ one live case fails.
+        // fails to resolve @dcsv-io/d2-* / @grpc/proto-loader â†’ one live case fails.
         var packageRoot = ClientTsDir();
         var psi = new ProcessStartInfo
         {

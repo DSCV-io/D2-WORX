@@ -4,22 +4,22 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Geo.Default.NameResolver;
+namespace DcsvIo.D2.Tests.Unit.Geo.Default.NameResolver;
 
 using System;
 using System.IO;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Geo.Default.NameResolution;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Geo.Default.NameResolution;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Xunit;
 
 /// <summary>
 /// Fixture-driven cross-language adversarial test. Loads
 /// <c>contracts/geo/fixtures/confusables.fixture.json</c> and walks
 /// every row through the resolver. The TS-side
-/// <c>@d2/geo-default</c> test loads the same fixture and asserts
+/// <c>@dcsv-io/d2-geo-default</c> test loads the same fixture and asserts
 /// byte-identical outcomes. Same input MUST resolve identically on
 /// both runtimes.
 /// </summary>
@@ -62,7 +62,7 @@ public sealed class ConfusablesTests
         string comment)
     {
         _ = comment;
-        var parent = D2.Shared.Geo.Default.CountryLookup.ByCode[
+        var parent = DcsvIo.D2.Geo.Default.CountryLookup.ByCode[
             Enum.Parse<CountryCode>(parentAlpha2)];
 
         var result = _resolver.TryResolveSubdivisionByName(input, parent);

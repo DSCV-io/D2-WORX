@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
-using D2.Services.Protos.KeyCustodian.V2Alpha;
-using D2.Shared.Encryption;
-using D2.Shared.Result.Grpc;
-using KeyringClientStub = D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.KeyCustodian.V2Alpha;
+using KeyringClientStub = global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient;
 
 /// <summary>
 /// Cross-process keyring fetch source. Calls the KeyCustodian keyring gRPC surface and

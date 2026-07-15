@@ -2,17 +2,17 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Result.ErrorCodes.SourceGen
+# DcsvIo.D2.Result.ErrorCodes.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
 **Input contract:** [`contracts/error-codes/`](../../../../../contracts/error-codes/README.md)
 
-A thin `[Generator]` shell over the shared unified error-codes engine ([`error-codes-emit`](../error-codes-emit/README.md)). It emits the `ErrorCodes` const-string catalog AND the constructing semantic failure factories + per-code booleans into `D2.Shared.Result` by reading `contracts/error-codes/error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Result`. The shell owns only the generic catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN) + its `CatalogConfig`; all generation logic lives in the shared engine.
+A thin `[Generator]` shell over the shared unified error-codes engine ([`error-codes-emit`](../error-codes-emit/README.md)). It emits the `ErrorCodes` const-string catalog AND the constructing semantic failure factories + per-code booleans into `DcsvIo.D2.Result` by reading `contracts/error-codes/error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `DcsvIo.D2.Result`. The shell owns only the generic catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN) + its `CatalogConfig`; all generation logic lives in the shared engine.
 
-The spec file is the single source of truth for the platform's generic error-code taxonomy. Every `d2_error_code` constant a `D2Result` failure carries, every constructing semantic failure factory on `D2Result` / `D2Result<TData>` (e.g. `NotFound`, `ValidationFailed`), and every per-code boolean discriminator (e.g. `IsNotFound`, `IsConflict`) is generated from this spec. Same spec drives the TS-side `@d2/result` `ErrorCodes` catalog + factories via `tools/ts-codegen/src/error-codes-emit.ts` — cross-language wire-format drift is structurally impossible.
+The spec file is the single source of truth for the platform's generic error-code taxonomy. Every `d2_error_code` constant a `D2Result` failure carries, every constructing semantic failure factory on `D2Result` / `D2Result<TData>` (e.g. `NotFound`, `ValidationFailed`), and every per-code boolean discriminator (e.g. `IsNotFound`, `IsConflict`) is generated from this spec. Same spec drives the TS-side `@dcsv-io/d2-result` `ErrorCodes` catalog + factories via `tools/ts-codegen/src/error-codes-emit.ts` — cross-language wire-format drift is structurally impossible.
 
-The generic catalog owns the reserved unprefixed namespace (`NOT_FOUND`, `CONFLICT`, …) and runs in the engine's `FactoryHost.Base` mode — the factories ARE the base, so they CONSTRUCT a `D2Result` directly and land as members ONTO the `D2Result` / `D2Result<TData>` partial classes (not a separate `<Domain>Failures` class). Per-domain catalogs (e.g. the auth `AUTH_*` taxonomy at `contracts/auth-error-codes/`, driven by `D2.Shared.Auth.ErrorCodes.SourceGen`) run in `FactoryHost.Domain` mode — their factories DELEGATE to the `httpStatus`-selected base factory and live in a separate `<Domain>Failures` (+ `<Domain>Failures<T>`) class. The SAME engine drives both via per-catalog config.
+The generic catalog owns the reserved unprefixed namespace (`NOT_FOUND`, `CONFLICT`, …) and runs in the engine's `FactoryHost.Base` mode — the factories ARE the base, so they CONSTRUCT a `D2Result` directly and land as members ONTO the `D2Result` / `D2Result<TData>` partial classes (not a separate `<Domain>Failures` class). Per-domain catalogs (e.g. the auth `AUTH_*` taxonomy at `contracts/auth-error-codes/`, driven by `DcsvIo.D2.Auth.ErrorCodes.SourceGen`) run in `FactoryHost.Domain` mode — their factories DELEGATE to the `httpStatus`-selected base factory and live in a separate `<Domain>Failures` (+ `<Domain>Failures<T>`) class. The SAME engine drives both via per-catalog config.
 
 **Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring) and [`error-codes-emit`](../error-codes-emit/README.md) for the shared engine + the add-a-catalog recipe.
 
@@ -74,9 +74,9 @@ The shared engine's `D2ERC001` (domain-prefix) does NOT apply — the generic ca
 
 ## Emitted output
 
-Four `.g.cs` files emitted into the consuming assembly (`D2.Shared.Result`):
+Four `.g.cs` files emitted into the consuming assembly (`DcsvIo.D2.Result`):
 
-- **`ErrorCodes.g.cs`** — `D2.Shared.Result.ErrorCodes` static class with one `public const string` per spec entry, `IReadOnlyList<string> AllCodes`, and `int GetHttpStatus(string)`.
+- **`ErrorCodes.g.cs`** — `DcsvIo.D2.Result.ErrorCodes` static class with one `public const string` per spec entry, `IReadOnlyList<string> AllCodes`, and `int GetHttpStatus(string)`.
 - **`D2Result.Factories.g.cs`** — the constructing non-generic semantic failure factories on `partial class D2Result` (one per `factoryShape != none` entry).
 - **`D2Result.Generic.Factories.g.cs`** — the `<TData>` typed twins on `partial class D2Result<TData>` (carry `new` + `default` data).
 - **`D2Result.Booleans.g.cs`** — the per-error-code boolean discriminators on `partial class D2Result` (one per ErrorCode-keyed code; serialization codes key none).
@@ -89,6 +89,6 @@ Four `.g.cs` files emitted into the consuming assembly (`D2.Shared.Result`):
 - [`error-codes-emit`](../error-codes-emit/README.md) — the shared unified engine this shell drives
 - [`contracts/error-codes/schema.json`](../../../../../contracts/error-codes/schema.json) — JSON Schema for the spec
 - [`contracts/error-codes/error-codes.spec.json`](../../../../../contracts/error-codes/error-codes.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Auth.ErrorCodes.SourceGen`](../../auth/error-codes-source-gen/README.md) — auth-domain SrcGen for the auth-specific `AUTH_*` taxonomy
+- [`DcsvIo.D2.Auth.ErrorCodes.SourceGen`](../../auth/error-codes-source-gen/README.md) — auth-domain SrcGen for the auth-specific `AUTH_*` taxonomy
 - [`tools/ts-codegen/src/error-codes-emit.ts`](../../../../../tools/ts-codegen/src/error-codes-emit.ts) — TS-side emitter consuming the same spec
 - [`docs/PARITY.md`](../../../../../docs/PARITY.md) — cross-language parity catalog (lists this spec)

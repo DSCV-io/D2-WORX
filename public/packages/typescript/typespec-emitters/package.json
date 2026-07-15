@@ -1,5 +1,5 @@
 {
-  "name": "@d2/typespec-emitters",
+  "name": "@dcsv-io/d2-typespec-emitters",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -24,15 +24,15 @@
     "@typespec/compiler": "^1.13.0"
   },
   "dependencies": {
-    "@d2/typespec-decorators": "workspace:*",
+    "@dcsv-io/d2-typespec-decorators": "workspace:*",
     "@typespec/http": "1.13.0"
   },
   "devDependencies": {
     "@bufbuild/buf": "1.65.0",
-    "@d2/grpc-client": "workspace:*",
-    "@d2/protos": "workspace:*",
-    "@d2/resilience": "workspace:*",
-    "@d2/result": "workspace:*",
+    "@dcsv-io/d2-grpc-client": "workspace:*",
+    "@dcsv-io/d2-protos": "workspace:*",
+    "@dcsv-io/d2-resilience": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*",
     "@grpc/grpc-js": "1.14.3",
     "@typespec/compiler": "1.13.0",
     "@typespec/openapi": "1.13.0",

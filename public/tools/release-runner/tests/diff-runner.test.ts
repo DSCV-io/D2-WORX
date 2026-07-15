@@ -184,7 +184,7 @@ function staticDiffProvider(diff: PackageDiff): DiffProvider {
 
 describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", () => {
   it("DR1: no diff, no commits → no plan produced", () => {
-    const { pkg } = createNpmFixture("@d2/a");
+    const { pkg } = createNpmFixture("@dcsv-io/d2-a");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: false, changed: false },
       fingerprintDiff: { changed: false },
@@ -198,7 +198,7 @@ describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", ()
   });
 
   it("DR2: fingerprint changed (API same), stable → PATCH bump", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "1.2.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "1.2.0");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -218,7 +218,7 @@ describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", ()
   });
 
   it("DR3: API add → MINOR bump (pre-stable)", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "0.1.0");
     const provider = staticDiffProvider({
       apiDiff: { added: true, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -239,7 +239,7 @@ describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", ()
   });
 
   it("DR4: API remove, stable → MAJOR bump", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "1.0.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "1.0.0");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: true, changed: false },
       fingerprintDiff: { changed: true },
@@ -258,7 +258,7 @@ describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", ()
   });
 
   it("DR5: API remove, pre-stable (0.x) → MINOR (pre-stable carve-out)", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "0.4.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "0.4.0");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: true, changed: false },
       fingerprintDiff: { changed: true },
@@ -277,7 +277,7 @@ describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", ()
   });
 
   it("DR6: footer-forced, no diff, stable → MAJOR (authoritative escalation)", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "1.2.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "1.2.0");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: false, changed: false },
       fingerprintDiff: { changed: false },
@@ -302,7 +302,7 @@ describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", ()
   });
 
   it("DR7: footer-forced, no diff, pre-stable (0.x) → MINOR (capped)", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "0.3.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "0.3.0");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: false, changed: false },
       fingerprintDiff: { changed: false },
@@ -325,7 +325,7 @@ describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", ()
   });
 
   it("DR8: baseline missing → PATCH bump + warning emitted (graceful, no crash)", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "0.1.0");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: false, changed: false },
       fingerprintDiff: { changed: true }, // missing baseline → changed=true by convention
@@ -342,7 +342,7 @@ describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", ()
     expect(result.plans[0]!.bump).toBe("patch");
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(result.warnings[0]).toContain("baseline missing");
-    expect(result.warnings[0]).toContain("@d2/a");
+    expect(result.warnings[0]).toContain("@dcsv-io/d2-a");
   });
 });
 
@@ -352,8 +352,16 @@ describe("runDiffRelease — Suite A: pure bump derivation (injected diffs)", ()
 
 describe("runDiffRelease — Suite B: propagation via fingerprint", () => {
   it("DR9: bumping dep → resolvedVersions updated → dependent sees changed fingerprint → floors at PATCH", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a", [], "0.1.0");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"], "0.1.0");
+    const { pkg: pkgA, dir: dirA } = createNpmFixture(
+      "@dcsv-io/d2-a",
+      [],
+      "0.1.0",
+    );
+    const { pkg: pkgB } = createNpmFixture(
+      "@dcsv-io/d2-b",
+      ["@dcsv-io/d2-a"],
+      "0.1.0",
+    );
 
     // Track what resolvedVersions B's call receives.
     const calls: DiffProviderInput[] = [];
@@ -361,7 +369,7 @@ describe("runDiffRelease — Suite B: propagation via fingerprint", () => {
     // A: API add → MINOR.  B: will check resolvedVersions.
     const diffMap = new Map<string, PackageDiff>([
       [
-        "@d2/a",
+        "@dcsv-io/d2-a",
         {
           apiDiff: { added: true, removed: false, changed: false },
           fingerprintDiff: { changed: true },
@@ -384,11 +392,12 @@ describe("runDiffRelease — Suite B: propagation via fingerprint", () => {
           resolvedVersions: new Map(input.resolvedVersions),
         });
 
-        if (input.pkg.name === "@d2/a") return diffMap.get("@d2/a")!;
+        if (input.pkg.name === "@dcsv-io/d2-a")
+          return diffMap.get("@dcsv-io/d2-a")!;
 
         // B: simulate that the DiffProvider detects the dep version changed
         // in resolvedVersions and reflects it as fingerprintDiff.changed=true.
-        const aVersion = input.resolvedVersions.get("@d2/a");
+        const aVersion = input.resolvedVersions.get("@dcsv-io/d2-a");
         const depVersionChanged =
           aVersion !== undefined && aVersion !== pkgA.currentVersion;
 
@@ -410,23 +419,27 @@ describe("runDiffRelease — Suite B: propagation via fingerprint", () => {
     );
 
     // A: MINOR bump expected.
-    const planA = result.plans.find((p) => p.pkg.name === "@d2/a");
+    const planA = result.plans.find((p) => p.pkg.name === "@dcsv-io/d2-a");
     expect(planA!.bump).toBe("minor");
 
     // B: propagated PATCH via fingerprint.
-    const planB = result.plans.find((p) => p.pkg.name === "@d2/b");
+    const planB = result.plans.find((p) => p.pkg.name === "@dcsv-io/d2-b");
     expect(planB).toBeDefined();
     expect(planB!.bump).toBe("patch");
 
-    // B's DiffProvider call received the updated @d2/a version.
-    const bCall = calls.find((c) => c.pkg.name === "@d2/b");
+    // B's DiffProvider call received the updated @dcsv-io/d2-a version.
+    const bCall = calls.find((c) => c.pkg.name === "@dcsv-io/d2-b");
     expect(bCall).toBeDefined();
-    expect(bCall!.resolvedVersions.get("@d2/a")).toBe("0.2.0");
+    expect(bCall!.resolvedVersions.get("@dcsv-io/d2-a")).toBe("0.2.0");
   });
 
   it("DR10: dep NOT bumped (no diff) → resolvedVersions unchanged → dependent fingerprint unchanged → no plan", () => {
-    const { pkg: pkgA } = createNpmFixture("@d2/a", [], "0.1.0");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"], "0.1.0");
+    const { pkg: pkgA } = createNpmFixture("@dcsv-io/d2-a", [], "0.1.0");
+    const { pkg: pkgB } = createNpmFixture(
+      "@dcsv-io/d2-b",
+      ["@dcsv-io/d2-a"],
+      "0.1.0",
+    );
 
     // No diff for either package.
     const provider = staticDiffProvider({
@@ -447,8 +460,12 @@ describe("runDiffRelease — Suite B: propagation via fingerprint", () => {
 
 describe("runDiffRelease — Suite C: topo ordering and cycle guard", () => {
   it("DR11: dep is processed before its dependent (leaf-first order)", () => {
-    const { pkg: pkgA } = createNpmFixture("@d2/a", [], "0.1.0");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"], "0.1.0");
+    const { pkg: pkgA } = createNpmFixture("@dcsv-io/d2-a", [], "0.1.0");
+    const { pkg: pkgB } = createNpmFixture(
+      "@dcsv-io/d2-b",
+      ["@dcsv-io/d2-a"],
+      "0.1.0",
+    );
 
     const callOrder: string[] = [];
     const provider: DiffProvider = {
@@ -465,8 +482,8 @@ describe("runDiffRelease — Suite C: topo ordering and cycle guard", () => {
     runDiffRelease([], [pkgA, pkgB], opts(true), provider);
 
     // A (dep) must be called before B (dependent).
-    const aIdx = callOrder.indexOf("@d2/a");
-    const bIdx = callOrder.indexOf("@d2/b");
+    const aIdx = callOrder.indexOf("@dcsv-io/d2-a");
+    const bIdx = callOrder.indexOf("@dcsv-io/d2-b");
     expect(aIdx).toBeGreaterThanOrEqual(0);
     expect(bIdx).toBeGreaterThanOrEqual(0);
     expect(aIdx).toBeLessThan(bIdx);
@@ -475,22 +492,22 @@ describe("runDiffRelease — Suite C: topo ordering and cycle guard", () => {
   it("DR12: cycle (A→B, B→A) → topoSort throws cycle-detected error", () => {
     // These are synthetic descriptor objects (no real fs needed for topoSort).
     const pkgA: PackageDescriptor = {
-      name: "@d2/a",
+      name: "@dcsv-io/d2-a",
       ecosystem: "npm",
       dir: "_d2_a",
       manifestPath: "_d2_a/package.json",
       changelogPath: "_d2_a/CHANGELOG.md",
       currentVersion: "0.1.0",
-      dependencies: ["@d2/b"],
+      dependencies: ["@dcsv-io/d2-b"],
     };
     const pkgB: PackageDescriptor = {
-      name: "@d2/b",
+      name: "@dcsv-io/d2-b",
       ecosystem: "npm",
       dir: "_d2_b",
       manifestPath: "_d2_b/package.json",
       changelogPath: "_d2_b/CHANGELOG.md",
       currentVersion: "0.1.0",
-      dependencies: ["@d2/a"],
+      dependencies: ["@dcsv-io/d2-a"],
     };
 
     expect(() => topoSort([pkgA, pkgB])).toThrow(/cycle/i);
@@ -498,7 +515,7 @@ describe("runDiffRelease — Suite C: topo ordering and cycle guard", () => {
 
   it("topoSort: isolated packages (no edges) are all returned", () => {
     const pkgA: PackageDescriptor = {
-      name: "@d2/a",
+      name: "@dcsv-io/d2-a",
       ecosystem: "npm",
       dir: "_a",
       manifestPath: "_a/package.json",
@@ -507,7 +524,7 @@ describe("runDiffRelease — Suite C: topo ordering and cycle guard", () => {
       dependencies: [],
     };
     const pkgB: PackageDescriptor = {
-      name: "@d2/b",
+      name: "@dcsv-io/d2-b",
       ecosystem: "npm",
       dir: "_b",
       manifestPath: "_b/package.json",
@@ -518,12 +535,15 @@ describe("runDiffRelease — Suite C: topo ordering and cycle guard", () => {
 
     const sorted = topoSort([pkgA, pkgB]);
     expect(sorted).toHaveLength(2);
-    expect(sorted.map((p) => p.name).sort()).toEqual(["@d2/a", "@d2/b"]);
+    expect(sorted.map((p) => p.name).sort()).toEqual([
+      "@dcsv-io/d2-a",
+      "@dcsv-io/d2-b",
+    ]);
   });
 
   it("topoSort: three-node chain A→B→C returns A, B, C in leaf-first order", () => {
     const pkgA: PackageDescriptor = {
-      name: "@d2/a",
+      name: "@dcsv-io/d2-a",
       ecosystem: "npm",
       dir: "_a",
       manifestPath: "_a/package.json",
@@ -532,26 +552,30 @@ describe("runDiffRelease — Suite C: topo ordering and cycle guard", () => {
       dependencies: [],
     };
     const pkgB: PackageDescriptor = {
-      name: "@d2/b",
+      name: "@dcsv-io/d2-b",
       ecosystem: "npm",
       dir: "_b",
       manifestPath: "_b/package.json",
       changelogPath: "_b/CHANGELOG.md",
       currentVersion: "0.1.0",
-      dependencies: ["@d2/a"],
+      dependencies: ["@dcsv-io/d2-a"],
     };
     const pkgC: PackageDescriptor = {
-      name: "@d2/c",
+      name: "@dcsv-io/d2-c",
       ecosystem: "npm",
       dir: "_c",
       manifestPath: "_c/package.json",
       changelogPath: "_c/CHANGELOG.md",
       currentVersion: "0.1.0",
-      dependencies: ["@d2/b"],
+      dependencies: ["@dcsv-io/d2-b"],
     };
 
     const sorted = topoSort([pkgA, pkgB, pkgC]);
-    expect(sorted.map((p) => p.name)).toEqual(["@d2/a", "@d2/b", "@d2/c"]);
+    expect(sorted.map((p) => p.name)).toEqual([
+      "@dcsv-io/d2-a",
+      "@dcsv-io/d2-b",
+      "@dcsv-io/d2-c",
+    ]);
   });
 
   it("topoSort: empty input returns empty array", () => {
@@ -565,7 +589,7 @@ describe("runDiffRelease — Suite C: topo ordering and cycle guard", () => {
 
 describe("runDiffRelease — Suite D: apply mode writes", () => {
   it("DR13: apply mode writes correct version and CHANGELOG for MINOR bump", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "0.1.0");
     const provider = staticDiffProvider({
       apiDiff: { added: true, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -594,11 +618,19 @@ describe("runDiffRelease — Suite D: apply mode writes", () => {
   });
 
   it("DR14: apply mode writes PATCH changelog for dep-propagation bump (no direct commits)", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a", [], "0.1.0");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"], "0.1.0");
+    const { pkg: pkgA, dir: dirA } = createNpmFixture(
+      "@dcsv-io/d2-a",
+      [],
+      "0.1.0",
+    );
+    const { pkg: pkgB } = createNpmFixture(
+      "@dcsv-io/d2-b",
+      ["@dcsv-io/d2-a"],
+      "0.1.0",
+    );
 
     const diffMap = new Map<string, PackageDiff>();
-    diffMap.set("@d2/a", {
+    diffMap.set("@dcsv-io/d2-a", {
       apiDiff: { added: true, removed: false, changed: false },
       fingerprintDiff: { changed: true },
       baselineMissing: false,
@@ -606,10 +638,11 @@ describe("runDiffRelease — Suite D: apply mode writes", () => {
 
     const provider: DiffProvider = {
       getDiff(input: DiffProviderInput): PackageDiff {
-        if (input.pkg.name === "@d2/a") return diffMap.get("@d2/a")!;
+        if (input.pkg.name === "@dcsv-io/d2-a")
+          return diffMap.get("@dcsv-io/d2-a")!;
 
-        // B: fingerprint changed because @d2/a version changed.
-        const aVersion = input.resolvedVersions.get("@d2/a");
+        // B: fingerprint changed because @dcsv-io/d2-a version changed.
+        const aVersion = input.resolvedVersions.get("@dcsv-io/d2-a");
         const changed =
           aVersion !== undefined && aVersion !== pkgA.currentVersion;
         return {
@@ -632,7 +665,7 @@ describe("runDiffRelease — Suite D: apply mode writes", () => {
   });
 
   it("apply mode writes NuGet csproj version for nuget packages", () => {
-    const { pkg, dir } = createNugetFixture("D2.Shared.Result", [], "0.1.0");
+    const { pkg, dir } = createNugetFixture("DcsvIo.D2.Result", [], "0.1.0");
     const provider = staticDiffProvider({
       apiDiff: { added: true, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -657,8 +690,16 @@ describe("runDiffRelease — Suite D: apply mode writes", () => {
 
 describe("runDiffRelease — Suite E: package filter", () => {
   it("DR15: packageFilter restricts plans to the specified package", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a", [], "0.1.0");
-    const { pkg: pkgB, dir: dirB } = createNpmFixture("@d2/b", [], "0.1.0");
+    const { pkg: pkgA, dir: dirA } = createNpmFixture(
+      "@dcsv-io/d2-a",
+      [],
+      "0.1.0",
+    );
+    const { pkg: pkgB, dir: dirB } = createNpmFixture(
+      "@dcsv-io/d2-b",
+      [],
+      "0.1.0",
+    );
     const provider = staticDiffProvider({
       apiDiff: { added: true, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -668,12 +709,12 @@ describe("runDiffRelease — Suite E: package filter", () => {
     const result = runDiffRelease(
       [makeCommit("feat: a", [dirA]), makeCommit("feat: b", [dirB])],
       [pkgA, pkgB],
-      opts(true, true, "@d2/a"),
+      opts(true, true, "@dcsv-io/d2-a"),
       provider,
     );
 
     expect(result.plans).toHaveLength(1);
-    expect(result.plans[0]!.pkg.name).toBe("@d2/a");
+    expect(result.plans[0]!.pkg.name).toBe("@dcsv-io/d2-a");
   });
 });
 
@@ -683,7 +724,7 @@ describe("runDiffRelease — Suite E: package filter", () => {
 
 describe("runDiffRelease — Suite F: dry-run leaves files unchanged", () => {
   it("DR16: dryRun=true returns plans but does not write manifests or changelogs", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "0.1.0");
     const originalManifest = readFileSync(pkg.manifestPath, "utf-8");
     const originalChangelog = readFileSync(pkg.changelogPath, "utf-8");
 
@@ -714,8 +755,16 @@ describe("runDiffRelease — Suite F: dry-run leaves files unchanged", () => {
 
 describe("runDiffRelease — Suite G: propagate:false suppresses version forwarding", () => {
   it("propagate:false — dep version NOT forwarded → dependent receives original version", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a", [], "0.1.0");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"], "0.1.0");
+    const { pkg: pkgA, dir: dirA } = createNpmFixture(
+      "@dcsv-io/d2-a",
+      [],
+      "0.1.0",
+    );
+    const { pkg: pkgB } = createNpmFixture(
+      "@dcsv-io/d2-b",
+      ["@dcsv-io/d2-a"],
+      "0.1.0",
+    );
 
     const calls: DiffProviderInput[] = [];
 
@@ -726,7 +775,7 @@ describe("runDiffRelease — Suite G: propagate:false suppresses version forward
           resolvedVersions: new Map(input.resolvedVersions),
         });
 
-        if (input.pkg.name === "@d2/a") {
+        if (input.pkg.name === "@dcsv-io/d2-a") {
           return {
             apiDiff: { added: true, removed: false, changed: false },
             fingerprintDiff: { changed: true },
@@ -752,12 +801,12 @@ describe("runDiffRelease — Suite G: propagate:false suppresses version forward
 
     // A bumped, B not (no propagation).
     expect(result.plans).toHaveLength(1);
-    expect(result.plans[0]!.pkg.name).toBe("@d2/a");
+    expect(result.plans[0]!.pkg.name).toBe("@dcsv-io/d2-a");
 
-    // B's DiffProvider call should have received the ORIGINAL @d2/a version.
-    const bCall = calls.find((c) => c.pkg.name === "@d2/b");
+    // B's DiffProvider call should have received the ORIGINAL @dcsv-io/d2-a version.
+    const bCall = calls.find((c) => c.pkg.name === "@dcsv-io/d2-b");
     expect(bCall).toBeDefined();
-    expect(bCall!.resolvedVersions.get("@d2/a")).toBe("0.1.0");
+    expect(bCall!.resolvedVersions.get("@dcsv-io/d2-a")).toBe("0.1.0");
   });
 });
 
@@ -767,7 +816,7 @@ describe("runDiffRelease — Suite G: propagate:false suppresses version forward
 
 describe("runDiffRelease — Suite H: commit type → changelog category (not bump)", () => {
   it("feat: commit with API-add diff → addedEntries populated, bump=minor", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "0.1.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "0.1.0");
     const provider = staticDiffProvider({
       apiDiff: { added: true, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -786,7 +835,7 @@ describe("runDiffRelease — Suite H: commit type → changelog category (not bu
   });
 
   it("fix: commit with fingerprint-only diff → fixedEntries populated, bump=patch", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "1.0.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "1.0.0");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -806,7 +855,7 @@ describe("runDiffRelease — Suite H: commit type → changelog category (not bu
   });
 
   it("chore: commit with API-remove diff → bump=major (diff wins, not commit type)", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "1.0.0");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "1.0.0");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: true, changed: false },
       fingerprintDiff: { changed: true },
@@ -839,7 +888,7 @@ describe("runDiffRelease — Suite H: commit type → changelog category (not bu
   });
 
   it("a commit touching a file under NO consumable package + a no-colon subject → ignored, bump still from diff", () => {
-    const { pkg } = createNpmFixture("@d2/a");
+    const { pkg } = createNpmFixture("@dcsv-io/d2-a");
     const provider = staticDiffProvider({
       apiDiff: { added: true, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -864,7 +913,7 @@ describe("runDiffRelease — Suite H: commit type → changelog category (not bu
   });
 
   it("a perf: commit → classified as a Fixed changelog category", () => {
-    const { pkg, dir } = createNpmFixture("@d2/a");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -884,7 +933,7 @@ describe("runDiffRelease — Suite H: commit type → changelog category (not bu
   });
 
   it("two commits with the SAME footer entry → deduplicated in the changelog accumulator", () => {
-    const { pkg, dir } = createNugetFixture("D2.Shared.Result", [], "1.2.0");
+    const { pkg, dir } = createNugetFixture("DcsvIo.D2.Result", [], "1.2.0");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -924,7 +973,7 @@ describe("runDiffRelease — prerelease-labelled currentVersion", () => {
   it("fingerprint change on a prerelease-labelled package produces a plan without throwing", () => {
     // Regression: parseVersion crashed on "1.0.0-alpha.3" at the newVersion
     // computation site (diff-runner.ts). parseVersionLoose must be used.
-    const { pkg } = createNugetFixture("D2.Shared.Result", [], "1.0.0-alpha.3");
+    const { pkg } = createNugetFixture("DcsvIo.D2.Result", [], "1.0.0-alpha.3");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: false, changed: false },
       fingerprintDiff: { changed: true },
@@ -942,7 +991,7 @@ describe("runDiffRelease — prerelease-labelled currentVersion", () => {
 
   it("API-remove diff on a prerelease-labelled package gives MINOR (pre-stable carve-out)", () => {
     // "1.0.0-alpha.3" is pre-stable → break → MINOR, not MAJOR.
-    const { pkg, dir } = createNpmFixture("@d2/a", [], "1.0.0-alpha.3");
+    const { pkg, dir } = createNpmFixture("@dcsv-io/d2-a", [], "1.0.0-alpha.3");
     const provider = staticDiffProvider({
       apiDiff: { added: false, removed: true, changed: false },
       fingerprintDiff: { changed: true },
@@ -966,10 +1015,10 @@ describe("runDiffRelease — prerelease-labelled currentVersion", () => {
     // Regression: diff-runner.ts:370 newVersion compute (via parseVersionLoose) was
     // called for propagated dependents. When the dependent carries a prerelease label
     // the parse crashed — parseVersionLoose now handles the prerelease suffix cleanly.
-    const { pkg: depPkg } = createNpmFixture("@d2/dep", [], "0.2.0");
+    const { pkg: depPkg } = createNpmFixture("@dcsv-io/d2-dep", [], "0.2.0");
     const { pkg: consumerPkg } = createNpmFixture(
-      "@d2/consumer",
-      ["@d2/dep"],
+      "@dcsv-io/d2-consumer",
+      ["@dcsv-io/d2-dep"],
       "1.0.0-alpha.1",
     );
 
@@ -978,7 +1027,7 @@ describe("runDiffRelease — prerelease-labelled currentVersion", () => {
     const provider: DiffProvider = {
       getDiff(input: DiffProviderInput): PackageDiff {
         callCount++;
-        const isConsumer = input.pkg.name === "@d2/consumer";
+        const isConsumer = input.pkg.name === "@dcsv-io/d2-consumer";
 
         return {
           apiDiff: { added: false, removed: false, changed: false },
@@ -1000,7 +1049,7 @@ describe("runDiffRelease — prerelease-labelled currentVersion", () => {
     );
     // consumer gets PATCH; prerelease label is stripped on output.
     const consumerPlan = result.plans.find(
-      (p) => p.pkg.name === "@d2/consumer",
+      (p) => p.pkg.name === "@dcsv-io/d2-consumer",
     );
     expect(consumerPlan).toBeDefined();
     expect(consumerPlan!.bump).toBe("patch");

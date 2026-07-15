@@ -7,7 +7,7 @@
  * Conventional names for the dead-letter exchange / queue that pair with a
  * primary queue, plus retry-tier naming used by the optional broker-level
  * retry topology. Byte-identical to the .NET
- * `D2.Shared.Messaging.RabbitMq.Topology.DlqNaming` — the names are derived
+ * `DcsvIo.D2.Messaging.RabbitMq.Topology.DlqNaming` — the names are derived
  * from the queue name, full stop (no override), so ops tooling and dashboards
  * rely on a fixed shape across both runtimes.
  */

@@ -4,13 +4,13 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { HttpStatusCode } from "@d2/result";
+import { HttpStatusCode } from "@dcsv-io/d2-result";
 import { redirectIfAuthenticated } from "../../src/guards/redirect-if-authenticated.js";
 import { requireAuth } from "../../src/guards/require-auth.js";
 import { requireOrg } from "../../src/guards/require-org.js";
 import { requireRole } from "../../src/guards/require-role.js";
 import { requireScope } from "../../src/guards/require-scope.js";
-import { PROBLEM_DETAILS_CONTENT_TYPE } from "@d2/problem-details-abstractions";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "@dcsv-io/d2-problem-details-abstractions";
 import { authenticatedCtx, makeEvent, makeThrowers } from "./helpers.js";
 
 /**
@@ -18,7 +18,7 @@ import { authenticatedCtx, makeEvent, makeThrowers } from "./helpers.js";
  * MUST carry `Content-Type: application/problem+json` so ProblemDetails-
  * aware clients can distinguish the envelope from a plain JSON error
  * (which carries `application/json`). The wire constant is spec-driven
- * via `@d2/headers`'s `PROBLEM_DETAILS_CONTENT_TYPE`; this test pins
+ * via `@dcsv-io/d2-headers`'s `PROBLEM_DETAILS_CONTENT_TYPE`; this test pins
  * that each guard threads it through the `GuardThrowers.throwError`
  * `contentType` parameter on every rejection branch.
  *

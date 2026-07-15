@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result;
+namespace DcsvIo.D2.Result;
 
 // This file uses the classic `this T target` extension-method parameter style instead of the
 // C# 14 `extension(T target) { ... }` block form. The block form fails for these methods due

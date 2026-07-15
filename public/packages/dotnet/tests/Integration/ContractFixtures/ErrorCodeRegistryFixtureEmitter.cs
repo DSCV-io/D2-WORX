@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ContractFixtures;
+namespace DcsvIo.D2.Tests.Integration.ContractFixtures;
 
 using System.Collections.Generic;
 using System.Linq;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.ErrorCodes.Registry;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.ErrorCodes.Registry;
 using Xunit;
 
 /// <summary>
@@ -41,7 +41,7 @@ using Xunit;
 /// <see cref="ErrorCategoryWire.ToWire"/>; the TS parity axis is
 /// <c>fixture.category === ts.category</c> (both are the wire string).
 /// The <c>userMessageKeySnake</c> field contains the runtime <c>.Key</c>
-/// value the .NET <see cref="D2.Shared.I18n.TKMessage"/> carries; the
+/// value the .NET <see cref="DcsvIo.D2.I18n.TKMessage"/> carries; the
 /// <c>userMessageKeyPath</c> field contains the spec's TK symbol-path
 /// reference (derived by inverse-transforming the snake key). The TS
 /// parity test asserts BOTH fields match the TS registry's corresponding

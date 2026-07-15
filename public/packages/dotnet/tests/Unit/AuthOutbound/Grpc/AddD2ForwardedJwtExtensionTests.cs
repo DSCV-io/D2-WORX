@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.Grpc;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.Grpc;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound.Grpc;
-using D2.Shared.Headers.Grpc;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Protos;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound.Grpc;
+using DcsvIo.D2.Headers.Grpc;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Protos;
 using global::Grpc.Core;
 using global::Grpc.Net.Client;
 using global::Grpc.Net.ClientFactory;
@@ -99,7 +99,7 @@ public sealed class AddD2ForwardedJwtExtensionTests
         // mTLS sibling needs the leaf cache + a clock. An empty cache (no current
         // leaf) is fine — the extension still installs the SocketsHttpHandler.
         services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<D2.Shared.Auth.Outbound.WorkloadCertificate.WorkloadLeafCache>();
+        services.AddSingleton<DcsvIo.D2.Auth.Outbound.WorkloadCertificate.WorkloadLeafCache>();
 
         services
             .AddGrpcClient<TestEcho.TestEchoClient>(o => o.Address = new Uri("https://callee.internal"))

@@ -37,7 +37,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 
-import { truthy } from "@d2/utilities";
+import { truthy } from "@dcsv-io/d2-utilities";
 
 import type { BreakingFinding } from "./breaking-finding.js";
 import { extractProtoPackage, isProtoGateExempt } from "./proto-exemption.js";

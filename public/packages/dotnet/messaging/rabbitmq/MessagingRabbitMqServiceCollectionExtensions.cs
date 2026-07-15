@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq;
+namespace DcsvIo.D2.Messaging.RabbitMq;
 
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Messaging.RabbitMq.Channels;
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Messaging.RabbitMq.Encryption;
-using D2.Shared.Messaging.RabbitMq.Idempotency;
-using D2.Shared.Messaging.RabbitMq.Publishing;
-using D2.Shared.Messaging.RabbitMq.Subscribing;
-using D2.Shared.Messaging.RabbitMq.Topology;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Messaging.RabbitMq.Channels;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Encryption;
+using DcsvIo.D2.Messaging.RabbitMq.Idempotency;
+using DcsvIo.D2.Messaging.RabbitMq.Publishing;
+using DcsvIo.D2.Messaging.RabbitMq.Subscribing;
+using DcsvIo.D2.Messaging.RabbitMq.Topology;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;

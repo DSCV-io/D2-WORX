@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Caching;
-using D2.Shared.Logging;
-using D2.Shared.ServiceDefaults;
-using D2.Shared.Telemetry;
-using D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Logging;
+using DcsvIo.D2.ServiceDefaults;
+using DcsvIo.D2.Telemetry;
+using DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 using global::Microsoft.AspNetCore.TestHost;
 using global::Microsoft.Extensions.DependencyInjection;
 using global::Microsoft.Extensions.Options;
@@ -235,7 +235,7 @@ public sealed class ServiceDefaultsConfigurationE2ETests
         // to resolve their dependencies.
         using var sp = services.BuildServiceProvider();
         var resolved = sp
-            .GetRequiredService<IOptions<D2.Shared.Auth.AuthOptions>>()
+            .GetRequiredService<IOptions<DcsvIo.D2.Auth.AuthOptions>>()
             .Value;
         resolved.Issuer.Should().Be(new Uri("https://my-edge.test"));
         resolved.Audience.Should().Be("audience-from-test");

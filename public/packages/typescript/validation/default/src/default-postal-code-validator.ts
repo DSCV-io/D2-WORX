@@ -3,11 +3,16 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { CountryCode } from "@d2/geo-abstractions";
-import { TK } from "@d2/i18n-keys";
-import { inputError, ok, validationFailed, type D2Result } from "@d2/result";
-import { falsey } from "@d2/utilities";
-import type { IPostalCodeValidator } from "@d2/validation-abstractions";
+import type { CountryCode } from "@dcsv-io/d2-geo-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
+import {
+  inputError,
+  ok,
+  validationFailed,
+  type D2Result,
+} from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
+import type { IPostalCodeValidator } from "@dcsv-io/d2-validation-abstractions";
 
 // long import path — cannot wrap
 import postalCodeRegexes from "../../../../../contracts/validation/postal-code-regexes.json" with { type: "json" };
@@ -20,7 +25,7 @@ import postalCodeRegexes from "../../../../../contracts/validation/postal-code-r
  * skipped — it is documentation, not a country entry.
  *
  * Sourced from `contracts/validation/postal-code-regexes.json`, the SINGLE
- * cross-runtime source of truth (the .NET `D2.Shared.Validation` embeds the
+ * cross-runtime source of truth (the .NET `DcsvIo.D2.Validation` embeds the
  * same file). Building a `RegExp` per entry up front avoids recompiling on
  * every `validate` call.
  */
@@ -32,7 +37,7 @@ const COUNTRY_REGEXES: ReadonlyMap<string, RegExp> = new Map(
 
 /**
  * Default `IPostalCodeValidator` implementation. Mirrors the .NET
- * `D2.Shared.Validation.DefaultPostalCodeValidator` — both compile the SAME
+ * `DcsvIo.D2.Validation.DefaultPostalCodeValidator` — both compile the SAME
  * per-country patterns from `contracts/validation/postal-code-regexes.json`,
  * run a country-aware structural check, and normalize to trimmed + uppercased
  * form. An unknown / absent country fails closed (ValidationFailed, never a

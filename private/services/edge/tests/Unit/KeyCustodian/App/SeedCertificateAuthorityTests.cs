@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
 
 /// <summary>
 /// Tests for <see cref="SeedCertificateAuthorityHandler"/>: it seeds both CA tiers

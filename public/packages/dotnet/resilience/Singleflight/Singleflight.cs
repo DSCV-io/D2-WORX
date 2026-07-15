@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Singleflight;
+namespace DcsvIo.D2.Resilience.Singleflight;
 
 using System.Collections.Concurrent;
 

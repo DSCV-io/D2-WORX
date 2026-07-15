@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.WorkloadCertificate;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.WorkloadCertificate;
 
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;
-using D2.Shared.Auth.Outbound.WorkloadCertificate;
+using DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
 using NodaTime;
 using Xunit;
 

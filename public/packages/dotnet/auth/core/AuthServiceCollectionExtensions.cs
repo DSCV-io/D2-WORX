@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth;
+namespace DcsvIo.D2.Auth;
 
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Abstractions.Sessions;
-using D2.Shared.Auth.Jwks;
-using D2.Shared.Auth.Sessions;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Abstractions.Sessions;
+using DcsvIo.D2.Auth.Jwks;
+using DcsvIo.D2.Auth.Sessions;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;

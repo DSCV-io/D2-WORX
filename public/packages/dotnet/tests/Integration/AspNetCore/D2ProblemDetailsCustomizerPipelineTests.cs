@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.AspNetCore;
+namespace DcsvIo.D2.Tests.Integration.AspNetCore;
 
 using System.Net;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
-using D2.Shared.I18n;
-using D2.Shared.ProblemDetails;
-using D2.Shared.Result;
-using D2.Shared.Tests.Integration.AspNetCore.Infrastructure;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.ProblemDetails;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Tests.Integration.AspNetCore.Infrastructure;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.Http;
 using global::Microsoft.AspNetCore.TestHost;

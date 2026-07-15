@@ -3,7 +3,7 @@
 //
 // Idempotent seeding tool: installs api-extractor.json configs and generates
 // committed baselines (etc/<pkg>.api.md + etc/.release-fingerprint) for all
-// 36 @d2/* consumable packages: 35 under public/packages/typescript/ plus the
+// 36 @dcsv-io/d2-* consumable packages: 35 under public/packages/typescript/ plus the
 // KeyCustodian client twin under private/services/edge/key-custodian/client-ts/.
 //
 // The fingerprint is SOURCE-BASED + PORTABLE - a SHA-256 over committed text
@@ -73,7 +73,7 @@ const API_EXTRACTOR_BIN = join(
 // opts in via a repeatable `--allow-empty <pkgName>` flag or a single-package
 // SEED_ALLOW_EMPTY=<pkgName> env var. For multiple packages use repeated CLI
 // flags; the env var accepts exactly one package name (comma-split lists are
-// not supported Ã¢â‚¬â€ Ã‚23.1). As of this writing NO @d2/* consumable legitimately
+// not supported Ã¢â‚¬â€ Ã‚23.1). As of this writing NO @dcsv-io/d2-* consumable legitimately
 // has zero exports, so the hatch defaults to refuse Ã¢â‚¬â€ it exists for symmetry
 // with the .NET seeder so both ecosystems fail loud on the same corruption class.
 const CLI_ARGS = process.argv.slice(2);
@@ -93,7 +93,7 @@ if (envAllowEmpty.length > 0) {
 
 // ---------------------------------------------------------------------------
 // The 36 consumable packages: [pkgDir, shortName] pairs.
-// Derived from the package names (@d2/<shortName>) so that api.md report
+// Derived from the package names (@dcsv-io/d2-<shortName>) so that api.md report
 // filenames are stable regardless of the directory structure.
 // Excludes: typespec-decorators, typespec-emitters, contract-tests.
 // ---------------------------------------------------------------------------
@@ -103,177 +103,177 @@ const CONSUMABLES = [
   {
     dir: join(TS_SHARED, "auth", "abstractions"),
     shortName: "auth-abstractions",
-    pkgName: "@d2/auth-abstractions",
+    pkgName: "@dcsv-io/d2-auth-abstractions",
   },
   {
     dir: join(TS_SHARED, "auth", "context-abstractions"),
     shortName: "auth-context-abstractions",
-    pkgName: "@d2/auth-context-abstractions",
+    pkgName: "@dcsv-io/d2-auth-context-abstractions",
   },
   {
     dir: join(TS_SHARED, "caching", "abstractions"),
     shortName: "caching-abstractions",
-    pkgName: "@d2/caching-abstractions",
+    pkgName: "@dcsv-io/d2-caching-abstractions",
   },
   {
     dir: join(TS_SHARED, "caching", "distributed-redis"),
     shortName: "caching-distributed-redis",
-    pkgName: "@d2/caching-distributed-redis",
+    pkgName: "@dcsv-io/d2-caching-distributed-redis",
   },
   {
     dir: join(TS_SHARED, "caching", "local-default"),
     shortName: "caching-local-default",
-    pkgName: "@d2/caching-local-default",
+    pkgName: "@dcsv-io/d2-caching-local-default",
   },
   {
     dir: join(TS_SHARED, "caching", "tiered"),
     shortName: "caching-tiered",
-    pkgName: "@d2/caching-tiered",
+    pkgName: "@dcsv-io/d2-caching-tiered",
   },
   {
     dir: join(TS_SHARED, "encryption"),
     shortName: "encryption",
-    pkgName: "@d2/encryption",
+    pkgName: "@dcsv-io/d2-encryption",
   },
   {
     dir: join(TS_SHARED, "encryption-abstractions"),
     shortName: "encryption-abstractions",
-    pkgName: "@d2/encryption-abstractions",
+    pkgName: "@dcsv-io/d2-encryption-abstractions",
   },
   {
     dir: join(TS_SHARED, "error-category"),
     shortName: "error-category",
-    pkgName: "@d2/error-category",
+    pkgName: "@dcsv-io/d2-error-category",
   },
   {
     dir: join(TS_SHARED, "error-codes-registry"),
     shortName: "error-codes-registry",
-    pkgName: "@d2/error-codes-registry",
+    pkgName: "@dcsv-io/d2-error-codes-registry",
   },
   {
     dir: join(TS_SHARED, "geo", "abstractions"),
     shortName: "geo-abstractions",
-    pkgName: "@d2/geo-abstractions",
+    pkgName: "@dcsv-io/d2-geo-abstractions",
   },
   {
     dir: join(TS_SHARED, "geo", "default"),
     shortName: "geo-default",
-    pkgName: "@d2/geo-default",
+    pkgName: "@dcsv-io/d2-geo-default",
   },
   {
     dir: join(TS_SHARED, "grpc-client"),
     shortName: "grpc-client",
-    pkgName: "@d2/grpc-client",
+    pkgName: "@dcsv-io/d2-grpc-client",
   },
   {
     dir: join(TS_SHARED, "headers", "amqp"),
     shortName: "headers-amqp",
-    pkgName: "@d2/headers-amqp",
+    pkgName: "@dcsv-io/d2-headers-amqp",
   },
   {
     dir: join(TS_SHARED, "headers", "common"),
     shortName: "headers-common",
-    pkgName: "@d2/headers-common",
+    pkgName: "@dcsv-io/d2-headers-common",
   },
   {
     dir: join(TS_SHARED, "headers", "core"),
     shortName: "headers",
-    pkgName: "@d2/headers",
+    pkgName: "@dcsv-io/d2-headers",
   },
   {
     dir: join(TS_SHARED, "headers", "grpc"),
     shortName: "headers-grpc",
-    pkgName: "@d2/headers-grpc",
+    pkgName: "@dcsv-io/d2-headers-grpc",
   },
   {
     dir: join(TS_SHARED, "headers", "http"),
     shortName: "headers-http",
-    pkgName: "@d2/headers-http",
+    pkgName: "@dcsv-io/d2-headers-http",
   },
   {
     dir: join(TS_SHARED, "i18n-abstractions"),
     shortName: "i18n-abstractions",
-    pkgName: "@d2/i18n-abstractions",
+    pkgName: "@dcsv-io/d2-i18n-abstractions",
   },
   {
     dir: join(TS_SHARED, "i18n-keys"),
     shortName: "i18n-keys",
-    pkgName: "@d2/i18n-keys",
+    pkgName: "@dcsv-io/d2-i18n-keys",
   },
   {
     dir: join(TS_SHARED, "i18n"),
     shortName: "i18n",
-    pkgName: "@d2/i18n",
+    pkgName: "@dcsv-io/d2-i18n",
   },
   {
     dir: join(TS_SHARED, "logging"),
     shortName: "logging",
-    pkgName: "@d2/logging",
+    pkgName: "@dcsv-io/d2-logging",
   },
   {
     dir: join(TS_SHARED, "messaging-abstractions"),
     shortName: "messaging-abstractions",
-    pkgName: "@d2/messaging-abstractions",
+    pkgName: "@dcsv-io/d2-messaging-abstractions",
   },
   {
     dir: join(TS_SHARED, "messaging", "rabbitmq"),
     shortName: "messaging-rabbitmq",
-    pkgName: "@d2/messaging-rabbitmq",
+    pkgName: "@dcsv-io/d2-messaging-rabbitmq",
   },
   {
     dir: join(TS_SHARED, "problem-details-abstractions"),
     shortName: "problem-details-abstractions",
-    pkgName: "@d2/problem-details-abstractions",
+    pkgName: "@dcsv-io/d2-problem-details-abstractions",
   },
   {
     dir: join(TS_SHARED, "protos"),
     shortName: "protos",
-    pkgName: "@d2/protos",
+    pkgName: "@dcsv-io/d2-protos",
   },
   {
     dir: join(TS_SHARED, "request-context-abstractions"),
     shortName: "request-context-abstractions",
-    pkgName: "@d2/request-context-abstractions",
+    pkgName: "@dcsv-io/d2-request-context-abstractions",
   },
   {
     dir: join(TS_SHARED, "resilience"),
     shortName: "resilience",
-    pkgName: "@d2/resilience",
+    pkgName: "@dcsv-io/d2-resilience",
   },
   {
     dir: join(TS_SHARED, "result"),
     shortName: "result",
-    pkgName: "@d2/result",
+    pkgName: "@dcsv-io/d2-result",
   },
   {
     dir: join(TS_SHARED, "service-defaults"),
     shortName: "service-defaults",
-    pkgName: "@d2/service-defaults",
+    pkgName: "@dcsv-io/d2-service-defaults",
   },
   {
     dir: join(TS_SHARED, "telemetry"),
     shortName: "telemetry",
-    pkgName: "@d2/telemetry",
+    pkgName: "@dcsv-io/d2-telemetry",
   },
   {
     dir: join(TS_SHARED, "time"),
     shortName: "time",
-    pkgName: "@d2/time",
+    pkgName: "@dcsv-io/d2-time",
   },
   {
     dir: join(TS_SHARED, "utilities"),
     shortName: "utilities",
-    pkgName: "@d2/utilities",
+    pkgName: "@dcsv-io/d2-utilities",
   },
   {
     dir: join(TS_SHARED, "validation", "abstractions"),
     shortName: "validation-abstractions",
-    pkgName: "@d2/validation-abstractions",
+    pkgName: "@dcsv-io/d2-validation-abstractions",
   },
   {
     dir: join(TS_SHARED, "validation", "default"),
     shortName: "validation",
-    pkgName: "@d2/validation",
+    pkgName: "@dcsv-io/d2-validation",
   },
   // Consumable outside public/packages/typescript/: the KeyCustodian workload-leaf
   // client twin lives beside its service. Same baseline mechanism (git-tracked src
@@ -288,7 +288,7 @@ const CONSUMABLES = [
       "client-ts",
     ),
     shortName: "key-custodian-client",
-    pkgName: "@d2/key-custodian-client",
+    pkgName: "@dcsv-io/d2-private-key-custodian-client",
   },
 ];
 
@@ -551,7 +551,7 @@ const TOOLCHAIN_PIN = readNpmToolchainPin();
 
 /**
  * Build the DEPS (manifest-metadata) JSON for a TS package: substitute each
- * @d2/* dep literal with its resolved version (at seed time = committed
+ * @dcsv-io/d2-* dep literal with its resolved version (at seed time = committed
  * version), then serialize {name, version, dependencies}. Mirrors the provider's
  * substituteResolvedDeps + buildNpmManifestMeta.
  *
@@ -601,7 +601,7 @@ function composeSourceFingerprint(pkgDir, apiMd, depsJson) {
 }
 
 // ---------------------------------------------------------------------------
-// Resolved-version map Ã¢â‚¬â€ each consumable @d2/* at its committed version.
+// Resolved-version map Ã¢â‚¬â€ each consumable @dcsv-io/d2-* at its committed version.
 // At seed time resolvedVersions == the committed versions, matching how the
 // provider seeds its map on a no-op drift recompute (every dep at its current
 // version), so the seeded fingerprint equals the runtime recompute.

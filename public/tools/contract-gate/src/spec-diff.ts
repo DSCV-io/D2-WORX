@@ -21,7 +21,7 @@
 // Telemetry nested catalogs (meters → instruments → tags → values) are handled
 // by the NestedCatalogIdentity descriptor and recursive diffing.
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 import type {
   CatalogIdentity,

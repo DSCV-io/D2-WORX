@@ -3,7 +3,13 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { ErrorCodes, fail, HttpStatusCode, ok, someFound } from "@d2/result";
+import {
+  ErrorCodes,
+  fail,
+  HttpStatusCode,
+  ok,
+  someFound,
+} from "@dcsv-io/d2-result";
 import { describe, expect, it } from "vitest";
 
 import {

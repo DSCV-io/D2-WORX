@@ -16,7 +16,7 @@ import { z } from "zod";
  * the exact integer assignments. Categories: General Geopolitical (0-2),
  * Economic (10-17), Political (20-25), Military (30-35).
  * 
- * Mirrors .NET `D2.Shared.Geo.Abstractions.GeopoliticalEntityType`
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType`
  * byte-for-byte (same integer values, same names).
  */
 export const GeopoliticalEntityType = {
@@ -76,7 +76,7 @@ export const GeopoliticalEntityTypeSchema = z.union([
 /**
  * Writing direction enum (left-to-right vs right-to-left). Surfaces on the
  * `Language` record. Mirrors .NET
- * `D2.Shared.Geo.Abstractions.WritingDirection`.
+ * `DcsvIo.D2.Geo.Abstractions.WritingDirection`.
  */
 export const WritingDirection = {
   LTR: "LTR",
@@ -92,7 +92,7 @@ export const WritingDirectionSchema = z.enum([
 
 /**
  * Date format pattern enum. Surfaces on `Locale.dateFormatPattern`.
- * Mirrors .NET `D2.Shared.Geo.Abstractions.DateFormatPattern`.
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.DateFormatPattern`.
  */
 export const DateFormatPattern = {
   DMY: "DMY",
@@ -111,7 +111,7 @@ export const DateFormatPatternSchema = z.enum([
 /**
  * Acceptance classification for a currency within a country (legal tender
  * vs widely accepted vs tourist). Surfaces on `Country.currencies[]`.
- * Mirrors .NET `D2.Shared.Geo.Abstractions.CurrencyAcceptanceLevel`.
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel`.
  */
 export const CurrencyAcceptanceLevel = {
   LegalTender: "LegalTender",
@@ -129,7 +129,7 @@ export const CurrencyAcceptanceLevelSchema = z.enum([
 
 /**
  * Measurement system enum. Surfaces on `Country.measurementSystem`.
- * Mirrors .NET `D2.Shared.Geo.Abstractions.MeasurementSystem`.
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.MeasurementSystem`.
  */
 export const MeasurementSystem = {
   Metric: "Metric",

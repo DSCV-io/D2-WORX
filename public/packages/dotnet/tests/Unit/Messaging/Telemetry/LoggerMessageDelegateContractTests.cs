@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging.Telemetry;
+namespace DcsvIo.D2.Tests.Unit.Messaging.Telemetry;
 
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Messaging.RabbitMq.Channels;
-using D2.Shared.Messaging.RabbitMq.Connection;
-using D2.Shared.Messaging.RabbitMq.Subscribing;
-using D2.Shared.Messaging.RabbitMq.Telemetry;
-using D2.Shared.Messaging.RabbitMq.Topology;
+using DcsvIo.D2.Messaging.RabbitMq.Channels;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Subscribing;
+using DcsvIo.D2.Messaging.RabbitMq.Telemetry;
+using DcsvIo.D2.Messaging.RabbitMq.Topology;
 using Xunit;
 
 /// <summary>

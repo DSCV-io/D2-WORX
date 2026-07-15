@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.I18n
+# DcsvIo.D2.I18n
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
 Runtime translation lib — `Translator` (loads `contracts/messages/*.json` catalogs and renders `TKMessage` instances per locale), `SupportedLocales` (env-driven BCP 47 locale registry with canonical-casing + language-fallback), and the `AddD2I18n` DI extension that wires both as singletons.
 
-The pure-types slice (`TKMessage`, `TK` constants, `ITranslator` interface) lives in [`D2.Shared.I18n.Abstractions`](../abstractions/README.md). Domain layers reference Abstractions; this runtime is for infrastructure / composition-root code that actually renders translated strings (Courier emails, SMS, push notifications).
+The pure-types slice (`TKMessage`, `TK` constants, `ITranslator` interface) lives in [`DcsvIo.D2.I18n.Abstractions`](../abstractions/README.md). Domain layers reference Abstractions; this runtime is for infrastructure / composition-root code that actually renders translated strings (Courier emails, SMS, push notifications).
 
 > **Translation strategy reminder.** See [`../abstractions/README.md` § Wire format](../abstractions/README.md#wire-format) for the canonical split: client-side via SvelteKit / Paraglide on HTTP-response payloads, server-side via this `Translator` for outbound notifications where the rendered text must be inlined before delivery.
 
@@ -120,8 +120,8 @@ The source-of-truth catalogs live in [`contracts/messages/`](../../../../../cont
 
 ## Dependencies
 
-- `D2.Shared.I18n.Abstractions` — `TKMessage`, `ITranslator`, the SrcGen-emitted `TK` constants
-- `D2.Shared.Utilities` — `Falsey()` for boundary checks during config parsing
+- `DcsvIo.D2.I18n.Abstractions` — `TKMessage`, `ITranslator`, the SrcGen-emitted `TK` constants
+- `DcsvIo.D2.Utilities` — `Falsey()` for boundary checks during config parsing
 - `Microsoft.Extensions.Configuration.Abstractions` + `Microsoft.Extensions.Configuration.Binder` — `IConfiguration` for env-var ingestion
 - `Microsoft.Extensions.DependencyInjection.Abstractions` — `IServiceCollection` for the `AddD2I18n` extension
 

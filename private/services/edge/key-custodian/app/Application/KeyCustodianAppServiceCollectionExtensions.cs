@@ -4,26 +4,26 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application;
 
-using D2.Edge.KeyCustodian.App.Application.Facade;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetOidcConfiguration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
 
 /// <summary>
 /// DI registration for the KeyCustodian App layer: the 17 operation handlers and

@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation;
+namespace DcsvIo.D2.Tests.Unit.Validation;
 
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Loads a hand-authored cross-language validation parity corpus from
 /// <c>contracts/validation/fixtures/&lt;name&gt;.json</c> and exposes its rows
 /// as a strongly-typed model. The corpus is the SOURCE OF TRUTH shared with
-/// the TypeScript <c>@d2/validation</c> parity tests — both runtimes read the
+/// the TypeScript <c>@dcsv-io/d2-validation</c> parity tests — both runtimes read the
 /// SAME file and assert the SAME expected behavior per row.
 /// </summary>
 /// <remarks>

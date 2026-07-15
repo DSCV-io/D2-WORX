@@ -30,10 +30,10 @@ import { VersioningTestLibrary } from "@typespec/versioning/testing";
 import { findRepoRoot } from "./repo-root.js";
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -42,7 +42,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 });
 
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -50,15 +50,16 @@ const D2EmitterTestLibrary = createTestLibrary({
 
 // The real-KC csharp options (mirrors contracts/typespec/tspconfig.yaml).
 const KC_OPTIONS = {
-  "csharp-namespace": "D2.Edge.Tests.TypeSpecDto.Generated",
-  "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
-  "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+  "csharp-namespace": "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
+  "csharp-clients-namespace": "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
+  "csharp-app-namespace-base":
+    "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
   "proto-package": "d2.keycustodian.v2alpha",
   "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V2Alpha",
-  "grpc-service-namespace": "D2.Edge.KeyCustodian.Client.Grpc",
+  "grpc-service-namespace": "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Grpc",
   "process-kind-by-module": { KeyCustodian: "edge-module" },
   "csharp-routes-namespace": {
-    KeyCustodian: "D2.Edge.Api.Routes.KeyCustodian",
+    KeyCustodian: "DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian",
   },
 };
 
@@ -119,8 +120,8 @@ describe("keyCustodianWellKnown_RealTspCompile", () => {
     // on diagnostics (the real KC .tsp carries @versioned, which can warn under
     // the isolated test-host). The error-free assertion is made explicitly below.
     await host.compileAndDiagnose("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": KC_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": KC_OPTIONS },
       outputDir: "testing:/out",
     });
   });
@@ -135,7 +136,9 @@ describe("keyCustodianWellKnown_RealTspCompile", () => {
   it("getJwks → harmless MapGet at /.well-known/jwks.json delegating to IKeyCustodianApi", () => {
     const route = getEmittedFile(host, "GetJwksRouteRegistration.g.cs");
     expect(route).toBeDefined();
-    expect(route).toContain("namespace D2.Edge.Api.Routes.KeyCustodian;");
+    expect(route).toContain(
+      "namespace DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian;",
+    );
     expect(route).toContain("MapGet(");
     expect(route).toContain('"/.well-known/jwks.json"');
     expect(route).toContain("MarkAsD2HarmlessEndpoint()");
@@ -205,8 +208,8 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
     // on diagnostics (the real KC .tsp carries @versioned, which can warn under
     // the isolated test-host). The error-free assertion is made explicitly below.
     await host.compileAndDiagnose("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": KC_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": KC_OPTIONS },
       outputDir: "testing:/out",
     });
   });
@@ -307,8 +310,8 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
       ),
     );
     const drifted = committed.replace(
-      "namespace D2.Edge.Api.Routes.KeyCustodian;",
-      "namespace D2.Edge.Api.Routes.Drifted;",
+      "namespace DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian;",
+      "namespace DcsvIo.D2.Private.Edge.Api.Routes.Drifted;",
     );
     expect(drifted).not.toBe(committed);
     expect(stripSpecBanner(emitted!)).not.toBe(drifted);

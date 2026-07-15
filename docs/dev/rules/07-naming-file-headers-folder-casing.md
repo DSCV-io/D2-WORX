@@ -46,7 +46,7 @@ _[← rules index](../rules.md) · §7 of the D2-WORX rules catalog._
 - **7.3** Are folders OUTSIDE a project (csproj-grouping, organizational) lowercase / kebab-case for multi-word? (`server/`, `services/`, `edge/`, `app/`, `client/`, `dotnet/`, `problem-details/`, `source-gen-shared/`, `service-defaults/`, `infra/`, `tools/`, `docs/`)
 - **7.4** Are folders INSIDE a project (namespace-mapping, where Rider auto-creates folders from namespace operations) PascalCase? (`Application/`, `Infrastructure/`, `Handlers/`, `Commands/`, `Queries/`, `Entities/`, `ValueObjects/`, `Rules/`, `Persistence/`, `Messaging/`, `Postgres/`, `RabbitMq/`) For a SERVICE project the in-project folder set is governed by the structure standard (§9.24 + [ADR-0020](../../public/docs/adrs/0020-service-project-structure.md)); this predicate is only the *casing* check — the killed letter-tier / mirror-tree / `Models/` / `CQRS/` folder names are §9.24 FINDINGS, not casing exceptions.
 - **7.5** Are `.cs` file names PascalCase (matching the type they contain — one-class-per-file)?
-- **7.6** Are `.csproj` file names PascalCase, dot-separated (`D2.Shared.Handler.csproj`) — the csproj filename IS the assembly name?
+- **7.6** Are `.csproj` file names PascalCase, dot-separated (`DcsvIo.D2.Handler.csproj`) — the csproj filename IS the assembly name?
 
 > **The rule**: if Rider auto-generates a folder from a namespace operation, that folder must be PascalCase. Anything else is lowercase.
 
@@ -148,7 +148,7 @@ If you encounter a language not listed above and it supports comments, the heade
 
 ### Scope vs Permission terminology
 
-- **7.9** Does code use **"scope"** as the primary term throughout (not "permission")? JWT carries them as the OAuth-canonical `scope` claim (space-separated string). Code references them as constants in `D2.Shared.Auth.Scopes`.
+- **7.9** Does code use **"scope"** as the primary term throughout (not "permission")? JWT carries them as the OAuth-canonical `scope` claim (space-separated string). Code references them as constants in `DcsvIo.D2.Auth.Scopes`.
   - Evidence: per new code touching authz → "scope" terminology.
 
 ### Git conventions

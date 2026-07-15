@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian;
 
 using System.Security.Cryptography;
-using D2.Edge.KeyCustodian.Infra;
-using D2.Shared.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Xunit;

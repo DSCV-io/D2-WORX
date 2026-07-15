@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Telemetry;
+namespace DcsvIo.D2.Messaging.RabbitMq.Telemetry;
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -18,7 +18,7 @@ using System.Diagnostics.Metrics;
 /// <remarks>
 /// Class is <c>public</c> so the source / meter name constant
 /// (<see cref="SOURCE_NAME"/>) is reachable cross-assembly — consumed by
-/// <c>D2.Shared.Telemetry</c>'s aggregation registration so messaging
+/// <c>DcsvIo.D2.Telemetry</c>'s aggregation registration so messaging
 /// publish / consume spans + metrics reach the OTLP / Prometheus exporters
 /// without per-host opt-in. The activity source / meter / counter / histogram
 /// fields remain <c>internal</c> — only the lib's own publish + consume
@@ -27,7 +27,7 @@ using System.Diagnostics.Metrics;
 public static class MessagingTelemetry
 {
     /// <summary>OTel source / meter name for the messaging-rabbitmq lib.</summary>
-    public const string SOURCE_NAME = "D2.Shared.Messaging.RabbitMq";
+    public const string SOURCE_NAME = "DcsvIo.D2.Messaging.RabbitMq";
 
     /// <summary>Activity source for publish + consume spans.</summary>
     public static readonly ActivitySource SR_ActivitySource = new(SOURCE_NAME);

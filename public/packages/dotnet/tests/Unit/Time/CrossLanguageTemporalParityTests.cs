@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Time;
+namespace DcsvIo.D2.Tests.Unit.Time;
 
 using System.IO;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Time;
+using DcsvIo.D2.Time;
 using NodaTime;
 using NodaTime.Text;
 using Xunit;

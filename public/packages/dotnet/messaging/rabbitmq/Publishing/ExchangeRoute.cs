@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Publishing;
+namespace DcsvIo.D2.Messaging.RabbitMq.Publishing;
 
 /// <summary>Resolved exchange + routing key pair for a publish call.</summary>
 /// <param name="Exchange">Canonical exchange name (descriptor or per-call

@@ -23,10 +23,10 @@ import { VersioningTestLibrary } from "@typespec/versioning/testing";
 import { findRepoRoot } from "./repo-root.js";
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -35,7 +35,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 });
 
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -43,14 +43,15 @@ const D2EmitterTestLibrary = createTestLibrary({
 
 /** Production Audit emit options (mirrors contracts/typespec/audit/tspconfig.yaml). */
 const AUDIT_OPTIONS = {
-  "csharp-clients-namespace": "D2.Audit.Client",
-  "csharp-app-namespace-base": "D2.Audit.App.Application.Handlers",
+  "csharp-clients-namespace": "DcsvIo.D2.Private.Audit.Client",
+  "csharp-app-namespace-base":
+    "DcsvIo.D2.Private.Audit.App.Application.Handlers",
   "proto-package": "d2.audit.v2alpha",
   "proto-csharp-namespace": "D2.Services.Protos.Audit.V2Alpha",
-  "grpc-service-namespace": "D2.Audit.Api.Grpc",
+  "grpc-service-namespace": "DcsvIo.D2.Private.Audit.Api.Grpc",
   "process-kind-by-module": { Audit: "standalone" },
   "csharp-bridge-namespace": {
-    Audit: "D2.Edge.Api.Bridges.Audit",
+    Audit: "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
   },
 };
 
@@ -260,8 +261,8 @@ describe("auditProductionHomes_RealTspCompile", () => {
     );
     host.addTypeSpecFile("main.tsp", tsp);
     await host.compileAndDiagnose("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": AUDIT_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": AUDIT_OPTIONS },
       outputDir: "testing:/out",
     });
   });
@@ -277,7 +278,7 @@ describe("auditProductionHomes_RealTspCompile", () => {
     const bridge = getEmittedFile(host, "PingAuditBridgeRegistration.g.cs");
     expect(bridge).toBeDefined();
     expect(bridge).toContain("RequireAnyScope(Scopes.Internal.Audit.Ping)");
-    expect(bridge).toContain("using D2.Shared.Auth.Abstractions;");
+    expect(bridge).toContain("using DcsvIo.D2.Auth.Abstractions;");
     expect(bridge).not.toContain("MarkAsD2HarmlessEndpoint");
     expect(bridge).not.toContain('RequireAnyScope("');
   });
@@ -301,8 +302,8 @@ describe("auditProductionHomes_ByteGate_CommittedArtifactsIdentical", () => {
     );
     host.addTypeSpecFile("main.tsp", tsp);
     await host.compileAndDiagnose("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": AUDIT_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": AUDIT_OPTIONS },
       outputDir: "testing:/out",
     });
   });
@@ -333,8 +334,8 @@ describe("auditProductionHomes_ByteGate_CommittedArtifactsIdentical", () => {
       ),
     );
     const drifted = committed.replace(
-      "namespace D2.Edge.Api.Bridges.Audit;",
-      "namespace D2.Edge.Api.Bridges.Drifted;",
+      "namespace DcsvIo.D2.Private.Edge.Api.Bridges.Audit;",
+      "namespace DcsvIo.D2.Private.Edge.Api.Bridges.Drifted;",
     );
     expect(drifted).not.toBe(committed);
     expect(stripSpecBanner(emitted!)).not.toBe(drifted);

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.TokenExchange;
+namespace DcsvIo.D2.Auth.Outbound.TokenExchange;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Per-process client that exchanges an inbound user JWT for a downstream-
@@ -46,7 +46,7 @@ public interface ITokenExchangeClient
     /// </param>
     /// <param name="targetAudience">
     /// The downstream service audience URL — typically one of the
-    /// <c>D2.Shared.Auth.Abstractions.Audiences.*</c> constants.
+    /// <c>DcsvIo.D2.Auth.Abstractions.Audiences.*</c> constants.
     /// </param>
     /// <param name="narrowedScopes">
     /// Optional subset of scopes to request on the new token. Null = request

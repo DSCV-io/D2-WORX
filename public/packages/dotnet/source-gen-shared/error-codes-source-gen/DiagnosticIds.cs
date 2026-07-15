@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ResultErrorCodes.SourceGen;
+namespace DcsvIo.D2.ResultErrorCodes.SourceGen;
 
 /// <summary>
 /// String identifiers for the generic catalog's per-catalog validation

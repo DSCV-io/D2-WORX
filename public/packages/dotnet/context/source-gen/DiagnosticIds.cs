@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.SourceGen;
+namespace DcsvIo.D2.Context.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by <see cref="ContextGenerator"/>.

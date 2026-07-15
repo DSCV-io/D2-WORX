@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.WorkloadCertificate;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.WorkloadCertificate;
 
 using System.Threading;
 using Microsoft.Extensions.Time.Testing;

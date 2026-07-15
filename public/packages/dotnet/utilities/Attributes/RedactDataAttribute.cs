@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Utilities.Attributes;
+namespace DcsvIo.D2.Utilities.Attributes;
 
-using D2.Shared.Utilities.Enums;
+using DcsvIo.D2.Utilities.Enums;
 using JetBrains.Annotations;
 
 /// <summary>

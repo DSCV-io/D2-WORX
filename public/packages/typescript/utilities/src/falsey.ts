@@ -8,7 +8,7 @@
  * whitespace-only string, an empty collection, or a zero/empty UUID.
  *
  * Mirrors the .NET `Falsey()` extension semantics from
- * `D2.Shared.Utilities.Extensions.StringExtensions` /
+ * `DcsvIo.D2.Utilities.Extensions.StringExtensions` /
  * `EnumerableExtensions` / `GuidExtensions`. The runtime kind check is
  * deliberately permissive — strings, arrays, sets, maps, and the canonical
  * empty-uuid string all share a single boundary helper so consumer code

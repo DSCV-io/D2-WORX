@@ -11,12 +11,12 @@ import { type Counter, metrics } from "@opentelemetry/api";
  * reach OTLP / Prometheus exporters.
  */
 // Byte-identical twin of .NET RedisCacheTelemetry: meter
-// "D2.Shared.Caching.Distributed.Redis" v1.0.0, counters
+// "DcsvIo.D2.Caching.Distributed.Redis" v1.0.0, counters
 // d2.cache.redis.{hits,misses,sets,removes,broadcasts,errors} with the same
 // units and descriptions. Aggregate counters only - no tags, no spans
 // (matches the .NET meter).
 // Instrument tuples below MUST match RedisCacheTelemetry.cs Counter registrations.
-export const REDIS_CACHE_METER_NAME = "D2.Shared.Caching.Distributed.Redis";
+export const REDIS_CACHE_METER_NAME = "DcsvIo.D2.Caching.Distributed.Redis";
 
 /** Meter version twin of .NET `RedisCacheTelemetry.SR_Meter` version. */
 export const REDIS_CACHE_METER_VERSION = "1.0.0";

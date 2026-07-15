@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Contacts.EntityFrameworkCore;
+namespace DcsvIo.D2.Tests.Unit.Contacts.EntityFrameworkCore;
 
 using System;
 using System.Linq;
 using System.Security.Cryptography;
 using AwesomeAssertions;
-using D2.Shared.Contacts.EntityFrameworkCore;
-using D2.Shared.Contacts.ValueObjects;
-using D2.Shared.DataGovernance.Abstractions;
-using D2.Shared.DataGovernance.EntityFrameworkCore;
-using D2.Shared.Time.EfCore;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Contacts.EntityFrameworkCore;
+using DcsvIo.D2.Contacts.ValueObjects;
+using DcsvIo.D2.DataGovernance.Abstractions;
+using DcsvIo.D2.DataGovernance.EntityFrameworkCore;
+using DcsvIo.D2.Time.EfCore;
+using DcsvIo.D2.Validation.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Xunit;

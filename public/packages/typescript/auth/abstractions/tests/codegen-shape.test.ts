@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { tk } from "@d2/i18n-abstractions";
+import { tk } from "@dcsv-io/d2-i18n-abstractions";
 import {
   ALL_AUTH_ERROR_CODES,
   AuthErrorCodes,

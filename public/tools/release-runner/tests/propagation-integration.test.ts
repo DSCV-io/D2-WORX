@@ -109,25 +109,29 @@ function opts(
 
 describe("runRelease — propagation enabled (default)", () => {
   it("directly-bumped dependency patch-bumps untouched dependents", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"]);
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB } = createNpmFixture("@dcsv-io/d2-b", ["@dcsv-io/d2-a"]);
 
     const commits = [makeCommit("feat: add helper", [dirA])];
     const result = runRelease(commits, [pkgA, pkgB], opts(true, true));
 
     expect(result.plans).toHaveLength(2);
 
-    const planA = result.plans.find((p) => p.pkg.name === "@d2/a");
-    const planB = result.plans.find((p) => p.pkg.name === "@d2/b");
+    const planA = result.plans.find((p) => p.pkg.name === "@dcsv-io/d2-a");
+    const planB = result.plans.find((p) => p.pkg.name === "@dcsv-io/d2-b");
 
     expect(planA!.bump).toBe("minor");
     expect(planB!.bump).toBe("patch");
-    expect(planB!.dependencyEntries).toContain("@d2/a");
+    expect(planB!.dependencyEntries).toContain("@dcsv-io/d2-a");
   });
 
   it("propagated plan writes PATCH version bump to manifest", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"], "0.2.0");
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB } = createNpmFixture(
+      "@dcsv-io/d2-b",
+      ["@dcsv-io/d2-a"],
+      "0.2.0",
+    );
 
     const commits = [makeCommit("feat: new thing", [dirA])];
     runRelease(commits, [pkgA, pkgB], opts(false, true));
@@ -139,20 +143,20 @@ describe("runRelease — propagation enabled (default)", () => {
   });
 
   it("propagated plan writes ### Changed section to CHANGELOG", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"]);
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB } = createNpmFixture("@dcsv-io/d2-b", ["@dcsv-io/d2-a"]);
 
     const commits = [makeCommit("feat: new feature", [dirA])];
     runRelease(commits, [pkgA, pkgB], opts(false, true));
 
     const changelog = readFileSync(pkgB.changelogPath, "utf-8");
     expect(changelog).toContain("### Changed");
-    expect(changelog).toContain("Dependency update: @d2/a bumped.");
+    expect(changelog).toContain("Dependency update: @dcsv-io/d2-a bumped.");
   });
 
   it("directly-bumped package does NOT get a ### Changed section", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"]);
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB } = createNpmFixture("@dcsv-io/d2-b", ["@dcsv-io/d2-a"]);
 
     const commits = [makeCommit("feat: new feature", [dirA])];
     runRelease(commits, [pkgA, pkgB], opts(false, true));
@@ -170,9 +174,9 @@ describe("runRelease — propagation enabled (default)", () => {
   });
 
   it("transitive chain (A → B → C) results in all three being planned", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"]);
-    const { pkg: pkgC } = createNpmFixture("@d2/c", ["@d2/b"]);
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB } = createNpmFixture("@dcsv-io/d2-b", ["@dcsv-io/d2-a"]);
+    const { pkg: pkgC } = createNpmFixture("@dcsv-io/d2-c", ["@dcsv-io/d2-b"]);
 
     const commits = [makeCommit("fix: core fix", [dirA])];
     const result = runRelease(commits, [pkgA, pkgB, pkgC], opts(true, true));
@@ -182,14 +186,16 @@ describe("runRelease — propagation enabled (default)", () => {
     const bumps = Object.fromEntries(
       result.plans.map((p) => [p.pkg.name, p.bump]),
     );
-    expect(bumps["@d2/a"]).toBe("patch");
-    expect(bumps["@d2/b"]).toBe("patch");
-    expect(bumps["@d2/c"]).toBe("patch");
+    expect(bumps["@dcsv-io/d2-a"]).toBe("patch");
+    expect(bumps["@dcsv-io/d2-b"]).toBe("patch");
+    expect(bumps["@dcsv-io/d2-c"]).toBe("patch");
   });
 
   it("already-directly-bumped dependent keeps its own higher bump", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB, dir: dirB } = createNpmFixture("@d2/b", ["@d2/a"]);
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB, dir: dirB } = createNpmFixture("@dcsv-io/d2-b", [
+      "@dcsv-io/d2-a",
+    ]);
 
     // Both A and B are directly touched.
     const commits = [
@@ -200,7 +206,7 @@ describe("runRelease — propagation enabled (default)", () => {
 
     expect(result.plans).toHaveLength(2);
 
-    const planB = result.plans.find((p) => p.pkg.name === "@d2/b");
+    const planB = result.plans.find((p) => p.pkg.name === "@dcsv-io/d2-b");
     expect(planB!.bump).toBe("minor"); // own feat, not overwritten by patch propagation
     expect(planB!.dependencyEntries).toHaveLength(0); // NOT a dep-update plan
   });
@@ -212,20 +218,24 @@ describe("runRelease — propagation enabled (default)", () => {
 
 describe("runRelease — --no-propagate reproduces direct-only bumping", () => {
   it("with propagate:false, untouched dependents receive no plan", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"]);
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB } = createNpmFixture("@dcsv-io/d2-b", ["@dcsv-io/d2-a"]);
 
     const commits = [makeCommit("feat: add feature", [dirA])];
     const result = runRelease(commits, [pkgA, pkgB], opts(true, false));
 
     // Only A is bumped — B is NOT in the plan.
     expect(result.plans).toHaveLength(1);
-    expect(result.plans[0]!.pkg.name).toBe("@d2/a");
+    expect(result.plans[0]!.pkg.name).toBe("@dcsv-io/d2-a");
   });
 
   it("with propagate:false, B's manifest is untouched in apply mode", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"], "0.5.0");
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB } = createNpmFixture(
+      "@dcsv-io/d2-b",
+      ["@dcsv-io/d2-a"],
+      "0.5.0",
+    );
 
     const commits = [makeCommit("feat: add feature", [dirA])];
     runRelease(commits, [pkgA, pkgB], opts(false, false));
@@ -244,15 +254,19 @@ describe("runRelease — --no-propagate reproduces direct-only bumping", () => {
 
 describe("runRelease — packageFilter applied after propagation", () => {
   it("--package B shows propagated PATCH plan for B even though A was directly bumped", () => {
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"]);
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB } = createNpmFixture("@dcsv-io/d2-b", ["@dcsv-io/d2-a"]);
 
     const commits = [makeCommit("feat: A feature", [dirA])];
-    const result = runRelease(commits, [pkgA, pkgB], opts(true, true, "@d2/b"));
+    const result = runRelease(
+      commits,
+      [pkgA, pkgB],
+      opts(true, true, "@dcsv-io/d2-b"),
+    );
 
-    // The filter restricts to @d2/b. B was reachable via propagation.
+    // The filter restricts to @dcsv-io/d2-b. B was reachable via propagation.
     expect(result.plans).toHaveLength(1);
-    expect(result.plans[0]!.pkg.name).toBe("@d2/b");
+    expect(result.plans[0]!.pkg.name).toBe("@dcsv-io/d2-b");
     expect(result.plans[0]!.bump).toBe("patch");
   });
 });
@@ -275,8 +289,8 @@ describe("runRelease — CHANGELOG back-compat (4-subsection seed)", () => {
 
 ### Fixed`;
 
-    const { pkg: pkgA, dir: dirA } = createNpmFixture("@d2/a");
-    const { pkg: pkgB } = createNpmFixture("@d2/b", ["@d2/a"]);
+    const { pkg: pkgA, dir: dirA } = createNpmFixture("@dcsv-io/d2-a");
+    const { pkg: pkgB } = createNpmFixture("@dcsv-io/d2-b", ["@dcsv-io/d2-a"]);
 
     // Override B's changelog with the OLD 4-section template.
     writeFileSync(pkgB.changelogPath, OLD_CHANGELOG, "utf-8");

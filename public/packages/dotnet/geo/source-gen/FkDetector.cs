@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen;
+namespace DcsvIo.D2.Geo.SourceGen;
 
 using System;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Naming-convention-driven classification of geo spec fields into one of

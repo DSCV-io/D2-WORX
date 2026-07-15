@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Messaging.DlqMetadata.SourceGen
+# DcsvIo.D2.Messaging.DlqMetadata.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -16,8 +16,8 @@ Roslyn incremental source generator that emits the DLQ failure-metadata catalogs
 
 | Consuming assembly                 | Emits                           | Class name                                       |
 | ---------------------------------- | ------------------------------- | ------------------------------------------------ |
-| `D2.Shared.Messaging.Abstractions` | `DlqFailureMetadataFields.g.cs` | `DlqFailureMetadataFields` (JSON property names) |
-| `D2.Shared.Messaging.RabbitMq`     | `DlqFailureCauses.g.cs`         | `DlqFailureCauses` (closed-enum cause strings)   |
+| `DcsvIo.D2.Messaging.Abstractions` | `DlqFailureMetadataFields.g.cs` | `DlqFailureMetadataFields` (JSON property names) |
+| `DcsvIo.D2.Messaging.RabbitMq`     | `DlqFailureCauses.g.cs`         | `DlqFailureCauses` (closed-enum cause strings)   |
 | any other                          | (nothing)                       | —                                                |
 
 The two catalogs co-live in one spec because they describe two facets of the same wire shape, but they emit into different consumers because the producer of the cause strings (`DlqFailureHeaderBuilder`) lives in the RabbitMq csproj while the consumer-of-the-record (`DlqFailureMetadata`) lives in the abstractions csproj.
@@ -29,7 +29,7 @@ The two catalogs co-live in one spec because they describe two facets of the sam
 
 ## Cross-language parity
 
-The SAME spec drives `@d2/messaging-abstractions` via `tools/ts-codegen/src/dlq-failure-metadata-emit.ts`. The TS-side `@d2/messaging-abstractions` package exposes the same field-name and cause-string catalogs; any TS consumer (DLQ ops tooling, RabbitMQ subscribers) reads byte-equal identifiers shared with the .NET producers.
+The SAME spec drives `@dcsv-io/d2-messaging-abstractions` via `tools/ts-codegen/src/dlq-failure-metadata-emit.ts`. The TS-side `@dcsv-io/d2-messaging-abstractions` package exposes the same field-name and cause-string catalogs; any TS consumer (DLQ ops tooling, RabbitMQ subscribers) reads byte-equal identifiers shared with the .NET producers.
 
 ## Diagnostics
 

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.RateLimiting;
+namespace DcsvIo.D2.Resilience.RateLimiting;
 
 /// <summary>
 /// Hand-rolled, <see cref="SemaphoreSlim"/>-based concurrency limiter. Bounds the

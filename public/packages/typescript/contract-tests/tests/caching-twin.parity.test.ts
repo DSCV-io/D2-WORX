@@ -29,7 +29,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { LOCAL_CACHE_DEFAULTS } from "@d2/caching-abstractions";
+import { LOCAL_CACHE_DEFAULTS } from "@dcsv-io/d2-caching-abstractions";
 import {
   INCREMENT_WITH_OPTIONAL_TTL,
   REDIS_CACHE_DEFAULTS,
@@ -38,17 +38,17 @@ import {
   REDIS_CACHE_METER_VERSION,
   RELEASE_LOCK_IF_OWNER,
   SET_ADD_WITH_OPTIONAL_TTL,
-} from "@d2/caching-distributed-redis";
+} from "@dcsv-io/d2-caching-distributed-redis";
 import {
   LOCAL_CACHE_INSTRUMENTS,
   LOCAL_CACHE_METER_NAME,
   LOCAL_CACHE_METER_VERSION,
-} from "@d2/caching-local-default";
+} from "@dcsv-io/d2-caching-local-default";
 import {
   BACKPLANE_NOT_REGISTERED_MESSAGE,
   TIERED_ERROR_CODE_UNKNOWN,
   TieredCacheOp,
-} from "@d2/caching-tiered";
+} from "@dcsv-io/d2-caching-tiered";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

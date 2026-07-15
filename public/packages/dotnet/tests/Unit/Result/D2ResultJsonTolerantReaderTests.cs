@@ -4,20 +4,20 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Result;
+namespace DcsvIo.D2.Tests.Unit.Result;
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using AwesomeAssertions;
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 using Xunit;
 
 /// <summary>
 /// Pins the Tolerant Reader property of the D2Result JSON serialization substrate.
 /// <para>
 /// On the .NET side <see cref="D2Result{TData}"/> is a <em>serialize-only</em> type: the
-/// TS-side <c>@d2/result</c> parser owns envelope deserialization (as documented in
+/// TS-side <c>@dcsv-io/d2-result</c> parser owns envelope deserialization (as documented in
 /// <see cref="D2ResultJsonShapeTests"/>). The Tolerant Reader property therefore applies in
 /// two directions:
 /// </para>

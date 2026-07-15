@@ -4,16 +4,16 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { AuthErrorCodes } from "@d2/auth-abstractions";
-import type { IRequestContext } from "@d2/request-context-abstractions";
-import { RequestOrigin } from "@d2/request-context-abstractions";
+import { AuthErrorCodes } from "@dcsv-io/d2-auth-abstractions";
+import type { IRequestContext } from "@dcsv-io/d2-request-context-abstractions";
+import { RequestOrigin } from "@dcsv-io/d2-request-context-abstractions";
 import { requireAuth } from "../../src/guards/require-auth.js";
 import type {
   GuardRequestEvent,
   GuardThrowers,
 } from "../../src/guards/guard-types.js";
 import type { ProblemDetailsBody } from "../../src/problem-details.js";
-import { ProblemDetailsExtensionKeys } from "@d2/problem-details-abstractions";
+import { ProblemDetailsExtensionKeys } from "@dcsv-io/d2-problem-details-abstractions";
 
 interface ThrownError {
   status: number;

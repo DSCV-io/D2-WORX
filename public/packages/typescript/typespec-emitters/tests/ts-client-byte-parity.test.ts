@@ -23,8 +23,8 @@ import {
   emitTsRestClient,
   type TsRestClientOp,
 } from "../src/lib/ts-rest-client-emitter.js";
-import { parseResultPredicate } from "@d2/typespec-decorators";
-import type { PredicateNode } from "@d2/typespec-decorators";
+import { parseResultPredicate } from "@dcsv-io/d2-typespec-decorators";
+import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 import type { FieldInfo } from "../src/lib/model-walk.js";
 
 /** Parse a result-predicate expression to its AST, failing the test on a parse error. */

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Emitters.Default;
+namespace DcsvIo.D2.Geo.SourceGen.Emitters.Default;
 
 using System.Collections.Immutable;
 using System.Text;
-using D2.Shared.Geo.SourceGen.Spec;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.Geo.SourceGen.Spec;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Emits the central <c>GeoDataInitializer</c> coordinator that drives the

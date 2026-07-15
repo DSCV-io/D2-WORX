@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging;
+namespace DcsvIo.D2.Tests.Unit.Messaging;
 
 using System.Text;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Messaging.RabbitMq.Subscribing;
-using D2.Shared.Result;
+using DcsvIo.D2.Messaging.RabbitMq.Subscribing;
+using DcsvIo.D2.Result;
 using Xunit;
 
 /// <summary>

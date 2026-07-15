@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 
 using System.Diagnostics.Metrics;
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -69,8 +69,8 @@ public sealed class KeyringMetricsTests
     public void MeterAndInstrumentNames_WireLiterals_ArePinned()
     {
         // Per-VALUE pins: a wire-name rename must fail a test, never pass silently.
-        KeyringMetrics.METER_NAME.Should().Be("D2.Edge.KeyCustodian.Client");
-        KeyringMetrics.SR_Meter.Name.Should().Be("D2.Edge.KeyCustodian.Client");
+        KeyringMetrics.METER_NAME.Should().Be("DcsvIo.D2.Private.Edge.KeyCustodian.Client");
+        KeyringMetrics.SR_Meter.Name.Should().Be("DcsvIo.D2.Private.Edge.KeyCustodian.Client");
 
         KeyringMetrics.SR_KeyringFetches.Name.Should().Be("d2.keyring.fetches");
         KeyringMetrics.SR_RefreshFailures.Name.Should().Be("d2.keyring.refresh_failures");

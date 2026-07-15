@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Time;
+namespace DcsvIo.D2.Tests.Unit.Time;
 
 using System.Linq;
 using AwesomeAssertions;
 using NodaTime;
 using Xunit;
-using IClock = D2.Shared.Time.IClock;
+using IClock = DcsvIo.D2.Time.IClock;
 
 public sealed class IClockTests
 {

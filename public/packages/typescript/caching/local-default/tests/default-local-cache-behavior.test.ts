@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { LocalCacheOptions } from "@d2/caching-abstractions";
+import type { LocalCacheOptions } from "@dcsv-io/d2-caching-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { DefaultLocalCache } from "../src/index.js";

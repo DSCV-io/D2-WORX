@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.InProcessKeys.SourceGen
+# DcsvIo.D2.InProcessKeys.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
@@ -20,8 +20,8 @@ The spec file is the single source of truth for cross-binding in-process slot ke
 
 | Consuming assembly            | Filter                      | Visibility | Emitted source                                                                                 |
 | ----------------------------- | --------------------------- | ---------- | ---------------------------------------------------------------------------------------------- |
-| `D2.Shared.Auth.Abstractions` | `bindings.Contains("http")` | `public`   | `D2HttpContextItems.g.cs` (class `D2HttpContextItems` in `D2.Shared.Auth.Abstractions.Http`)   |
-| `D2.Shared.Auth.Grpc`         | `bindings.Contains("grpc")` | `internal` | `D2GrpcUserStateKeys.g.cs` (class `D2GrpcUserStateKeys` in `D2.Shared.Auth.Grpc.Interceptors`) |
+| `DcsvIo.D2.Auth.Abstractions` | `bindings.Contains("http")` | `public`   | `D2HttpContextItems.g.cs` (class `D2HttpContextItems` in `DcsvIo.D2.Auth.Abstractions.Http`)   |
+| `DcsvIo.D2.Auth.Grpc`         | `bindings.Contains("grpc")` | `internal` | `D2GrpcUserStateKeys.g.cs` (class `D2GrpcUserStateKeys` in `DcsvIo.D2.Auth.Grpc.Interceptors`) |
 
 The visibility difference (public vs internal) reflects the consumption pattern of each binding — HTTP downstream code reads `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]` directly, whereas gRPC consumers go through typed accessor extensions and the raw key class stays internal.
 
@@ -68,5 +68,5 @@ The visibility difference (public vs internal) reflects the consumption pattern 
 - [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/in-process-keys/schema.json`](../../../../../contracts/in-process-keys/schema.json) — JSON Schema for the spec
 - [`contracts/in-process-keys/keys.spec.json`](../../../../../contracts/in-process-keys/keys.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Headers.SourceGen`](../../headers/source-gen/README.md) — sibling SrcGen for cross-transport wire headers
-- [`D2.Shared.Auth.JwtClaims.SourceGen`](../../auth/jwt-claims-source-gen/README.md) — sibling SrcGen for JWT claim names
+- [`DcsvIo.D2.Headers.SourceGen`](../../headers/source-gen/README.md) — sibling SrcGen for cross-transport wire headers
+- [`DcsvIo.D2.Auth.JwtClaims.SourceGen`](../../auth/jwt-claims-source-gen/README.md) — sibling SrcGen for JWT claim names

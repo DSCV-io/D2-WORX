@@ -2,14 +2,14 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/request-context-abstractions
+# @dcsv-io/d2-request-context-abstractions
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
 `IRequestContext` interface (extends `IAuthContext`) + `IPropagatedContext`
 cross-hop subset + `PropagatedContextSerializer` round-trip helper.
 Emitted from `contracts/request-context/IRequestContext.spec.json` via
-`tools/ts-codegen`. Mirrors `D2.Shared.Context.Abstractions` (.NET).
+`tools/ts-codegen`. Mirrors `DcsvIo.D2.Context.Abstractions` (.NET).
 
 ## Public API
 
@@ -22,7 +22,7 @@ Generated artifacts (committed to git):
 | `IPropagatedContext`          | `IPropagatedContext.g.ts` (cross-hop subset, `propagate: true` only) |
 | `PropagatedContextSerializer` | `PropagatedContextSerializer.g.ts` (`serialize` + `tryDecode`)       |
 
-Plus all `@d2/auth-context-abstractions` exports re-exported transitively.
+Plus all `@dcsv-io/d2-auth-context-abstractions` exports re-exported transitively.
 
 ## Codegen workflow
 
@@ -32,16 +32,16 @@ Plus all `@d2/auth-context-abstractions` exports re-exported transitively.
 artifacts.
 
 The emitter honors the spec's `extends` field: when set (as it is for
-`IRequestContext.spec.json:6` `"extends": "D2.Shared.AuthContext.Abstractions.IAuthContext"`),
+`IRequestContext.spec.json:6` `"extends": "DcsvIo.D2.AuthContext.Abstractions.IAuthContext"`),
 the generated `IRequestContext.g.ts` declares
 `export interface IRequestContext extends IAuthContext { ... }` and
-emits a `import type { IAuthContext } from "@d2/auth-context-abstractions";`
+emits a `import type { IAuthContext } from "@dcsv-io/d2-auth-context-abstractions";`
 line at the top. Consumers see the unified `IRequestContext` shape as a
 single import — IAuthContext properties are inherited transitively.
 
 ## Dependencies
 
-- `@d2/auth-context-abstractions` — `IAuthContext` + supporting enums.
+- `@dcsv-io/d2-auth-context-abstractions` — `IAuthContext` + supporting enums.
 
 ## Usage example
 
@@ -49,8 +49,8 @@ single import — IAuthContext properties are inherited transitively.
 import {
   PropagatedContextSerializer,
   IRequestContextRedactPaths,
-} from "@d2/request-context-abstractions";
-import { setupLogger } from "@d2/logging";
+} from "@dcsv-io/d2-request-context-abstractions";
+import { setupLogger } from "@dcsv-io/d2-logging";
 
 // Encode envelope for cross-hop propagation.
 const envelope = PropagatedContextSerializer.serialize(propagatedCtx);
@@ -68,7 +68,7 @@ const log = setupLogger({
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.Context.Abstractions`:
+Mirrors `DcsvIo.D2.Context.Abstractions`:
 
 - `IRequestContext` ↔ same property set, camelCased.
 - `PropagatedContextSerializer` ↔ 1:1 type-named class with

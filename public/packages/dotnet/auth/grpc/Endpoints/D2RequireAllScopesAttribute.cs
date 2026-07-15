@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Endpoints;
+namespace DcsvIo.D2.Auth.Grpc.Endpoints;
 
 using System.Collections.Generic;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Declares that a gRPC method (or every method on a service class) requires
 /// the caller's <c>IRequestContext.Scopes</c> set to contain <b>every</b>
-/// listed scope (<see cref="D2.Shared.Auth.Abstractions.ScopeMatch.All"/>).
+/// listed scope (<see cref="DcsvIo.D2.Auth.Abstractions.ScopeMatch.All"/>).
 /// Read by the auth interceptor via the matched endpoint's metadata collection
 /// (ASP.NET routing auto-pulls method-level + class-level
 /// <see cref="Attribute"/> declarations onto endpoint metadata during
@@ -80,7 +80,7 @@ public sealed class D2RequireAllScopesAttribute : Attribute
     /// <summary>
     /// Gets the declared scope set (all-of). Order preserved from the
     /// constructor; deduping is performed when projected into
-    /// <see cref="MethodScopeMetadata.ForScopes(IEnumerable{string}, D2.Shared.Auth.Abstractions.ScopeMatch)"/>.
+    /// <see cref="MethodScopeMetadata.ForScopes(IEnumerable{string}, DcsvIo.D2.Auth.Abstractions.ScopeMatch)"/>.
     /// </summary>
     public IReadOnlyList<string> Scopes { get; }
 }

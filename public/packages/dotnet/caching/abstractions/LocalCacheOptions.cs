@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Caching;
+namespace DcsvIo.D2.Caching;
 
 /// <summary>
 /// Configuration knobs for an <see cref="ILocalCache"/> implementation.

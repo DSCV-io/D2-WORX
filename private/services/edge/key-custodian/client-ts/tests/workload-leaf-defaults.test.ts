@@ -4,7 +4,7 @@
 
 // Drift-guard: pins the WorkloadLeafClient default tunables to the literal values
 // they mirror from the .NET twin. The .NET side pins the same three defaults in
-// D2.Shared.Tests.Unit.AuthOutbound.AuthOutboundDefaultsParityTests; a change to
+// DcsvIo.D2.Tests.Unit.AuthOutbound.AuthOutboundDefaultsParityTests; a change to
 // either runtime's default reds that runtime's pin test and points at the twin.
 //
 //   DEFAULT_REFRESH_MARGIN_MS  <- AuthOutboundOptions.WorkloadLeafRefreshLeadTime (5 min)

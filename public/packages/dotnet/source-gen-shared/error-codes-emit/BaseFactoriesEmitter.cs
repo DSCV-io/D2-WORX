@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.SourceGen;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Emits the generic cross-cutting catalog's CONSTRUCTING failure factories
@@ -221,8 +221,8 @@ internal static class BaseFactoriesEmitter
         sb.AppendLine();
         sb.AppendLine("using System.Collections.Generic;");
         sb.AppendLine("using System.Net;");
-        sb.AppendLine("using D2.Shared.ErrorCodes.Category;");
-        sb.AppendLine("using D2.Shared.I18n;");
+        sb.AppendLine("using DcsvIo.D2.ErrorCodes.Category;");
+        sb.AppendLine("using DcsvIo.D2.I18n;");
         sb.AppendLine();
         sb.AppendLine($"namespace {config.RootNamespace};");
         sb.AppendLine();

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
 /// <summary>Integration message fixture exercising the plaintext code path.
 /// The resolver descriptor is pre-seeded by

@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.Pipeline;
+namespace DcsvIo.D2.Tests.Unit.Resilience.Pipeline;
 
 using AwesomeAssertions;
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Resilience.RateLimiting;
-using D2.Shared.Resilience.Retry;
-using D2.Shared.Resilience.Singleflight;
-using D2.Shared.Resilience.Timeout;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.Pipeline;
+using DcsvIo.D2.Resilience.RateLimiting;
+using DcsvIo.D2.Resilience.Retry;
+using DcsvIo.D2.Resilience.Singleflight;
+using DcsvIo.D2.Resilience.Timeout;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

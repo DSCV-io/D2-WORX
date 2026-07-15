@@ -8,7 +8,7 @@ import {
   AuthErrorCodes,
   JwtClaimTypes,
   type JwtPayload,
-} from "@d2/auth-abstractions";
+} from "@dcsv-io/d2-auth-abstractions";
 import { parseAuthHeader } from "../src/parse-auth-header.js";
 
 function buildJwt(claims: Record<string, unknown>): string {

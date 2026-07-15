@@ -2,11 +2,11 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/caching-distributed-redis
+# @dcsv-io/d2-caching-distributed-redis
 
-> Parent: [`../README.md`](../README.md) · .NET mirror: `D2.Shared.Caching.Distributed.Redis`
+> Parent: [`../README.md`](../README.md) · .NET mirror: `DcsvIo.D2.Caching.Distributed.Redis`
 
-Node/BFF authors who need a cluster-scoped `IDistributedCache` inject this Redis implementation — Basic + Atomic + Broadcast + Set over Redis, a pub/sub invalidation backplane on channel `d2:cache:invalidations`, JSON serialization, aggregate OTel counters, and `@d2/result` shapes on every operation.
+Node/BFF authors who need a cluster-scoped `IDistributedCache` inject this Redis implementation — Basic + Atomic + Broadcast + Set over Redis, a pub/sub invalidation backplane on channel `d2:cache:invalidations`, JSON serialization, aggregate OTel counters, and `@dcsv-io/d2-result` shapes on every operation.
 
 ## Usage
 
@@ -17,8 +17,8 @@ import {
   JsonCacheSerializer,
   RedisCacheInvalidationBackplane,
   RedisDistributedCache,
-} from "@d2/caching-distributed-redis";
-import type { ILogger } from "@d2/logging";
+} from "@dcsv-io/d2-caching-distributed-redis";
+import type { ILogger } from "@dcsv-io/d2-logging";
 
 const options = createRedisCacheOptions({
   connectionString: process.env.REDIS_URL, // SECRET when credentials embedded — never log
@@ -142,7 +142,7 @@ Applies to store keys **and** to keys published on `*AndBroadcast*` (prefixed pa
 | `d2.cache.redis.broadcasts` | `{broadcast}` | Invalidation messages published to backplane. |
 | `d2.cache.redis.errors` | `{error}` | Redis-side failures. |
 
-Meter name `D2.Shared.Caching.Distributed.Redis` v`1.0.0` (`REDIS_CACHE_METER_NAME`). Construct the cache after host `setupTelemetry` so instruments bind to the real meter; without a MeterProvider counters are no-op-safe.
+Meter name `DcsvIo.D2.Caching.Distributed.Redis` v`1.0.0` (`REDIS_CACHE_METER_NAME`). Construct the cache after host `setupTelemetry` so instruments bind to the real meter; without a MeterProvider counters are no-op-safe.
 
 ## Logging
 
@@ -173,11 +173,11 @@ An aborted signal at method entry returns `canceled` without touching Redis. The
 
 | Package | Role |
 | --- | --- |
-| `@d2/caching-abstractions` | Ports (`IDistributedCache`, backplane, serializer) |
-| `@d2/result` | Result factories + `bubbleFail` + `fail` |
-| `@d2/utilities` | `falsey` / helpers |
-| `@d2/logging` | `ILogger` |
-| `@d2/i18n-keys` | `TK.common.errors.COULD_NOT_BE_*` for serializer messages |
+| `@dcsv-io/d2-caching-abstractions` | Ports (`IDistributedCache`, backplane, serializer) |
+| `@dcsv-io/d2-result` | Result factories + `bubbleFail` + `fail` |
+| `@dcsv-io/d2-utilities` | `falsey` / helpers |
+| `@dcsv-io/d2-logging` | `ILogger` |
+| `@dcsv-io/d2-i18n-keys` | `TK.common.errors.COULD_NOT_BE_*` for serializer messages |
 | `@opentelemetry/api` | Meter / counters |
 | `ioredis` | Redis command + subscriber clients |
 

@@ -3,9 +3,9 @@
 // The stand-in resilience PRIMITIVES + the policy FACTORY. These implement the
 // GENERATED abstraction (IAsyncResiliencePolicy / IResiliencePolicyFactory) and
 // throw/catch the GENERATED BrokenCircuitException. In a real system these would
-// be D2.Shared.Resilience's policy + builder types (Polly-backed or bespoke);
+// be DcsvIo.D2.Resilience's policy + builder types (Polly-backed or bespoke);
 // here they're minimal stand-ins so the spike proves the CODEGEN of the ordered
-// composition + registry resolution, NOT the exact D2.Shared.Resilience impl.
+// composition + registry resolution, NOT the exact DcsvIo.D2.Resilience impl.
 //
 // This is the ONLY resilience-primitive code in the spike, and it's supplied by
 // the TEST — the generated pipeline has zero hardcoded primitives (B4): it only
@@ -136,7 +136,7 @@ public sealed class CircuitBreakerPolicy : IAsyncResiliencePolicy
 /// on. The generated pipeline calls <see cref="CreateRetry"/> / <see cref="CreateBreaker"/>
 /// with the registry-resolved tunables; this chassis factory mints the stand-in
 /// primitives (with injected delay + now-provider so the tests are deterministic).
-/// Prod swaps this for a D2.Shared.Resilience-backed factory with no pipeline change.
+/// Prod swaps this for a DcsvIo.D2.Resilience-backed factory with no pipeline change.
 /// </summary>
 public sealed class StandInPolicyFactory : IResiliencePolicyFactory
 {

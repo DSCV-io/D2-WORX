@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > **Status: NOT IMPLEMENTED** — design keep: [private/docs/v2/PHASE_3_AUTH_CORE.md](../../../../private/docs/v2/PHASE_3_AUTH_CORE.md) · JWT/anon/KC: [PHASE_3_AUTH.md](../../../../private/docs/v2/PHASE_3_AUTH.md) · spine: [PHASE_3.md](../../../../private/docs/v2/PHASE_3.md)
 
-Module-within-host (`domain` / `app` / `infra`); composition on `D2.Edge.Api`; database `d2-auth`.
+Module-within-host (`domain` / `app` / `infra`); composition on `DcsvIo.D2.Private.Edge.Api`; database `d2-auth`.
 
 **Build order (locked):** **Auth Core → Minting → Auth Extras**. Do not ship mint without Core domain/storage.
 

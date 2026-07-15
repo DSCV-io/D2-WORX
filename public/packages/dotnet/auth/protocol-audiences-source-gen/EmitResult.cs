@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.ProtocolAudiences.SourceGen;
+namespace DcsvIo.D2.Auth.ProtocolAudiences.SourceGen;
 
 using System.Collections.Immutable;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Result of <see cref="ProtocolAudiencesEmitter.Emit"/>. Pure data — the Roslyn

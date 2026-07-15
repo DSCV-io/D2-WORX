@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.I18n;
+namespace DcsvIo.D2.Tests.Unit.I18n;
 
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.I18n;
+using DcsvIo.D2.I18n;
 using Xunit;
 
 /// <summary>
@@ -74,7 +74,7 @@ public sealed class TKGeneratedTests
         // useful smoke-test for the build wiring.
         var enUsPath = Path.Combine(AppContext.BaseDirectory, "messages", "en-US.json");
         File.Exists(enUsPath).Should().BeTrue(
-            $"test wiring requires en-US.json at {enUsPath} (D2.Shared.I18n's content-copy " +
+            $"test wiring requires en-US.json at {enUsPath} (DcsvIo.D2.I18n's content-copy " +
             "must land in the test project's output Î“Ã‡Ã¶ check the i18n csproj's <None> Pack/Copy " +
             "directives if this fails).");
 

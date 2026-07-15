@@ -63,10 +63,10 @@ describe("CLI default-path wiring (artifact-diff engine)", () => {
     };
 
     const pkg: PackageDescriptor = {
-      name: "D2.Shared.Result",
+      name: "DcsvIo.D2.Result",
       ecosystem: "nuget",
       dir: "public/packages/dotnet/result/core",
-      manifestPath: "/abs/result/core/D2.Shared.Result.csproj",
+      manifestPath: "/abs/result/core/DcsvIo.D2.Result.csproj",
       changelogPath: "/abs/result/core/CHANGELOG.md",
       currentVersion: "0.1.0",
       dependencies: [],
@@ -80,7 +80,7 @@ describe("CLI default-path wiring (artifact-diff engine)", () => {
       provider,
     );
 
-    expect(calls).toEqual(["D2.Shared.Result"]);
+    expect(calls).toEqual(["DcsvIo.D2.Result"]);
     expect(result.plans).toHaveLength(1);
     expect(result.plans[0]!.bump).toBe("minor");
     expect(result.plans[0]!.newVersion).toBe("0.2.0");
@@ -93,7 +93,7 @@ describe("CLI default-path wiring (artifact-diff engine)", () => {
 
 describe("--legacy-commit-type routing (unit)", () => {
   const pkg: PackageDescriptor = {
-    name: "@d2/utilities",
+    name: "@dcsv-io/d2-utilities",
     ecosystem: "npm",
     dir: "public/packages/typescript/utilities",
     manifestPath: "public/packages/typescript/utilities/package.json",
@@ -127,7 +127,7 @@ describe("--legacy-commit-type routing (unit)", () => {
     );
 
     // Provider was consulted — diff is the bump source.
-    expect(diffCalls).toContain("@d2/utilities");
+    expect(diffCalls).toContain("@dcsv-io/d2-utilities");
     expect(result.plans).toHaveLength(1);
     expect(result.plans[0]!.bump).toBe("minor");
   });
@@ -136,7 +136,7 @@ describe("--legacy-commit-type routing (unit)", () => {
     // The legacy path routes through runRelease, which uses commit-type parsing.
     // A feat: commit produces MINOR; no DiffProvider is consulted.
     const commitRecord = {
-      message: "feat(@d2/utilities): add new helper\n\nSome detail.",
+      message: "feat(@dcsv-io/d2-utilities): add new helper\n\nSome detail.",
       files: ["public/packages/typescript/utilities/src/index.ts"],
     };
 

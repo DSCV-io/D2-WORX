@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D² context interface specification",
-  "description": "Schema for IAuthContext.spec.json and IRequestContext.spec.json — the source-of-truth shape that D2.Shared.Context.SourceGen reads to emit interfaces + MutableRequestContext.",
+  "description": "Schema for IAuthContext.spec.json and IRequestContext.spec.json — the source-of-truth shape that DcsvIo.D2.Context.SourceGen reads to emit interfaces + MutableRequestContext.",
   "type": "object",
   "required": ["name", "namespace", "sections"],
   "additionalProperties": false,
@@ -15,12 +15,12 @@
     "namespace": {
       "type": "string",
       "pattern": "^[A-Z][A-Za-z0-9]+(\\.[A-Z][A-Za-z0-9]+)*$",
-      "description": "Target .NET namespace (e.g. D2.Shared.AuthContext.Abstractions)."
+      "description": "Target .NET namespace (e.g. DcsvIo.D2.AuthContext.Abstractions)."
     },
     "description": { "type": "string" },
     "extends": {
       "type": ["string", "null"],
-      "description": "Fully-qualified base interface name (e.g. D2.Shared.AuthContext.Abstractions.IAuthContext) or null."
+      "description": "Fully-qualified base interface name (e.g. DcsvIo.D2.AuthContext.Abstractions.IAuthContext) or null."
     },
     "sections": {
       "type": "array",

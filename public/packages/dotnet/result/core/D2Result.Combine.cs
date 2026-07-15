@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result;
+namespace DcsvIo.D2.Result;
 
 using System.Collections.Generic;
 using System.Linq;
-using D2.Shared.I18n;
+using DcsvIo.D2.I18n;
 
 /// <summary>
 /// Aggregator for combining multiple typed <see cref="D2Result{T}"/> instances

@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.DataGovernance;
+namespace DcsvIo.D2.Tests.Integration.DataGovernance;
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Contacts.ValueObjects;
-using D2.Shared.DataGovernance.Abstractions;
-using D2.Shared.DataGovernance.EntityFrameworkCore;
+using DcsvIo.D2.Contacts.ValueObjects;
+using DcsvIo.D2.DataGovernance.Abstractions;
+using DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

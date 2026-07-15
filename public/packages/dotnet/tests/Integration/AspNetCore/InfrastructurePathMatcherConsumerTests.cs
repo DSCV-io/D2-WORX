@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.AspNetCore;
+namespace DcsvIo.D2.Tests.Integration.AspNetCore;
 
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
+using DcsvIo.D2.AspNetCore;
 using Microsoft.AspNetCore.Http;
 using Xunit;
 
@@ -15,7 +15,7 @@ using Xunit;
 /// Regression tests pinning the consumer-swap behavior of
 /// <see cref="InfrastructurePathMatcher"/>: per-lib internal duplicates
 /// collapsed into the canonical public matcher;
-/// <c>D2.Shared.Logging</c> + <c>D2.Shared.Telemetry</c> consume the
+/// <c>DcsvIo.D2.Logging</c> + <c>DcsvIo.D2.Telemetry</c> consume the
 /// same matcher.
 /// </summary>
 /// <remarks>
@@ -44,17 +44,17 @@ public sealed class InfrastructurePathMatcherConsumerTests
     [Fact]
     public void LoggingDefault_PointsToCanonicalConstants()
     {
-        // D2.Shared.Logging.D2LoggingOptions.InfrastructurePaths defaults
+        // DcsvIo.D2.Logging.D2LoggingOptions.InfrastructurePaths defaults
         // to the same list (verified via Logging's own existing tests).
         // Cross-confirm by checking both lists are sequence-equal.
-        var loggingDefault = new D2.Shared.Logging.D2LoggingOptions().InfrastructurePaths;
+        var loggingDefault = new DcsvIo.D2.Logging.D2LoggingOptions().InfrastructurePaths;
         loggingDefault.Should().Equal(D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS);
     }
 
     [Fact]
     public void TelemetryDefault_PointsToCanonicalConstants()
     {
-        var telemetryDefault = new D2.Shared.Telemetry.D2TelemetryOptions()
+        var telemetryDefault = new DcsvIo.D2.Telemetry.D2TelemetryOptions()
             .InstrumentationExcludedPaths;
         telemetryDefault.Should().Equal(D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS);
     }

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging;
+namespace DcsvIo.D2.Tests.Unit.Messaging;
 
 using System.Security.Cryptography;
 using System.Text;
 using AwesomeAssertions;
-using D2.Shared.Encryption;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq.Encryption;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

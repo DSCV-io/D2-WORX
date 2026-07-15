@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Validation;
+namespace DcsvIo.D2.Auth.Validation;
 
 /// <summary>
 /// JWT-validator-specific knobs on <see cref="AuthOptions"/>. Composed under

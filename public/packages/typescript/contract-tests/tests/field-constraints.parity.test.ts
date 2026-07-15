@@ -8,7 +8,7 @@ import {
   FieldConstraints,
   NamePrefix,
   NameSuffix,
-} from "@d2/validation-abstractions";
+} from "@dcsv-io/d2-validation-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { canonicalize, loadFixture } from "../src/index.js";
@@ -21,7 +21,7 @@ import { canonicalize, loadFixture } from "../src/index.js";
  *    on the .NET side; string-valued const-objects on the TS side.
  *
  * The .NET `FieldConstraintsFixtureEmitter` reflects both groups off the
- * `D2.Shared.Validation.Abstractions` assembly; this test asserts the TS
+ * `DcsvIo.D2.Validation.Abstractions` assembly; this test asserts the TS
  * catalog matches per-VALUE so a drift names the specific drifted member.
  */
 type ConstraintsFixture = Readonly<Record<string, number>>;

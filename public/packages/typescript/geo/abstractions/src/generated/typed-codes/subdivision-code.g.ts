@@ -13,7 +13,7 @@ import { z } from "zod";
 /**
  * ISO 3166-2 subdivision code (e.g. `US-CA`, `JP-13`, `GB-LND`). Closed
  * set — the Zod schema rejects unknown codes (strict deserialization).
- * Mirrors .NET `D2.Shared.Geo.Abstractions.SubdivisionCode` wrapper /
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.SubdivisionCode` wrapper /
  * JsonConverter byte-for-byte over the wire.
  */
 export type SubdivisionCode = string & { readonly __brand: "SubdivisionCode" };

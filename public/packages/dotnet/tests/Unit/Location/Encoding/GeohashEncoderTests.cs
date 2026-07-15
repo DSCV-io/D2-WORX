@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Location.Encoding;
+namespace DcsvIo.D2.Tests.Unit.Location.Encoding;
 
 using AwesomeAssertions;
-using D2.Shared.Location.Encoding;
+using DcsvIo.D2.Location.Encoding;
 using Xunit;
 
 /// <summary>

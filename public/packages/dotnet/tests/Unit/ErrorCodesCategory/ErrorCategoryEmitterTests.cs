@@ -6,10 +6,10 @@
 
 extern alias CategorySourceGen;
 
-namespace D2.Shared.Tests.Unit.ErrorCodesCategory;
+namespace DcsvIo.D2.Tests.Unit.ErrorCodesCategory;
 
 using AwesomeAssertions;
-using CategorySourceGen::D2.Shared.ErrorCodes.Category.SourceGen;
+using CategorySourceGen::DcsvIo.D2.ErrorCodes.Category.SourceGen;
 using Xunit;
 
 /// <summary>

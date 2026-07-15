@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Sessions;
+namespace DcsvIo.D2.Auth.Sessions;
 
 /// <summary>
 /// Session-liveness-specific knobs on <see cref="AuthOptions"/>. Composed

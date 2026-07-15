@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Pipeline;
+namespace DcsvIo.D2.Resilience.Pipeline;
 
-using D2.Shared.Resilience.Singleflight;
+using DcsvIo.D2.Resilience.Singleflight;
 
 /// <summary>
 /// Pipeline layer that dedupes concurrent in-flight operations by the

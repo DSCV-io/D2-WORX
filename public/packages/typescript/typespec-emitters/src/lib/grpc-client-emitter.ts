@@ -74,7 +74,7 @@ import {
   emitNestedModelMapperHelpers,
   type OutboundAssign,
 } from "./nested-model-mapper.js";
-import type { PredicateNode } from "@d2/typespec-decorators";
+import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -194,7 +194,7 @@ function emitInterface(
   // namespace differs from the client namespace. Mirrors the server emitter's
   // alias-using convention. Omitted when the DTO type lives in this namespace.
   for (const alias of collectDtoAliasUsings(ops, clientsNs)) lines.push(alias);
-  lines.push("using D2.Shared.Resilience.Pipeline;");
+  lines.push("using DcsvIo.D2.Resilience.Pipeline;");
   lines.push("");
 
   lines.push(`/// <summary>`);
@@ -265,9 +265,9 @@ function emitImpl(
   // common-proto namespace; the rest are shared-lib namespaces.
   const usingSet = new Set<string>();
   usingSet.add("D2.Services.Protos.Common.V1");
-  usingSet.add("D2.Shared.Resilience.Pipeline");
-  usingSet.add("D2.Shared.Resilience.Retry");
-  usingSet.add("D2.Shared.Result.Grpc");
+  usingSet.add("DcsvIo.D2.Resilience.Pipeline");
+  usingSet.add("DcsvIo.D2.Resilience.Retry");
+  usingSet.add("DcsvIo.D2.Result.Grpc");
   usingSet.add("Grpc.Core");
   usingSet.add("Microsoft.Extensions.DependencyInjection");
   // OTel ActivityEvent for retry-signal instrumentation.
@@ -644,8 +644,8 @@ function emitClientMappers(
   for (const ns of sortedUsings) lines.push(`using ${ns};`);
   for (const alias of enumAliasLines.sort()) lines.push(alias);
   if (allClientEnums.length > 0) {
-    lines.push("using D2.Shared.I18n;");
-    lines.push("using D2.Shared.Result;");
+    lines.push("using DcsvIo.D2.I18n;");
+    lines.push("using DcsvIo.D2.Result;");
   }
 
   if (clientHasArrayOfModel) lines.push("using System.Linq;");
@@ -814,12 +814,12 @@ function emitGrpcClientsDiExtension(
   // / RetryOptions generic args resolves when the DTO namespace differs from the client
   // namespace. Omitted when the DTO type lives in this namespace.
   for (const alias of collectDtoAliasUsings(ops, clientsNs)) lines.push(alias);
-  // D2.Shared.Auth.Outbound.Grpc supplies the per-channel .AddD2ForwardedJwt() /
+  // DcsvIo.D2.Auth.Outbound.Grpc supplies the per-channel .AddD2ForwardedJwt() /
   // .AddD2WorkloadCertificate() extensions auto-chained onto each registered client.
-  lines.push("using D2.Shared.Auth.Outbound.Grpc;");
-  lines.push("using D2.Shared.Resilience.Pipeline;");
-  lines.push("using D2.Shared.Resilience.Retry;");
-  lines.push("using D2.Shared.Result.Grpc;");
+  lines.push("using DcsvIo.D2.Auth.Outbound.Grpc;");
+  lines.push("using DcsvIo.D2.Resilience.Pipeline;");
+  lines.push("using DcsvIo.D2.Resilience.Retry;");
+  lines.push("using DcsvIo.D2.Result.Grpc;");
   lines.push("using Grpc.Core;");
   lines.push("using Microsoft.Extensions.DependencyInjection;");
   lines.push("");

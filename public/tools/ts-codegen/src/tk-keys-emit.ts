@@ -139,14 +139,14 @@ export function emitTkKeys(catalog: MessageCatalog): EmitResult {
   sb.appendLine(buildHeader("contracts/messages/en-US.json"));
   sb.appendLine("/* eslint-disable */");
   sb.appendLine();
-  sb.appendLine('import { tk } from "@d2/i18n-abstractions";');
+  sb.appendLine('import { tk } from "@dcsv-io/d2-i18n-abstractions";');
   sb.appendLine();
   sb.appendLine("/**");
   sb.appendLine(
     " * Type-safe i18n key catalog. Mirrors the .NET `TK` class emitted by",
   );
   sb.appendLine(
-    " * D2.Shared.I18n.SourceGen from the same `contracts/messages/en-US.json`",
+    " * DcsvIo.D2.I18n.SourceGen from the same `contracts/messages/en-US.json`",
   );
   sb.appendLine(
     " * source — single spec, two emitters, cross-language drift structurally",

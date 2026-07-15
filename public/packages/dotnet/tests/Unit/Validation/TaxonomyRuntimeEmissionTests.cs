@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation;
+namespace DcsvIo.D2.Tests.Unit.Validation;
 
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Validation.Abstractions;
 using Xunit;
 
 /// <summary>
@@ -19,7 +19,7 @@ using Xunit;
 /// <c>JsonStringEnumConverter</c> (round-trip serialize / deserialize) and
 /// that an unknown wire code throws — mirroring the strict-deserialization
 /// policy used by the geo enums. Drift here would break cross-language wire
-/// parity with the TS-side <c>@d2/validation-abstractions</c> catalog.
+/// parity with the TS-side <c>@dcsv-io/d2-validation-abstractions</c> catalog.
 /// </summary>
 public sealed class TaxonomyRuntimeEmissionTests
 {

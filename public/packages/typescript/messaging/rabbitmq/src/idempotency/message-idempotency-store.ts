@@ -3,8 +3,8 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { type D2Result, ok, serviceUnavailable } from "@d2/result";
-import { falsey } from "@d2/utilities";
+import { type D2Result, ok, serviceUnavailable } from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 /**
  * Dedup store for the consumer's idempotency window. Twin of the .NET

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Repo.Abstractions;
+namespace DcsvIo.D2.Handler.Repo.Abstractions;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Per-DB-error-code boolean discriminators on <see cref="D2Result"/>.
@@ -92,7 +92,7 @@ public static class D2ResultDbBooleans
         /// They live in separate libs because not every consumer of
         /// <see cref="D2Result"/> deals with a database; the DB roll-up
         /// only loads when the consumer references
-        /// <c>D2.Shared.Handler.Repo.Abstractions</c>.
+        /// <c>DcsvIo.D2.Handler.Repo.Abstractions</c>.
         /// </remarks>
         public bool IsTransientDbFailure =>
             result.IsDbDeadlock || result.IsDbTimeout || result.IsDbConnectionFailure;

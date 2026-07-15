@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { CountryCode, CurrencyCode } from "@d2/geo-abstractions";
+import { CountryCode, CurrencyCode } from "@dcsv-io/d2-geo-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { Currencies, CurrencyLookup } from "../../src/currencies.js";

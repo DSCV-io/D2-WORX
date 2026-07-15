@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.Abstractions;
+namespace DcsvIo.D2.Context.Abstractions;
 
 using System.Collections.Generic;
 using System.Text.Json;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Parses the RFC 8693 §2.1 nested <c>act</c> claim into a flat

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.ErrorCodes.SourceGen;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen;
 
 using Microsoft.CodeAnalysis;
 
@@ -66,5 +66,5 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    private const string _CATEGORY = "D2.Edge.KeyCustodian.ErrorCodes.SourceGen";
+    private const string _CATEGORY = "DcsvIo.D2.Private.Edge.KeyCustodian.ErrorCodes.SourceGen";
 }

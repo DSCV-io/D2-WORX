@@ -14,7 +14,7 @@
 //   npx tsp compile spike-all.tsp --config resilience.tspconfig.yaml
 // ============================================================================
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 
 using D2;
 

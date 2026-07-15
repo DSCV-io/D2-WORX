@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Repo.Abstractions;
+namespace DcsvIo.D2.Handler.Repo.Abstractions;
 
 /// <summary>
 /// Provider-agnostic categorization of a database failure. Returned by

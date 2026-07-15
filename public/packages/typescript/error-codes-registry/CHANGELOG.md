@@ -1,4 +1,4 @@
-# Changelog — @d2/error-codes-registry
+# Changelog — @dcsv-io/d2-error-codes-registry
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.

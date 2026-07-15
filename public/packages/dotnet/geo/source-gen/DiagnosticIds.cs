@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen;
+namespace DcsvIo.D2.Geo.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by <see cref="GeoGenerator"/>.

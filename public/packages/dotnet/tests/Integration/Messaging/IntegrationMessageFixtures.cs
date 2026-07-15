@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Messaging;
+namespace DcsvIo.D2.Tests.Integration.Messaging;
 
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq.Encryption;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq.Encryption;
 
 /// <summary>
 /// Pre-seeds <see cref="MessageWireResolver"/> with descriptors for the
 /// integration test fixture types. The production registry is codegen'd from
 /// <c>contracts/mq-messages/mq-messages.spec.json</c> and only contains real
 /// domain messages; integration fixtures live under
-/// <c>D2.Shared.Tests.Integration.Messaging</c> and would fail the resolver's
+/// <c>DcsvIo.D2.Tests.Integration.Messaging</c> and would fail the resolver's
 /// FQN check, so we use the test-only registration seam.
 /// </summary>
 internal static class IntegrationMessageFixtures

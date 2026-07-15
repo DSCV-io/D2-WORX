@@ -3,9 +3,9 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { AuthErrorCodes } from "@d2/auth-abstractions";
-import { fail, forbidden, HttpStatusCode } from "@d2/result";
-import { PROBLEM_DETAILS_CONTENT_TYPE } from "@d2/problem-details-abstractions";
+import { AuthErrorCodes } from "@dcsv-io/d2-auth-abstractions";
+import { fail, forbidden, HttpStatusCode } from "@dcsv-io/d2-result";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "@dcsv-io/d2-problem-details-abstractions";
 import { toProblemDetails } from "../problem-details.js";
 import type {
   AuthenticatedRequestContext,

@@ -10,7 +10,7 @@
 
 /**
  * D2 wire-protocol headers applicable to the grpc catalog.
- * Generated from headers.spec.json. Mirrors .NET D2.Shared.Headers.Grpc.GrpcHeaders.
+ * Generated from headers.spec.json. Mirrors .NET DcsvIo.D2.Headers.Grpc.GrpcHeaders.
  */
 export const GrpcHeaders = {
   /**

@@ -1,4 +1,4 @@
-# Changelog — @d2/encryption
+# Changelog — @dcsv-io/d2-encryption
 
 All notable changes to this package are documented here. The format follows
 Keep a Changelog, and this package adheres to Semantic Versioning.
@@ -11,7 +11,7 @@ Keep a Changelog, and this package adheres to Semantic Versioning.
 
 ### Added
 
-- Initial runtime crypto twin of .NET `D2.Shared.Encryption`: symmetric
+- Initial runtime crypto twin of .NET `DcsvIo.D2.Encryption`: symmetric
   (v1 AES-256-GCM) `PayloadCrypto` + `PayloadCryptoKeyring`, and sealed
   (v2 P-256 ECDH-ES → HKDF-SHA256 → AES-256-GCM) `PayloadSealer` /
   `PayloadOpener` + `RecipientPublicKeyring` / `RecipientPrivateKeyring`, with

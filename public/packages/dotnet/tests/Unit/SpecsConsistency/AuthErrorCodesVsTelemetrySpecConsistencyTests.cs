@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Xunit;
 
 /// <summary>
@@ -44,12 +44,12 @@ public sealed class AuthErrorCodesVsTelemetrySpecConsistencyTests
         var meters = LoadTelemetryMeters();
         var meterNames = meters.Select(m => m.MeterName).ToHashSet();
 
-        meterNames.Should().Contain("D2.Shared.Auth");
-        meterNames.Should().Contain("D2.Shared.Auth.Outbound");
-        meterNames.Should().Contain("D2.Shared.Handler");
-        meterNames.Should().Contain("D2.Shared.Messaging.RabbitMq");
-        meterNames.Should().Contain("D2.Shared.Caching.Distributed.Redis");
-        meterNames.Should().Contain("D2.Shared.Caching.Local");
+        meterNames.Should().Contain("DcsvIo.D2.Auth");
+        meterNames.Should().Contain("DcsvIo.D2.Auth.Outbound");
+        meterNames.Should().Contain("DcsvIo.D2.Handler");
+        meterNames.Should().Contain("DcsvIo.D2.Messaging.RabbitMq");
+        meterNames.Should().Contain("DcsvIo.D2.Caching.Distributed.Redis");
+        meterNames.Should().Contain("DcsvIo.D2.Caching.Local");
     }
 
     private static List<string> LoadAuthErrorCodes()
@@ -74,7 +74,7 @@ public sealed class AuthErrorCodesVsTelemetrySpecConsistencyTests
         // Locate the d2.auth.problem.emitted instrument's tag.
         using var doc = JsonDocument.Parse(File.ReadAllText(LoadTelemetrySpecPath()));
         var meter = doc.RootElement.GetProperty("meters").EnumerateArray()
-            .First(m => m.GetProperty("meter").GetString() == "D2.Shared.Auth");
+            .First(m => m.GetProperty("meter").GetString() == "DcsvIo.D2.Auth");
         var problemEmitted = meter.GetProperty("instruments").EnumerateArray()
             .First(i => i.GetProperty("name").GetString() == "d2.auth.problem.emitted");
         var tag = problemEmitted.GetProperty("tags").EnumerateArray().First();

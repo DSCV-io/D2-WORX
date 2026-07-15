@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Location.EntityFrameworkCore
+# DcsvIo.D2.Location.EntityFrameworkCore
 
 > Parent: [`location/`](../README.md) · [`public/packages/dotnet/`](../../README.md)
 >
-> **Audience**: backend .NET service engineers mapping `D2.Shared.Location` value objects into EF Core entity models via infra `IEntityTypeConfiguration<T>`.
+> **Audience**: backend .NET service engineers mapping `DcsvIo.D2.Location` value objects into EF Core entity models via infra `IEntityTypeConfiguration<T>`.
 
-Per-VO complex-type and value-converter mapping helpers for the D2.Shared.Location value
+Per-VO complex-type and value-converter mapping helpers for the DcsvIo.D2.Location value
 objects (`StreetAddress`, `AdminLocation`, `Coordinates`). The helpers are called from the
 host's `IEntityTypeConfiguration<T>` implementation — the domain aggregate holds plain
 VO-typed properties and carries zero EF references.
@@ -19,7 +19,7 @@ Each helper, in one call:
 - Applies `HasMaxLength` from `FieldConstraints.*` caps (plus the encoder-intrinsic
   geohash / plus-code caps)
 - Writes the per-field anonymize defaults via the fluent `.Anonymize*` API
-  (`D2.Shared.DataGovernance.EntityFrameworkCore`)
+  (`DcsvIo.D2.DataGovernance.EntityFrameworkCore`)
 
 Ships no `DbContext`, no migrations, and no DI engine. The host owns all of those.
 
@@ -121,7 +121,7 @@ Tombstone values are non-i18n literals — deliberately stable across locales.
 
 For the EF Core 10 limitation on indexing `ComplexProperty` member columns (e.g.
 `AdminLocation.City`) and the `CreateD2Index` workaround, see
-[`D2.Shared.EntityFrameworkCore`](../../entity-framework-core/README.md).
+[`DcsvIo.D2.EntityFrameworkCore`](../../entity-framework-core/README.md).
 
 ---
 
@@ -131,7 +131,7 @@ No telemetry surface — mapping helpers are pure model-build-time calls with no
 
 ## Edge cases / gotchas
 
-- **`SetNull` on required numeric columns blocked** — `Coordinates.Latitude` / `Longitude` are non-nullable `double` columns. The V7 startup guard in `D2.Shared.DataGovernance` blocks `SetNull` on non-nullable columns. Both fields take a constant `"0"` anonymization rule; the engine coerces `"0"` to `0.0` through the column's type mapping at erasure time.
+- **`SetNull` on required numeric columns blocked** — `Coordinates.Latitude` / `Longitude` are non-nullable `double` columns. The V7 startup guard in `DcsvIo.D2.DataGovernance` blocks `SetNull` on non-nullable columns. Both fields take a constant `"0"` anonymization rule; the engine coerces `"0"` to `0.0` through the column's type mapping at erasure time.
 - **Country field intentionally kept** — `AdminLocation.CountryIso31661Alpha2Code` carries no anonymization annotation. Country is coarse-grained and deliberately retained for analytics post-erasure.
 - **Same-VO-type-twice** (e.g. home + work `AdminLocation`) works natively. EF Core 10 prefixes columns by the owning-property path automatically. The helpers never call `HasColumnName`.
 
@@ -141,9 +141,9 @@ No configuration — the helpers carry no tunable behavior. All caps come from t
 
 ## Dependencies
 
-- `D2.Shared.Location` (`location/core/`) — the `StreetAddress` / `AdminLocation` /
+- `DcsvIo.D2.Location` (`location/core/`) — the `StreetAddress` / `AdminLocation` /
   `Coordinates` VO types being mapped
-- `D2.Shared.Validation.Abstractions` — `FieldConstraints.*` length caps
-- `D2.Shared.DataGovernance.EntityFrameworkCore` — the fluent `.Anonymize*` API
+- `DcsvIo.D2.Validation.Abstractions` — `FieldConstraints.*` length caps
+- `DcsvIo.D2.DataGovernance.EntityFrameworkCore` — the fluent `.Anonymize*` API
 - `Microsoft.EntityFrameworkCore.Relational` — `ComplexPropertyBuilder<T>`,
   `ComplexTypePropertyBuilder<T>`, `HasMaxLength`, `HasConversion`

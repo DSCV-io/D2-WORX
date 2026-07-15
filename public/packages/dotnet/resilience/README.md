@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Resilience
+# DcsvIo.D2.Resilience
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
 The sole, feature-complete resilience mechanism for the platform. Covers retry, circuit-breaker, singleflight, timeout, and concurrency rate-limiting as composable pipeline layers. Lock-free where possible (`Interlocked` operations, `ConcurrentDictionary`); test seams baked in (clock + delay overrides). Resilience is **caller-side, opt-in** (off by default — it costs latency) and **per-call overridable**.
 
-Depends only on `D2.Shared.Result` (for the `D2Result`-aware retry overload) and `Microsoft.Extensions.DependencyInjection.Abstractions` (for keyed DI).
+Depends only on `DcsvIo.D2.Result` (for the `D2Result`-aware retry overload) and `Microsoft.Extensions.DependencyInjection.Abstractions` (for keyed DI).
 
 > **Design rationale: custom primitives over Polly.** Most of our outbound boundaries are NOT HTTP (RabbitMQ publishes, EF Core, Redis via StackExchange, internal handler chains, SeaweedFS via SDK). Polly's main "free win" — its HttpClientFactory integration via `AddStandardResilienceHandler()` — applies cleanly to gRPC (since `Grpc.Net.Client` rides on `HttpClient`) and external HTTP APIs, but the HTTP-level integration only sees HTTP 200 + trailing gRPC status codes; retry-on-`StatusCode.Unavailable` requires custom predicates anyway. With <500 LOC of pure-logic primitives + first-class `D2Result.IsTransientRetryable` integration, owning the primitives is cheaper than wrapping Polly.
 
@@ -194,7 +194,7 @@ public Task<WhoIsRecord> ResolveAsync(string ip, CancellationToken ct) =>
         ct: ct).AsTask();
 ```
 
-**This is NOT a cache.** Once the operation completes, the key is removed and the next call re-runs the operation. Use Singleflight to prevent thundering-herd duplication of in-progress work, then layer a real cache (`D2.Shared.Caching.Memory`, `D2.Shared.Caching.Redis`, etc.) on top of the singleflight call site if you want persistent reuse of the result.
+**This is NOT a cache.** Once the operation completes, the key is removed and the next call re-runs the operation. Use Singleflight to prevent thundering-herd duplication of in-progress work, then layer a real cache (`DcsvIo.D2.Caching.Memory`, `DcsvIo.D2.Caching.Redis`, etc.) on top of the singleflight call site if you want persistent reuse of the result.
 
 #### When to use Singleflight — and when NOT
 
@@ -527,9 +527,9 @@ CLI coverage one-liner:
 
 ```bash
 cd public/packages/dotnet/tests
-coverlet bin/Debug/net10.0/D2.Shared.Tests.dll \
+coverlet bin/Debug/net10.0/DcsvIo.D2.Tests.dll \
   --target dotnet --targetargs "test --no-build" \
-  --include "[D2.Shared.Resilience]*" \
+  --include "[DcsvIo.D2.Resilience]*" \
   --exclude-by-attribute "GeneratedCode" \
   --format cobertura --output ./coverage/resilience.cobertura.xml
 ```

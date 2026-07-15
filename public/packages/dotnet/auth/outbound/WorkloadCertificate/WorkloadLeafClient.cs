@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound.WorkloadCertificate;
+namespace DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
 
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using D2.Shared.Auth.Outbound.Telemetry;
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Resilience.Singleflight;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Diagnostics;
+using DcsvIo.D2.Auth.Outbound.Telemetry;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.Singleflight;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using NodaTime;

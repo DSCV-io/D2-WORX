@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation;
+namespace DcsvIo.D2.Tests.Unit.Validation;
 
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Utilities.Extensions;
-using D2.Shared.Validation;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Utilities.Extensions;
+using DcsvIo.D2.Validation;
 using Xunit;
 
 /// <summary>
 /// Asserts the .NET <see cref="DefaultPostalCodeValidator"/> produces the SAME
 /// verdict + normalized (trim + uppercase) form as the hand-authored
 /// cross-language corpus at <c>contracts/validation/fixtures/postcode.json</c>.
-/// The TypeScript <c>@d2/validation</c> parity test asserts the identical
+/// The TypeScript <c>@dcsv-io/d2-validation</c> parity test asserts the identical
 /// corpus. The unknown-country (<c>ZZ</c>) and no-country rows exercise the
 /// shared FAIL-CLOSED policy: an unparseable / absent country yields a
 /// <c>null</c> <see cref="CountryCode"/>, which the validator rejects with no

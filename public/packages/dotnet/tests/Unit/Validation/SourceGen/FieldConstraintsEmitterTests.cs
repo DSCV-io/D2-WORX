@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Validation.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Validation.SourceGen;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Validation.SourceGen;
+using DcsvIo.D2.Validation.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -53,7 +53,7 @@ public sealed class FieldConstraintsEmitterTests
 
         var constraints = ConstraintsSource(spec);
 
-        constraints.Should().Contain("namespace D2.Shared.Validation.Abstractions;");
+        constraints.Should().Contain("namespace DcsvIo.D2.Validation.Abstractions;");
         constraints.Should().Contain("public static class FieldConstraints");
         constraints.Should().Contain("public const int EMAIL_MAX = 254;");
         constraints.Should().Contain("    /// <summary>Email max.</summary>");
@@ -94,7 +94,7 @@ public sealed class FieldConstraintsEmitterTests
 
         var taxonomy = TaxonomySource(spec);
 
-        taxonomy.Should().Contain("namespace D2.Shared.Validation.Abstractions;");
+        taxonomy.Should().Contain("namespace DcsvIo.D2.Validation.Abstractions;");
         taxonomy.Should().Contain("[JsonConverter(typeof(JsonStringEnumConverter))]");
         taxonomy.Should().Contain("public enum BiologicalSex : byte");
         taxonomy.Should().Contain("    Male = 0,");
@@ -361,7 +361,7 @@ public sealed class FieldConstraintsEmitterTests
     /// <param name="constName">The public const field name on the emitter.</param>
     /// <param name="expected">The locked value the const must carry.</param>
     [Theory]
-    [InlineData("ROOT_NAMESPACE", "D2.Shared.Validation.Abstractions")]
+    [InlineData("ROOT_NAMESPACE", "DcsvIo.D2.Validation.Abstractions")]
     [InlineData("FIELD_CONSTRAINTS_CLASS_NAME", "FieldConstraints")]
     [InlineData("FIELD_CONSTRAINTS_HINT_NAME", "FieldConstraints.g.cs")]
     [InlineData("TAXONOMY_HINT_NAME", "Taxonomy.g.cs")]

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.Retry;
+namespace DcsvIo.D2.Tests.Unit.Resilience.Retry;
 
 using System.Net;
 using System.Net.Sockets;
 using AwesomeAssertions;
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Resilience.Retry;
-using D2.Shared.Result;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.Retry;
+using DcsvIo.D2.Result;
 using Xunit;
 
 public sealed class RetryHelperTests

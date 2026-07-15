@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://d2-worx.dev/contracts/geo/subdivisions.schema.json",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/subdivisions.schema.json",
   "title": "Subdivision catalog (codegen-ready)",
   "description": "Tier 2 codegen-ready Subdivision catalog. Matches the SubdivisionSpec record shape consumed by .NET SourceGen + TS emitter.",
   "type": "object",

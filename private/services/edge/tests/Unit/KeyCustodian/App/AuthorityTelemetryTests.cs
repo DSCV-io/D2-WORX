@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
-using D2.Edge.KeyCustodian.App.Application.Observability;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

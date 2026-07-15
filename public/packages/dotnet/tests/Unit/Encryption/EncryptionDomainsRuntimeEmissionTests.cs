@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption;
+namespace DcsvIo.D2.Tests.Unit.Encryption;
 
 using AwesomeAssertions;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
 using Xunit;
 
 /// <summary>
@@ -48,7 +48,7 @@ public sealed class EncryptionDomainsRuntimeEmissionTests
         // The PLAINTEXT sentinel is special — it does NOT register a keyed
         // IPayloadCrypto. Its production emit site is
         // mq-messages.spec entries with "encryption": "plaintext".
-        var descriptor = new D2.Shared.Messaging.MqMessageDescriptor(
+        var descriptor = new DcsvIo.D2.Messaging.MqMessageDescriptor(
             Constant: "TestPlaintext",
             MessageTypeName: typeof(object).FullName!,
             Exchange: "d2.test.plaintext",

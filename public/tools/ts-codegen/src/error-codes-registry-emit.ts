@@ -34,7 +34,7 @@ import {
 // and emits one `error-code-registry.g.ts` into
 // `public/packages/typescript/error-codes-registry/src/generated/`.
 //
-// Mirrors the .NET D2.Shared.ErrorCodes.Registry.SourceGen shape and the geo
+// Mirrors the .NET DcsvIo.D2.ErrorCodes.Registry.SourceGen shape and the geo
 // GeoGenerator aggregate-then-collision-check precedent.
 //
 // Collision semantics:
@@ -347,7 +347,7 @@ export function emitErrorCodeRegistry(
   sb.appendLine(buildHeader(specRelativePath));
   sb.appendLine("/* eslint-disable */");
   sb.appendLine();
-  sb.appendLine('import { TK } from "@d2/i18n-keys";');
+  sb.appendLine('import { TK } from "@dcsv-io/d2-i18n-keys";');
   sb.appendLine(
     'import { buildRegistry, type ErrorCodeInfo } from "../error-code-registry.js";',
   );

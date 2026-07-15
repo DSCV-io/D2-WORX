@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.ServiceDefaults;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.Extensions.DependencyInjection;
 using global::Microsoft.Extensions.Hosting;
@@ -24,7 +24,7 @@ using Xunit;
 /// startup wrapper's "Starting" log line, PII-safe Log.Fatal on startup
 /// fault, rethrow, and Log.CloseAndFlushAsync in finally all fire when
 /// invoked through the composed aggregator (mirroring the contract held
-/// by the underlying <c>D2.Shared.AspNetCore</c> direct path).
+/// by the underlying <c>DcsvIo.D2.AspNetCore</c> direct path).
 /// </summary>
 [Collection("LogLoggerStaticState")]
 public sealed class RunD2ServiceAsyncE2ETests

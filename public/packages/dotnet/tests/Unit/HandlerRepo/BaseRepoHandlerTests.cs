@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.HandlerRepo;
+namespace DcsvIo.D2.Tests.Unit.HandlerRepo;
 
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Handler;
-using D2.Shared.Handler.Repo;
-using D2.Shared.Handler.Repo.Abstractions;
-using D2.Shared.Result;
-using D2.Shared.Tests.Unit.Handler;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Handler.Repo;
+using DcsvIo.D2.Handler.Repo.Abstractions;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Tests.Unit.Handler;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

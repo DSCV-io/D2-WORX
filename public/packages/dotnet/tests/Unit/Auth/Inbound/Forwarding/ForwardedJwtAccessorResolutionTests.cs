@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Forwarding;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Forwarding;
 
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Grpc;
-using D2.Shared.Auth.Http;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Grpc;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -181,78 +181,78 @@ public sealed class ForwardedJwtAccessorResolutionTests
     /// </summary>
     private sealed class FakeTieredCacheStub : ITieredCache
     {
-        public ValueTask<D2.Shared.Result.D2Result<bool>> ExistsAsync(
+        public ValueTask<DcsvIo.D2.Result.D2Result<bool>> ExistsAsync(
             string key, CancellationToken ct = default)
-            => new(D2.Shared.Result.D2Result<bool>.Ok());
+            => new(DcsvIo.D2.Result.D2Result<bool>.Ok());
 
-        public ValueTask<D2.Shared.Result.D2Result<T?>> GetAsync<T>(
+        public ValueTask<DcsvIo.D2.Result.D2Result<T?>> GetAsync<T>(
             string key, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result<IReadOnlyDictionary<string, T?>>>
+        public ValueTask<DcsvIo.D2.Result.D2Result<IReadOnlyDictionary<string, T?>>>
             GetManyAsync<T>(
                 IReadOnlyCollection<string> keys, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result> SetAsync<T>(
+        public ValueTask<DcsvIo.D2.Result.D2Result> SetAsync<T>(
             string key, T value, TimeSpan? ttl = null, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result> SetManyAsync<T>(
+        public ValueTask<DcsvIo.D2.Result.D2Result> SetManyAsync<T>(
             IReadOnlyDictionary<string, T> entries,
             TimeSpan? ttl = null,
             CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result> RemoveAsync(
+        public ValueTask<DcsvIo.D2.Result.D2Result> RemoveAsync(
             string key, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result> RemoveManyAsync(
+        public ValueTask<DcsvIo.D2.Result.D2Result> RemoveManyAsync(
             IReadOnlyCollection<string> keys, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result<TimeSpan?>> GetTtlAsync(
+        public ValueTask<DcsvIo.D2.Result.D2Result<TimeSpan?>> GetTtlAsync(
             string key, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result<long>> IncrementAsync(
+        public ValueTask<DcsvIo.D2.Result.D2Result<long>> IncrementAsync(
             string key,
             long delta = 1,
             TimeSpan? ttl = null,
             CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result<bool>> SetNxAsync<T>(
+        public ValueTask<DcsvIo.D2.Result.D2Result<bool>> SetNxAsync<T>(
             string key,
             T value,
             TimeSpan? ttl = null,
             CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result<bool>> AcquireLockAsync(
+        public ValueTask<DcsvIo.D2.Result.D2Result<bool>> AcquireLockAsync(
             string key, string token, TimeSpan ttl, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result> ReleaseLockAsync(
+        public ValueTask<DcsvIo.D2.Result.D2Result> ReleaseLockAsync(
             string key, string token, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result> SetAndBroadcastAsync<T>(
+        public ValueTask<DcsvIo.D2.Result.D2Result> SetAndBroadcastAsync<T>(
             string key, T value, TimeSpan? ttl = null, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result> SetManyAndBroadcastAsync<T>(
+        public ValueTask<DcsvIo.D2.Result.D2Result> SetManyAndBroadcastAsync<T>(
             IReadOnlyDictionary<string, T> entries,
             TimeSpan? ttl = null,
             CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result> RemoveAndBroadcastAsync(
+        public ValueTask<DcsvIo.D2.Result.D2Result> RemoveAndBroadcastAsync(
             string key, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public ValueTask<D2.Shared.Result.D2Result> RemoveManyAndBroadcastAsync(
+        public ValueTask<DcsvIo.D2.Result.D2Result> RemoveManyAndBroadcastAsync(
             IReadOnlyCollection<string> keys, CancellationToken ct = default)
             => throw new NotImplementedException();
     }

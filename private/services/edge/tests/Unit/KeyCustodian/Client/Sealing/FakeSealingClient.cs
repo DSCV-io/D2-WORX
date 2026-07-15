@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
 
-using D2.Edge.KeyCustodian.Client.Sealing;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 
 /// <summary>
 /// Configurable in-assembly double for the lib-internal <see cref="ISealingClient"/> fetch

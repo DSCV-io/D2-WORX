@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation.Abstractions;
+namespace DcsvIo.D2.Validation.Abstractions;
 
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Result;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Validates a phone number and returns an E.164-normalized form on success.
@@ -27,7 +27,7 @@ public interface IPhoneValidator
     /// <returns>
     /// <c>Ok</c> wrapping the E.164-normalized number (e.g. <c>"+12125551234"</c>) on success;
     /// <see cref="D2Result{TData}.ValidationFailed"/> with a per-field
-    /// <see cref="D2.Shared.Result.InputError"/> on null, empty, whitespace, or
+    /// <see cref="DcsvIo.D2.Result.InputError"/> on null, empty, whitespace, or
     /// structurally invalid input.
     /// </returns>
     D2Result<string> Validate(string? phone, CountryCode? defaultRegion = null);

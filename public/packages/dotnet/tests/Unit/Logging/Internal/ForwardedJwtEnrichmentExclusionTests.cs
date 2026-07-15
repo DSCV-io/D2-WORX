@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Logging.Internal;
+namespace DcsvIo.D2.Tests.Unit.Logging.Internal;
 
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.AuthContext.Abstractions;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Logging.Internal;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.AuthContext.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Logging.Internal;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;

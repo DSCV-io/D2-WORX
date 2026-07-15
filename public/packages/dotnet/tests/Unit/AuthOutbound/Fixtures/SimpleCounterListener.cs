@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AuthOutbound.Fixtures;
+namespace DcsvIo.D2.Tests.Unit.AuthOutbound.Fixtures;
 
 using System.Diagnostics.Metrics;
-using D2.Shared.Auth.Outbound.Telemetry;
+using DcsvIo.D2.Auth.Outbound.Telemetry;
 
 /// <summary>
 /// Captures the running total of an untagged counter on the outbound meter.

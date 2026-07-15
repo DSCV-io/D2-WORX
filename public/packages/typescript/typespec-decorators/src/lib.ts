@@ -5,11 +5,11 @@
 
 import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 
-// Library descriptor for the @d2/typespec-decorators package.
+// Library descriptor for the @dcsv-io/d2-typespec-decorators package.
 // All diagnostics use severity "error" — every contract violation fails the
 // TypeSpec compile so authors see hard build failures, not silent warnings.
 export const $lib = createTypeSpecLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   diagnostics: {
     // ----------------------------------------------------------------
     // In-decorator eager value-set checks (run in each $fn body)

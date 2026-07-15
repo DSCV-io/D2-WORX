@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound;
+namespace DcsvIo.D2.Auth.Outbound;
 
-using D2.Shared.Auth.Outbound.TokenExchange;
-using D2.Shared.Auth.Outbound.WorkloadCertificate;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Outbound.TokenExchange;
+using DcsvIo.D2.Auth.Outbound.WorkloadCertificate;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;

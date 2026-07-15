@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Location;
+namespace DcsvIo.D2.Tests.Unit.Location;
 
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.I18n;
-using D2.Shared.Location;
-using D2.Shared.Location.ValueObjects;
-using D2.Shared.Result;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Location;
+using DcsvIo.D2.Location.ValueObjects;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Validation.Abstractions;
 using Xunit;
-using LocationPostalCodeValidator = D2.Shared.Location.IPostalCodeValidator;
+using LocationPostalCodeValidator = DcsvIo.D2.Location.IPostalCodeValidator;
 
 /// <summary>
 /// Adversarial test coverage for <see cref="AdminLocation"/> per §7.1 matrix:

@@ -4,13 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
 
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
-
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf.IIssueLeafHandler;
-using I = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput;
-using O = D2.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf.IIssueLeafHandler;
+using I = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafInput;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafOutput;
 
 /// <summary>
 /// Thin transport shell for the generated <c>issueLeaf</c> operation: maps the

@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge.KeyCustodian.App
+# DcsvIo.D2.Private.Edge.KeyCustodian.App
 
 > Parent: [`private/services/edge/key-custodian/`](../README.md)
 
@@ -129,7 +129,7 @@ The pure crypto-over-domain logic lives in `domain/Rules/` and is called directl
 
 ## Telemetry
 
-`KeyCustodianMetrics` (`Application/Observability/`) declares the domain-level OTel counters on meter **`D2.Edge.KeyCustodian`** (`METER_NAME = "D2.Edge.KeyCustodian"`). Hosts register the meter via `.WithMetrics(m => m.AddMeter(KeyCustodianMetrics.METER_NAME))`.
+`KeyCustodianMetrics` (`Application/Observability/`) declares the domain-level OTel counters on meter **`DcsvIo.D2.Private.Edge.KeyCustodian`** (`METER_NAME = "DcsvIo.D2.Private.Edge.KeyCustodian"`). Hosts register the meter via `.WithMetrics(m => m.AddMeter(KeyCustodianMetrics.METER_NAME))`.
 
 | Counter | Unit | Tags | Intent |
 | ------- | ---- | ---- | ------ |
@@ -163,15 +163,15 @@ App also hosts the module's IN-PROCESS keyring consumer source: `services.AddD2E
 
 Project references:
 
-- `D2.Edge.KeyCustodian.Domain` — the aggregates, sealed state types, value objects, enums, and generated error-code factories that App orchestrates.
-- `D2.Shared.Handler` — `BaseHandler<TSelf, TInput, TOutput>` for the query handlers (`GetJwks`, `GetRotationPlan`); cross-cutting telemetry, metrics, D2Result, and cancellation.
-- `D2.Shared.Handler.Repo` — `BaseRepoHandler` for the command handlers; DB-exception → D2Result mapping via the injected `IDbExceptionClassifier`; brings `Microsoft.EntityFrameworkCore` + `D2.Shared.Result` transitively, but each is listed explicitly.
-- `D2.Shared.Result` — `D2Result<T>` semantic factories (`Ok`, `NotFound`, `ValidationFailed`, `Conflict`, etc.) used directly by command/query handlers.
-- `D2.Shared.Encryption` — `IPayloadCrypto` for root-wrapping `KeyMaterialEncrypted` in command handlers; `PayloadCryptoKeyring` resolution via keyed DI.
-- `D2.Shared.Time` — `IClock` for rotation-planner due-key math and transition timestamps inside command handlers.
-- `D2.Shared.Context.Abstractions` — `IRequestContext` (the established `Origin` / `ImmediateCaller`, [ADR-0025](../../../../../public/docs/adrs/0025-request-context-establishment.md)) `SignHandler` reads and `JwtSigningCapability` injects to assert its in-process plane. Read side only — App stays gRPC-free and ASP.NET-Core-free.
-- `D2.Shared.Utilities` — `[RedactData]` on `CompromiseKeyInput.Reason` + `Falsey()` input guards. Carried transitively via Domain but listed explicitly ("declare what you use").
-- `D2.Shared.I18n.Keys` — the generated `TK.*` translation-key constants passed to `D2Result` factories (e.g. precondition arg-naming messages).
+- `DcsvIo.D2.Private.Edge.KeyCustodian.Domain` — the aggregates, sealed state types, value objects, enums, and generated error-code factories that App orchestrates.
+- `DcsvIo.D2.Handler` — `BaseHandler<TSelf, TInput, TOutput>` for the query handlers (`GetJwks`, `GetRotationPlan`); cross-cutting telemetry, metrics, D2Result, and cancellation.
+- `DcsvIo.D2.Handler.Repo` — `BaseRepoHandler` for the command handlers; DB-exception → D2Result mapping via the injected `IDbExceptionClassifier`; brings `Microsoft.EntityFrameworkCore` + `DcsvIo.D2.Result` transitively, but each is listed explicitly.
+- `DcsvIo.D2.Result` — `D2Result<T>` semantic factories (`Ok`, `NotFound`, `ValidationFailed`, `Conflict`, etc.) used directly by command/query handlers.
+- `DcsvIo.D2.Encryption` — `IPayloadCrypto` for root-wrapping `KeyMaterialEncrypted` in command handlers; `PayloadCryptoKeyring` resolution via keyed DI.
+- `DcsvIo.D2.Time` — `IClock` for rotation-planner due-key math and transition timestamps inside command handlers.
+- `DcsvIo.D2.Context.Abstractions` — `IRequestContext` (the established `Origin` / `ImmediateCaller`, [ADR-0025](../../../../../public/docs/adrs/0025-request-context-establishment.md)) `SignHandler` reads and `JwtSigningCapability` injects to assert its in-process plane. Read side only — App stays gRPC-free and ASP.NET-Core-free.
+- `DcsvIo.D2.Utilities` — `[RedactData]` on `CompromiseKeyInput.Reason` + `Falsey()` input guards. Carried transitively via Domain but listed explicitly ("declare what you use").
+- `DcsvIo.D2.I18n.Keys` — the generated `TK.*` translation-key constants passed to `D2Result` factories (e.g. precondition arg-naming messages).
 
 Package references:
 

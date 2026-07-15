@@ -16,7 +16,7 @@ import type {
   Scalar,
   Type,
 } from "@typespec/compiler";
-import { D2_REDACT_KEY } from "@d2/typespec-decorators";
+import { D2_REDACT_KEY } from "@dcsv-io/d2-typespec-decorators";
 import { walkModel } from "../src/lib/model-walk.js";
 
 // ---------------------------------------------------------------------------

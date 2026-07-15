@@ -11,7 +11,7 @@
 import { z } from "zod";
 
 /**
- * ISO 4217 alpha currency code catalog (active + historical). Branded string type. Mirrors .NET `D2.Shared.Geo.Abstractions.CurrencyCode` (real enum) byte-for-byte over the wire.
+ * ISO 4217 alpha currency code catalog (active + historical). Branded string type. Mirrors .NET `DcsvIo.D2.Geo.Abstractions.CurrencyCode` (real enum) byte-for-byte over the wire.
  */
 export const CurrencyCode = {
   /** Andorran Peseta */

@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AspNetCore;
+namespace DcsvIo.D2.Tests.Unit.AspNetCore;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
-using D2.Shared.AspNetCore.Internal;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Http.ProblemDetails;
-using D2.Shared.Result;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.AspNetCore.Internal;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Http.ProblemDetails;
+using DcsvIo.D2.Result;
 using Microsoft.AspNetCore.Http;
 using Xunit;
 using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
@@ -20,9 +20,9 @@ using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 /// <summary>
 /// Cross-path regression: path A
 /// (<see cref="D2ProblemDetailsExtensions.ToProblemDetails"/> in
-/// <c>D2.Shared.Auth.Http</c>) and path B
+/// <c>DcsvIo.D2.Auth.Http</c>) and path B
 /// (<see cref="D2ProblemDetailsCustomizer"/> in
-/// <c>D2.Shared.AspNetCore</c>) MUST emit the same <c>instance</c> shape
+/// <c>DcsvIo.D2.AspNetCore</c>) MUST emit the same <c>instance</c> shape
 /// (<c>"{Method} {Path}"</c>) for the same request. Otherwise operators
 /// querying logs by <c>instance</c> get two shapes depending on which
 /// failure path fired.
@@ -63,7 +63,7 @@ public sealed class InstanceShapeConsistencyTests
     public void PathA_PathB_EmitIdenticalTypeUri()
     {
         var failure = D2Result.Fail(
-            messages: [D2.Shared.I18n.TK.Auth.Errors.UNAUTHORIZED],
+            messages: [DcsvIo.D2.I18n.TK.Auth.Errors.UNAUTHORIZED],
             errorCode: AuthErrorCodes.AUTH_BEARER_MISSING,
             statusCode: HttpStatusCode.Unauthorized);
 
@@ -90,7 +90,7 @@ public sealed class InstanceShapeConsistencyTests
     public void PathA_PathB_EmitIdenticalTitleForKnownStatusCodes()
     {
         var failure = D2Result.Fail(
-            messages: [D2.Shared.I18n.TK.Auth.Errors.UNAUTHORIZED],
+            messages: [DcsvIo.D2.I18n.TK.Auth.Errors.UNAUTHORIZED],
             errorCode: "OOPS",
             statusCode: HttpStatusCode.ServiceUnavailable);
 

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Context.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Context.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.Context.SourceGen;
+using DcsvIo.D2.Context.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -225,7 +225,7 @@ public sealed class PropagatedEmitterTests
             .Single(r => r.HintName == "PropagatedContext.g.cs");
 
         record.GeneratedSource.Should().Contain("using System.Collections.Generic;");
-        record.GeneratedSource.Should().Contain("using D2.Shared.Auth.Abstractions;");
+        record.GeneratedSource.Should().Contain("using DcsvIo.D2.Auth.Abstractions;");
     }
 
     [Fact]
@@ -307,7 +307,7 @@ public sealed class PropagatedEmitterTests
             .Single(r => r.HintName == "PropagatedContextSerializer.g.cs").GeneratedSource;
 
         record.Should().NotContain("using System.Collections.Generic;");
-        record.Should().NotContain("using D2.Shared.Auth.Abstractions;");
+        record.Should().NotContain("using DcsvIo.D2.Auth.Abstractions;");
         record.Should().NotContain("CallPathEntry");
         serializer.Should().NotContain("_CALL_PATH_ENTRY_ID_MAX");
         serializer.Should().NotContain("JsonStringEnumConverter");
@@ -325,11 +325,11 @@ public sealed class PropagatedEmitterTests
     /// </summary>
     private static (ContextSpec Auth, ContextSpec Request) PropagateSpecs()
     {
-        var auth = Spec("IAuthContext", "D2.Shared.AuthContext.Abstractions");
+        var auth = Spec("IAuthContext", "DcsvIo.D2.AuthContext.Abstractions");
         var request = Spec(
             "IRequestContext",
-            "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             Section(
                 "Tracing",
                 Property("RequestId", "string?", propagate: true, maxLength: 128),
@@ -343,11 +343,11 @@ public sealed class PropagatedEmitterTests
     /// </summary>
     private static (ContextSpec Auth, ContextSpec Request) EmptyPropagateSpecs()
     {
-        var auth = Spec("IAuthContext", "D2.Shared.AuthContext.Abstractions");
+        var auth = Spec("IAuthContext", "DcsvIo.D2.AuthContext.Abstractions");
         var request = Spec(
             "IRequestContext",
-            "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             Section("Tracing", Property("InternalOnly", "string?", propagate: false)));
         return (auth, request);
     }
@@ -360,11 +360,11 @@ public sealed class PropagatedEmitterTests
     /// </summary>
     private static (ContextSpec Auth, ContextSpec Request) PropagateSpecsWithCallPath()
     {
-        var auth = Spec("IAuthContext", "D2.Shared.AuthContext.Abstractions");
+        var auth = Spec("IAuthContext", "DcsvIo.D2.AuthContext.Abstractions");
         var request = Spec(
             "IRequestContext",
-            "D2.Shared.Context.Abstractions",
-            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            "DcsvIo.D2.Context.Abstractions",
+            extends: "DcsvIo.D2.AuthContext.Abstractions.IAuthContext",
             Section(
                 "Tracing",
                 Property("RequestId", "string?", propagate: true, maxLength: 128),

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
 
 /// <summary>
 /// The dedicated CA-root-signing capability — the ONLY holder of every stored
@@ -46,12 +46,12 @@ public interface ICaRootSigningCapability
     /// </param>
     /// <param name="operation">
     /// The closed-set operation label for the chokepoint telemetry
-    /// (<see cref="D2.Edge.KeyCustodian.App.Application.Observability.KeyCustodianMetrics.CaRootKeyUses.Operation"/>
+    /// (<see cref="DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability.KeyCustodianMetrics.CaRootKeyUses.Operation"/>
     /// — <c>generate-successor</c> or <c>compromise-replacement</c>).
     /// </param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
-    /// <c>Ok(<see cref="D2.Edge.KeyCustodian.Domain.ValueObjects.GeneratedCaMaterial"/>)</c>
+    /// <c>Ok(<see cref="DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects.GeneratedCaMaterial"/>)</c>
     /// carrying the new intermediate certificate + its raw private key (which the
     /// caller root-wraps immediately); a typed
     /// <c>KEYCUSTODIAN_NO_ACTIVE_ISSUING_CA</c> (503) failure when no active root
@@ -64,7 +64,7 @@ public interface ICaRootSigningCapability
     /// <summary>
     /// Smoke-tests a pending / successor <c>mtls-ca-root</c>'s material when the root
     /// itself is activated or rotated: unwraps the pending root's private key,
-    /// exercises it via <see cref="D2.Edge.KeyCustodian.Domain.Rules.SmokeTesting.Verify"/>,
+    /// exercises it via <see cref="DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Rules.SmokeTesting.Verify"/>,
     /// and zeroes the unwrapped material in a <c>finally</c>. Behavior is
     /// byte-identical to the generic inline smoke the lifecycle handlers run for every
     /// other domain — a decrypt throw on an undecryptable wrapped blob propagates
@@ -76,7 +76,7 @@ public interface ICaRootSigningCapability
     /// <param name="pendingRoot">The pending / successor root key to smoke-test.</param>
     /// <param name="operation">
     /// The closed-set operation label for the chokepoint telemetry
-    /// (<see cref="D2.Edge.KeyCustodian.App.Application.Observability.KeyCustodianMetrics.CaRootKeyUses.Operation"/>
+    /// (<see cref="DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability.KeyCustodianMetrics.CaRootKeyUses.Operation"/>
     /// — <c>activate-smoke-test</c> or <c>rotate-smoke-test</c>).
     /// </param>
     /// <param name="ct">Cancellation token (the verify probe is CPU-bound; unused today).</param>

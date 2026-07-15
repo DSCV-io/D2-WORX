@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Contacts;
+namespace DcsvIo.D2.Tests.Unit.Contacts;
 
 using AwesomeAssertions;
-using D2.Shared.Contacts.ValueObjects;
-using D2.Shared.Logging.Destructuring;
-using D2.Shared.Validation.Abstractions;
+using DcsvIo.D2.Contacts.ValueObjects;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.Validation.Abstractions;
 using Serilog.Core;
 using Serilog.Events;
 using Xunit;

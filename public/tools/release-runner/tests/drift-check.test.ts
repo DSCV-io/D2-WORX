@@ -75,14 +75,14 @@ describe("checkBaselineDrift", () => {
 
   it("all baselines current → clean, no drift", () => {
     const packages = [
-      pkg("D2.Shared.Result", "nuget"),
-      pkg("@d2/result", "npm"),
+      pkg("DcsvIo.D2.Result", "nuget"),
+      pkg("@dcsv-io/d2-result", "npm"),
     ];
     const result = checkBaselineDrift(
       packages,
       makeProvider({
-        "D2.Shared.Result": noDiff,
-        "@d2/result": noDiff,
+        "DcsvIo.D2.Result": noDiff,
+        "@dcsv-io/d2-result": noDiff,
       }),
     );
 
@@ -93,11 +93,11 @@ describe("checkBaselineDrift", () => {
   });
 
   it("a nuget package with a fingerprint drift → FAIL, package named", () => {
-    const packages = [pkg("D2.Shared.Result", "nuget")];
+    const packages = [pkg("DcsvIo.D2.Result", "nuget")];
     const result = checkBaselineDrift(
       packages,
       makeProvider({
-        "D2.Shared.Result": {
+        "DcsvIo.D2.Result": {
           apiDiff: { added: false, removed: false, changed: false },
           fingerprintDiff: { changed: true },
           baselineMissing: false,
@@ -107,17 +107,17 @@ describe("checkBaselineDrift", () => {
 
     expect(result.clean).toBe(false);
     expect(result.drifted).toHaveLength(1);
-    expect(result.drifted[0]!.name).toBe("D2.Shared.Result");
+    expect(result.drifted[0]!.name).toBe("DcsvIo.D2.Result");
     expect(result.drifted[0]!.fingerprintDrift).toBe(true);
     expect(result.drifted[0]!.detail).toContain("fingerprint changed");
   });
 
   it("a TS package with an API drift → FAIL with the api axes named", () => {
-    const packages = [pkg("@d2/result", "npm")];
+    const packages = [pkg("@dcsv-io/d2-result", "npm")];
     const result = checkBaselineDrift(
       packages,
       makeProvider({
-        "@d2/result": {
+        "@dcsv-io/d2-result": {
           apiDiff: { added: true, removed: false, changed: true },
           fingerprintDiff: { changed: false },
           baselineMissing: false,
@@ -131,11 +131,11 @@ describe("checkBaselineDrift", () => {
   });
 
   it("a missing baseline → FAIL flagged as baseline missing", () => {
-    const packages = [pkg("D2.Shared.New", "nuget")];
+    const packages = [pkg("DcsvIo.D2.New", "nuget")];
     const result = checkBaselineDrift(
       packages,
       makeProvider({
-        "D2.Shared.New": {
+        "DcsvIo.D2.New": {
           apiDiff: { added: false, removed: false, changed: false },
           fingerprintDiff: { changed: true },
           baselineMissing: true,
@@ -150,20 +150,20 @@ describe("checkBaselineDrift", () => {
 
   it("MULTIPLE drifted packages → ALL reported (not first-fail)", () => {
     const packages = [
-      pkg("D2.Shared.A", "nuget"),
-      pkg("D2.Shared.B", "nuget"),
-      pkg("@d2/c", "npm"),
+      pkg("DcsvIo.D2.A", "nuget"),
+      pkg("DcsvIo.D2.B", "nuget"),
+      pkg("@dcsv-io/d2-c", "npm"),
     ];
     const result = checkBaselineDrift(
       packages,
       makeProvider({
-        "D2.Shared.A": {
+        "DcsvIo.D2.A": {
           apiDiff: { added: false, removed: true, changed: false },
           fingerprintDiff: { changed: true },
           baselineMissing: false,
         },
-        "D2.Shared.B": noDiff,
-        "@d2/c": {
+        "DcsvIo.D2.B": noDiff,
+        "@dcsv-io/d2-c": {
           apiDiff: { added: false, removed: false, changed: false },
           fingerprintDiff: { changed: true },
           baselineMissing: false,
@@ -174,8 +174,8 @@ describe("checkBaselineDrift", () => {
     expect(result.clean).toBe(false);
     expect(result.drifted).toHaveLength(2);
     expect(result.drifted.map((r) => r.name).sort()).toEqual([
-      "@d2/c",
-      "D2.Shared.A",
+      "@dcsv-io/d2-c",
+      "DcsvIo.D2.A",
     ]);
   });
 });
@@ -211,7 +211,7 @@ describe("formatDriftReport", () => {
       results: [],
       drifted: [
         {
-          name: "D2.Shared.Result",
+          name: "DcsvIo.D2.Result",
           ecosystem: "nuget",
           apiDrift: false,
           fingerprintDrift: true,
@@ -224,7 +224,7 @@ describe("formatDriftReport", () => {
     });
 
     expect(report).toContain("DRIFT DETECTED in 1 package(s)");
-    expect(report).toContain("D2.Shared.Result | nuget | fingerprint changed");
+    expect(report).toContain("DcsvIo.D2.Result | nuget | fingerprint changed");
     expect(report).toContain("Re-seed the baselines");
   });
 });

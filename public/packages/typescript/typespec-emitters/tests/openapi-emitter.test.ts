@@ -36,10 +36,10 @@ import { OPENAPI_GENERATED_BY_EMITTER } from "../src/lib/openapi-emitter.js";
 // ===========================================================================
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -413,7 +413,7 @@ describe("openApiEmitter_Unit_injectD2Extensions", () => {
       D2_RATE_LIMIT_TIER_KEY,
       D2_AUDIENCE_KEY,
       D2_CSRF_KEY,
-    } = await import("@d2/typespec-decorators");
+    } = await import("@dcsv-io/d2-typespec-decorators");
 
     const stateByOp = new Map<object, Map<symbol, unknown>>();
     // any-scope op: also OBJECT-form tier + OBJECT-form csrf + audience.

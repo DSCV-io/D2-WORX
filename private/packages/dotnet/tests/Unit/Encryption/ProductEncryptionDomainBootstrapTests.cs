@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Private.Packages.Tests.Unit.Encryption;
+namespace DcsvIo.D2.Private.Packages.Tests.Unit.Encryption;
 
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Private.Encryption;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Encryption;
 using Xunit;
 
 /// <summary>

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Private.Auth;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
 
 /// <summary>
 /// The generated-op shell <see cref="IssueLeafHandler"/>: the wire DTO's CSR bytes
@@ -39,7 +39,7 @@ public sealed class IssueLeafHandlerTests
             inner);
 
         var result = await shell.HandleAsync(
-            new D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput(csr));
+            new DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafInput(csr));
 
         result.Success.Should().BeTrue();
         var output = result.Data!;
@@ -75,7 +75,7 @@ public sealed class IssueLeafHandlerTests
             inner);
 
         var result = await shell.HandleAsync(
-            new D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput(csr));
+            new DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafInput(csr));
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -97,7 +97,7 @@ public sealed class IssueLeafHandlerTests
             inner);
 
         var result = await shell.HandleAsync(
-            new D2.Edge.KeyCustodian.Client.Issuance.IssueLeafInput(
+            new DcsvIo.D2.Private.Edge.KeyCustodian.Client.Issuance.IssueLeafInput(
                 RandomNumberGenerator.GetBytes(64)));
 
         result.Success.Should().BeFalse();

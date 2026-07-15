@@ -20,19 +20,19 @@ test("extraction: THROWS when HEAD non-empty extracts to 0 without allow", () =>
   assert.throws(
     () =>
       assertExtractionNotWrongfullyEmpty({
-        packageId: "D2.Shared.Time",
+        packageId: "DcsvIo.D2.Time",
         priorSurfaceCount: 42,
         extractedSurfaceCount: 0,
         allowEmpty: false,
       }),
-    /refusing to write empty PublicAPI for D2\.Shared\.Time: had 42 lines at HEAD/,
+    /refusing to write empty PublicAPI for DcsvIo\.D2\.Time: had 42 lines at HEAD/,
   );
 });
 
 test("extraction: allow-empty permits intentional N→0 surface", () => {
   assert.doesNotThrow(() =>
     assertExtractionNotWrongfullyEmpty({
-      packageId: "D2.Shared.Time",
+      packageId: "DcsvIo.D2.Time",
       priorSurfaceCount: 42,
       extractedSurfaceCount: 0,
       allowEmpty: true,
@@ -43,7 +43,7 @@ test("extraction: allow-empty permits intentional N→0 surface", () => {
 test("extraction: new package (HEAD 0) may extract empty without allow", () => {
   assert.doesNotThrow(() =>
     assertExtractionNotWrongfullyEmpty({
-      packageId: "D2.Shared.BrandNew",
+      packageId: "DcsvIo.D2.BrandNew",
       priorSurfaceCount: 0,
       extractedSurfaceCount: 0,
       allowEmpty: false,
@@ -54,7 +54,7 @@ test("extraction: new package (HEAD 0) may extract empty without allow", () => {
 test("extraction: normal non-empty extract OK", () => {
   assert.doesNotThrow(() =>
     assertExtractionNotWrongfullyEmpty({
-      packageId: "D2.Shared.Time",
+      packageId: "DcsvIo.D2.Time",
       priorSurfaceCount: 42,
       extractedSurfaceCount: 40,
       allowEmpty: false,
@@ -68,12 +68,12 @@ test("disk: THROWS empty vs non-empty HEAD without allow (failure wipe)", () => 
   assert.throws(
     () =>
       assertShippedContentNotWrongfullyEmpty({
-        packageId: "D2.Shared.AspNetCore",
+        packageId: "DcsvIo.D2.AspNetCore",
         shippedContent: `${NULLABLE_HEADER}\n`,
         headSurfaceCount: 147,
         allowEmpty: false,
       }),
-    /PublicAPI\.Shipped\.txt for D2\.Shared\.AspNetCore is EMPTY/,
+    /PublicAPI\.Shipped\.txt for DcsvIo\.D2\.AspNetCore is EMPTY/,
   );
 });
 
@@ -81,7 +81,7 @@ test("disk: missing file treated as empty", () => {
   assert.throws(
     () =>
       assertShippedContentNotWrongfullyEmpty({
-        packageId: "D2.Shared.AspNetCore",
+        packageId: "DcsvIo.D2.AspNetCore",
         shippedContent: "",
         headSurfaceCount: 10,
         allowEmpty: false,
@@ -93,7 +93,7 @@ test("disk: missing file treated as empty", () => {
 test("disk: brand-new / HEAD-empty package may be header-only", () => {
   assert.doesNotThrow(() =>
     assertShippedContentNotWrongfullyEmpty({
-      packageId: "D2.Shared.BrandNew",
+      packageId: "DcsvIo.D2.BrandNew",
       shippedContent: `${NULLABLE_HEADER}\n`,
       headSurfaceCount: 0,
       allowEmpty: false,
@@ -104,7 +104,7 @@ test("disk: brand-new / HEAD-empty package may be header-only", () => {
 test("disk: intentional first empty commit needs allowEmpty", () => {
   assert.doesNotThrow(() =>
     assertShippedContentNotWrongfullyEmpty({
-      packageId: "D2.Shared.AspNetCore",
+      packageId: "DcsvIo.D2.AspNetCore",
       shippedContent: formatPublicApiFile([]),
       headSurfaceCount: 147,
       allowEmpty: true,
@@ -115,7 +115,7 @@ test("disk: intentional first empty commit needs allowEmpty", () => {
 test("disk: partial reduction (still has lines) never trips empty guard", () => {
   assert.doesNotThrow(() =>
     assertShippedContentNotWrongfullyEmpty({
-      packageId: "D2.Shared.Time",
+      packageId: "DcsvIo.D2.Time",
       shippedContent: formatPublicApiFile(["P:OnlyOneLeft"]),
       headSurfaceCount: 99,
       allowEmpty: false,

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.Abstractions;
+namespace DcsvIo.D2.Context.Abstractions;
 
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Parses the OAuth <c>scope</c> claim into an <see cref="IReadOnlySet{T}"/>.

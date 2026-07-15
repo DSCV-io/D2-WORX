@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -36,7 +36,7 @@ public static class KeyringMetrics
     /// The OpenTelemetry <see cref="Meter"/> name. Hosts add this via
     /// <c>.WithMetrics(m =&gt; m.AddMeter(KeyringMetrics.METER_NAME))</c>.
     /// </summary>
-    public const string METER_NAME = "D2.Edge.KeyCustodian.Client";
+    public const string METER_NAME = "DcsvIo.D2.Private.Edge.KeyCustodian.Client";
 
     /// <summary>The shared <see cref="Meter"/> for the keyring runtime.</summary>
     public static readonly Meter SR_Meter = new(METER_NAME);

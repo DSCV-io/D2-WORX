@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler;
+namespace DcsvIo.D2.Handler;
 
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler.Abstractions;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

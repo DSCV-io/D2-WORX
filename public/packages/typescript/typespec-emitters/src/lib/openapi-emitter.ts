@@ -46,7 +46,7 @@ import {
   D2_RATE_LIMIT_TIER_KEY,
   D2_AUDIENCE_KEY,
   D2_CSRF_KEY,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 import type { EmittedFile } from "./csharp-dto-emitter.js";
 
 export type { EmittedFile } from "./csharp-dto-emitter.js";
@@ -94,7 +94,7 @@ export type OpenApiHttpMethod =
   | "trace";
 
 /** The emitter name recorded in the `x-d2-generated-by` document extension. */
-export const OPENAPI_GENERATED_BY_EMITTER = "@d2/typespec-emitters";
+export const OPENAPI_GENERATED_BY_EMITTER = "@dcsv-io/d2-typespec-emitters";
 
 /** The note recorded in the `x-d2-generated-by` document extension. */
 export const OPENAPI_GENERATED_BY_NOTE =

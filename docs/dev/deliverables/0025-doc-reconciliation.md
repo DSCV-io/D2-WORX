@@ -46,7 +46,7 @@ This hierarchy is now codified in `docs/README.md` and enforced by `rules.md §1
 - §5.x design tables collapsed: four patterns confirmed non-existent by code grep (`MultiTierFetcher`, `InputParsers`, `Validator-property pattern`, `WithXxx builder`) and dropped; four already captured in PATTERNS; one (`IsUnhandledException` exclusion) moved to PATTERNS as a real pattern. §5.3 Operation Risk Tier full detail homed in `PHASE_3_RATE_LIMITING §12`.
 - §7 superseded by ADR-0024 → dropped, pointer added.
 - §8 fully covered by `TESTS.md` → collapsed to pointer.
-- Five stale `D2.Shared.GeoReference` references → `D2.Shared.Geo`.
+- Five stale `DcsvIo.D2.GeoReference` references → `DcsvIo.D2.Geo`.
 
 ### PHASE_3.md reconciled
 
@@ -59,7 +59,7 @@ Four staleness fixes + corrected Edge build order + trimmed open-prereqs. `POST_
 ### KEEP docs + READMEs (~16 files)
 
 - ~16 forward-looking `docs/v2/PHASE_*` / `V2.md` deep-links replaced with inline prose across KEEP docs and per-service/lib READMEs. Present-tense docs now describe current reality without pointing into phase-tracking holding-pens.
-- `edge/README.md`: `D2.Shared.GeoReference` → `D2.Shared.Geo`; `leaf_issuance_audit_record` row added to the schema table.
+- `edge/README.md`: `DcsvIo.D2.GeoReference` → `DcsvIo.D2.Geo`; `leaf_issuance_audit_record` row added to the schema table.
 - `courier/README.md` + `files/README.md`: same `GeoReference` → `Geo` fix.
 - Deliverables index (`docs/dev/deliverables/README.md`): +4 missing rows (0016 / 0018 / 0019 / 0020) + a note documenting the 0010 gap (that index slot was used by a now-deleted legacy doc).
 

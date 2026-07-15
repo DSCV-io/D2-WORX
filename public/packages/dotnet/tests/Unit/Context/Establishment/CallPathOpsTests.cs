@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Context.Establishment;
+namespace DcsvIo.D2.Tests.Unit.Context.Establishment;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
 using Xunit;
 
 /// <summary>

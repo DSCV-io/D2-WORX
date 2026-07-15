@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.Registry.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.Registry.SourceGen;
 
 using System;
 using System.Collections.Generic;
@@ -80,14 +80,14 @@ internal static class CategorySpecLoader
     /// <param name="entries">All aggregated registry entries.</param>
     /// <param name="wireSet">The closed set of category wire strings.</param>
     /// <returns>The membership diagnostics (empty when all categories are known).</returns>
-    public static ImmutableArray<D2.Shared.SourceGen.EmitDiagnostic> Check(
+    public static ImmutableArray<DcsvIo.D2.SourceGen.EmitDiagnostic> Check(
         IReadOnlyList<RegistrySpecEntry> entries,
         ImmutableHashSet<string> wireSet)
     {
         if (wireSet.Count == 0)
-            return ImmutableArray<D2.Shared.SourceGen.EmitDiagnostic>.Empty;
+            return ImmutableArray<DcsvIo.D2.SourceGen.EmitDiagnostic>.Empty;
 
-        var diagnostics = ImmutableArray.CreateBuilder<D2.Shared.SourceGen.EmitDiagnostic>();
+        var diagnostics = ImmutableArray.CreateBuilder<DcsvIo.D2.SourceGen.EmitDiagnostic>();
         foreach (var entry in entries)
         {
             if (!wireSet.Contains(entry.Category))

@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Contacts;
+namespace DcsvIo.D2.Tests.Integration.Contacts;
 
-using D2.Shared.Contacts.EntityFrameworkCore;
-using D2.Shared.Contacts.ValueObjects;
-using D2.Shared.DataGovernance.Abstractions;
-using D2.Shared.DataGovernance.EntityFrameworkCore;
-using D2.Shared.Location.EntityFrameworkCore;
-using D2.Shared.Location.ValueObjects;
-using D2.Shared.Time.EfCore;
+using DcsvIo.D2.Contacts.EntityFrameworkCore;
+using DcsvIo.D2.Contacts.ValueObjects;
+using DcsvIo.D2.DataGovernance.Abstractions;
+using DcsvIo.D2.DataGovernance.EntityFrameworkCore;
+using DcsvIo.D2.Location.EntityFrameworkCore;
+using DcsvIo.D2.Location.ValueObjects;
+using DcsvIo.D2.Time.EfCore;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>

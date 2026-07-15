@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using D2.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
 /// <summary>
 /// Consumer-side OTel metrics for the sealing runtime — the sealed sibling of
-/// <see cref="KeyringMetrics"/>. Shares the same <c>D2.Edge.KeyCustodian.Client</c>
+/// <see cref="KeyringMetrics"/>. Shares the same <c>DcsvIo.D2.Private.Edge.KeyCustodian.Client</c>
 /// <see cref="Meter"/> (<see cref="KeyringMetrics.SR_Meter"/>), so a host that already
 /// subscribed that meter for keyring metrics receives the sealing counters too. No counter
 /// exposes key material.

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore.Mtls;
+namespace DcsvIo.D2.AspNetCore.Mtls;
 
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +18,7 @@ using Microsoft.Extensions.Options;
 /// <see cref="D2MutualTlsOptions.Enabled"/>, Kestrel's HTTPS endpoint is configured
 /// to REQUIRE a client certificate and to validate it with the default-deny
 /// <see cref="SpiffeSanPeerValidator"/>. The Kestrel-config LOGIC lives here in
-/// <c>D2.Shared.AspNetCore</c>; the service-defaults aggregator composes it.
+/// <c>DcsvIo.D2.AspNetCore</c>; the service-defaults aggregator composes it.
 /// </summary>
 public static class MutualTlsHostExtensions
 {

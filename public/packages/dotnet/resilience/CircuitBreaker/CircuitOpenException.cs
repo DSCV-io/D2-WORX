@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.CircuitBreaker;
+namespace DcsvIo.D2.Resilience.CircuitBreaker;
 
 /// <summary>
 /// Thrown by <see cref="CircuitBreaker{T}.ExecuteAsync"/> when the circuit

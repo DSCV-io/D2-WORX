@@ -22,24 +22,24 @@ Shared Postgres owns mechanism only (`PgAdvisoryLock`, migrator, design-time fac
 
 | Surface | Before | After |
 | --- | --- | --- |
-| Destination assembly | `D2.Shared.EntityFrameworkCore.Postgres` | `D2.Edge.KeyCustodian.Infra` |
-| Emitted namespace | `D2.Shared.EntityFrameworkCore.Postgres` | `D2.Edge.KeyCustodian.Infra` |
+| Destination assembly | `DcsvIo.D2.EntityFrameworkCore.Postgres` | `DcsvIo.D2.Private.Edge.KeyCustodian.Infra` |
+| Emitted namespace | `DcsvIo.D2.EntityFrameworkCore.Postgres` | `DcsvIo.D2.Private.Edge.KeyCustodian.Infra` |
 | Leaf shape | `AdvisoryLocks.D2Keycustodian.{MIGRATOR,ROTATION,CA_SEED}` | **unchanged** |
 | Spec SoT | `contracts/advisory-locks/advisory-locks.spec.json` | **same** (central fleet catalog) |
 | Generator home | `locks-source-gen/` | **same** (shared tooling) |
 | Uniqueness | Full catalog at gen | **same** |
 
-- `AdvisoryLocksGenerator._TARGET_ASSEMBLY_NAME` → `D2.Edge.KeyCustodian.Infra`
-- `AdvisoryLocksEmitter.ROOT_NAMESPACE` → `D2.Edge.KeyCustodian.Infra`
+- `AdvisoryLocksGenerator._TARGET_ASSEMBLY_NAME` → `DcsvIo.D2.Private.Edge.KeyCustodian.Infra`
+- `AdvisoryLocksEmitter.ROOT_NAMESPACE` → `DcsvIo.D2.Private.Edge.KeyCustodian.Infra`
 - Analyzer + AdditionalFiles moved from postgres csproj → KC Infra csproj
-- Deleted postgres `Generated/D2.Shared.AdvisoryLocks.SourceGen/**`
-- Regenerated: `server/services/edge/key-custodian/infra/Generated/D2.Shared.AdvisoryLocks.SourceGen/.../AdvisoryLocks.g.cs`
+- Deleted postgres `Generated/DcsvIo.D2.AdvisoryLocks.SourceGen/**`
+- Regenerated: `server/services/edge/key-custodian/infra/Generated/DcsvIo.D2.AdvisoryLocks.SourceGen/.../AdvisoryLocks.g.cs`
 - Softened mechanism remarks that pointed at shared-hosted lock catalogs
 
 ### Call sites
 
 - KC Infra production (3): same-assembly `AdvisoryLocks`; keep shared Postgres for `PgAdvisoryLock` / migrator
-- Edge.Tests (3): MigratorComposition / Lifecycle / Concurrency — `using D2.Edge.KeyCustodian.Infra`
+- Edge.Tests (3): MigratorComposition / Lifecycle / Concurrency — `using DcsvIo.D2.Private.Edge.KeyCustodian.Infra`
 
 ### Tests retargeted
 
@@ -93,7 +93,7 @@ Local journals (gitignored): `docs/wip/0031-advisory-locks-domain-keys/01-domain
 | `dotnet build server/D2.slnx` | 0w / 0e |
 | `dotnet test` Shared (full) | PASS (6870) |
 | `dotnet test` Edge | PASS (1793 + 8 skipped) |
-| `jb inspectcode` deliverable scope | 0 findings; 2 pre-existing unused-using in `D2.Shared.Auth.Grpc` (untouched) |
+| `jb inspectcode` deliverable scope | 0 findings; 2 pre-existing unused-using in `DcsvIo.D2.Auth.Grpc` (untouched) |
 | Baseline currency | PASS |
 
 ## Steps
@@ -113,8 +113,8 @@ Central contracts/advisory-locks catalog retained. KEEP spine as locked **at shi
 D2 → A2 fat → A3+E1 fat → E2 — **living SoT supersession** in [PHASE_3.md](../../v2/PHASE_3.md):
 **D2 → Auth Core → Minting → Auth Extras + E1 → E2**.
 
-BREAKING CHANGE: D2.Shared.EntityFrameworkCore.Postgres no longer ships
-AdvisoryLocks.D2Keycustodian.*; consume constants from D2.Edge.KeyCustodian.Infra.
+BREAKING CHANGE: DcsvIo.D2.EntityFrameworkCore.Postgres no longer ships
+AdvisoryLocks.D2Keycustodian.*; consume constants from DcsvIo.D2.Private.Edge.KeyCustodian.Infra.
 ```
 
 ## Residuals (not findings)

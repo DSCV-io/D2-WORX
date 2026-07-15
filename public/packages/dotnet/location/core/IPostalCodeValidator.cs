@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Location;
+namespace DcsvIo.D2.Location;
 
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Result;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Boundary validator for postal codes invoked by
 /// <see cref="ValueObjects.AdminLocation"/> (and any other consumer
 /// that needs structured postal-code validation). Lives in
-/// <c>D2.Shared.Location</c> (NOT Abstractions) so the DI seam stays
+/// <c>DcsvIo.D2.Location</c> (NOT Abstractions) so the DI seam stays
 /// out of pure-vocabulary projects per the Plan §4.5 layer policy.
 /// </summary>
 public interface IPostalCodeValidator

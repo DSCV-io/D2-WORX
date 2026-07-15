@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging;
+namespace DcsvIo.D2.Messaging;
 
 /// <summary>
 /// Per-publish toggles passed to <see cref="IMessageBus.PublishAsync"/>.

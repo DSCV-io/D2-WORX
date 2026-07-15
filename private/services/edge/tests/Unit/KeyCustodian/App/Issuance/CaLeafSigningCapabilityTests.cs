@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App.Issuance;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App.Issuance;
 
 using System.Security.Cryptography.X509Certificates;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
 
 /// <summary>
 /// The isolated <see cref="CaLeafSigningCapability"/> — the sole holder of the

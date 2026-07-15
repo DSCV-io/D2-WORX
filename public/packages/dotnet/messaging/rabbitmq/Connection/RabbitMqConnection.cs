@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Connection;
+namespace DcsvIo.D2.Messaging.RabbitMq.Connection;
 
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using global::RabbitMQ.Client;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;

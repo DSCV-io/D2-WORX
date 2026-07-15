@@ -27,7 +27,7 @@ function makeBridgeInput(
     outputTypeName: "PingAuditOutput",
     dtoNamespace: "D2.Services.Audit.Client.Ping",
     scopePolicy: { kind: "any", scopes: ["internal.audit.ping"] },
-    registrationNamespace: "D2.Edge.Api.Bridges.Audit",
+    registrationNamespace: "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
     sourceSpec: SOURCE,
     ...overrides,
   };
@@ -38,7 +38,9 @@ describe("emitBridgeRegistration — happy path", () => {
     const file = emitBridgeRegistration(makeBridgeInput());
 
     expect(file.fileName).toBe("PingAuditBridgeRegistration.g.cs");
-    expect(file.content).toContain("namespace D2.Edge.Api.Bridges.Audit;");
+    expect(file.content).toContain(
+      "namespace DcsvIo.D2.Private.Edge.Api.Bridges.Audit;",
+    );
     expect(file.content).toContain("MapPingAuditBridge()");
     expect(file.content).toContain("MapGet(");
     expect(file.content).toContain('"/internal/v1/audit/ping"');
@@ -49,7 +51,7 @@ describe("emitBridgeRegistration — happy path", () => {
     expect(file.content).toContain("RequireAnyScope");
     // Free-string ban: Scopes.* constant, never wire literal at Map sites.
     expect(file.content).toContain("Scopes.Internal.Audit.Ping");
-    expect(file.content).toContain("using D2.Shared.Auth.Abstractions;");
+    expect(file.content).toContain("using DcsvIo.D2.Auth.Abstractions;");
     expect(file.content).not.toContain('RequireAnyScope("');
     // MAP-ii
     expect(file.content).toContain("var status = (int)result.StatusCode;");
@@ -129,7 +131,7 @@ describe("emitBridgeRegistration — happy path", () => {
     expect(file.content).toContain("TryGetAsync");
     expect(file.content).toContain("StoreAsync");
     expect(file.content).toContain("TimeSpan.FromSeconds(3600)");
-    expect(file.content).toContain("D2.Shared.Utilities.Extensions");
+    expect(file.content).toContain("DcsvIo.D2.Utilities.Extensions");
     expect(file.content).toContain("client.CreateAuditEventAsync");
   });
 
@@ -142,13 +144,14 @@ describe("emitBridgeRegistration — happy path", () => {
       routePath: "/internal/v1/fixtures/bridge-ping",
       moduleName: "BridgeFixture",
       grpcClientNamespace:
-        "D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures",
+        "DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures",
       inputTypeName: "BridgeFixturePingInput",
       outputTypeName: "BridgeFixturePingOutput",
-      dtoNamespace: "D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures",
+      dtoNamespace:
+        "DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Fixtures",
       scopePolicy: { kind: "any", scopes: ["self.read"] },
       registrationNamespace:
-        "D2.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Generated",
+        "DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Generated",
       sourceSpec: "contracts/typespec/fixtures/bridge-shaped.tsp",
     });
     expect(file.fileName).toBe("PingBridgeFixtureBridgeRegistration.g.cs");
@@ -198,7 +201,7 @@ describe("emitMapAllBridges", () => {
     const file = emitMapAllBridges(
       "Audit",
       [{ opName: "pingAudit" }, { opName: "listAuditEvents" }],
-      "D2.Edge.Api.Bridges.Audit",
+      "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
       SOURCE,
     );
     expect(file).toBeDefined();
@@ -210,7 +213,12 @@ describe("emitMapAllBridges", () => {
 
   it("zero ops → undefined (no empty trap)", () => {
     expect(
-      emitMapAllBridges("Audit", [], "D2.Edge.Api.Bridges.Audit", SOURCE),
+      emitMapAllBridges(
+        "Audit",
+        [],
+        "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
+        SOURCE,
+      ),
     ).toBeUndefined();
   });
 
@@ -219,7 +227,7 @@ describe("emitMapAllBridges", () => {
       emitMapAllBridges(
         "",
         [{ opName: "x" }],
-        "D2.Edge.Api.Bridges.Audit",
+        "DcsvIo.D2.Private.Edge.Api.Bridges.Audit",
         SOURCE,
       ),
     ).toThrow(/moduleName/);

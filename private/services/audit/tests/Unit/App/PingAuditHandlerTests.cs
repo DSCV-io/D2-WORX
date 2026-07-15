@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Tests.Unit.App;
+namespace DcsvIo.D2.Private.Audit.Tests.Unit.App;
 
 using System.Net;
-using D2.Audit.App.Application.Handlers.Queries.PingAudit;
-using D2.Audit.Client.Ping;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Private.Audit.App.Application.Handlers.Queries.PingAudit;
+using DcsvIo.D2.Private.Audit.Client.Ping;
 using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>

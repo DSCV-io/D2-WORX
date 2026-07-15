@@ -21,7 +21,7 @@
 // fingerprint-currency.ts; this shim only resolves the repo root, wires the
 // real inventory loader, and maps the result to an exit code.
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import {
   checkFingerprintCurrency,
   formatCurrencyReport,

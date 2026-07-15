@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 /// <summary>
 /// Round-trip + anti-stale-column + corrupt-row tests for
@@ -228,7 +228,7 @@ public sealed class KeyRecordMapperTests
             Kid.FromTrusted("kid-1"),
             KeyAuditAction.Generated,
             KeyStatus.Pending,
-            new D2.Shared.Time.TestClock(sr_created),
+            new DcsvIo.D2.Time.TestClock(sr_created),
             detail: "note");
 
         var record = audit.ToRecord();

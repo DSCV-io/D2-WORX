@@ -64,8 +64,8 @@ function readFacadeFixture(absPath: string): string {
 // Test helpers
 // ---------------------------------------------------------------------------
 
-const _KC_CLIENTS_NS = "D2.Edge.KeyCustodian.Client";
-const _KC_APP_NS = "D2.Edge.KeyCustodian.App.Application";
+const _KC_CLIENTS_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.Client";
+const _KC_APP_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application";
 const _SPEC = "contracts/typespec/key-custodian/key-custodian.tsp";
 
 function makeOp(
@@ -261,7 +261,7 @@ describe("facadeEmitter_ModuleNameDrivesTypeNames", () => {
     const [, , di] = emitFacade(
       "KeyCustodian",
       [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
-      "D2.Edge.KeyCustodian.Gateway",
+      "DcsvIo.D2.Private.Edge.KeyCustodian.Gateway",
       _KC_APP_NS,
     );
 
@@ -702,10 +702,10 @@ describe("facadeEmitter_ByteGate_DiExtension", () => {
 // ---------------------------------------------------------------------------
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -714,7 +714,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 });
 
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -743,7 +743,7 @@ describe("facadeEmitter_Integration_getJwks", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -758,13 +758,14 @@ describe("facadeEmitter_Integration_getJwks", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
-            "D2.Edge.KeyCustodian.App.Application.Handlers",
+            "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",
@@ -779,7 +780,7 @@ describe("facadeEmitter_Integration_getJwks", () => {
     const ifaceContent = getEmittedFile(host, "IKeyCustodianApi.g.cs");
     expect(ifaceContent).toBeDefined();
     expect(ifaceContent).toContain(
-      "namespace D2.Edge.KeyCustodian.Client.Facade;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;",
     );
     expect(ifaceContent).toContain("public interface IKeyCustodianApi");
     expect(ifaceContent).toContain("GetJwksAsync(");
@@ -788,7 +789,7 @@ describe("facadeEmitter_Integration_getJwks", () => {
     const implContent = getEmittedFile(host, "/KeyCustodianApi.g.cs");
     expect(implContent).toBeDefined();
     expect(implContent).toContain(
-      "namespace D2.Edge.KeyCustodian.App.Application.Facade;",
+      "namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Facade;",
     );
     expect(implContent).toContain("public sealed class KeyCustodianApi");
     expect(implContent).toContain("=> getJwksHandler.HandleAsync(input, ct);");
@@ -816,7 +817,7 @@ describe("facadeEmitter_Integration_InternalOp_AbsentFromFacade", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -838,13 +839,14 @@ describe("facadeEmitter_Integration_InternalOp_AbsentFromFacade", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
+      emit: ["@dcsv-io/d2-typespec-emitters"],
       options: {
-        "@d2/typespec-emitters": {
+        "@dcsv-io/d2-typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
-          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Client",
+          "csharp-clients-namespace":
+            "DcsvIo.D2.Private.Edge.KeyCustodian.Client",
           "csharp-app-namespace-base":
-            "D2.Edge.KeyCustodian.App.Application.Handlers",
+            "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",

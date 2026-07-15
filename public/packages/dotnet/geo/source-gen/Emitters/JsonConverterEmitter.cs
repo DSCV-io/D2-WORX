@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Emitters;
+namespace DcsvIo.D2.Geo.SourceGen.Emitters;
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
-using D2.Shared.Geo.SourceGen.Spec;
-using D2.Shared.SourceGen;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.Geo.SourceGen.Spec;
+using DcsvIo.D2.SourceGen;
+using DcsvIo.D2.SourceGen.Polyfills;
 
 /// <summary>
 /// Emits the three <c>JsonConverter&lt;T&gt;</c> classes paired with the
@@ -108,7 +108,7 @@ internal static class JsonConverterEmitter
         sb.AppendLine("using System.Collections.Generic;");
         sb.AppendLine("using System.Text.Json;");
         sb.AppendLine("using System.Text.Json.Serialization;");
-        sb.AppendLine("using D2.Shared.Utilities.Extensions;");
+        sb.AppendLine("using DcsvIo.D2.Utilities.Extensions;");
         sb.AppendLine();
         sb.AppendLine($"namespace {_NAMESPACE};");
         sb.AppendLine();

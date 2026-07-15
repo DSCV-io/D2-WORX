@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Infra;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Infra;
 
-using D2.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
 
 /// <summary>
 /// Tests for the pure <see cref="KeyRotatedEventMapper"/> (domain announce args →

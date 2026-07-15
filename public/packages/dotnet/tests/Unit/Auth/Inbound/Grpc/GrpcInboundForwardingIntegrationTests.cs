@@ -4,22 +4,22 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc;
 
 using System.Collections.Generic;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Grpc;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Outbound.Grpc;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Headers.Grpc;
-using D2.Shared.Result;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Protos;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Grpc;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Outbound.Grpc;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Headers.Grpc;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Protos;
 using global::Grpc.Core;
 using global::Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
@@ -185,14 +185,14 @@ public sealed class GrpcInboundForwardingIntegrationTests
 
                         // Swap the network-touching JwksProvider for the in-memory
                         // fake (mirrors GrpcAuthIntegrationTests.BuildHostAsync).
-                        services.RemoveAll<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>();
-                        services.RemoveAll<D2.Shared.Auth.Jwks.HttpJwksProvider>();
-                        services.AddSingleton<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(
+                        services.RemoveAll<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>();
+                        services.RemoveAll<DcsvIo.D2.Auth.Jwks.HttpJwksProvider>();
+                        services.AddSingleton<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(
                             new FakeJwksProvider(jwtBuilder.PublicKey));
                         services.RemoveAll<JwtValidator>();
                         services.AddSingleton(sp => new JwtValidator(
                             sp.GetRequiredService<
-                                D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(),
+                                DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(),
                             sp.GetRequiredService<IOptions<AuthOptions>>(),
                             sp.GetRequiredService<ClaimsToContextMapper>(),
                             Microsoft.Extensions.Logging.Abstractions

@@ -4,24 +4,24 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.I18n.SourceGen;
+namespace DcsvIo.D2.I18n.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.SourceGen;
+using DcsvIo.D2.SourceGen.Polyfills;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits translation-key catalogs from
 /// <c>contracts/messages/*.json</c> via <c>AdditionalFiles</c>.
-/// Dual-target: public assembly <c>D2.Shared.I18n.Keys</c> → <c>TK</c>
+/// Dual-target: public assembly <c>DcsvIo.D2.I18n.Keys</c> → <c>TK</c>
 /// (public messages only); private Extensions assembly
-/// <c>D2.Shared.I18n.Keys.Extensions</c> → <c>ProductTK</c>
-/// (public∪private messages, distinct FQN under <c>D2.Private.I18n</c>).
+/// <c>DcsvIo.D2.Private.I18n.Keys.Extensions</c> → <c>ProductTK</c>
+/// (public∪private messages, distinct FQN under <c>DcsvIo.D2.Private.I18n</c>).
 /// </summary>
 /// <remarks>
 /// The generator filters AdditionalFiles to <c>.json</c> files whose
@@ -29,8 +29,8 @@ using Microsoft.CodeAnalysis.Text;
 /// matches the consuming csproj's
 /// <c>&lt;AdditionalFiles Include="...contracts/messages/*.json" /&gt;</c>
 /// glob and avoids accidentally treating unrelated AdditionalFiles as catalogs.
-/// Private host PackageId = <c>D2.Shared.I18n.Keys.Extensions</c> (1:1 with the
-/// public twin). Emitted dual-types keep the <c>D2.Private.I18n.ProductTK</c>
+/// Private host PackageId = <c>DcsvIo.D2.Private.I18n.Keys.Extensions</c> (1:1 with the
+/// public twin). Emitted dual-types keep the <c>DcsvIo.D2.Private.I18n.ProductTK</c>
 /// FQN; <c>TKMessage</c> remains the shared public primitive (IVT grant).
 /// </remarks>
 [Generator]
@@ -41,10 +41,10 @@ public sealed class TKGenerator : IIncrementalGenerator
     private const string _EN_US_LOCALE = "en-US";
 
     private const string _PRIVATE_GENERATED_SOURCE_NAME = "ProductTK.g.cs";
-    private const string _PUBLIC_TARGET_ASSEMBLY = "D2.Shared.I18n.Keys";
-    private const string _PRIVATE_TARGET_ASSEMBLY = "D2.Shared.I18n.Keys.Extensions";
-    private const string _PUBLIC_ROOT_NAMESPACE = "D2.Shared.I18n";
-    private const string _PRIVATE_ROOT_NAMESPACE = "D2.Private.I18n";
+    private const string _PUBLIC_TARGET_ASSEMBLY = "DcsvIo.D2.I18n.Keys";
+    private const string _PRIVATE_TARGET_ASSEMBLY = "DcsvIo.D2.Private.I18n.Keys.Extensions";
+    private const string _PUBLIC_ROOT_NAMESPACE = "DcsvIo.D2.I18n";
+    private const string _PRIVATE_ROOT_NAMESPACE = "DcsvIo.D2.Private.I18n";
     private const string _PUBLIC_CLASS_NAME = "TK";
     private const string _PRIVATE_CLASS_NAME = "ProductTK";
 
@@ -81,7 +81,7 @@ public sealed class TKGenerator : IIncrementalGenerator
             if (!isPublic && !isPrivate)
             {
                 // Backward-compat: when hosted only by public Keys historically the
-                // generator was assembly-agnostic. Public host IS D2.Shared.I18n.Keys.
+                // generator was assembly-agnostic. Public host IS DcsvIo.D2.I18n.Keys.
                 // Any other host (tests double-hosting) does not emit.
                 return;
             }

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen;
+namespace DcsvIo.D2.Geo.SourceGen;
 
 /// <summary>
 /// Result of <see cref="FkDetector.Classify(string, string?)"/>. Describes

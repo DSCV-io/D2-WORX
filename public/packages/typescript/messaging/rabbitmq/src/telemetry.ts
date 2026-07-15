@@ -11,7 +11,7 @@ import { type Counter, metrics, type Tracer, trace } from "@opentelemetry/api";
  * spans + metrics from both runtimes aggregate under one instrumentation
  * scope.
  */
-export const MESSAGING_SOURCE_NAME = "D2.Shared.Messaging.RabbitMq";
+export const MESSAGING_SOURCE_NAME = "DcsvIo.D2.Messaging.RabbitMq";
 
 const meter = metrics.getMeter(MESSAGING_SOURCE_NAME);
 

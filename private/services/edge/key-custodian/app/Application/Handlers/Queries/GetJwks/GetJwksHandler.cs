@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks.IGetJwksHandler;
-using I = D2.Edge.KeyCustodian.Client.Jwks.GetJwksInput;
-using O = D2.Edge.KeyCustodian.Client.Jwks.GetJwksOutput;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks.IGetJwksHandler;
+using I = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks.GetJwksInput;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks.GetJwksOutput;
 
 /// <summary>
 /// Assembles the RFC 7517 JWKS document from the currently-serving signing keys.
@@ -39,7 +39,7 @@ public sealed class GetJwksHandler(HandlerContext<GetJwksHandler> ctx, IKeyCusto
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        var jwks = new List<D2.Edge.KeyCustodian.Client.Jwks.Jwk>(rows.Count);
+        var jwks = new List<DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks.Jwk>(rows.Count);
 
         foreach (var row in rows)
         {
@@ -48,7 +48,7 @@ public sealed class GetJwksHandler(HandlerContext<GetJwksHandler> ctx, IKeyCusto
             if (row.PublicKeyMaterial is { } spki)
             {
                 var domainJwk = JwkProjection.ToJwk(row.Kid, spki);
-                jwks.Add(new D2.Edge.KeyCustodian.Client.Jwks.Jwk(
+                jwks.Add(new DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks.Jwk(
                     domainJwk.Kid,
                     domainJwk.N,
                     domainJwk.E,

@@ -8,16 +8,16 @@
 
 /* eslint-disable */
 
-import { D2Result, serviceUnavailable, unauthorized } from "@d2/result";
-import { ErrorCategoryWire } from "@d2/error-category";
-import { type TKMessage } from "@d2/i18n-abstractions";
-import { TK } from "@d2/i18n-keys";
+import { D2Result, serviceUnavailable, unauthorized } from "@dcsv-io/d2-result";
+import { ErrorCategoryWire } from "@dcsv-io/d2-error-category";
+import { type TKMessage } from "@dcsv-io/d2-i18n-abstractions";
+import { TK } from "@dcsv-io/d2-i18n-keys";
 import { AuthErrorCodes } from "./auth-error-codes.g.js";
 
 /**
  * Pre-built D2Result failures for inbound auth runtime — JWT validation
  * rejections, session liveness outages, JWKS upstream failures.
- * Mirrors .NET D2.Shared.Auth.Errors.AuthFailures factory shape.
+ * Mirrors .NET DcsvIo.D2.Auth.Errors.AuthFailures factory shape.
  */
 export const AuthFailures = {
   /** The Authorization header was present but not a parseable Bearer JWT. */

@@ -4,15 +4,15 @@ Copyright (c) DCSV. All rights reserved.
 
 # PHASE_3_AUTH.md — Edge Auth Module Design
 
-> Design annex — holds the auth-module and D2.Shared.Auth runtime design for the unbuilt Edge-auth
+> Design annex — holds the auth-module and DcsvIo.D2.Auth runtime design for the unbuilt Edge-auth
 > deliverables (A1–A6). Folds into the deliverable ship doc(s) + ADRs when built, then pruned.
 > Not a tracker (see [PHASE_3.md](PHASE_3.md)) and not current-truth for what is already shipped
 > (see the relevant ADRs and per-lib READMEs).
 
-> **D2.Shared.Auth shipped** (deliverable 0002). The auth runtime library (`D2.Shared.Auth`,
-> `D2.Shared.Auth.Http`, `D2.Shared.Auth.Grpc`, `D2.Shared.Auth.Outbound`) is live on `nova`.
+> **DcsvIo.D2.Auth shipped** (deliverable 0002). The auth runtime library (`DcsvIo.D2.Auth`,
+> `DcsvIo.D2.Auth.Http`, `DcsvIo.D2.Auth.Grpc`, `DcsvIo.D2.Auth.Outbound`) is live on `nova`.
 > The keyring consumer runtime is service-owned in the KC client package
-> `D2.Edge.KeyCustodian.Client`, not a shared lib. This doc is the **auth-runtime and Edge-auth
+> `DcsvIo.D2.Private.Edge.KeyCustodian.Client`, not a shared lib. This doc is the **auth-runtime and Edge-auth
 > design reference** that Phase 3 A1–A6 builds on — not an in-progress working doc.
 
 > **⚠ Deliverable 0002 scope tightening (2026-05-10)** — the inbound runtime's authoritative
@@ -32,7 +32,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## §1. Purpose & non-goals
 
-`D2.Shared.Auth` is the **uniform consumer-side runtime** every D²-WORX service uses to:
+`DcsvIo.D2.Auth` is the **uniform consumer-side runtime** every D²-WORX service uses to:
 
 1. **Validate inbound JWTs** (HTTP middleware + gRPC interceptor).
 2. **Fetch + cache JWKS** from Edge (verify keys for inbound JWT signature checks).
@@ -86,7 +86,7 @@ doc names an outbound type whose name ends in `Client` — `ITokenExchangeClient
   read-heavy (validation, JWKS lookup) and benefit from L1 + tiered + backplane; keyring material
   is held in-process-memory-only, never a shared cache tier.
 
-The split is: **Edge produces auth signal; D2.Shared.Auth consumes it everywhere.**
+The split is: **Edge produces auth signal; DcsvIo.D2.Auth consumes it everywhere.**
 
 ---
 
@@ -94,7 +94,7 @@ The split is: **Edge produces auth signal; D2.Shared.Auth consumes it everywhere
 
 ```
                     ┌──────────────────────────────────────┐
-                    │  D2.Shared.Auth (this lib)           │
+                    │  DcsvIo.D2.Auth (this lib)           │
                     └──────────────────────────────────────┘
                        │           │           │           │
                        │           │           │           │
@@ -124,7 +124,7 @@ The split is: **Edge produces auth signal; D2.Shared.Auth consumes it everywhere
 - **Every backend service** (Phase 3+) — uses inbound JWT validation + the forwarded
   transaction-token (re-attached unchanged on outbound calls, with mTLS authenticating the workload)
   + KeyringClient; `ITokenExchangeClient` only on the retained RFC 8693 exception paths.
-- **D2.Shared.Messaging** (Wave 6) — uses `IPayloadCrypto` keyed-by-domain (which the KeyringClient
+- **DcsvIo.D2.Messaging** (Wave 6) — uses `IPayloadCrypto` keyed-by-domain (which the KeyringClient
   registers).
 
 ---
@@ -157,7 +157,7 @@ Citations inline.
   - `d2_org_id`, `d2_org_name`, `d2_org_type`, `d2_org_role` — operating org context
   - `d2_fp` — composite session fingerprint bound at mint time (10-slot `v1.c1...c5.s1...s5` format)
   - `d2_kind` (only inside `act` chain entries) — `consent` / `force` impersonation flavor
-- **Single source of truth**: `JwtClaimTypes` static class in `D2.Shared.Auth.Abstractions`.
+- **Single source of truth**: `JwtClaimTypes` static class in `DcsvIo.D2.Auth.Abstractions`.
 
 ### 3.2 Issuance flows (Edge-side; this lib consumes)
 
@@ -417,7 +417,7 @@ SoT for continuity, fixation, yeet/re-mint, and idle/absolute policy:
 ### 3.7 Scope enforcement
 
 - Single concept, single term: **scope** (OAuth canonical). "Permission" only in informal speech.
-- `D2.Shared.Auth.Scopes` — codegen'd static class with nested constants + helper methods
+- `DcsvIo.D2.Auth.Scopes` — codegen'd static class with nested constants + helper methods
   (`IsKnown`, `IsImpersonationBlocked`, `IsAnonymous`, `IsGrantedTo(scope, OrgType, Role)`,
   `GrantedScopes` dict).
 - Wildcards (`files.*`) **only in role definitions, never in JWT claims** — expansion happens at
@@ -479,7 +479,7 @@ mapper needs to consume them:
 
 **ActorKind enum** — Phase 3 needs a new `Anonymous` variant added alongside the existing
 `Service` / `Impersonation` values. Not a breaking change at the JWT layer (top-level `d2_kind`
-is a new claim, not a redefinition); is a vocabulary addition in `D2.Shared.Auth.Abstractions`.
+is a new claim, not a redefinition); is a vocabulary addition in `DcsvIo.D2.Auth.Abstractions`.
 
 #### Flows
 
@@ -549,7 +549,7 @@ is a new claim, not a redefinition); is a vocabulary addition in `D2.Shared.Auth
    Prefer longer-lived visitor keys: **deviceKey / sticky `d2-did` / IP** (and session id only as
    visit glue). Do **not** key historical risk or RL solely on short-lived anon JWT `sub`.
 
-#### Implications for `D2.Shared.Auth` (this lib) — algorithm gap, Phase 3 followup
+#### Implications for `DcsvIo.D2.Auth` (this lib) — algorithm gap, Phase 3 followup
 
 This lib already has the data model in place to support Pattern A:
 
@@ -576,7 +576,7 @@ These changes are small, but they're an architectural commitment that depends on
 anon-JWT minting being in place upstream — defer to the Phase 3 Edge work item. The shipped lib
 is unchanged; the design intent above is the contract Phase 3 builds toward.
 
-#### Implications for `D2.Shared.Auth.Http` / `D2.Shared.Auth.Grpc` README footgun sections
+#### Implications for `DcsvIo.D2.Auth.Http` / `DcsvIo.D2.Auth.Grpc` README footgun sections
 
 Both transport-binding csprojs document a footgun: anonymous-method ctor-injection failure (a
 handler resolved without a `JWT → IRequestContext` populated explodes at construction). Once
@@ -612,14 +612,14 @@ the anon-JWT pattern lands in Edge.
 
 All on `nova`, all merged.
 
-### 4.1 Vocabulary — `D2.Shared.Auth.Abstractions`
+### 4.1 Vocabulary — `DcsvIo.D2.Auth.Abstractions`
 
 - Enums: `ActorKind`, `ImpersonationKind`, `OrgType`, `Role`, `ActionSensitivity`
 - Records: `ActorEntry` (RFC 8693 nested chain link)
 - Constants: `JwtClaimTypes`, `RequestHeaders`
 - Codegen'd: `Scopes` static class (from `contracts/auth-scopes/scopes.spec.json`)
 
-### 4.2 Context — `D2.Shared.{Auth,Request}Context.Abstractions` + `D2.Shared.RequestContext`
+### 4.2 Context — `DcsvIo.D2.{Auth,Request}Context.Abstractions` + `DcsvIo.D2.RequestContext`
 
 - `IAuthContext` interface (codegen'd from `contracts/auth-context/IAuthContext.spec.json`)
 - `IRequestContext extends IAuthContext` (codegen'd from
@@ -632,7 +632,7 @@ All on `nova`, all merged.
 - `IAuthContextExtensions`: `HasScope`, `HasAnyScope`, `HasAllScopes`, `IsStaff`, `IsAdmin`,
   `IsForcedImpersonation`, `IsConsentImpersonation`, `IsImpersonatorStaff`, `IsImpersonatorAdmin`
 
-### 4.3 Crypto — `D2.Shared.Encryption`
+### 4.3 Crypto — `DcsvIo.D2.Encryption`
 
 - `PayloadCryptoKeyring` — immutable JWKS-style multi-kid keyring (active + retiring + archived).
   Per-call AES-256-GCM. AAD context per domain. Defensive key copy + zero-on-dispose.
@@ -644,14 +644,14 @@ All on `nova`, all merged.
 - DI: `services.AddD2EncryptionFor(serviceKey, factory)` — keyed-singleton pattern. The factory is
   what `KeyringClient` will plug into.
 
-### 4.4 Caching — `D2.Shared.Caching.*`
+### 4.4 Caching — `DcsvIo.D2.Caching.*`
 
 - `ITieredCache` (L1 + L2 composition) — exactly the shape JWKS + session caching need.
 - `ICacheInvalidationBackplane` — Redis pub/sub with universal "everyone acts" rule. Exactly the
   shape `d2.security.key-rotated` and `d2.security.session-revoked` need.
 - `ILocalCache` — for the token-exchange cache (shared singleton per Q17) and any per-instance state.
 
-### 4.5 Handler / context infrastructure — `D2.Shared.Handler*`
+### 4.5 Handler / context infrastructure — `DcsvIo.D2.Handler*`
 
 - `BaseHandler<TSelf, TIn, TOut>` runs `RequiredScopes` check + `ValidateAudience` check inside its
   sealed pipeline. Auth doesn't reimplement either — it just populates `IRequestContext.Scopes` and
@@ -667,20 +667,20 @@ in place. Auth runtime is the missing operational glue.
 
 > **⚠ Csproj-split deviation locked during deliverable 0002 (Steps 06 + 07 + 08, 2026-05-11)**:
 > the inbound-runtime `auth/` csproj is now SPLIT into transport-agnostic core +
-> per-transport binding csprojs. The original single `D2.Shared.Auth` carrying both runtime
+> per-transport binding csprojs. The original single `DcsvIo.D2.Auth` carrying both runtime
 > and ASP.NET Core middleware is replaced by:
 >
-> - `D2.Shared.Auth` — transport-agnostic runtime (`JwtValidator`, `HttpJwksProvider`,
+> - `DcsvIo.D2.Auth` — transport-agnostic runtime (`JwtValidator`, `HttpJwksProvider`,
 >   `TieredCacheSessionLivenessTracker`, `ClaimsToContextMapper`, telemetry, options, errors).
 >   No framework refs — gRPC-only services and out-of-process workers consume freely.
-> - `D2.Shared.Auth.Http` — HTTP middleware binding (`JwtAuthMiddleware`,
+> - `DcsvIo.D2.Auth.Http` — HTTP middleware binding (`JwtAuthMiddleware`,
 >   `EndpointScopeMetadata`, `D2ProblemDetailsExtensions`, `HttpContextRequestContextExtensions`,
 >   `AuthAppBuilderExtensions`). Carries `<FrameworkReference Include="Microsoft.AspNetCore.App" />`
->   via `Sdk.Web`. Renamed in Step 08 from the original `D2.Shared.Auth.AspNetCore` for
+>   via `Sdk.Web`. Renamed in Step 08 from the original `DcsvIo.D2.Auth.AspNetCore` for
 >   naming-symmetry parity with sibling `.Grpc` (both run on the same AspNetCore Kestrel
 >   runtime — naming the HTTP one for the host runtime while naming the gRPC one for the
 >   transport protocol was misleading).
-> - `D2.Shared.Auth.Grpc` (Step 07) — gRPC interceptor binding (`JwtAuthInterceptor`,
+> - `DcsvIo.D2.Auth.Grpc` (Step 07) — gRPC interceptor binding (`JwtAuthInterceptor`,
 >   `D2RpcStatusExtensions`). Carries `Grpc.AspNetCore.Server`.
 >
 > Cross-transport `IRequestContext` resolver wiring (Step 08): both `AddD2AuthHttp()` and
@@ -688,30 +688,30 @@ in place. Auth runtime is the missing operational glue.
 > reading from `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]`. The HTTP middleware
 > writes the slot on successful auth; the gRPC interceptor mirrors the write (alongside its
 > existing `ServerCallContext.UserState` write for the gRPC-specific hot-path accessor). The
-> `D2HttpContextItems` constant lives in `D2.Shared.Auth.Abstractions` so both transport
+> `D2HttpContextItems` constant lives in `DcsvIo.D2.Auth.Abstractions` so both transport
 > csprojs reach it without an inter-csproj dep — the two transport-binding csprojs remain
 > siblings (no `auth-grpc → auth-http` ProjectReference). A parity test in the test project
 > defends against future drift between the two duplicated lambdas.
 >
-> Rationale: `D2.Shared.Auth` stays free of framework refs so non-HTTP consumers don't pay
+> Rationale: `DcsvIo.D2.Auth` stays free of framework refs so non-HTTP consumers don't pay
 > the ASP.NET Core dep cost. The §5 tree below reflects the ORIGINAL layout — treat the
 > deliverable's authoritative wip README ([`docs/wip/0002-auth-inbound/README.md`](../wip/0002-auth-inbound/README.md))
 > as the current source of truth for the as-shipped layout.
 
-Three new implementation csprojs sit alongside the existing `D2.Shared.Auth.Abstractions`, plus
+Three new implementation csprojs sit alongside the existing `DcsvIo.D2.Auth.Abstractions`, plus
 one new analyzer csproj that extends Abstractions with codegen'd `Audiences.g.cs` per Q19:
 
 ```
 public/packages/dotnet/
 ├── auth-abstractions/                  # ALREADY SHIPPED (Wave 2) — vocabulary
-│   ├── D2.Shared.Auth.Abstractions.csproj
+│   ├── DcsvIo.D2.Auth.Abstractions.csproj
 │   ├── ActorKind.cs / ImpersonationKind.cs / OrgType.cs / Role.cs / ActionSensitivity.cs
 │   ├── ActorEntry.cs / JwtClaimTypes.cs / RequestHeaders.cs
 │   ├── (codegen) Scopes.g.cs            # via auth-scopes-source-gen (Wave 2)
 │   └── (codegen) Audiences.g.cs         # via auth-audiences-source-gen (Wave 7 Step 0; Q19)
 │
 ├── auth-audiences-source-gen/           # NEW (Wave 7 Step 0; Q19)
-│   ├── D2.Shared.Auth.Audiences.SourceGen.csproj   # netstandard2.0, IsRoslynComponent
+│   ├── DcsvIo.D2.Auth.Audiences.SourceGen.csproj   # netstandard2.0, IsRoslynComponent
 │   ├── AudiencesGenerator.cs            # IIncrementalGenerator
 │   ├── AudienceSpecLoader.cs / AudienceSpecModels.cs / AudiencesEmitter.cs
 │   ├── DiagnosticIds.cs / DiagnosticDescriptors.cs / EmitDiagnostic.cs
@@ -720,7 +720,7 @@ public/packages/dotnet/
 │
 ├── auth/                                # NEW — inbound validation + sessions + JWKS
 │   │                                    # ⚠ Authoritative layout: docs/wip/0002-auth-inbound/README.md
-│   ├── D2.Shared.Auth.csproj
+│   ├── DcsvIo.D2.Auth.csproj
 │   ├── README.md
 │   ├── Validation/
 │   │   ├── JwtValidator.cs              # core token validation orchestration
@@ -761,7 +761,7 @@ public/packages/dotnet/
 │   └── AuthServiceCollectionExtensions.cs   # services.AddD2Auth(opts)
 │
 ├── auth-outbound/                       # NEW — outbound auth factors
-│   ├── D2.Shared.Auth.Outbound.csproj
+│   ├── DcsvIo.D2.Auth.Outbound.csproj
 │   ├── README.md
 │   ├── WorkloadCertificate/             # internal workload identity = mTLS (ADR-0023)
 │   │   ├── IWorkloadCertificateIssuer.cs # KeyCustodian CA leaf-issuance contract
@@ -783,7 +783,7 @@ public/packages/dotnet/
 │   │   └── GrpcClientBuilderExtensions.cs  # .AddD2ForwardedJwt() + .AddD2WorkloadCertificate()
 │   │                                        # per-channel opt-ins (forward-unchanged + mTLS)
 │   ├── Telemetry/
-│   │   └── OutboundTelemetry.cs         # static Meter + ActivitySource ("D2.Shared.Auth.Outbound") (Q22)
+│   │   └── OutboundTelemetry.cs         # static Meter + ActivitySource ("DcsvIo.D2.Auth.Outbound") (Q22)
 │   └── AuthOutboundServiceCollectionExtensions.cs   # services.AddD2AuthOutbound(opts)
 │
 └── (no keyring lib — the keyring consumer runtime is service-owned, not a shared lib; see the
@@ -793,7 +793,7 @@ public/packages/dotnet/
 **Placement — keyring consumer runtime (service-owned, not a shared lib).** The keyring consumer
 machinery (`IKeyringClient` + `GrpcKeyringClient`, `KeyringBackedPayloadCrypto` (the Q9 hot-swap
 wrapper), `IRotationEventChannel` / `RabbitMqRotationEventChannel` (Q3), `KeyringRefreshSubscriber`,
-`AddD2EncryptionForViaKeyring`) lives in the KC client package `D2.Edge.KeyCustodian.Client`
+`AddD2EncryptionForViaKeyring`) lives in the KC client package `DcsvIo.D2.Private.Edge.KeyCustodian.Client`
 (`private/services/edge/key-custodian/client/`). The in-process source (`InProcessKeyringClient` +
 `AddD2EncryptionFromKeyCustodian`) lives in the KC app
 (`private/services/edge/key-custodian/app/Application/`), because it composes the leaf
@@ -813,7 +813,7 @@ session-liveness client components too: service-owned client packages, not share
   `caching-abstractions`, `caching-tiered`, `result`, `i18n-abstractions`,
   `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.IdentityModel.Tokens`
 - keyring consumer runtime → not one of these csprojs; it lives in the KC client package
-  `D2.Edge.KeyCustodian.Client`, which references contracts + shared libs only (`encryption`,
+  `DcsvIo.D2.Private.Edge.KeyCustodian.Client`, which references contracts + shared libs only (`encryption`,
   `messaging-abstractions`, `handler`, `auth-events`, `result`); its gRPC channel to Edge is
   host-composed (the host supplies the keyring client stub over the mTLS channel per ADR-0023)
 
@@ -822,7 +822,7 @@ session-liveness client components too: service-owned client packages, not share
 - **Pure inbound-only service** (rare; receives requests, never calls anything): `auth` only.
 - **Standard backend** (receives + calls): `auth` + `auth-outbound`.
 - **Backend that publishes/consumes encrypted RMQ messages** (most): `auth` + `auth-outbound` +
-  the KC client package `D2.Edge.KeyCustodian.Client` (keyring consumer runtime).
+  the KC client package `DcsvIo.D2.Private.Edge.KeyCustodian.Client` (keyring consumer runtime).
 - **Edge** (Phase 3, the issuer side): all three plus its own issuer-side code that ships in Edge,
   not here.
 
@@ -1081,11 +1081,11 @@ public interface IServiceIdentityClient
 <client_id:client_secret>`. Edge does the actual issuance — this lib just sends the request and
   caches the response.
 - HTTP client registered via `IHttpClientFactory` named `"d2-auth-service-identity"` with
-  `D2.Shared.Resilience` `CircuitBreaker` + `RetryPolicy` attached as message handlers (Q20).
+  `DcsvIo.D2.Resilience` `CircuitBreaker` + `RetryPolicy` attached as message handlers (Q20).
 - TTL: **5 min** (Q11 — service-identity tokens are short-lived; rotation cadence and blast
   radius). Refreshed by `IHostedService` ~60s before expiry.
 - In-memory cache (no `ILocalCache` needed — single-value-per-process; atomic reference swap).
-- `Singleflight` (already in `D2.Shared.Resilience`) on the refresh path to deduplicate concurrent
+- `Singleflight` (already in `DcsvIo.D2.Resilience`) on the refresh path to deduplicate concurrent
   requests (Q20).
 - On Edge unreachable at refresh time: log warning, keep serving the still-valid existing token.
   Hard fail only when token has actually expired and can't be refreshed (Q18 confirms this is
@@ -1158,7 +1158,7 @@ public interface ITokenExchangeClient
   JWT; requested token type is `jwt`; audience is the downstream service (one of the codegen'd
   `Audiences.*` constants per Q19). Edge mints, this lib caches.
 - HTTP client registered via `IHttpClientFactory` named `"d2-auth-token-exchange"` with
-  `D2.Shared.Resilience` `CircuitBreaker` + `RetryPolicy` attached (Q20).
+  `DcsvIo.D2.Resilience` `CircuitBreaker` + `RetryPolicy` attached (Q20).
 - Cache: shared `ILocalCache` singleton (Q17), key prefix `tokenexchange:`, keyed by
   `(sessionId, target_audience, scope_set)` (Q16 — sessionId comes from inbound JWT's
   `d2_session_id` claim; not subject-token-hash, so session-revoked backplane events can
@@ -1221,7 +1221,7 @@ better than silent degradation):
 
 3. `ISessionLivenessTracker` initializes (no-op at startup — cache populates lazily on first
    request per session).
-4. `EncryptionStartupCheck` runs (validates keyring round-trip per `D2.Shared.Encryption`).
+4. `EncryptionStartupCheck` runs (validates keyring round-trip per `DcsvIo.D2.Encryption`).
 5. `JwtAuthMiddleware` / `JwtAuthInterceptor` ready to accept requests.
 
 Backplane subscriptions (key-rotated, session-revoked) start as soon as their respective components
@@ -1437,7 +1437,7 @@ token never rescues a bad leaf (check 0 rejects at the channel). Both factors ar
 > no-user BFF fetch is the same mTLS Scenario-4 case as any other workload.
 
 **Build-state**: the forwarded-token `CallCredentials` attach + mTLS leaf-presentation machinery are
-**built** in `D2.Shared.Auth.Outbound` (proven in-memory / loopback, no live host); the build-time
+**built** in `DcsvIo.D2.Auth.Outbound` (proven in-memory / loopback, no live host); the build-time
 caller-scopes ⊇ callee-scopes check is **designed, not built** — a code follow-up of the pivot.
 Operational-subset propagation on .NET → .NET sync gRPC hops — including the propagated service
 call-path — is **built**: .NET already rebuilds the *identity* half from the JWT (correct today), and
@@ -1452,7 +1452,7 @@ tags each arrow's build-state precisely.
 ### Scenario C: AMQP message Edge → Notifications
 
 ```
-Edge publishes notification via D2.Shared.Messaging
+Edge publishes notification via DcsvIo.D2.Messaging
     ↓
 Messaging lib (Wave 6, not yet built):
    1. Get IPayloadCrypto for "notifications" domain (via KeyringClient → AddD2EncryptionFor)
@@ -1616,7 +1616,7 @@ Q, it's flagged.
 
 - **End-to-end rotation gate** ("no rotation tests = no merge" — phase-acceptance gate enforced
   inline). Requires Testcontainers RMQ + the actual KeyCustodian server-side state machine.
-  Belongs in `D2.Edge.Tests`, not here.
+  Belongs in `DcsvIo.D2.Private.Edge.Tests`, not here.
 - **Session revocation end-to-end** — requires Edge's session storage. Tested here only at the
   consumer-side invalidation level.
 - **OAuth `/oauth/token` endpoint behavior** — Edge's responsibility.
@@ -1676,7 +1676,7 @@ the resolved contradiction record (C1–C7) are in **§13**. The three coupled i
    [ADR-0025](../adrs/0025-request-context-establishment.md)); async hops use the encrypted
    `PropagatedContext` as the trust boundary — no mint, no validation (Scenario C). The forwarding
    wiring re-attaches the inbound token on outbound calls and appends to the propagated service
-   call-path — both **built** (the forwarded-JWT `CallCredentials` in `D2.Shared.Auth.Outbound`; the
+   call-path — both **built** (the forwarded-JWT `CallCredentials` in `DcsvIo.D2.Auth.Outbound`; the
    call-path via the outbound/inbound gRPC interceptor pair, ADR-0025); the failure mode to avoid —
    "exchange on every outbound hop" — is exactly the per-hop re-mint the pivot removes and does not
    occur. The build-time caller-scopes ⊇ callee-scopes check remains **designed, not built** (a code
@@ -1700,13 +1700,13 @@ the resolved contradiction record (C1–C7) are in **§13**. The three coupled i
 
 **Resulting structure**:
 
-- `D2.Shared.Auth.Abstractions` — vocabulary (already shipped — Wave 2; nothing new here)
-- `D2.Shared.Auth` — inbound: middleware + interceptor + JwksProvider + SessionLivenessTracker +
+- `DcsvIo.D2.Auth.Abstractions` — vocabulary (already shipped — Wave 2; nothing new here)
+- `DcsvIo.D2.Auth` — inbound: middleware + interceptor + JwksProvider + SessionLivenessTracker +
   fingerprint scoring + ProblemDetails converter
-- `D2.Shared.Auth.Outbound` — outbound: workload-certificate leaf source (mTLS) + forwarded-token
+- `DcsvIo.D2.Auth.Outbound` — outbound: workload-certificate leaf source (mTLS) + forwarded-token
   call-credentials + TokenExchangeClient (the RFC 8693 exception paths)
 - Keyring consumer runtime — KeyringClient + KeyringBackedPayloadCrypto wrapper (depends on
-  Encryption + Messaging); service-owned in the KC client package `D2.Edge.KeyCustodian.Client`,
+  Encryption + Messaging); service-owned in the KC client package `DcsvIo.D2.Private.Edge.KeyCustodian.Client`,
   not a shared auth lib
 
 ### Q2 — Bootstrap auth → **(a) `client_id` + `client_secret` env vars**
@@ -1720,7 +1720,7 @@ without rewriting; this is rung 2 of the maturity ladder per V2.md §5.4.
 mounted via Docker secret in production, env var in dev. Rotation requires service restart on
 this rung.
 
-### Q3 — Rotation event channel → **RabbitMQ via `D2.Shared.Messaging`**
+### Q3 — Rotation event channel → **RabbitMQ via `DcsvIo.D2.Messaging`**
 
 **Decided**: 2026-05-07.
 
@@ -1731,7 +1731,7 @@ this rung.
   missing it like a Redis pub/sub fire-and-forget.
 - Cluster-wide cache invalidation is what the Redis backplane is for; key rotation is a different
   concern (durability matters).
-- This means **`D2.Shared.Messaging` is now a prerequisite** for `D2.Shared.Auth`. Build order
+- This means **`DcsvIo.D2.Messaging` is now a prerequisite** for `DcsvIo.D2.Auth`. Build order
   flips: Messaging ships first as its own commit, Auth follows.
 
 **Implication for V2.md §5.4**: rotation events stay on RabbitMQ as currently specified
@@ -1860,7 +1860,7 @@ Wired via `services.AddD2EncryptionForViaKeyring("audit")` (sibling to Encryptio
 > issuer still unbuilt.
 
 **Original rationale (historical)**: distinct semantics, both needed. Two interfaces in
-`D2.Shared.Auth.Outbound`:
+`DcsvIo.D2.Auth.Outbound`:
 
 - `IServiceIdentityClient` — transport-level "I am the Files service" identity, no user in the
   loop. Used by KeyringClient + JwksProvider to authenticate their own gRPC / HTTP calls to Edge.
@@ -1951,8 +1951,8 @@ Compatibility points:
 - `instance` = `IRequestContext.RequestPath`.
 
 A `D2ProblemDetailsExtensions.ToProblemDetails(this D2Result result)` converter does the
-translation. Lives in `D2.Shared.Auth` initially; can be extracted to a shared
-`D2.Shared.Result.AspNetCore` lib later if anyone else needs it (likely Edge in Phase 3).
+translation. Lives in `DcsvIo.D2.Auth` initially; can be extracted to a shared
+`DcsvIo.D2.Result.AspNetCore` lib later if anyone else needs it (likely Edge in Phase 3).
 
 `Content-Type: application/problem+json` per RFC 7807.
 
@@ -1993,7 +1993,7 @@ translation. Lives in `D2.Shared.Auth` initially; can be extracted to a shared
   than a Redis update. Cookies stay as opaque session-id pointers.
 
 **Implication for this lib (SUPERSEDED by the (a) reversal — historical):** the original (b)
-intent was that a `SessionSnapshot` record ship in `D2.Shared.Auth` (under `Sessions/`) with
+intent was that a `SessionSnapshot` record ship in `DcsvIo.D2.Auth` (under `Sessions/`) with
 `ISessionLivenessTracker` exposing both `IsAliveAsync(sessionId)` and `GetSnapshotAsync(sessionId)`.
 **As shipped this did NOT happen** — the lib is sentinel-only: `ISessionLivenessTracker` exposes
 `IsAliveAsync` only, there is no `SessionSnapshot` record and no `GetSnapshotAsync`, and the concrete
@@ -2030,7 +2030,7 @@ delete each.
 
 **Rationale**:
 
-- `D2.Shared.Caching.Local.Default` registers `ILocalCache` as a process singleton. There is one
+- `DcsvIo.D2.Caching.Local.Default` registers `ILocalCache` as a process singleton. There is one
   global `MaxEntries` cap shared by every consumer (JWKS, session liveness, token-exchange,
   anything else). No per-item-type limits.
 - Using `ILocalCache` instead of a per-feature `ConcurrentDictionary` keeps cache infrastructure
@@ -2045,7 +2045,7 @@ delete each.
 
 **Implication for this lib**: `TokenExchangeCache` writes/reads through the injected
 `ILocalCache` with the `tokenexchange:` key prefix. The default-bump is a separate small change
-to `D2.Shared.Caching.Local.Default/LocalCacheOptions.cs` that lands alongside Auth.Outbound.
+to `DcsvIo.D2.Caching.Local.Default/LocalCacheOptions.cs` that lands alongside Auth.Outbound.
 
 ### Q18 — Edge-unreachable behavior for TokenExchange cache miss → **(a) fail-fast (`D2Result.ServiceUnavailable`)**
 
@@ -2084,7 +2084,7 @@ queue the operation for later.
   the same JSON spec and emits its own `audiences.ts` constants. One source of truth.
 - Same pattern as `auth-scopes-source-gen` / `context-source-gen` / `messaging-source-gen`. Tiny
   analyzer csproj (~150 lines), reads `contracts/auth-audiences/audiences.spec.json`, emits
-  `Audiences.g.cs` into `D2.Shared.Auth.Abstractions` next to `Scopes.g.cs`.
+  `Audiences.g.cs` into `DcsvIo.D2.Auth.Abstractions` next to `Scopes.g.cs`.
 
 **Implication for this lib**: new `public/packages/dotnet/auth-audiences-source-gen/` analyzer +
 new `contracts/auth-audiences/{schema.json,audiences.spec.json}` shipped as Step 0 of Wave 7
@@ -2092,7 +2092,7 @@ new `contracts/auth-audiences/{schema.json,audiences.spec.json}` shipped as Step
 TokenExchange `targetAudience` arguments consume `Audiences.Files` / `Audiences.Notifications`
 constants). Spec entries: `name + url + description` per audience.
 
-### Q20 — HTTP client setup → **(a) `IHttpClientFactory` named clients + `D2.Shared.Resilience` pipeline + `Singleflight`**
+### Q20 — HTTP client setup → **(a) `IHttpClientFactory` named clients + `DcsvIo.D2.Resilience` pipeline + `Singleflight`**
 
 **Decided**: 2026-05-09.
 
@@ -2101,10 +2101,10 @@ constants). Spec entries: `name + url + description` per audience.
 - `IHttpClientFactory` is the .NET-native pattern for managed `HttpClient` lifetimes — handles
   socket exhaustion, DNS refresh, per-client policy attachment. Rolling our own is unnecessary
   reinvention.
-- `D2.Shared.Resilience`'s `CircuitBreaker` + `RetryPolicy` already exist and are battle-tested
+- `DcsvIo.D2.Resilience`'s `CircuitBreaker` + `RetryPolicy` already exist and are battle-tested
   via the messaging stack. Standard pattern: register the policy as a named `HttpMessageHandler`
   - attach via `AddHttpMessageHandler<>()`.
-- `Singleflight` (also in `D2.Shared.Resilience`) wraps the cache-miss / refresh path so N
+- `Singleflight` (also in `DcsvIo.D2.Resilience`) wraps the cache-miss / refresh path so N
   concurrent callers waiting on the same token result in 1 outbound HTTP call, not N.
 
 **Implication for this lib**:
@@ -2138,12 +2138,12 @@ constants). Spec entries: `name + url + description` per audience.
   attaches the credential. Calls without `.AddD2ServiceIdentity()` (e.g. SeaweedFS) get no D²
   auth header.
 
-**Implication for this lib**: `ForwardedJwtCallCredentials` lives in `D2.Shared.Auth.Outbound`.
+**Implication for this lib**: `ForwardedJwtCallCredentials` lives in `DcsvIo.D2.Auth.Outbound`.
 The extension methods `AddD2ForwardedJwt()` + `AddD2WorkloadCertificate()` on `IHttpClientBuilder`
 (the gRPC client builder from `Grpc.Net.ClientFactory`) attach the forwarded-token credentials and
 the mTLS leaf to the channel under construction. Per-channel; explicit; safe-by-default.
 
-### Q22 — Telemetry source naming → **(b) separate `D2.Shared.Auth.Outbound` `ActivitySource` + `Meter`**
+### Q22 — Telemetry source naming → **(b) separate `DcsvIo.D2.Auth.Outbound` `ActivitySource` + `Meter`**
 
 **Decided**: 2026-05-09.
 
@@ -2153,13 +2153,13 @@ the mTLS leaf to the channel under construction. Per-channel; explicit; safe-by-
   with different SLOs, dashboards, and alert thresholds. Token-acquire latency matters when Edge
   has issues; token-validate latency matters when JWKS cache misses pile up. Sharing one source
   forces dashboards to filter on tags instead of source-name, which is a worse default.
-- Mirrors how `D2.Shared.Messaging.RabbitMq` ships its own `MessagingTelemetry` rather than
+- Mirrors how `DcsvIo.D2.Messaging.RabbitMq` ships its own `MessagingTelemetry` rather than
   riding on a generic shared source.
 
-**Implication for this lib**: `D2.Shared.Auth.Outbound.OutboundTelemetry` static class hosts an
-`ActivitySource("D2.Shared.Auth.Outbound")` + `Meter("D2.Shared.Auth.Outbound")`. Inbound's
-`D2.Shared.Auth.AuthTelemetry` (created in Step 2) hosts the parallel pair under
-`"D2.Shared.Auth"`.
+**Implication for this lib**: `DcsvIo.D2.Auth.Outbound.OutboundTelemetry` static class hosts an
+`ActivitySource("DcsvIo.D2.Auth.Outbound")` + `Meter("DcsvIo.D2.Auth.Outbound")`. Inbound's
+`DcsvIo.D2.Auth.AuthTelemetry` (created in Step 2) hosts the parallel pair under
+`"DcsvIo.D2.Auth"`.
 
 ### Q23 — Edge anon-visitor authentication pattern → **(a) Pattern A: mint short-lived anon JWT**
 
@@ -2185,7 +2185,7 @@ the mTLS leaf to the channel under construction. Per-channel; explicit; safe-by-
 - New top-level claims: `d2_kind` (carrying anon/authed discriminator — distinct from the existing
   inside-`act` `d2_kind`), `d2_whois_id`, `d2_fingerprint_score`. Requires `JwtClaimTypes`
   vocabulary additions.
-- New `ActorKind.Anonymous` enum variant in `D2.Shared.Auth.Abstractions` (alongside `Service`
+- New `ActorKind.Anonymous` enum variant in `DcsvIo.D2.Auth.Abstractions` (alongside `Service`
   and `Impersonation`).
 - Algorithm gap (Phase 3 followup): `EffectiveScopes(ctx) = ctx.Scopes ∪ Scopes.AllAnonymousScopes`
   for the scope check in `JwtAuthMiddleware` + `JwtAuthInterceptor`. `Scopes.AllAnonymousScopes`
@@ -2205,7 +2205,7 @@ the mTLS leaf to the channel under construction. Per-channel; explicit; safe-by-
 [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) (token bucket, AND of ceilings). Session id
 is visit glue and risk baseline — not sole Restricted key.
 
-**Implication for `D2.Shared.Auth.Http` / `D2.Shared.Auth.Grpc` README footgun sections**: the
+**Implication for `DcsvIo.D2.Auth.Http` / `DcsvIo.D2.Auth.Grpc` README footgun sections**: the
 documented anonymous-method ctor-injection failure becomes RARELY-RELEVANT in production once
 Pattern A ships at Edge — every normal request carries a JWT. Update README framing when
 Phase 3 lands.
@@ -2250,7 +2250,7 @@ signed-claims-derived plaintext JSON, and under the forward-unchanged model it c
 **operational subset**, never the bearer identity (identity comes from the forwarded JWT). There is
 **no type named `ContextEnvelope`** anywhere in `server/` (the only hit is a *negative* assertion in
 `MutableEmitterTests.cs:88-91` proving the emitter must NOT emit one). Encryption applies to the
-**AMQP** path only (the `PropagatedContext` rides inside `D2.Shared.Encryption`'s frame as message
+**AMQP** path only (the `PropagatedContext` rides inside `DcsvIo.D2.Encryption`'s frame as message
 payload — §8 Scenario C), not to sync gRPC, which relies on transport TLS / mTLS plus the forwarded
 JWT.
 
@@ -2312,13 +2312,13 @@ that mints the inbound token).
 
 | Step | Token | aud + claims | Issued by / how | Mint callback? | Receiver validates | Build-state |
 | --- | --- | --- | --- | --- | --- | --- |
-| workload auth on the channel | mTLS client certificate | mTLS peer = the calling workload | KeyCustodian-issued per-workload leaf (ADR-0023) | per-RPC cert presentation (~0 I/O) | receiver verifies the mTLS peer cert against the internal CA → workload identity (no cross-service-bearer `AUDIENCE_MISMATCH` footgun — old C2 — arises; workload identity is the channel, not a second JWT) | **⚠ designed, NOT built** — the cross-process mTLS issuance + Edge host wiring is a new KeyCustodian capability (ADR-0023). The in-process leaf-presentation path (cache + refresh-ahead + per-channel opt-in) is built in `D2.Shared.Auth.Outbound`; the cross-process gRPC issuance + first-leaf bootstrap is future work. |
+| workload auth on the channel | mTLS client certificate | mTLS peer = the calling workload | KeyCustodian-issued per-workload leaf (ADR-0023) | per-RPC cert presentation (~0 I/O) | receiver verifies the mTLS peer cert against the internal CA → workload identity (no cross-service-bearer `AUDIENCE_MISMATCH` footgun — old C2 — arises; workload identity is the channel, not a second JWT) | **⚠ designed, NOT built** — the cross-process mTLS issuance + Edge host wiring is a new KeyCustodian capability (ADR-0023). The in-process leaf-presentation path (cache + refresh-ahead + per-channel opt-in) is built in `DcsvIo.D2.Auth.Outbound`; the cross-process gRPC issuance + first-leaf bootstrap is future work. |
 
 ### Scenario 5 — async AMQP hop (Edge → Notifications) [encrypted PropagatedContext is the trust boundary; NO JWT, §8 Scenario C]
 
 | Step | Token / credential | aud + claims | Issued by / how | Mint callback? | Receiver validates | Build-state |
 | --- | --- | --- | --- | --- | --- | --- |
-| Edge publishes | **NO JWT.** `PropagatedContext` — the **operational subset only** — serialized + **encrypted** into the message frame | n/a (no `aud` — not a JWT); carries the `propagate:true` fields (request id, fingerprints, risk score, locale, `WhoIsHashId`, etc.) — **no `UserId`/`OrgId`/`Scopes`/`ActorChain`/`SessionId`** (ADR-0007 §Decision-2: the AMQP frame carries no bearer identity) | `RabbitMqMessageBus` serializes `PropagatedContext` (`messaging/rabbitmq/Publishing/RabbitMqMessageBus.cs`), `D2.Shared.Encryption` encrypts via the `notifications`-domain keyring | **no mint, no validation** — the *encryption* is the trust act | — (publish side) | **✅ built** on the messaging+encryption primitives (`PropagatedContext` is referenced by `RabbitMqMessageBus.cs` + `SubscriberChannel.cs`). The **keyring source** (KeyringClient in the KC client package `D2.Edge.KeyCustodian.Client`) is **✅ built** — a domain's `IPayloadCrypto` is backed by the KeyCustodian keyring via `AddD2EncryptionForViaKeyring` (cross-process) / `AddD2EncryptionFromKeyCustodian` (in-process); the live Edge-host wiring is the remaining piece. |
+| Edge publishes | **NO JWT.** `PropagatedContext` — the **operational subset only** — serialized + **encrypted** into the message frame | n/a (no `aud` — not a JWT); carries the `propagate:true` fields (request id, fingerprints, risk score, locale, `WhoIsHashId`, etc.) — **no `UserId`/`OrgId`/`Scopes`/`ActorChain`/`SessionId`** (ADR-0007 §Decision-2: the AMQP frame carries no bearer identity) | `RabbitMqMessageBus` serializes `PropagatedContext` (`messaging/rabbitmq/Publishing/RabbitMqMessageBus.cs`), `DcsvIo.D2.Encryption` encrypts via the `notifications`-domain keyring | **no mint, no validation** — the *encryption* is the trust act | — (publish side) | **✅ built** on the messaging+encryption primitives (`PropagatedContext` is referenced by `RabbitMqMessageBus.cs` + `SubscriberChannel.cs`). The **keyring source** (KeyringClient in the KC client package `DcsvIo.D2.Private.Edge.KeyCustodian.Client`) is **✅ built** — a domain's `IPayloadCrypto` is backed by the KeyCustodian keyring via `AddD2EncryptionForViaKeyring` (cross-process) / `AddD2EncryptionFromKeyCustodian` (in-process); the live Edge-host wiring is the remaining piece. |
 | Notifications consumes | decrypted `PropagatedContext` (operational subset) | same | `SubscriberChannel` decrypts frame (active/retiring kid) → applies the operational subset to its context; does **NOT** reconstruct bearer identity (no JWT, no identity fields in `PropagatedContext` — ADR-0007) | none | **NO JWT validation** — "encryption boundary = trust boundary" (§8 Scenario C). Decrypt-clean-with-production-kid ⇒ the operational subset is trusted. | **✅ built** (decrypt + operational-subset apply on the messaging path); keyring auto-wiring ✅ built (the KC client package's consumer runtime). |
 
 ### Contradictions found — RESOLVED record
@@ -2344,7 +2344,7 @@ that mints the inbound token).
 (`JwtAuthMiddleware`, `JwtAuthInterceptor`, `JwtValidator`, `TieredCacheSessionLivenessTracker`) is
 **built and strict**. The **forward-unchanged service-to-service model** — re-attaching the once-minted
 transaction-token, the propagated service call-path, and **mTLS** workload identity presentation — is
-**built** (`D2.Shared.Auth.Outbound`'s forwarded-transaction-token `CallCredentials` + workload-certificate
+**built** (`DcsvIo.D2.Auth.Outbound`'s forwarded-transaction-token `CallCredentials` + workload-certificate
 leaf-presentation path; the call-path's outbound/inbound gRPC interceptor pair —
 [ADR-0025](../adrs/0025-request-context-establishment.md)), proven over an in-memory two-process
 `TestServer`, not yet exercised by a live multi-process host. The **build-time caller-scopes ⊇
@@ -2400,30 +2400,30 @@ From the v1 auth survey (BetterAuth-based; located in `/old/v1/D2-WORX/`):
 
 ## §15. Build order
 
-**Prerequisite — `D2.Shared.Messaging` ships first as its own commit / squash merge to nova**.
+**Prerequisite — `DcsvIo.D2.Messaging` ships first as its own commit / squash merge to nova**.
 Q3's RMQ rotation event subscriber requires the Messaging lib. Per-user direction, we build
 Messaging fully (with its own `n/messaging` branch, design doc, tests, and merge) before starting
 on Auth.
 
-### Wave 6 — `D2.Shared.Messaging` (separate commit)
+### Wave 6 — `DcsvIo.D2.Messaging` (separate commit)
 
 Out of scope for THIS doc — gets its own working doc when it starts. Suffice to say its surface
 area must include enough for Auth to subscribe to a fanout exchange (or topic-routed durable
 queue) for `d2.security.key-rotated` events with a typed payload, and to publish events similarly.
 
-### Wave 7 — `D2.Shared.Auth` (this doc, four csprojs per Q1 + Q19)
+### Wave 7 — `DcsvIo.D2.Auth` (this doc, four csprojs per Q1 + Q19)
 
 Each csproj lands as its own buildable unit; tests pass at every checkpoint; zero warnings
 (`dotnet build` + `jb inspectcode`).
 
 #### ✅ Step 0 — Pre-reqs that land alongside Outbound (Q17 + Q19) — COMPLETE
 
-1. ✅ New analyzer csproj `auth-audiences-source-gen/D2.Shared.Auth.Audiences.SourceGen.csproj`
+1. ✅ New analyzer csproj `auth-audiences-source-gen/DcsvIo.D2.Auth.Audiences.SourceGen.csproj`
    (netstandard2.0, IsRoslynComponent) per Q19 — same shape as `auth-scopes-source-gen`.
    6 diagnostic IDs (`D2AUD001`–`D2AUD006`).
 2. ✅ New spec `contracts/auth-audiences/{schema.json, audiences.spec.json}` with the
    initial 4 audiences (`Files`, `Notifications`, `Courier`, `Audit`).
-3. ✅ Wired `auth-abstractions/D2.Shared.Auth.Abstractions.csproj` to reference the new
+3. ✅ Wired `auth-abstractions/DcsvIo.D2.Auth.Abstractions.csproj` to reference the new
    analyzer + `<AdditionalFiles>` for the spec. `Audiences.g.cs` emits to `obj/Generated/`.
 4. ✅ Bumped `LocalCacheOptions.MaxEntries` default `10_000` → `100_000` per Q17. Both
    `caching-abstractions/README.md` and `caching-local-default/README.md` updated.
@@ -2432,7 +2432,7 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
 6. ✅ Verified: `dotnet build` 0 warnings 0 errors; `jb inspectcode` clean;
    1884 / 1884 unit tests pass (was 1799 before Step 0 — 85 new tests added).
 
-#### Step 1 — `D2.Shared.Auth.Outbound` (no Messaging dep, simplest) — IMPLEMENTED (tests pending)
+#### Step 1 — `DcsvIo.D2.Auth.Outbound` (no Messaging dep, simplest) — IMPLEMENTED (tests pending)
 
 > **Historical build-log — the service-identity client (items 2 + 4 below) was subsequently
 > RETIRED.** Internal workload identity moved to mTLS (ADR-0023): `IServiceIdentityClient`,
@@ -2457,12 +2457,12 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
    _(Retired — replaced by `ForwardedJwtCallCredentials` + `.AddD2ForwardedJwt()` /
    `.AddD2WorkloadCertificate()`, ADR-0022 / ADR-0023.)_
 5. ✅ `services.AddD2AuthOutbound(opts)` composition root + `OutboundTelemetry` static
-   (Q22 — separate `D2.Shared.Auth.Outbound` ActivitySource + Meter) + `OutboundLog` +
+   (Q22 — separate `DcsvIo.D2.Auth.Outbound` ActivitySource + Meter) + `OutboundLog` +
    README. **Tests pending — Step 1.6.**
 
 ⏸ Step 1.6 — unit + integration tests deferred for review checkpoint.
 
-#### Step 2 — `D2.Shared.Auth` (the inbound runtime)
+#### Step 2 — `DcsvIo.D2.Auth` (the inbound runtime)
 
 1. csproj skeleton + DI extension stub
 2. `IJwksProvider` + `HttpJwksProvider` (using
@@ -2477,11 +2477,11 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
    events are the only thing that goes via RMQ per Q3) + tests
 8. `services.AddD2Auth(opts)` composition root
 
-#### Step 3 — Keyring consumer runtime (KC client package `D2.Edge.KeyCustodian.Client`; depends on Encryption + Messaging)
+#### Step 3 — Keyring consumer runtime (KC client package `DcsvIo.D2.Private.Edge.KeyCustodian.Client`; depends on Encryption + Messaging)
 
 1. csproj skeleton + DI extension stub
 2. `IKeyringClient` + `GrpcKeyringClient` + tests against in-memory gRPC fixture
-3. `IRotationEventChannel` + `RabbitMqRotationEventChannel` (uses `D2.Shared.Messaging` from
+3. `IRotationEventChannel` + `RabbitMqRotationEventChannel` (uses `DcsvIo.D2.Messaging` from
    Wave 6) + tests
 4. `KeyringBackedPayloadCrypto` + tests (round-trip encrypt/decrypt, mid-test rotation, in-flight
    message during overlap window)
@@ -2495,7 +2495,7 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
 1. README per csproj + parent README (`public/packages/dotnet/README.md`) updates: Mermaid dep graph
    - per-lib row in the per-lib table.
 2. `D2.slnx` + `Directory.Packages.props` updates for the new csprojs.
-3. `D2.Shared.Tests.csproj` adds `<ProjectReference>` to all four new libs (3 implementation
+3. `DcsvIo.D2.Tests.csproj` adds `<ProjectReference>` to all four new libs (3 implementation
    csprojs + the audiences source-gen — analyzers are referenced as regular project refs in tests
    so loader/emitter logic can be asserted directly).
 4. PATTERNS.md updates (auth section if needed).

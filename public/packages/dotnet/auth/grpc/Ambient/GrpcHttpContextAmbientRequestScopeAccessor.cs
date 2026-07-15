@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Ambient;
+namespace DcsvIo.D2.Auth.Grpc.Ambient;
 
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 using Microsoft.AspNetCore.Http;
 
 /// <summary>
@@ -40,11 +40,11 @@ using Microsoft.AspNetCore.Http;
 /// </para>
 /// <para>
 /// This is a TINY DUPLICATE of the HTTP sibling, not a shared type. The two
-/// transport-binding libs (<c>D2.Shared.Auth.Http</c> / <c>D2.Shared.Auth.Grpc</c>)
+/// transport-binding libs (<c>DcsvIo.D2.Auth.Http</c> / <c>DcsvIo.D2.Auth.Grpc</c>)
 /// are deliberate siblings with no inter-csproj dependency, so a single shared
 /// adapter type registered from both would require either a forbidden inter-lib edge
 /// or a new shared lib for one trivial property — a duplicated three-line type
-/// implementing the SAME <c>D2.Shared.Auth.Abstractions</c> port is cleaner than
+/// implementing the SAME <c>DcsvIo.D2.Auth.Abstractions</c> port is cleaner than
 /// either. Both adapters are stateless singletons reading the same
 /// <see cref="IHttpContextAccessor"/> seam, so a dual-transport host (HTTP endpoints
 /// + gRPC services on one Kestrel host) sees identical behavior regardless of which

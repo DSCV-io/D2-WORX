@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
 using System.Collections.Concurrent;
-using D2.Shared.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Diagnostics;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

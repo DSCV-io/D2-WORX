@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth;
+namespace DcsvIo.D2.Tests.Unit.Auth;
 
 using System;
 using System.IO;

@@ -14,7 +14,7 @@ import { z } from "zod";
  * IANA timezone identifier (e.g. `America/New_York`, `Asia/Tokyo`,
  * `Europe/London`). Closed set — the Zod schema rejects unknown
  * identifiers (strict deserialization). Mirrors .NET
- * `D2.Shared.Geo.Abstractions.TimezoneCode` wrapper struct /
+ * `DcsvIo.D2.Geo.Abstractions.TimezoneCode` wrapper struct /
  * JsonConverter byte-for-byte over the wire.
  */
 export type TimezoneCode = string & { readonly __brand: "TimezoneCode" };

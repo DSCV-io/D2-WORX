@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Audit.Api
+# DcsvIo.D2.Private.Audit.Api
 
 **Who / what:** Operators and host integrators of the Audit **API composition root** (standalone multiproc stub process) — binds, Map, and dual-process smoke pointers. Not the product append-only store.
 

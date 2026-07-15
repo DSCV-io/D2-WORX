@@ -29,7 +29,7 @@ describe("RedisCacheTelemetry", () => {
   });
 
   it("meter_name_isDotNetTwin", () => {
-    expect(REDIS_CACHE_METER_NAME).toBe("D2.Shared.Caching.Distributed.Redis");
+    expect(REDIS_CACHE_METER_NAME).toBe("DcsvIo.D2.Caching.Distributed.Redis");
   });
 
   it("six_instruments_registerWithExpectedTuples", async () => {

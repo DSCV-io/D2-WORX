@@ -10,10 +10,10 @@
 
 /**
  * Spec-derived gRPC trailer-key constants. Mirrors .NET
- * D2.Shared.Auth.Grpc.Status.D2GrpcTrailers (same wire values).
+ * DcsvIo.D2.Auth.Grpc.Status.D2GrpcTrailers (same wire values).
  *
  * Cross-language parity: the SAME spec drives the .NET-side catalog
- * via D2.Shared.Grpc.Trailers.SourceGen. Both sides emit identical
+ * via DcsvIo.D2.Grpc.Trailers.SourceGen. Both sides emit identical
  * trailer keys byte-for-byte; cross-language wire drift is impossible.
  */
 export const D2GrpcTrailers = {

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Sessions;
+namespace DcsvIo.D2.Auth.Sessions;
 
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.Caching;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.Caching;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -23,7 +23,7 @@ using Microsoft.Extensions.Options;
 /// <remarks>
 /// <para>
 /// <strong>NOT required for correctness</strong> —
-/// <see cref="D2.Shared.Caching.Tiered.DefaultTieredCache"/> auto-subscribes
+/// <see cref="DcsvIo.D2.Caching.Tiered.DefaultTieredCache"/> auto-subscribes
 /// to the same backplane in its own constructor and drops
 /// matching L1 entries cluster-wide. This subscriber sits alongside,
 /// observing the same events purely for the ops dashboards' "revocations

@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Auth.Events
+# DcsvIo.D2.Auth.Events
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -22,7 +22,7 @@ This is a pure-vocabulary leaf: no impl logic, no DI extension, no `Add*` regist
 
 ## Why a standalone leaf lib (not folded into `auth/abstractions`)
 
-Each event type carries an `[MqPub(MqMessages.*)]` attribute. The publisher's `MessageWireResolver` reads that attribute off the **runtime CLR type** via reflection and fails default-deny if it is absent — so the attribute MUST sit on the exact single `sealed record` that gets instantiated and published. That forces a reference to `D2.Shared.Messaging.Abstractions`.
+Each event type carries an `[MqPub(MqMessages.*)]` attribute. The publisher's `MessageWireResolver` reads that attribute off the **runtime CLR type** via reflection and fails default-deny if it is absent — so the attribute MUST sit on the exact single `sealed record` that gets instantiated and published. That forces a reference to `DcsvIo.D2.Messaging.Abstractions`.
 
 [`auth/abstractions`](../abstractions/README.md) **cannot** take that reference. There is a real dependency chain:
 
@@ -30,13 +30,13 @@ Each event type carries an `[MqPub(MqMessages.*)]` attribute. The publisher's `M
 Messaging.Abstractions → Handler → Context.Abstractions → AuthContext.Abstractions → Auth.Abstractions
 ```
 
-If `auth/abstractions` referenced `Messaging.Abstractions`, that chain would close into a cycle. This leaf is the cycle-break: nothing in the messaging chain references it, so it can depend on `Messaging.Abstractions` freely. The event's wire-contract namespace stays `D2.Shared.Auth.Events` (matching the `messageType` declared in `contracts/mq-messages/mq-messages.spec.json`).
+If `auth/abstractions` referenced `Messaging.Abstractions`, that chain would close into a cycle. This leaf is the cycle-break: nothing in the messaging chain references it, so it can depend on `Messaging.Abstractions` freely. The event's wire-contract namespace stays `DcsvIo.D2.Auth.Events` (matching the `messageType` declared in `contracts/mq-messages/mq-messages.spec.json`).
 
 ---
 
 ## Dependencies
 
-- `D2.Shared.Messaging.Abstractions` — the `[MqPub(MqMessages.X)]` attribute + the generated `MqMessages` constants each event references.
+- `DcsvIo.D2.Messaging.Abstractions` — the `[MqPub(MqMessages.X)]` attribute + the generated `MqMessages` constants each event references.
 
 No other runtime deps. The `MqMessages.AuthKeyRotated` constant + the `d2.security.key-rotated` exchange / `plaintext` encryption decision are declared once in `contracts/mq-messages/mq-messages.spec.json` and codegen-emitted into `MqMessagesRegistry`.
 

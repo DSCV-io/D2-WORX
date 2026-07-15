@@ -10,8 +10,8 @@
 
 /**
  * Spec-derived DLQ failure-metadata wire-shape catalogs.
- * Mirrors .NET D2.Shared.Messaging.DlqFailureMetadataFields and
- * D2.Shared.Messaging.RabbitMq.Subscribing.DlqFailureCauses (same wire values).
+ * Mirrors .NET DcsvIo.D2.Messaging.DlqFailureMetadataFields and
+ * DcsvIo.D2.Messaging.RabbitMq.Subscribing.DlqFailureCauses (same wire values).
  */
 
 /**

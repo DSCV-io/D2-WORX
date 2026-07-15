@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.I18n.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.I18n.SourceGen;
 
 using System.Collections.Generic;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.I18n.SourceGen;
+using DcsvIo.D2.I18n.SourceGen;
 using Xunit;
 
 public sealed class TKEmitterTests
@@ -37,35 +37,35 @@ public sealed class TKEmitterTests
         var result = TKEmitter.Emit(single_key_json, sr_noOtherLocales);
 
         result.Diagnostics.Should().BeEmpty();
-        result.GeneratedSource.Should().Contain("namespace D2.Shared.I18n;");
+        result.GeneratedSource.Should().Contain("namespace DcsvIo.D2.I18n;");
         result.GeneratedSource.Should().Contain("public static partial class TK");
         result.GeneratedSource.Should().Contain("public static partial class Common");
         result.GeneratedSource.Should().Contain("public static partial class Errors");
         result.GeneratedSource.Should()
-            .Contain("public static readonly global::D2.Shared.I18n.TKMessage NOT_FOUND")
+            .Contain("public static readonly global::DcsvIo.D2.I18n.TKMessage NOT_FOUND")
             .And.Contain(@"= new(""common_errors_NOT_FOUND"")");
     }
 
     [Fact]
     public void Emit_ProductTKNamespaceAndClass_PinsPrivateDualTypeFqns()
     {
-        // Dual-type pin: private host emits ProductTK under D2.Private.I18n —
-        // NEVER same-FQN D2.Shared.I18n.TK (would cause CS0433).
+        // Dual-type pin: private host emits ProductTK under DcsvIo.D2.Private.I18n —
+        // NEVER same-FQN DcsvIo.D2.I18n.TK (would cause CS0433).
         const string single_key_json = @"{""keycustodian_errors_KID_INVALID"": ""Kid invalid.""}";
 
         var result = TKEmitter.Emit(
             single_key_json,
             sr_noOtherLocales,
-            rootNamespace: "D2.Private.I18n",
+            rootNamespace: "DcsvIo.D2.Private.I18n",
             className: "ProductTK");
 
         result.Diagnostics.Should().BeEmpty();
-        result.GeneratedSource.Should().Contain("namespace D2.Private.I18n;");
+        result.GeneratedSource.Should().Contain("namespace DcsvIo.D2.Private.I18n;");
         result.GeneratedSource.Should().Contain("public static partial class ProductTK");
-        result.GeneratedSource.Should().NotContain("namespace D2.Shared.I18n;");
+        result.GeneratedSource.Should().NotContain("namespace DcsvIo.D2.I18n;");
         result.GeneratedSource.Should().NotContain("public static partial class TK");
         result.GeneratedSource.Should()
-            .Contain("public static readonly global::D2.Shared.I18n.TKMessage KID_INVALID");
+            .Contain("public static readonly global::DcsvIo.D2.I18n.TKMessage KID_INVALID");
     }
 
     [Fact]
@@ -104,10 +104,10 @@ public sealed class TKEmitterTests
 
         result.Diagnostics.Should().BeEmpty();
         result.GeneratedSource.Should()
-            .Contain("public static readonly global::D2.Shared.I18n.TKMessage NOT_FOUND")
-            .And.Contain("public static readonly global::D2.Shared.I18n.TKMessage FORBIDDEN")
-            .And.Contain("public static readonly global::D2.Shared.I18n.TKMessage EMAIL_INVALID")
-            .And.Contain("public static readonly global::D2.Shared.I18n.TKMessage INVALID_ROLE");
+            .Contain("public static readonly global::DcsvIo.D2.I18n.TKMessage NOT_FOUND")
+            .And.Contain("public static readonly global::DcsvIo.D2.I18n.TKMessage FORBIDDEN")
+            .And.Contain("public static readonly global::DcsvIo.D2.I18n.TKMessage EMAIL_INVALID")
+            .And.Contain("public static readonly global::DcsvIo.D2.I18n.TKMessage INVALID_ROLE");
 
         // Both Common and Auth domain blocks present.
         result.GeneratedSource.Should().Contain("public static partial class Common");
@@ -224,7 +224,7 @@ public sealed class TKEmitterTests
         // Only one constant emitted (substring count, no regex needed).
         var occurrences = CountSubstring(
             result.GeneratedSource,
-            "static readonly global::D2.Shared.I18n.TKMessage UNKNOWN");
+            "static readonly global::DcsvIo.D2.I18n.TKMessage UNKNOWN");
         occurrences.Should().Be(1);
     }
 

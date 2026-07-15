@@ -115,7 +115,7 @@ export function emitOtelMessagingTags(spec: OtelMessagingTagsSpec): EmitResult {
     " * Spec-derived OTel messaging activity-tag attribute-name constants.",
   );
   sb.appendLine(
-    " * Mirrors .NET D2.Shared.Messaging.RabbitMq.MessagingActivityTags",
+    " * Mirrors .NET DcsvIo.D2.Messaging.RabbitMq.MessagingActivityTags",
   );
   sb.appendLine(" * (same wire values).");
   sb.appendLine(" *");
@@ -123,7 +123,7 @@ export function emitOtelMessagingTags(spec: OtelMessagingTagsSpec): EmitResult {
     " * Cross-language parity: the SAME spec drives the .NET-side catalog",
   );
   sb.appendLine(
-    " * via D2.Shared.OtelMessagingTags.SourceGen. Both sides emit identical",
+    " * via DcsvIo.D2.OtelMessagingTags.SourceGen. Both sides emit identical",
   );
   sb.appendLine(
     " * attribute names byte-for-byte; cross-language wire drift is impossible.",

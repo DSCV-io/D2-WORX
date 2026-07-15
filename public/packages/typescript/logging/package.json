@@ -1,5 +1,5 @@
 {
-  "name": "@d2/logging",
+  "name": "@dcsv-io/d2-logging",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -21,8 +21,8 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/result": "workspace:*",
-    "@d2/utilities": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*",
     "pino": "10.3.1"
   },
   "devDependencies": {

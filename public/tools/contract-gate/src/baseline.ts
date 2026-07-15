@@ -9,7 +9,7 @@
 // without triggering cli.ts's module-level side effects (argv capture,
 // git calls, process.exit).
 
-import { truthy } from "@d2/utilities";
+import { truthy } from "@dcsv-io/d2-utilities";
 
 // ---------------------------------------------------------------------------
 // resolveBaseline

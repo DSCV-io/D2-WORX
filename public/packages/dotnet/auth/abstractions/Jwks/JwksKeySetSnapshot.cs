@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions.Jwks;
+namespace DcsvIo.D2.Auth.Abstractions.Jwks;
 
 using Microsoft.IdentityModel.Tokens;
 

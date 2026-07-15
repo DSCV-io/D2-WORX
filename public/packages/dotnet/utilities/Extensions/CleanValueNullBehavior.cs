@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Utilities.Extensions;
+namespace DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Behavior options controlling how <see cref="EnumerableExtensions"/> handles

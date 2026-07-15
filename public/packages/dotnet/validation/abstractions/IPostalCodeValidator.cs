@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Validation.Abstractions;
+namespace DcsvIo.D2.Validation.Abstractions;
 
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Result;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Validates a postal code against the given country's format and returns a
@@ -15,7 +15,7 @@ using D2.Shared.Result;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This interface (<c>D2.Shared.Validation.Abstractions.IPostalCodeValidator</c>) is the
+/// This interface (<c>DcsvIo.D2.Validation.Abstractions.IPostalCodeValidator</c>) is the
 /// <em>country-aware</em> member of the validator family — it accepts an explicit
 /// <see cref="CountryCode"/> to apply country-specific format rules and normalization.
 /// <b>Fail-closed contract:</b> a null or unrecognized country code causes validation to
@@ -23,7 +23,7 @@ using D2.Shared.Result;
 /// </para>
 /// <para>
 /// A deliberately distinct twin exists at
-/// <c>D2.Shared.Location.IPostalCodeValidator</c>: that interface is the
+/// <c>DcsvIo.D2.Location.IPostalCodeValidator</c>: that interface is the
 /// <em>country-blind</em> boundary validator used by value-object construction
 /// (global-range regex only, no country-specific rules). The two interfaces share
 /// a short name but live in separate namespaces by design. Consumers that require
@@ -45,7 +45,7 @@ public interface IPostalCodeValidator
     /// <returns>
     /// <c>Ok</c> wrapping the trimmed and uppercased postal code on success;
     /// <see cref="D2Result{TData}.ValidationFailed"/> with a per-field
-    /// <see cref="D2.Shared.Result.InputError"/> on null, empty, whitespace, or
+    /// <see cref="DcsvIo.D2.Result.InputError"/> on null, empty, whitespace, or
     /// format-invalid input.
     /// </returns>
     D2Result<string> Validate(string? postalCode, CountryCode? countryCode = null);

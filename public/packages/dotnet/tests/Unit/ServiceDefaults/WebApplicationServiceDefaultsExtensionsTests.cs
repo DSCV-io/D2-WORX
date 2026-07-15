@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.ServiceDefaults;
+namespace DcsvIo.D2.Tests.Unit.ServiceDefaults;
 
 using AwesomeAssertions;
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Xunit;

@@ -4,6 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Handler;
+namespace DcsvIo.D2.Tests.Unit.Handler;
 
 internal sealed record Measurement(string InstrumentName, object Value);

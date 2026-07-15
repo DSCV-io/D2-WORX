@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Mtls;
+namespace DcsvIo.D2.Tests.Unit.Mtls;
 
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using AwesomeAssertions;
-using D2.Shared.AspNetCore.Mtls;
+using DcsvIo.D2.AspNetCore.Mtls;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

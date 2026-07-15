@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging;
+namespace DcsvIo.D2.Tests.Unit.Messaging;
 
-using D2.Shared.Messaging;
+using DcsvIo.D2.Messaging;
 
 /// <summary>Test fixture: a message type carrying [MqPub] referencing the
 /// real <c>AuthKeyRotated</c> spec entry. Used by composer / dispatcher /

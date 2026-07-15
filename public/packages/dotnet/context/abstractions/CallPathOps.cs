@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.Abstractions;
+namespace DcsvIo.D2.Context.Abstractions;
 
 using System;
 using System.Collections.Generic;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Pure, depth-bounded helpers for appending a hop's own identity to the

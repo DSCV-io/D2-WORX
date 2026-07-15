@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.SourceGen;
+namespace DcsvIo.D2.Context.SourceGen;
 
 using System;
 using System.Linq;
-using D2.Shared.SourceGen;
-using D2.Shared.SourceGen.Polyfills;
+using DcsvIo.D2.SourceGen;
+using DcsvIo.D2.SourceGen.Polyfills;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -19,10 +19,10 @@ using Microsoft.CodeAnalysis.Text;
 /// <c>AdditionalFiles</c>; dispatches per assembly:
 /// <list type="bullet">
 ///   <item>
-///     <c>D2.Shared.AuthContext.Abstractions</c> → <c>IAuthContext.g.cs</c>.
+///     <c>DcsvIo.D2.AuthContext.Abstractions</c> → <c>IAuthContext.g.cs</c>.
 ///   </item>
 ///   <item>
-///     <c>D2.Shared.Context.Abstractions</c> → <c>IRequestContext.g.cs</c>,
+///     <c>DcsvIo.D2.Context.Abstractions</c> → <c>IRequestContext.g.cs</c>,
 ///     <c>MutableRequestContext.g.cs</c>, <c>PropagatedContext.g.cs</c>,
 ///     <c>PropagatedContextExtensions.g.cs</c>,
 ///     <c>PropagatedContextSerializer.g.cs</c>.
@@ -38,10 +38,10 @@ public sealed class ContextGenerator : IIncrementalGenerator
 {
     private const string _SPEC_SUFFIX = ".spec.json";
 
-    private const string _AUTH_CONTEXT_ASSEMBLY = "D2.Shared.AuthContext.Abstractions";
+    private const string _AUTH_CONTEXT_ASSEMBLY = "DcsvIo.D2.AuthContext.Abstractions";
 
     private const string _CONTEXT_ABSTRACTIONS_ASSEMBLY =
-        "D2.Shared.Context.Abstractions";
+        "DcsvIo.D2.Context.Abstractions";
 
     private const string _AUTH_SPEC_NAME = "IAuthContext";
 
@@ -126,7 +126,7 @@ public sealed class ContextGenerator : IIncrementalGenerator
                 if (requestSpec.Extends.Truthy())
                 {
                     const string expectedExtends
-                        = $"D2.Shared.AuthContext.Abstractions.{_AUTH_SPEC_NAME}";
+                        = $"DcsvIo.D2.AuthContext.Abstractions.{_AUTH_SPEC_NAME}";
                     if (!string.Equals(
                             requestSpec.Extends, expectedExtends, StringComparison.Ordinal))
                     {

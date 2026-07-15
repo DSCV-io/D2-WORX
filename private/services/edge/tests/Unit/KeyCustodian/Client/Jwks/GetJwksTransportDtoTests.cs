@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Jwks;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Jwks;
 
-using D2.Edge.KeyCustodian.Client.Jwks;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks;
 
 /// <summary>
 /// Validates the structural shape of the generated
 /// <see cref="GetJwksInput"/>, <see cref="GetJwksOutput"/>, and
-/// <see cref="Jwk"/> transport DTOs in <c>D2.Edge.KeyCustodian.Client</c>.
+/// <see cref="Jwk"/> transport DTOs in <c>DcsvIo.D2.Private.Edge.KeyCustodian.Client</c>.
 /// These types are the committed byte-pinned output of the TypeSpec emitter;
 /// structural regressions here mean the emitter or the spec changed.
 /// </summary>
@@ -89,7 +89,7 @@ public sealed class GetJwksTransportDtoTests
         // Confirm the transport DTO public property set is identical to the
         // domain VO. Constructor arity and default values intentionally differ
         // (domain VO: 3 positional + 3 init-only; transport DTO: 6 positional).
-        var domainProps = typeof(D2.Edge.KeyCustodian.Domain.ValueObjects.Jwk)
+        var domainProps = typeof(DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects.Jwk)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(p => new { p.Name, TypeName = p.PropertyType.Name })
             .OrderBy(x => x.Name)

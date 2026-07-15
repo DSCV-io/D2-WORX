@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Logging.Internal;
+namespace DcsvIo.D2.Logging.Internal;
 
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;

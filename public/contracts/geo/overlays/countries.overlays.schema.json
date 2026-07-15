@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://d2-worx.dev/contracts/geo/overlays/countries.overlays.schema.json",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/overlays/countries.overlays.schema.json",
   "title": "Country catalog overlays (trackable manual patches)",
   "description": "Hand-rolled overlay file applied at Tier 2 build time on top of Tier 1 src-data. Used to inject entities that upstream sources (datasets/country-codes / CLDR / etc.) omit but the platform needs (e.g., disputed-status territories like Kosovo) AND to override / remove specific entries when upstream is wrong. Each entry carries a `reason` + `addedAt` so the policy decision is audit-trail visible. The Tier 2 builder loads overlays after Tier 1 src-data and merges them in before running cross-catalog M:M backfill.",
   "type": "object",

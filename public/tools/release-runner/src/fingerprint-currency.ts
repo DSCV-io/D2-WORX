@@ -28,7 +28,7 @@
 
 import { readFileSync } from "node:fs";
 import { join, isAbsolute, resolve } from "node:path";
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import {
   fingerprintBaselinePath,
   unshippedTxtPath,
@@ -214,8 +214,8 @@ function recomputeNpmFingerprint(
         });
 
   // Use the full cross-package resolved-version map (all consumables at their
-  // committed versions) so that @d2/* dep substitution matches the seed exactly.
-  // A narrow map (own name only) left every @d2/* dep unresolved → kept its
+  // committed versions) so that @dcsv-io/d2-* dep substitution matches the seed exactly.
+  // A narrow map (own name only) left every @dcsv-io/d2-* dep unresolved → kept its
   // workspace:* literal → DEPS input differed from the seed → false positive.
   const substituted = substituteResolvedDeps(packageJson, allResolved);
 
@@ -284,10 +284,10 @@ export function checkFingerprintCurrency(
     options.toolchainReader ?? makeRepoFileReader(repoRoot);
 
   // Build the full cross-package resolved-version map (every consumable at its
-  // committed version) so that @d2/* dep substitution in the npm composition
+  // committed version) so that @dcsv-io/d2-* dep substitution in the npm composition
   // matches what the seed script writes. Mirrors drift-check's map exactly:
   // packages.map(p => [p.name, p.currentVersion]). A narrow per-package map
-  // (own name only) left @d2/* deps unresolved, producing false positives.
+  // (own name only) left @dcsv-io/d2-* deps unresolved, producing false positives.
   const allResolved = new Map<string, string>(
     packages.map((p) => [p.name, p.currentVersion]),
   );

@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.WorkloadIdentity;
+namespace DcsvIo.D2.Spiffe;
 
 using System.Text.RegularExpressions;
-using D2.Shared.ErrorCodes.Category;
+using DcsvIo.D2.ErrorCodes.Category;
 
 /// <summary>
 /// Strong-typed value object representing a single workload's SPIFFE identity —
@@ -166,7 +166,8 @@ public sealed partial record SpiffeWorkloadIdentity
     /// KeyCustodian's issuance path) re-maps it to its own code.
     /// </summary>
     private static D2Result<SpiffeWorkloadIdentity> Invalid() =>
-        D2Result<SpiffeWorkloadIdentity>.ValidationFailed(category: ErrorCategory.ValidationFailure);
+        D2Result<SpiffeWorkloadIdentity>.ValidationFailed(
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>
     /// Lowercase DNS-label-safe charset: lowercase letters, digits, hyphens only.

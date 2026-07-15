@@ -8,7 +8,7 @@
  * at `maxDistance + 1`. Pure function — no I/O, no shared state, thread
  * safe by design.
  *
- * Mirrors .NET `D2.Shared.Geo.Abstractions.NameResolution.LevenshteinComparer`
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.NameResolution.LevenshteinComparer`
  * byte-for-byte; the same input pair + `maxDistance` MUST produce the
  * same numeric output on both runtimes. Cross-language parity is pinned
  * via the byte-equivalent fixture exercised by the parity test suite.

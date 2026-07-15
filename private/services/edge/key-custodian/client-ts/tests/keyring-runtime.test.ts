@@ -4,14 +4,14 @@
 
 import { webcrypto } from "node:crypto";
 
-import { PayloadCryptoKeyring } from "@d2/encryption";
-import type { ILogger } from "@d2/logging";
+import { PayloadCryptoKeyring } from "@dcsv-io/d2-encryption";
+import type { ILogger } from "@dcsv-io/d2-logging";
 import {
   type D2Result,
   ok,
   serviceUnavailable,
   validationFailed,
-} from "@d2/result";
+} from "@dcsv-io/d2-result";
 import { describe, expect, it, vi } from "vitest";
 
 import type { KeyCustodianGrpcClient } from "../src/facade/key-custodian-grpc-client.g.js";

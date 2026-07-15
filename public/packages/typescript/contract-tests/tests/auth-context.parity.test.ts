@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import type { IAuthContext } from "@d2/auth-context-abstractions";
+import type { IAuthContext } from "@dcsv-io/d2-auth-context-abstractions";
 import { loadFixture } from "../src/index.js";
 
 interface AuthContextPayload {

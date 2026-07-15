@@ -2,27 +2,27 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.ServiceDefaults
+# DcsvIo.D2.ServiceDefaults
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
 The composition-root convenience csproj that wires every prior shared lib into a single `AddD2ServiceDefaults()` + `UseD2DefaultPipeline()` + `MapD2DefaultEndpoints()` + `RunD2ServiceAsync()` extension surface, so per-service `Program.cs` shrinks to ~10-15 lines of service-specific declarations.
 
-**Pure thin aggregator — owns ZERO logic.** Every behavior is owned by a logic-bearing prior shared lib (`D2.Shared.Logging`, `D2.Shared.Telemetry`, `D2.Shared.AspNetCore`, `D2.Shared.I18n`, `D2.Shared.Handler`, `D2.Shared.Auth`, `D2.Shared.Auth.Http`, `D2.Shared.Auth.Grpc`, `D2.Shared.Caching.Local.Default`, `D2.Shared.Utilities`). Pattern parity inspiration: `Microsoft.Extensions.ServiceDefaults` from .NET Aspire, adapted for the D² shared-lib stack with locked middleware ordering and Serilog-based PII discipline.
+**Pure thin aggregator — owns ZERO logic.** Every behavior is owned by a logic-bearing prior shared lib (`DcsvIo.D2.Logging`, `DcsvIo.D2.Telemetry`, `DcsvIo.D2.AspNetCore`, `DcsvIo.D2.I18n`, `DcsvIo.D2.Handler`, `DcsvIo.D2.Auth`, `DcsvIo.D2.Auth.Http`, `DcsvIo.D2.Auth.Grpc`, `DcsvIo.D2.Caching.Local.Default`, `DcsvIo.D2.Utilities`). Pattern parity inspiration: `Microsoft.Extensions.ServiceDefaults` from .NET Aspire, adapted for the D² shared-lib stack with locked middleware ordering and Serilog-based PII discipline.
 
 The lib does NOT own (each is opt-in via the owning lib's own builder):
 
-- Encryption — `D2.Shared.Encryption` (per-domain keying).
-- Distributed cache — `D2.Shared.Caching.Distributed.Redis`.
-- Tiered cache — `D2.Shared.Caching.Tiered`.
-- PostgreSQL — `D2.Shared.Handler.Repo.Postgres`.
-- RabbitMQ — `D2.Shared.Messaging.RabbitMq`.
-- Caller-side auth — `D2.Shared.Auth.Outbound` (the per-request forwarded-transaction-token credential, the workload-certificate mTLS leaf, and RFC 8693 token-exchange for the boundary mint + exceptions). Cross-process workload identity is mTLS ([ADR-0023](../../../../public/docs/adrs/0023-mtls-workload-identity.md)).
+- Encryption — `DcsvIo.D2.Encryption` (per-domain keying).
+- Distributed cache — `DcsvIo.D2.Caching.Distributed.Redis`.
+- Tiered cache — `DcsvIo.D2.Caching.Tiered`.
+- PostgreSQL — `DcsvIo.D2.Handler.Repo.Postgres`.
+- RabbitMQ — `DcsvIo.D2.Messaging.RabbitMq`.
+- Caller-side auth — `DcsvIo.D2.Auth.Outbound` (the per-request forwarded-transaction-token credential, the workload-certificate mTLS leaf, and RFC 8693 token-exchange for the boundary mint + exceptions). Cross-process workload identity is mTLS ([ADR-0023](../../../../public/docs/adrs/0023-mtls-workload-identity.md)).
 
 ## Public API surface
 
 ```csharp
-using D2.Shared.ServiceDefaults;
+using DcsvIo.D2.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,7 +97,7 @@ endpoints.MapD2PrometheusEndpoint();     // /metrics — IP-restricted, honors O
 
 ### `RunD2ServiceAsync(string? serviceName = null)`
 
-Re-exports `D2.Shared.AspNetCore.RunD2ServiceWebApplicationExtensions.RunD2ServiceAsync` at the aggregator namespace so a single `using D2.Shared.ServiceDefaults;` directive at a composition root makes every default surface available without importing each underlying lib's namespace separately. Behavior is identical to the underlying:
+Re-exports `DcsvIo.D2.AspNetCore.RunD2ServiceWebApplicationExtensions.RunD2ServiceAsync` at the aggregator namespace so a single `using DcsvIo.D2.ServiceDefaults;` directive at a composition root makes every default surface available without importing each underlying lib's namespace separately. Behavior is identical to the underlying:
 
 - Logs `Log.Information("Starting {ServiceName} ({EnvironmentName})", ...)` at entry.
 - On exception: logs `Log.Fatal` with PII-safe exception rendering — type FullName + first stack frame only, NEVER `ex.Message`. Re-throws so the host exit code reflects failure.
@@ -132,7 +132,7 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 
 | Path                                            | Role                                                                                                                              |
 | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.ServiceDefaults.csproj`              | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. ProjectReferences (incl. `context/abstractions`) + `JetBrains.Annotations`. |
+| `DcsvIo.D2.ServiceDefaults.csproj`              | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. ProjectReferences (incl. `context/abstractions`) + `JetBrains.Annotations`. |
 | `ServiceDefaultsServiceCollectionExtensions.cs` | The `AddD2ServiceDefaults` extension. Body = ordered sequence of `services.AddD2X(...)` calls.                                    |
 | `WebApplicationServiceDefaultsExtensions.cs`    | The `UseD2DefaultPipeline` + `MapD2DefaultEndpoints` + `RunD2ServiceAsync` extensions.                                            |
 | `D2ServiceDefaultsOptions.cs`                   | Sealed options class — opt-out flags + per-component pass-through `Action<T>?` delegates.                                         |
@@ -142,18 +142,18 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 
 | Project reference                 | Why                                                                                                                                                                           |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Logging`               | `AddD2Logging` + `UseD2RequestLogging`                                                                                                                                        |
-| `D2.Shared.Telemetry`             | `AddD2Telemetry` + `MapD2PrometheusEndpoint`                                                                                                                                  |
-| `D2.Shared.AspNetCore`            | `AddD2HealthChecks` + `AddD2ProblemDetails` + `AddD2Cors` + `MapD2HealthEndpoints` + `UseD2SecurityHeaders` + `UseD2Cors` + `UseD2InfrastructureBypass` + `RunD2ServiceAsync` |
-| `D2.Shared.I18n`                  | `AddD2I18n`                                                                                                                                                                   |
-| `D2.Shared.Handler`               | `AddD2Handler`                                                                                                                                                                |
-| `D2.Shared.Context.Abstractions`  | `AddD2SystemWorkPlane` — platform System work plane (`ISystemWorkScopeFactory`)                                                                                               |
-| `D2.Shared.Auth`                  | `AddD2Auth`                                                                                                                                                                   |
-| `D2.Shared.Auth.Http`             | `AddD2AuthHttp` + `UseD2Auth`                                                                                                                                                 |
-| `D2.Shared.Auth.Grpc`             | `AddD2AuthGrpc`                                                                                                                                                               |
-| `D2.Shared.Auth.Startup`          | `AddD2AuthEndpointGuard` — deny-by-default boot guard                                                                                                                         |
-| `D2.Shared.Caching.Local.Default` | `AddD2LocalCache`                                                                                                                                                             |
-| `D2.Shared.Utilities`             | `D2Env.Load`                                                                                                                                                                  |
+| `DcsvIo.D2.Logging`               | `AddD2Logging` + `UseD2RequestLogging`                                                                                                                                        |
+| `DcsvIo.D2.Telemetry`             | `AddD2Telemetry` + `MapD2PrometheusEndpoint`                                                                                                                                  |
+| `DcsvIo.D2.AspNetCore`            | `AddD2HealthChecks` + `AddD2ProblemDetails` + `AddD2Cors` + `MapD2HealthEndpoints` + `UseD2SecurityHeaders` + `UseD2Cors` + `UseD2InfrastructureBypass` + `RunD2ServiceAsync` |
+| `DcsvIo.D2.I18n`                  | `AddD2I18n`                                                                                                                                                                   |
+| `DcsvIo.D2.Handler`               | `AddD2Handler`                                                                                                                                                                |
+| `DcsvIo.D2.Context.Abstractions`  | `AddD2SystemWorkPlane` — platform System work plane (`ISystemWorkScopeFactory`)                                                                                               |
+| `DcsvIo.D2.Auth`                  | `AddD2Auth`                                                                                                                                                                   |
+| `DcsvIo.D2.Auth.Http`             | `AddD2AuthHttp` + `UseD2Auth`                                                                                                                                                 |
+| `DcsvIo.D2.Auth.Grpc`             | `AddD2AuthGrpc`                                                                                                                                                               |
+| `DcsvIo.D2.Auth.Startup`          | `AddD2AuthEndpointGuard` — deny-by-default boot guard                                                                                                                         |
+| `DcsvIo.D2.Caching.Local.Default` | `AddD2LocalCache`                                                                                                                                                             |
+| `DcsvIo.D2.Utilities`             | `D2Env.Load`                                                                                                                                                                  |
 
 | Package reference     | Why                                                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------------------------------- |

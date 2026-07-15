@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Validation.SourceGen
+# DcsvIo.D2.Validation.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 >
@@ -10,9 +10,9 @@ Copyright (c) DCSV. All rights reserved.
 
 **Input contract:** [`contracts/validation/`](../../../../../contracts/validation/README.md)
 
-Roslyn incremental source generator that emits `FieldConstraints.g.cs` (field-length / digit-count `const int` bounds) and `Taxonomy.g.cs` (the `NamePrefix` / `NameSuffix` / `BiologicalSex` closed-list enums) into `D2.Shared.Validation.Abstractions` by reading `contracts/validation/field-constraints.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Validation.Abstractions`.
+Roslyn incremental source generator that emits `FieldConstraints.g.cs` (field-length / digit-count `const int` bounds) and `Taxonomy.g.cs` (the `NamePrefix` / `NameSuffix` / `BiologicalSex` closed-list enums) into `DcsvIo.D2.Validation.Abstractions` by reading `contracts/validation/field-constraints.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `DcsvIo.D2.Validation.Abstractions`.
 
-The spec file is the single source of truth for the platform's shared field bounds + name/sex taxonomy. The bounds gate every value-object `Create(...)` call (contacts + Location); the enums are the closed wire vocabularies for name prefixes/suffixes and biological sex. Same spec drives the TS-side `@d2/validation-abstractions` catalog via `tools/ts-codegen/src/field-constraints-emit.ts` — cross-language wire-format drift is structurally impossible.
+The spec file is the single source of truth for the platform's shared field bounds + name/sex taxonomy. The bounds gate every value-object `Create(...)` call (contacts + Location); the enums are the closed wire vocabularies for name prefixes/suffixes and biological sex. Same spec drives the TS-side `@dcsv-io/d2-validation-abstractions` catalog via `tools/ts-codegen/src/field-constraints-emit.ts` — cross-language wire-format drift is structurally impossible.
 
 **Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
@@ -22,10 +22,10 @@ The spec file is the single source of truth for the platform's shared field boun
 
 The single `FieldConstraintsGenerator` gates on `compilation.AssemblyName`:
 
-- `D2.Shared.Validation.Abstractions` → emit `FieldConstraints.g.cs` + `Taxonomy.g.cs`.
+- `DcsvIo.D2.Validation.Abstractions` → emit `FieldConstraints.g.cs` + `Taxonomy.g.cs`.
 - Anything else → emit nothing.
 
-Pattern mirrors `D2.Shared.ResultErrorCodes.SourceGen`'s single-target dispatch (one consuming assembly) while emitting two sources via two `AddSource` calls (as the geo generator does for its multi-type emission).
+Pattern mirrors `DcsvIo.D2.ResultErrorCodes.SourceGen`'s single-target dispatch (one consuming assembly) while emitting two sources via two `AddSource` calls (as the geo generator does for its multi-type emission).
 
 ---
 
@@ -77,12 +77,12 @@ Pattern mirrors `D2.Shared.ResultErrorCodes.SourceGen`'s single-target dispatch 
 
 ## Emitted output
 
-Two `.g.cs` files emitted into the consuming assembly (`D2.Shared.Validation.Abstractions`).
+Two `.g.cs` files emitted into the consuming assembly (`DcsvIo.D2.Validation.Abstractions`).
 The committed copies land under the `EmitCompilerGeneratedFiles` output path, nested by
 analyzer assembly + generator FQN:
-`validation/abstractions/Generated/D2.Shared.Validation.SourceGen/D2.Shared.Validation.SourceGen.FieldConstraintsGenerator/{FieldConstraints,Taxonomy}.g.cs`.
+`validation/abstractions/Generated/DcsvIo.D2.Validation.SourceGen/DcsvIo.D2.Validation.SourceGen.FieldConstraintsGenerator/{FieldConstraints,Taxonomy}.g.cs`.
 
-- **`FieldConstraints.g.cs`** — `D2.Shared.Validation.Abstractions.FieldConstraints` static class with one `public const int` per `constraints` entry.
+- **`FieldConstraints.g.cs`** — `DcsvIo.D2.Validation.Abstractions.FieldConstraints` static class with one `public const int` per `constraints` entry.
 - **`Taxonomy.g.cs`** — one `public enum X : byte` carrying `[JsonConverter(typeof(JsonStringEnumConverter))]` per `enums` entry (`NamePrefix`, `NameSuffix`, `BiologicalSex`).
 
 ---

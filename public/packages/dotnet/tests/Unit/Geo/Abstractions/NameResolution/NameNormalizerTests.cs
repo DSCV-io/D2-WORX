@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Geo.Abstractions.NameResolution;
+namespace DcsvIo.D2.Tests.Unit.Geo.Abstractions.NameResolution;
 
 using AwesomeAssertions;
-using D2.Shared.Geo.Abstractions.NameResolution;
+using DcsvIo.D2.Geo.Abstractions.NameResolution;
 using Xunit;
 
 /// <summary>

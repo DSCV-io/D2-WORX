@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 field-constraints spec",
-  "description": "Schema for contracts/validation/field-constraints.spec.json — the source-of-truth catalog that D2.Shared.Validation.SourceGen reads to emit FieldConstraints.g.cs + Taxonomy.g.cs into D2.Shared.Validation.Abstractions, and that tools/ts-codegen/src/field-constraints-emit.ts reads to emit field-constraints.g.ts + taxonomy.g.ts into @d2/validation-abstractions. One spec carries both the shared field-constraint integer bounds (char-length caps and phone digit-count bounds) and the closed-list taxonomy enums consumed by the domain value objects (contacts + Location), the FE/BFF Zod schemas, and arbitrary backend modules.",
+  "description": "Schema for contracts/validation/field-constraints.spec.json — the source-of-truth catalog that DcsvIo.D2.Validation.SourceGen reads to emit FieldConstraints.g.cs + Taxonomy.g.cs into DcsvIo.D2.Validation.Abstractions, and that tools/ts-codegen/src/field-constraints-emit.ts reads to emit field-constraints.g.ts + taxonomy.g.ts into @dcsv-io/d2-validation-abstractions. One spec carries both the shared field-constraint integer bounds (char-length caps and phone digit-count bounds) and the closed-list taxonomy enums consumed by the domain value objects (contacts + Location), the FE/BFF Zod schemas, and arbitrary backend modules.",
   "type": "object",
   "required": ["constraints", "enums"],
   "additionalProperties": false,

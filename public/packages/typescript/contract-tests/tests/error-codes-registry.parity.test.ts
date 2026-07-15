@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import {
   errorCodeRegistry,
   type ErrorCategory,
-} from "@d2/error-codes-registry";
+} from "@dcsv-io/d2-error-codes-registry";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 
@@ -19,7 +19,7 @@ import { canonicalize, loadFixture } from "../src/index.js";
 // (via `ErrorCodeRegistryFixtureEmitter`). Each entry carries 8 fields plus the
 // extra `userMessageKeyPath` helper field the fixture emitter adds for comparison
 // convenience. The TS side exposes the same data via `errorCodeRegistry` from
-// `@d2/error-codes-registry`.
+// `@dcsv-io/d2-error-codes-registry`.
 //
 // PARITY AXES (per code):
 //   httpStatus        : fixture.httpStatus         === ts.httpStatus

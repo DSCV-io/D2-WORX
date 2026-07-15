@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.HandlerRepo.Postgres;
+namespace DcsvIo.D2.Tests.Unit.HandlerRepo.Postgres;
 
 using System;
 using System.Reflection;

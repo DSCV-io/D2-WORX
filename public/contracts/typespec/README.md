@@ -34,7 +34,7 @@ contracts/typespec/
 ## Regen
 
 ```text
-pnpm --filter @d2/typespec-emitters regen
+pnpm --filter @dcsv-io/d2-typespec-emitters regen
 # or
 node tools/scripts/regen-typespec-emitters.mjs
 ```

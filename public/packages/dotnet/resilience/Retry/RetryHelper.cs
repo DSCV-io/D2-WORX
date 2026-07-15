@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Retry;
+namespace DcsvIo.D2.Resilience.Retry;
 
 using System.Net;
 using System.Net.Sockets;
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Result;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Generic retry utility with exponential backoff and optional jitter. Knows

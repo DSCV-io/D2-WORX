@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen;
+namespace DcsvIo.D2.Geo.SourceGen;
 
 using System;
 using System.Collections.Immutable;
 using System.IO;
-using D2.Shared.Geo.SourceGen.Emitters;
-using D2.Shared.Geo.SourceGen.Emitters.Default;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.Geo.SourceGen.Emitters;
+using DcsvIo.D2.Geo.SourceGen.Emitters.Default;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -21,12 +21,12 @@ using Microsoft.CodeAnalysis.Text;
 /// generator's responsibilities are split across two consumer assemblies:
 /// <list type="bullet">
 ///   <item>
-///     <c>D2.Shared.Geo.Abstractions</c> → emit all TYPES (enums, wrapper
+///     <c>DcsvIo.D2.Geo.Abstractions</c> → emit all TYPES (enums, wrapper
 ///     structs, JsonConverters, record shapes, <c>GeoCatalog</c> constants,
 ///     <c>SubdivisionParentCountryLookup</c>).
 ///   </item>
 ///   <item>
-///     <c>D2.Shared.Geo.Default</c> → emit all DATA (per-entity static
+///     <c>DcsvIo.D2.Geo.Default</c> → emit all DATA (per-entity static
 ///     instances, nested static-class shells, lookup tables, and the
 ///     wire-nav coordinator).
 ///   </item>
@@ -43,8 +43,8 @@ public sealed class GeoGenerator : IIncrementalGenerator
     private const string _SPEC_SUFFIX = ".spec.json";
     private const string _GEO_SPEC_DIRECTORY_NAME = "geo";
 
-    private const string _ABSTRACTIONS_ASSEMBLY = "D2.Shared.Geo.Abstractions";
-    private const string _DEFAULT_ASSEMBLY = "D2.Shared.Geo.Default";
+    private const string _ABSTRACTIONS_ASSEMBLY = "DcsvIo.D2.Geo.Abstractions";
+    private const string _DEFAULT_ASSEMBLY = "DcsvIo.D2.Geo.Default";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

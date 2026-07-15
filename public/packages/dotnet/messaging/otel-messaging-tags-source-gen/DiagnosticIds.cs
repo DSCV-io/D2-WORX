@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.OtelMessagingTags.SourceGen;
+namespace DcsvIo.D2.OtelMessagingTags.SourceGen;
 
 /// <summary>
 /// String identifiers for the diagnostics emitted by
 /// <see cref="OtelMessagingTagsGenerator"/>. See parallel
-/// <c>D2.Shared.Grpc.Trailers.SourceGen.DiagnosticIds</c> for the rationale
+/// <c>DcsvIo.D2.Grpc.Trailers.SourceGen.DiagnosticIds</c> for the rationale
 /// behind the split.
 /// </summary>
 internal static class DiagnosticIds

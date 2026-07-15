@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Repo;
+namespace DcsvIo.D2.Handler.Repo;
 
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Shared.Handler.Abstractions;
-using D2.Shared.Handler.Repo.Abstractions;
-using D2.Shared.Result;
+using DcsvIo.D2.Handler.Abstractions;
+using DcsvIo.D2.Handler.Repo.Abstractions;
+using DcsvIo.D2.Result;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>

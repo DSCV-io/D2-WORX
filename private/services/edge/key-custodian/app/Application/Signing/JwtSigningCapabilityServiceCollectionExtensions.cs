@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Signing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Signing;
 
-using D2.Edge.KeyCustodian.Client.Signing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Signing;
 
 /// <summary>
 /// DI registration for the dedicated JWT-minter signing capability. Deliberately SEPARATE

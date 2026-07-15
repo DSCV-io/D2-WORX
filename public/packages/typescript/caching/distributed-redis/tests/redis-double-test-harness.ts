@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { ILogger, LogBindings } from "@d2/logging";
+import type { ILogger, LogBindings } from "@dcsv-io/d2-logging";
 import type Redis from "ioredis";
 
 import {

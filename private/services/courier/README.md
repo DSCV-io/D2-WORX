@@ -32,16 +32,16 @@ D2.Notifications is the "show in the UI" side. Each owns one slice — Courier n
 
 ## Dependencies (.NET shared libs)
 
-- `D2.Shared.Messaging` (consumer + publisher to `d2.audit.events` for cross-cutting audit)
-- `D2.Shared.Encryption` (decrypts RMQ payloads from `d2.courier.deliver`)
-- `D2.Shared.Contacts` (recipient resolution via `courier_contacts_db`)
-- `D2.Shared.Geo`, `D2.Shared.Location` (locale + currency for templated content)
-- `D2.Shared.I18n` (template rendering with locale-aware variables)
+- `DcsvIo.D2.Messaging` (consumer + publisher to `d2.audit.events` for cross-cutting audit)
+- `DcsvIo.D2.Encryption` (decrypts RMQ payloads from `d2.courier.deliver`)
+- `DcsvIo.D2.Contacts` (recipient resolution via `courier_contacts_db`)
+- `DcsvIo.D2.Geo`, `DcsvIo.D2.Location` (locale + currency for templated content)
+- `DcsvIo.D2.I18n` (template rendering with locale-aware variables)
 
 ## Database
 
 - `courier_db` — owned by D2.Courier. Schema: `delivery_request` (correlationId unique index), `delivery_attempt` (`(request_id, channel, attempt_number)` unique), `delivery_status_history`, channel preference rows, brand chrome configs.
-- `courier_contacts_db` — via `D2.Shared.Contacts` library.
+- `courier_contacts_db` — via `DcsvIo.D2.Contacts` library.
 
 ## Client library
 

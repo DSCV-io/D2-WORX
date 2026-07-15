@@ -4,29 +4,29 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.OtelMessagingTags.SourceGen;
+namespace DcsvIo.D2.OtelMessagingTags.SourceGen;
 
 using System;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits the
 /// <c>MessagingActivityTags</c> static class into
-/// <c>D2.Shared.Messaging.RabbitMq</c> by reading
+/// <c>DcsvIo.D2.Messaging.RabbitMq</c> by reading
 /// <c>contracts/otel-messaging-tags/otel-messaging-tags.spec.json</c> via
 /// <c>AdditionalFiles</c>. Single-target — only emits when the consuming
-/// assembly is <c>D2.Shared.Messaging.RabbitMq</c>.
+/// assembly is <c>DcsvIo.D2.Messaging.RabbitMq</c>.
 /// </summary>
 [Generator]
 public sealed class OtelMessagingTagsGenerator : IIncrementalGenerator
 {
     private const string _SOURCE_NAME = "MessagingActivityTags.g.cs";
     private const string _SPEC_FILE_NAME = "otel-messaging-tags.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.Messaging.RabbitMq";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Messaging.RabbitMq";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)

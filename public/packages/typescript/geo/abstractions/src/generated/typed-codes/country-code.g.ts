@@ -11,7 +11,7 @@
 import { z } from "zod";
 
 /**
- * ISO 3166-1 alpha-2 country code catalog. Branded string type — narrows to exactly the 250-ish codes shipped in the spec. Mirrors .NET `D2.Shared.Geo.Abstractions.CountryCode` (real enum) byte-for-byte over the wire (string-encoded alpha-2 in both runtimes). The bare `Country` name is reserved for the spec-derived data record (interface).
+ * ISO 3166-1 alpha-2 country code catalog. Branded string type — narrows to exactly the 250-ish codes shipped in the spec. Mirrors .NET `DcsvIo.D2.Geo.Abstractions.CountryCode` (real enum) byte-for-byte over the wire (string-encoded alpha-2 in both runtimes). The bare `Country` name is reserved for the spec-derived data record (interface).
  */
 export const CountryCode = {
   /** Andorra */

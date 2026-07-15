@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore.Internal;
+namespace DcsvIo.D2.AspNetCore.Internal;
 
 using System.Diagnostics;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.ProblemDetails;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.ProblemDetails;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
 
 /// <summary>

@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Grpc.Status;
+namespace DcsvIo.D2.Auth.Grpc.Status;
 
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.I18n;
-using D2.Shared.Result;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
 using global::Grpc.Core;
 using GrpcStatus = global::Grpc.Core.Status;
 using GrpcStatusCode = global::Grpc.Core.StatusCode;
@@ -50,7 +50,7 @@ using GrpcStatusCode = global::Grpc.Core.StatusCode;
 ///   <item>Trailers carry only:
 ///     <list type="bullet">
 ///       <item><c>d2_error_code</c> (<see cref="D2GrpcTrailers.ERROR_CODE"/>) —
-///         the closed-enum <see cref="D2.Shared.Auth.Errors.AuthErrorCodes"/>
+///         the closed-enum <see cref="DcsvIo.D2.Auth.Errors.AuthErrorCodes"/>
 ///         constant.</item>
 ///       <item><c>d2_messages</c> (<see cref="D2GrpcTrailers.MESSAGES"/>) —
 ///         the <see cref="D2Result.Messages"/> array serialized as JSON (TK

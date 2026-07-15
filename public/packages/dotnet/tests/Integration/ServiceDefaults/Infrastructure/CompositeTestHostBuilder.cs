@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.ServiceDefaults.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.ServiceDefaults.Infrastructure;
 
 using System.Collections.Generic;
-using D2.Shared.Logging.Destructuring;
-using D2.Shared.ServiceDefaults;
-using D2.Shared.Tests.Integration.Logging.Infrastructure;
-using D2.Shared.Tests.Integration.Telemetry.Infrastructure;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.ServiceDefaults;
+using DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
+using DcsvIo.D2.Tests.Integration.Telemetry.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;

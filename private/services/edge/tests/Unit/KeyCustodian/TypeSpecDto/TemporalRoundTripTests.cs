@@ -4,27 +4,27 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecDto;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecDto;
 
 using System.IO;
 using System.Text.Json;
-using D2.Shared.I18n;
+using DcsvIo.D2.I18n;
 using NodaTime.Text;
 using NodaTime.TimeZones;
-using GenTemporal = D2.Edge.Tests.TypeSpecDto.Generated;
+using GenTemporal = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated;
 
 /// <summary>
 /// Temporal-adversarial round-trip suite for the TypeSpec-emitted temporal DTOs.
 /// Each test maps a domain value to the emitted WIRE DTO shape
 /// (<see cref="DateTimeOffset"/> / offset-free ISO string / ISO-8601 duration)
 /// and back, asserting nothing is lost — the same lossless contract the handler
-/// body implements via <c>D2.Shared.Time</c> smart constructors + the NodaTime
+/// body implements via <c>DcsvIo.D2.Time</c> smart constructors + the NodaTime
 /// pattern set. The composite cases prove the IANA zone NAME survives the wire
 /// (a bare <see cref="DateTimeOffset"/> carries an offset but NOT the IANA id).
 ///
-/// These exercise the REAL <c>D2.Shared.Time</c> seams (<see cref="ZonedInstant"/>,
+/// These exercise the REAL <c>DcsvIo.D2.Time</c> seams (<see cref="ZonedInstant"/>,
 /// <see cref="LocalAnchoredEvent"/>) and the REAL generated wire records in
-/// <c>D2.Edge.Tests.TypeSpecDto.Generated</c> — no test doubles. The TypeScript
+/// <c>DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated</c> — no test doubles. The TypeScript
 /// half (<c>temporal-round-trip.test.ts</c>) drives the SAME
 /// <c>contracts/temporal/temporal-adversarial.fixture.json</c>, so an identical
 /// wire string materializes to the equivalent domain value in both languages.
@@ -142,7 +142,7 @@ public sealed class TemporalRoundTripTests
         {
             // The wire is ISO-8601 "P…T…" (cross-language with Temporal.Duration).
             // NodaTime has no built-in ISO-8601 Duration pattern, so the .NET path
-            // bridges via the D2.Shared.Time IsoDuration helper (int64-nanosecond,
+            // bridges via the DcsvIo.D2.Time IsoDuration helper (int64-nanosecond,
             // no float) — lossless including sub-second decimal-fraction seconds.
             var original = ParseIsoDuration(fx.Wire);
 
@@ -397,7 +397,7 @@ public sealed class TemporalRoundTripTests
     [Fact]
     public void AD9_Duration_SubSecondIsoDecimalNotation_RoundTripsLossless_BothLanguages()
     {
-        // LOSSLESS (was a surfaced boundary; now bridged by the D2.Shared.Time
+        // LOSSLESS (was a surfaced boundary; now bridged by the DcsvIo.D2.Time
         // IsoDuration helper). ISO-8601 allows a decimal fraction on the seconds
         // field ("PT0.123456789S"); TS Temporal.Duration round-trips that natively
         // and the .NET helper now matches — computing total nanoseconds as int64
@@ -608,7 +608,7 @@ public sealed class TemporalRoundTripTests
     private static LocalDateTime ParseLocalDateTime(string isoLocal) =>
         LocalDateTimePattern.ExtendedIso.Parse(isoLocal).Value;
 
-    // ISO-8601 "P…T…" duration ↔ NodaTime Duration via the D2.Shared.Time
+    // ISO-8601 "P…T…" duration ↔ NodaTime Duration via the DcsvIo.D2.Time
     // IsoDuration helper. NodaTime exposes no built-in ISO-8601 Duration
     // pattern (DurationPattern.Roundtrip is the colon form; PeriodPattern uses
     // explicit unit fields with no decimal-fraction seconds), so the helper

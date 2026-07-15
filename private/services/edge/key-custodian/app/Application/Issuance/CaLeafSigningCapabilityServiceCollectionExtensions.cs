@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Issuance;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
 
 /// <summary>
 /// DI registration for the dedicated issuance leaf-signing capability.

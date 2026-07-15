@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result;
+namespace DcsvIo.D2.Result;
 
 using System.Net;
 using System.Text.Json.Serialization;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.I18n;
 
 /// <summary>
 /// Represents the result of an operation, including success status, messages, errors,
@@ -35,7 +35,7 @@ using D2.Shared.I18n;
 /// wire shape is explicit per-property and spec-derived, so the camelCase
 /// envelope ships unchanged under ANY <c>JsonSerializerOptions</c> — callers
 /// do not need to set <c>PropertyNamingPolicy = JsonNamingPolicy.CamelCase</c>
-/// for the envelope keys to render correctly. The TS-side <c>@d2/result</c>
+/// for the envelope keys to render correctly. The TS-side <c>@dcsv-io/d2-result</c>
 /// catalog consumes the same spec; cross-language wire drift on these 8
 /// field names is structurally impossible.
 /// </para>

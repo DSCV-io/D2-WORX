@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 
 using System.Collections.Generic;
 using System.Security.Cryptography;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 /// <summary>
 /// Builds real RSA-signed JWTs for route-policy enforcement tests.
-/// Local copy — originals in <c>D2.Shared.Tests</c> are <c>internal sealed</c>
+/// Local copy — originals in <c>DcsvIo.D2.Tests</c> are <c>internal sealed</c>
 /// and cannot be referenced from a different assembly.
 /// </summary>
 internal sealed class TestJwtBuilder : IDisposable

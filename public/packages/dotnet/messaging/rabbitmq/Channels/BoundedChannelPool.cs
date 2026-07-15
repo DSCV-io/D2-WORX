@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Channels;
+namespace DcsvIo.D2.Messaging.RabbitMq.Channels;
 
 using System.Collections.Concurrent;
-using D2.Shared.Messaging.RabbitMq.Connection;
+using DcsvIo.D2.Messaging.RabbitMq.Connection;
 using global::RabbitMQ.Client;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;

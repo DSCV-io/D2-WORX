@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.WorkloadIdentity
+# DcsvIo.D2.Spiffe
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
@@ -55,9 +55,9 @@ Both paths return a generic `D2Result.ValidationFailed` on rejection — a defau
 **One grammar, two consumers.** The SPIFFE format lives here and nowhere else:
 
 - `KeyCustodian` delegates to `Create` at issuance time, re-mapping the generic `ValidationFailed` to its own `KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY` error code.
-- The shared mTLS peer validator in `D2.Shared.AspNetCore` calls `Parse` to check a presented certificate's URI SAN.
+- The shared mTLS peer validator in `DcsvIo.D2.AspNetCore` calls `Parse` to check a presented certificate's URI SAN.
 
-**No framework dependency.** This lib references only `D2.Shared.Result` (for `D2Result<T>`) and `D2.Shared.Utilities` (for `ToNullIfEmpty()` / `ThrowIfFalsey()`). No AspNetCore, Kestrel, X.509, or service-domain dependency.
+**No framework dependency.** This lib references only `DcsvIo.D2.Result` (for `D2Result<T>`) and `DcsvIo.D2.Utilities` (for `ToNullIfEmpty()` / `ThrowIfFalsey()`). No AspNetCore, Kestrel, X.509, or service-domain dependency.
 
 **Not PII.** A workload identity is a service label such as `edge` or `files` — not personally identifying. The `[RedactData]` attribute is deliberately absent from this type.
 
@@ -65,5 +65,5 @@ Both paths return a generic `D2Result.ValidationFailed` on rejection — a defau
 
 ## References
 
-- [`D2.Shared.AspNetCore`](../aspnetcore/README.md) — hosts the mTLS peer validator that feeds presented certificate SANs to `Parse`
+- [`DcsvIo.D2.AspNetCore`](../aspnetcore/README.md) — hosts the mTLS peer validator that feeds presented certificate SANs to `Parse`
 - [ADR-0023](../../../../public/docs/adrs/0023-mtls-workload-identity.md) — mTLS workload identity for cross-process hops

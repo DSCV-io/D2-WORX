@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.I18n.SourceGen
+# DcsvIo.D2.I18n.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -14,10 +14,10 @@ Roslyn incremental source generator that emits translation-key catalogs from `pu
 
 | Consuming assembly | Emitted type | Values |
 | --- | --- | --- |
-| `D2.Shared.I18n.Keys` | `TK` under `D2.Shared.I18n` | public messages only |
-| `D2.Shared.I18n.Keys.Extensions` | `ProductTK` under `D2.Private.I18n` | public∪private messages |
+| `DcsvIo.D2.I18n.Keys` | `TK` under `DcsvIo.D2.I18n` | public messages only |
+| `DcsvIo.D2.Private.I18n.Keys.Extensions` | `ProductTK` under `DcsvIo.D2.Private.I18n` | public∪private messages |
 
-Any other assembly → no emit. `TKMessage` remains the shared public primitive (`InternalsVisibleTo` on `D2.Shared.I18n.Abstractions` grants the Extensions host). Private host PackageId is 1:1 with the public twin + `.Extensions`.
+Any other assembly → no emit. `TKMessage` remains the shared public primitive (`InternalsVisibleTo` on `DcsvIo.D2.I18n.Abstractions` grants the Extensions host). Private host PackageId is 1:1 with the public twin + `.Extensions`.
 
 The catalog is the single source of truth for translation keys. Every `TK.Common.Errors.NOT_FOUND` reference compiles against an emitted constant — adding a key is a one-line edit to `en-US.json` (the SrcGen picks it up next build); renaming a key breaks every consumer at compile time.
 
@@ -93,13 +93,13 @@ public static partial class TK
 }
 ```
 
-Each constant is a `static readonly TKMessage` carrying just the key — parameter substitution happens lazily at render time via `TKMessage.With(...)`. The `internal`-ctor design of `TKMessage` (per `D2.Shared.I18n.Abstractions`) means raw-string `D2Result.messages = ["untranslated literal"]` is structurally unrepresentable; every consumer is forced through `TK.*`.
+Each constant is a `static readonly TKMessage` carrying just the key — parameter substitution happens lazily at render time via `TKMessage.With(...)`. The `internal`-ctor design of `TKMessage` (per `DcsvIo.D2.I18n.Abstractions`) means raw-string `D2Result.messages = ["untranslated literal"]` is structurally unrepresentable; every consumer is forced through `TK.*`.
 
 ---
 
 ## Cross-platform parity
 
-The Node side uses [Paraglide](https://inlang.com/m/gerre34r) for translation key compilation (different toolchain rooted in the SvelteKit ecosystem). Per [docs/dev/rules.md §9.30](../../../../../docs/dev/rules.md#9-architectural-layer-hygiene), this is an intentional "Why exclusive?" carve-out — the .NET SrcGen + Node Paraglide both consume the same `public/contracts/messages/*.json` catalogs but produce platform-native artifacts. No `@d2/i18n-source-gen` Node mirror exists.
+The Node side uses [Paraglide](https://inlang.com/m/gerre34r) for translation key compilation (different toolchain rooted in the SvelteKit ecosystem). Per [docs/dev/rules.md §9.30](../../../../../docs/dev/rules.md#9-architectural-layer-hygiene), this is an intentional "Why exclusive?" carve-out — the .NET SrcGen + Node Paraglide both consume the same `public/contracts/messages/*.json` catalogs but produce platform-native artifacts. No `@dcsv-io/d2-i18n-source-gen` Node mirror exists.
 
 ---
 
@@ -107,5 +107,5 @@ The Node side uses [Paraglide](https://inlang.com/m/gerre34r) for translation ke
 
 - [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`public/contracts/messages/en-US.json`](../../../../contracts/messages/en-US.json) — source-of-truth catalog
-- [`D2.Shared.I18n.Abstractions`](../abstractions/README.md) — emission target (defines `TKMessage`)
-- [`D2.Shared.Auth.Scopes.SourceGen`](../../auth/scopes-source-gen/README.md) — sibling SrcGen modeled on this one
+- [`DcsvIo.D2.I18n.Abstractions`](../abstractions/README.md) — emission target (defines `TKMessage`)
+- [`DcsvIo.D2.Auth.Scopes.SourceGen`](../../auth/scopes-source-gen/README.md) — sibling SrcGen modeled on this one

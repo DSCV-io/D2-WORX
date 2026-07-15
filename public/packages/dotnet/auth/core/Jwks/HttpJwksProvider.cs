@@ -4,19 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Jwks;
+namespace DcsvIo.D2.Auth.Jwks;
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Resilience.Singleflight;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Diagnostics;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.Singleflight;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols;

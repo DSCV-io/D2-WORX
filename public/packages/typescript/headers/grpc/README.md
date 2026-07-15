@@ -2,21 +2,21 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/headers-grpc
+# @dcsv-io/d2-headers-grpc
 
 > Parent: [`public/packages/typescript/`](../../README.md)
 
-> **Duplicated from [`contracts/headers/headers.spec.json`](../../../../../contracts/headers/headers.spec.json) — update both in lockstep.** This catalog mirrors its .NET sibling [`D2.Shared.Headers.Grpc`](../../../dotnet/headers/grpc/README.md) at byte-equal wire values per the cross-language parity contract documented in [`docs/PARITY.md`](../../../../../docs/PARITY.md). Both sides emit from the same spec; physical dedup across TS ↔ .NET is not feasible. Parity is asserted by `contract-tests/headers.parity.test.ts` (TS) and `HeaderCatalogConsistencyTests` (.NET).
+> **Duplicated from [`contracts/headers/headers.spec.json`](../../../../../contracts/headers/headers.spec.json) — update both in lockstep.** This catalog mirrors its .NET sibling [`DcsvIo.D2.Headers.Grpc`](../../../dotnet/headers/grpc/README.md) at byte-equal wire values per the cross-language parity contract documented in [`docs/PARITY.md`](../../../../../docs/PARITY.md). Both sides emit from the same spec; physical dedup across TS ↔ .NET is not feasible. Parity is asserted by `contract-tests/headers.parity.test.ts` (TS) and `HeaderCatalogConsistencyTests` (.NET).
 
-D2 wire-protocol headers applicable to the gRPC transport. Today the catalog holds the gRPC-applicable subset of cross-transport entries (`Authorization`, `x-d2-context`, `traceparent`, `tracestate`) at identical wire values per `headers.spec.json`. Mirrors .NET `D2.Shared.Headers.Grpc.GrpcHeaders`.
+D2 wire-protocol headers applicable to the gRPC transport. Today the catalog holds the gRPC-applicable subset of cross-transport entries (`Authorization`, `x-d2-context`, `traceparent`, `tracestate`) at identical wire values per `headers.spec.json`. Mirrors .NET `DcsvIo.D2.Headers.Grpc.GrpcHeaders`.
 
 ## Public API
 
 | Export             | Source              | Mirror                                  |
 | ------------------ | ------------------- | --------------------------------------- |
-| `GrpcHeaders`      | `grpc-headers.g.ts` | `D2.Shared.Headers.Grpc.GrpcHeaders`    |
+| `GrpcHeaders`      | `grpc-headers.g.ts` | `DcsvIo.D2.Headers.Grpc.GrpcHeaders`    |
 | `GrpcHeaderName`   | `grpc-headers.g.ts` | n/a (TS-only union type)                |
-| `ALL_GRPC_HEADERS` | `grpc-headers.g.ts` | `D2.Shared.Headers.Grpc.AllGrpcHeaders` |
+| `ALL_GRPC_HEADERS` | `grpc-headers.g.ts` | `DcsvIo.D2.Headers.Grpc.AllGrpcHeaders` |
 
 ## Codegen workflow
 
@@ -24,7 +24,7 @@ D2 wire-protocol headers applicable to the gRPC transport. Today the catalog hol
 
 ## When to reach for this catalog
 
-Use `@d2/headers-grpc` from any gRPC-context consumer — gRPC interceptors, gRPC client wrappers. The catalog includes cross-transport entries (e.g. `TRACEPARENT`) at identical wire values to the other catalogs (codegen-guaranteed and verified by `HeaderCatalogConsistencyTests` on the .NET side).
+Use `@dcsv-io/d2-headers-grpc` from any gRPC-context consumer — gRPC interceptors, gRPC client wrappers. The catalog includes cross-transport entries (e.g. `TRACEPARENT`) at identical wire values to the other catalogs (codegen-guaranteed and verified by `HeaderCatalogConsistencyTests` on the .NET side).
 
 ## Notes on gRPC framework constants
 
@@ -41,6 +41,6 @@ None at runtime — pure constants. DevDeps: `vitest` + `@vitest/coverage-v8` + 
 ## Reference
 
 - [`contracts/headers/headers.spec.json`](../../../../../contracts/headers/headers.spec.json) — source spec
-- [`@d2/headers-common`](../common/README.md) — cross-transport subset
-- [`@d2/headers-http`](../http/README.md) — HTTP-applicable subset
-- [`@d2/headers-amqp`](../amqp/README.md) — AMQP-applicable subset
+- [`@dcsv-io/d2-headers-common`](../common/README.md) — cross-transport subset
+- [`@dcsv-io/d2-headers-http`](../http/README.md) — HTTP-applicable subset
+- [`@dcsv-io/d2-headers-amqp`](../amqp/README.md) — AMQP-applicable subset

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecDto;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecDto;
 
 using System.Collections.Concurrent;
 using Serilog.Core;
@@ -15,7 +15,7 @@ using Serilog.Formatting.Compact;
 /// Local in-memory Serilog sink for TypeSpec DTO validation tests.
 /// Captures <see cref="LogEvent"/> instances and renders them via
 /// <see cref="CompactJsonFormatter"/> for assertion.
-/// Mirrors the pattern from D2.Shared.Tests.Integration.Logging.Infrastructure.InMemorySink.
+/// Mirrors the pattern from DcsvIo.D2.Tests.Integration.Logging.Infrastructure.InMemorySink.
 /// </summary>
 internal sealed class TypeSpecDtoInMemorySink : ILogEventSink
 {

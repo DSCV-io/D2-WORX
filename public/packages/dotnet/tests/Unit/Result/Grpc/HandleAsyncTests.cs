@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Result.Grpc;
+namespace DcsvIo.D2.Tests.Unit.Result.Grpc;
 
 using System.Net;
 using AwesomeAssertions;
-using D2.Services.Protos.Common.V1;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.Common.V1;
 using global::Grpc.Core;
 using Microsoft.Extensions.Logging;
 using Xunit;

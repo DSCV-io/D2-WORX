@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Jwks;
+namespace DcsvIo.D2.Auth.Jwks;
 
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Auth.Telemetry;
-using D2.Shared.Caching;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Auth.Telemetry;
+using DcsvIo.D2.Caching;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -41,7 +41,7 @@ using Microsoft.Extensions.Options;
 /// at <see cref="StartAsync"/> via <see cref="ICacheInvalidationBackplane.Subscribe"/>.
 /// The contract delegates connection / channel resilience to the backplane
 /// implementation: a conformant impl (e.g. <c>RedisCacheInvalidationBackplane</c>
-/// in <c>D2.Shared.Caching.Distributed.Redis</c>) auto-reconnects internally
+/// in <c>DcsvIo.D2.Caching.Distributed.Redis</c>) auto-reconnects internally
 /// and resumes delivering events to the same handler lambda without
 /// requiring re-subscription. If a future backplane impl breaks this
 /// contract, this subscriber will silently miss events after the first

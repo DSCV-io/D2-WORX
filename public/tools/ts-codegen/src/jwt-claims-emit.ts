@@ -155,7 +155,7 @@ export function emitJwtClaims(spec: JwtClaimsSpec): EmitResult {
     " * JWT claim name string constants used across the platform. Mirrors",
   );
   sb.appendLine(
-    " * .NET D2.Shared.Auth.Abstractions.JwtClaimTypes (same string values).",
+    " * .NET DcsvIo.D2.Auth.Abstractions.JwtClaimTypes (same string values).",
   );
   sb.appendLine(" *");
   sb.appendLine(

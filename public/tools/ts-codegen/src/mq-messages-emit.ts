@@ -51,7 +51,7 @@ const CONST_NAME_RE = /^[A-Z][A-Za-z0-9]*$/;
  * Validate the spec — surface invalid-constName, duplicate constName,
  * duplicate messageType, missing encryption (default-deny), and empty
  * required-field violations. Mirrors the .NET
- * `D2.Shared.Messaging.SourceGen.MqGenerator` predicate interpretation
+ * `DcsvIo.D2.Messaging.SourceGen.MqGenerator` predicate interpretation
  * (same spec source on both sides means the same violation surface).
  */
 export function validateMqMessagesSpec(
@@ -150,19 +150,19 @@ export function emitMqMessages(spec: MqMessagesSpec): EmitResult {
   sb.appendLine(
     " * Spec-derived RabbitMQ message-descriptor mirror. Mirrors .NET",
   );
-  sb.appendLine(" * D2.Shared.Messaging.MqMessages (string constants) +");
+  sb.appendLine(" * DcsvIo.D2.Messaging.MqMessages (string constants) +");
   sb.appendLine(
-    " * D2.Shared.Messaging.MqMessagesRegistry.ByConstant (constant → descriptor)",
+    " * DcsvIo.D2.Messaging.MqMessagesRegistry.ByConstant (constant → descriptor)",
   );
   sb.appendLine(
-    " * + the D2.Shared.Messaging.MqMessageDescriptor record shape.",
+    " * + the DcsvIo.D2.Messaging.MqMessageDescriptor record shape.",
   );
   sb.appendLine(" *");
   sb.appendLine(
     " * Cross-language parity: the SAME spec drives the .NET-side catalog via",
   );
   sb.appendLine(
-    " * D2.Shared.Messaging.SourceGen. Both sides emit identical constants +",
+    " * DcsvIo.D2.Messaging.SourceGen. Both sides emit identical constants +",
   );
   sb.appendLine(
     " * descriptor field values; cross-language wire drift is impossible.",
@@ -288,7 +288,7 @@ export function emitMqMessages(spec: MqMessagesSpec): EmitResult {
     " * Literal-typed (`as const`) per-message catalog — the compile-time",
   );
   sb.appendLine(
-    " * type-witness input for the @d2/messaging-rabbitmq publisher. Same data",
+    " * type-witness input for the @dcsv-io/d2-messaging-rabbitmq publisher. Same data",
   );
   sb.appendLine(
     " * as MqMessagesRegistry, but each `encryption` keeps its literal type.",

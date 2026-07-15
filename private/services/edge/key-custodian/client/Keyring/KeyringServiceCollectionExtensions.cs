@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
 using System.Linq;
-using D2.Shared.Auth.Events;
-using D2.Shared.Encryption;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Auth.Events;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using KeyringClientStub = D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient;
+using KeyringClientStub = global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient;
 
 /// <summary>
 /// Registration source that backs a domain's <see cref="IPayloadCrypto"/> with a

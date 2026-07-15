@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Messaging;
+namespace DcsvIo.D2.Tests.Unit.Messaging;
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
-using D2.Shared.Messaging;
+using DcsvIo.D2.Messaging;
 using Xunit;
 
 /// <summary>

@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Repo.Postgres;
+namespace DcsvIo.D2.Handler.Repo.Postgres;
 
 using System;
 using System.IO;
 using System.Net.Sockets;
-using D2.Shared.Handler.Repo.Abstractions;
+using DcsvIo.D2.Handler.Repo.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 

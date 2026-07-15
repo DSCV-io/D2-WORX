@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.ErrorCodesRegistry;
+namespace DcsvIo.D2.Tests.Unit.ErrorCodesRegistry;
 
 using AwesomeAssertions;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.ErrorCodes.Registry;
-using D2.Shared.I18n;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.ErrorCodes.Registry;
+using DcsvIo.D2.I18n;
 using Xunit;
 
 /// <summary>
@@ -274,7 +274,7 @@ public sealed class ErrorCodeRegistryTests
     public void All_Count_EqualsExpectedTotalSpecCodes()
     {
         // The merged registry globs every *-error-codes.spec.json surfaced to the
-        // D2.Shared.ErrorCodes.Registry build (its csproj AdditionalFiles pattern
+        // DcsvIo.D2.ErrorCodes.Registry build (its csproj AdditionalFiles pattern
         // is contracts/**/*-error-codes.spec.json): 15 generic + 15 auth +
         // 15 generic + 15 auth = 30 public-only (KEYCUSTODIAN_* private).
         const int expected_count = 30;

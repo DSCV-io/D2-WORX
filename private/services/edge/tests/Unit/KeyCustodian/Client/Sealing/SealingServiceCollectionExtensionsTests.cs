@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
 
 using System.Linq;
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Application.Sealing;
-using D2.Edge.KeyCustodian.Client.Sealing;
-using D2.Private.Encryption;
-using D2.Shared.Encryption;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Sealing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
+using DcsvIo.D2.Private.Encryption;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

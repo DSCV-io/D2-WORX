@@ -189,7 +189,7 @@ export function emitEncryptionDomains(spec: EncryptionDomainsSpec): EmitResult {
     " * Spec-derived closed catalog of encryption-domain identifiers.",
   );
   sb.appendLine(
-    " * Mirrors .NET D2.Shared.Encryption.EncryptionDomains (same wire values).",
+    " * Mirrors .NET DcsvIo.D2.Encryption.EncryptionDomains (same wire values).",
   );
   sb.appendLine(" *");
   sb.appendLine(

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging;
+namespace DcsvIo.D2.Messaging;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Optional dedup helper for subscribers. When
@@ -17,7 +17,7 @@ using D2.Shared.Result;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Default impl in <c>D2.Shared.Messaging.RabbitMq</c> is backed by
+/// Default impl in <c>DcsvIo.D2.Messaging.RabbitMq</c> is backed by
 /// <c>IDistributedCache</c> with a 24-hour TTL — enough to cover the
 /// retry / redelivery window without growing unbounded.
 /// </para>

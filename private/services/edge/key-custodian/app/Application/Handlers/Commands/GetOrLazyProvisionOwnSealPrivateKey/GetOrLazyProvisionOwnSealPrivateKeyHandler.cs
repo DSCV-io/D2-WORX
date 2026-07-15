@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
 
-using D2.Edge.KeyCustodian.App.Application.Sealing;
-using D2.Edge.KeyCustodian.Client.Sealing;
-using D2.Private.Auth;
-using H = D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey.IGetOrLazyProvisionOwnSealPrivateKeyHandler;
-using I = D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput;
-using O = D2.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Sealing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
+using H = DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey.IGetOrLazyProvisionOwnSealPrivateKeyHandler;
+using I = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyInput;
+using O = DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing.GetOrLazyProvisionOwnSealPrivateKeyOutput;
 
 /// <summary>
 /// Serves the CALLER'S OWN PRIVATE sealing keys (active + retiring, root-unwrapped PKCS#8) so
@@ -120,7 +120,7 @@ public sealed class GetOrLazyProvisionOwnSealPrivateKeyHandler(
     private D2Result<O?> DenyWithTelemetry(D2Result authResult, string? immediateCaller)
     {
         // Switch on the EMITTED error-code constants, never raw string literals (in scope via
-        // the app/GlobalUsings.cs D2.Edge.KeyCustodian.Domain.Errors global using). The uniform
+        // the app/GlobalUsings.cs DcsvIo.D2.Private.Edge.KeyCustodian.Domain.Errors global using). The uniform
         // 403 SEAL_NOT_AUTHORIZED splits by deny arm for TELEMETRY ONLY â€” the wire code stays
         // uniform (no plane-probing signal).
         var reason = authResult.ErrorCode switch

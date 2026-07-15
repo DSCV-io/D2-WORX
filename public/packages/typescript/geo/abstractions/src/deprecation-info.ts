@@ -24,7 +24,7 @@
  * capture (e.g. "successor list is approximate; political recognition of
  * XK is partial").
  *
- * Mirrors .NET `D2.Shared.Geo.Abstractions.DeprecationInfo` (sealed record)
+ * Mirrors .NET `DcsvIo.D2.Geo.Abstractions.DeprecationInfo` (sealed record)
  * byte-for-byte over the JSON wire: .NET `DateOnly DeprecatedAt` serializes
  * to ISO-8601 calendar-date string (`"2003-06-04"`), `IReadOnlyList<string>?
  * SupersededBy` to a string array or absent property. The TS-side mirror

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.I18n.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.I18n.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.I18n.SourceGen;
+using DcsvIo.D2.I18n.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -18,8 +18,8 @@ using Xunit;
 
 /// <summary>
 /// IIncrementalGenerator integration tests for dual-target TK emission —
-/// public <c>D2.Shared.I18n.Keys</c> → <c>TK</c>; private
-/// <c>D2.Shared.I18n.Keys.Extensions</c> → <c>ProductTK</c> (distinct FQN).
+/// public <c>DcsvIo.D2.I18n.Keys</c> → <c>TK</c>; private
+/// <c>DcsvIo.D2.Private.I18n.Keys.Extensions</c> → <c>ProductTK</c> (distinct FQN).
 /// </summary>
 public sealed class TKGeneratorTests
 {
@@ -40,7 +40,7 @@ public sealed class TKGeneratorTests
     public void Generator_PublicKeysAssembly_EmitsTKUnderSharedI18n()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.I18n.Keys",
+            assemblyName: "DcsvIo.D2.I18n.Keys",
             catalogs:
             [
                 ("contracts/messages/en-US.json", _PUBLIC_EN_US),
@@ -51,7 +51,7 @@ public sealed class TKGeneratorTests
         Path.GetFileName(result.GeneratedTrees.Single().FilePath).Should().Be("TK.g.cs");
 
         var src = result.GeneratedTrees.Single().ToString();
-        src.Should().Contain("namespace D2.Shared.I18n;");
+        src.Should().Contain("namespace DcsvIo.D2.I18n;");
         src.Should().Contain("public static partial class TK");
         src.Should().Contain("NOT_FOUND");
     }
@@ -61,7 +61,7 @@ public sealed class TKGeneratorTests
     {
         // Private host merges public∪private en-US catalogs into ProductTK.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.I18n.Keys.Extensions",
+            assemblyName: "DcsvIo.D2.Private.I18n.Keys.Extensions",
             catalogs:
             [
                 ("public/contracts/messages/en-US.json", _PUBLIC_EN_US),
@@ -74,12 +74,12 @@ public sealed class TKGeneratorTests
             .Should().Be("ProductTK.g.cs");
 
         var src = result.GeneratedTrees.Single().ToString();
-        src.Should().Contain("namespace D2.Private.I18n;");
+        src.Should().Contain("namespace DcsvIo.D2.Private.I18n;");
         src.Should().Contain("public static partial class ProductTK");
         src.Should().Contain("NOT_FOUND");
         src.Should().Contain("KID_INVALID");
         src.Should().NotContain("public static partial class TK");
-        src.Should().NotContain("namespace D2.Shared.I18n;");
+        src.Should().NotContain("namespace DcsvIo.D2.I18n;");
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public sealed class TKGeneratorTests
     public void Generator_PrivateHost_MissingEnUs_EmitsMissingEnUsDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.I18n.Keys.Extensions",
+            assemblyName: "DcsvIo.D2.Private.I18n.Keys.Extensions",
             catalogs: []);
 
         var result = driver.GetRunResult();

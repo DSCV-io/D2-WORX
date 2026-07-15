@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Scheduling.Hosted;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Scheduling.Hosted;
 
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
-using D2.Edge.KeyCustodian.Infra.Configuration;
-using D2.Edge.KeyCustodian.Infra.Observability;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Observability;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

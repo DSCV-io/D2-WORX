@@ -5,8 +5,8 @@
 
 import { HttpStatusCode } from "./http-status-codes.js";
 import type { InputError } from "./input-error.js";
-import type { ErrorCategory } from "@d2/error-category";
-import type { TKMessage } from "@d2/i18n-abstractions";
+import type { ErrorCategory } from "@dcsv-io/d2-error-category";
+import type { TKMessage } from "@dcsv-io/d2-i18n-abstractions";
 
 /**
  * Constructor input for `D2Result`. All optional except `success`.
@@ -23,7 +23,7 @@ export interface D2ResultInit<T = void> {
 }
 
 /**
- * Result of an operation. Mirrors .NET `D2.Shared.Result.D2Result` /
+ * Result of an operation. Mirrors .NET `DcsvIo.D2.Result.D2Result` /
  * `D2Result<T>` — same field shape so cross-language wire is byte-identical.
  *
  * Producers should always prefer a semantic factory

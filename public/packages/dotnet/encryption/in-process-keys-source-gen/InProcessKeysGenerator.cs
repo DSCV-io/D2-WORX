@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.InProcessKeys.SourceGen;
+namespace DcsvIo.D2.InProcessKeys.SourceGen;
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -21,15 +21,15 @@ using Microsoft.CodeAnalysis.Text;
 /// <c>AdditionalFiles</c>. Dispatches per consuming assembly:
 /// <list type="bullet">
 ///   <item>
-///     <c>D2.Shared.Auth.Abstractions</c> →
+///     <c>DcsvIo.D2.Auth.Abstractions</c> →
 ///     <c>Http/D2HttpContextItems.g.cs</c> (entries with binding <c>http</c>;
-///     class is <c>public</c>, namespace <c>D2.Shared.Auth.Abstractions.Http</c>).
+///     class is <c>public</c>, namespace <c>DcsvIo.D2.Auth.Abstractions.Http</c>).
 ///   </item>
 ///   <item>
-///     <c>D2.Shared.Auth.Grpc</c> →
+///     <c>DcsvIo.D2.Auth.Grpc</c> →
 ///     <c>Interceptors/D2GrpcUserStateKeys.g.cs</c> (entries with binding
 ///     <c>grpc</c>; class is <c>internal</c>, namespace
-///     <c>D2.Shared.Auth.Grpc.Interceptors</c>).
+///     <c>DcsvIo.D2.Auth.Grpc.Interceptors</c>).
 ///   </item>
 ///   <item>Anything else → emit nothing.</item>
 /// </list>
@@ -42,21 +42,21 @@ public sealed class InProcessKeysGenerator : IIncrementalGenerator
 {
     private const string _SPEC_FILE_NAME = "keys.spec.json";
 
-    private const string _HTTP_CONSUMING_ASSEMBLY = "D2.Shared.Auth.Abstractions";
-    private const string _GRPC_CONSUMING_ASSEMBLY = "D2.Shared.Auth.Grpc";
+    private const string _HTTP_CONSUMING_ASSEMBLY = "DcsvIo.D2.Auth.Abstractions";
+    private const string _GRPC_CONSUMING_ASSEMBLY = "DcsvIo.D2.Auth.Grpc";
 
     private static readonly Dictionary<string, DispatchTarget> sr_dispatch =
         new(StringComparer.Ordinal)
         {
             [_HTTP_CONSUMING_ASSEMBLY] = new DispatchTarget(
                 Filter: InProcessKeysEmitter.BindingFilter.Http,
-                TargetNamespace: "D2.Shared.Auth.Abstractions.Http",
+                TargetNamespace: "DcsvIo.D2.Auth.Abstractions.Http",
                 ClassName: "D2HttpContextItems",
                 Visibility: "public",
                 SourceName: "D2HttpContextItems.g.cs"),
             [_GRPC_CONSUMING_ASSEMBLY] = new DispatchTarget(
                 Filter: InProcessKeysEmitter.BindingFilter.Grpc,
-                TargetNamespace: "D2.Shared.Auth.Grpc.Interceptors",
+                TargetNamespace: "DcsvIo.D2.Auth.Grpc.Interceptors",
                 ClassName: "D2GrpcUserStateKeys",
                 Visibility: "internal",
                 SourceName: "D2GrpcUserStateKeys.g.cs"),

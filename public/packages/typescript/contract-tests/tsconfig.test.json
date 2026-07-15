@@ -9,8 +9,8 @@
     "declarationMap": false,
     "baseUrl": ".",
     "paths": {
-      "@d2/geo-abstractions": ["../geo/abstractions/dist/index.d.ts"],
-      "@d2/geo-default/_records-meta.g": [
+      "@dcsv-io/d2-geo-abstractions": ["../geo/abstractions/dist/index.d.ts"],
+      "@dcsv-io/d2-geo-default/_records-meta.g": [
         "../geo/default/dist/generated/_records-meta.g.d.ts"
       ]
     }

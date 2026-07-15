@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.DataGovernance;
+namespace DcsvIo.D2.Tests.Integration.DataGovernance;
 
 using System;
 using System.Threading.Tasks;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using JetBrains.Annotations;
 using Npgsql;
 using Testcontainers.PostgreSql;

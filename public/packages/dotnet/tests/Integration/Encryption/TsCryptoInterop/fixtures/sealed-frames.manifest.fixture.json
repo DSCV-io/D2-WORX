@@ -1,7 +1,7 @@
 {
   "$comment": "Synthetic fixture-only key material; no real PII. TS-produced sealed frames opened by the .NET TsCryptoInterop suite.",
   "emittedBy": "public/packages/typescript/encryption/scripts/emit-sealed-frames.fixture.ts",
-  "regenerate": "pnpm --filter @d2/encryption emit-crypto-fixtures",
+  "regenerate": "pnpm --filter @dcsv-io/d2-encryption emit-crypto-fixtures",
   "recipientServiceId": "audit",
   "recipientKid": "ts-seal-kid",
   "recipientPrivatePkcs8Base64": "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgQPNEwYLT/eESVKigwRhwM3bz0fzHsRxO54e90hpQzn+hRANCAARN/tu3qywpSaZnxtNYIeZ3VczT/Y7Ixbv1UgCs4+0KpQUWtn/gfteUAUvFNeq9ltImuh8fgnbuk/+saGqwW8SA",

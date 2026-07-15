@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry;
+namespace DcsvIo.D2.Telemetry;
 
-using D2.Shared.AspNetCore;
-using D2.Shared.Telemetry.Internal;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Telemetry.Internal;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,7 +20,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 /// <summary>
-/// DI registration entry point for <see cref="D2.Shared.Telemetry"/> —
+/// DI registration entry point for <see cref="DcsvIo.D2.Telemetry"/> —
 /// wires the OpenTelemetry SDK (traces / metrics / logs) plus the OTLP
 /// exporters (when their canonical env vars are set), the in-process
 /// Prometheus exporter (when enabled), and the standard
@@ -178,7 +178,7 @@ public static class TelemetryServiceCollectionExtensions
 
             // Resolve the eager defaults that the OTel SDK builders need
             // at registration time (before IOptions resolution). The
-            // pattern mirrors D2.Shared.Logging — walk ServiceDescriptors
+            // pattern mirrors DcsvIo.D2.Logging — walk ServiceDescriptors
             // for the host environment without materializing a temp
             // service provider.
             var serviceName = ResolveServiceName(services, configuration, configure);
@@ -204,7 +204,7 @@ public static class TelemetryServiceCollectionExtensions
             // host already wired it or not. AddOpenTelemetry on
             // ILoggingBuilder registers an OpenTelemetryLoggerProvider
             // which Serilog's writeToProviders: true (set by
-            // D2.Shared.Logging) routes through automatically.
+            // DcsvIo.D2.Logging) routes through automatically.
             services.AddLogging(loggingBuilder =>
             {
                 loggingBuilder.AddOpenTelemetry(logging =>
@@ -454,7 +454,7 @@ public static class TelemetryServiceCollectionExtensions
         // path-only data. The SDK's default tags already strip the query
         // string in 1.15.x, but the explicit override locks the contract
         // so a future SDK regression doesn't silently leak query-string
-        // PII (matches D2.Shared.Logging's defense-in-depth posture for
+        // PII (matches DcsvIo.D2.Logging's defense-in-depth posture for
         // RemoteIp on the request-completion log line).
         var sanitized = $"{requestUri.Scheme}://{requestUri.Host}"
             + (requestUri.IsDefaultPort ? string.Empty : $":{requestUri.Port}")

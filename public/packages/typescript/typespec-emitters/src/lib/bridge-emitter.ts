@@ -312,9 +312,9 @@ function buildBridgeUsings(
   extraUsings: readonly string[] = [],
 ): readonly string[] {
   const set = new Set<string>([
-    "D2.Shared.Auth.Http.Endpoints",
-    "D2.Shared.Auth.Http.ProblemDetails",
-    "D2.Shared.Result",
+    "DcsvIo.D2.Auth.Http.Endpoints",
+    "DcsvIo.D2.Auth.Http.ProblemDetails",
+    "DcsvIo.D2.Result",
     "Microsoft.AspNetCore.Builder",
     "Microsoft.AspNetCore.Http",
     "Microsoft.AspNetCore.Routing",
@@ -322,7 +322,7 @@ function buildBridgeUsings(
 
   // Scope fluent uses Scopes.* constants (free-string ban on Edge.Api Map).
   if (scopePolicy.kind === "any" || scopePolicy.kind === "all")
-    set.add("D2.Shared.Auth.Abstractions");
+    set.add("DcsvIo.D2.Auth.Abstractions");
 
   if (grpcClientNamespace !== registrationNamespace)
     set.add(grpcClientNamespace);

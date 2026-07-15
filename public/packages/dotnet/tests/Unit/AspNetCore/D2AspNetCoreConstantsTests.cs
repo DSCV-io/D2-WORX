@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AspNetCore;
+namespace DcsvIo.D2.Tests.Unit.AspNetCore;
 
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
+using DcsvIo.D2.AspNetCore;
 using Xunit;
 
 /// <summary>

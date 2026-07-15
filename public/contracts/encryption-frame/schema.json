@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 encryption-frame binary-layout spec",
-  "description": "Schema for contracts/encryption-frame/encryption-frame.spec.json — the source-of-truth catalog of binary-layout field positions + byte lengths for the D2 on-wire encryption frame ([version:1][kid_len:1][kid:UTF-8 N][nonce:12][ct+tag:M]). D2.Shared.EncryptionFrame.SourceGen reads it to emit field-offset / byte-length constants into D2.Shared.Encryption; tools/ts-codegen/src/encryption-frame-emit.ts reads it to emit encryption-frame.g.ts into @d2/encryption-abstractions. The .NET encoder and any TS reader of @d2/encryption-abstractions reference the same catalog so the binary layout cannot drift across language boundaries.",
+  "description": "Schema for contracts/encryption-frame/encryption-frame.spec.json — the source-of-truth catalog of binary-layout field positions + byte lengths for the D2 on-wire encryption frame ([version:1][kid_len:1][kid:UTF-8 N][nonce:12][ct+tag:M]). DcsvIo.D2.EncryptionFrame.SourceGen reads it to emit field-offset / byte-length constants into DcsvIo.D2.Encryption; tools/ts-codegen/src/encryption-frame-emit.ts reads it to emit encryption-frame.g.ts into @dcsv-io/d2-encryption-abstractions. The .NET encoder and any TS reader of @dcsv-io/d2-encryption-abstractions reference the same catalog so the binary layout cannot drift across language boundaries.",
   "type": "object",
   "required": ["version", "fields", "constraints"],
   "additionalProperties": false,

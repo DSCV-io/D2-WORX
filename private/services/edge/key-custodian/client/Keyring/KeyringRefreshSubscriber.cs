@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Client.Keyring;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
 
-using D2.Shared.Handler;
-using D2.Shared.Messaging;
-using I = D2.Shared.Auth.Events.KeyRotatedEvent;
-using O = D2.Shared.Result.Unit;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Messaging;
+using I = DcsvIo.D2.Auth.Events.KeyRotatedEvent;
+using O = DcsvIo.D2.Result.Unit;
 
 /// <summary>
 /// Messaging entry point for keyring rotation. Consumes the <c>KeyRotatedEvent</c> fanout

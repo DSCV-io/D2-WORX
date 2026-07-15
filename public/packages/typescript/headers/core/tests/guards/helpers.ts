@@ -3,8 +3,8 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { IRequestContext } from "@d2/request-context-abstractions";
-import { RequestOrigin } from "@d2/request-context-abstractions";
+import type { IRequestContext } from "@dcsv-io/d2-request-context-abstractions";
+import { RequestOrigin } from "@dcsv-io/d2-request-context-abstractions";
 import type {
   GuardRequestEvent,
   GuardThrowers,

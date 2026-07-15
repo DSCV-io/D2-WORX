@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Sealing;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Sealing;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

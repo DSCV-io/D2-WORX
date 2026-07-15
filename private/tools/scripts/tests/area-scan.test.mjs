@@ -114,7 +114,7 @@ test("diffAreaSets_current_only_identity_is_post_reorg_add", () => {
     backupIdentities: [],
     currentPresent: new Set(),
     currentOnlyIdentities: [
-      "private/packages/dotnet/tests/D2.Private.Packages.Tests.csproj",
+      "private/packages/dotnet/tests/DcsvIo.D2.Private.Packages.Tests.csproj",
     ],
   });
   assert.equal(missingCount, 0);

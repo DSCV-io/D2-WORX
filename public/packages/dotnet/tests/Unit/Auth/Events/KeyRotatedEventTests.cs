@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Events;
+namespace DcsvIo.D2.Tests.Unit.Auth.Events;
 
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth.Events;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq.Encryption;
+using DcsvIo.D2.Auth.Events;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq.Encryption;
 using Xunit;
 
 /// <summary>
@@ -24,7 +24,7 @@ using Xunit;
 /// </summary>
 public sealed class KeyRotatedEventTests
 {
-    private const string _EXPECTED_FQN = "D2.Shared.Auth.Events.KeyRotatedEvent";
+    private const string _EXPECTED_FQN = "DcsvIo.D2.Auth.Events.KeyRotatedEvent";
 
     [Fact]
     public void KeyRotatedEvent_CarriesMqPubAttribute_OnThePublishedType()

@@ -9,7 +9,7 @@ import {
   ok,
   validationFailed,
   type D2Result,
-} from "@d2/result";
+} from "@dcsv-io/d2-result";
 import { describe, expect, it } from "vitest";
 
 import type {

@@ -2,15 +2,15 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Auth.Grpc
+# DcsvIo.D2.Auth.Grpc
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
-gRPC-transport binding for [`D2.Shared.Auth`](../core/README.md) — server-side `Grpc.Core.Interceptors.Interceptor` subclass that runs the JWT validation pipeline + session liveness check on inbound gRPC calls, emits `RpcException(Status, Trailers)` on failure with the `d2_error_code` / `d2_messages` / `traceid` trailer triple, and enforces per-method scope requirements via attribute declarations OR fluent endpoint metadata.
+gRPC-transport binding for [`DcsvIo.D2.Auth`](../core/README.md) — server-side `Grpc.Core.Interceptors.Interceptor` subclass that runs the JWT validation pipeline + session liveness check on inbound gRPC calls, emits `RpcException(Status, Trailers)` on failure with the `d2_error_code` / `d2_messages` / `traceid` trailer triple, and enforces per-method scope requirements via attribute declarations OR fluent endpoint metadata.
 
-Lives in its own csproj (separate from `D2.Shared.Auth`) so the `Grpc.AspNetCore.Server` framework reference is opt-in: HTTP-only services / worker processes / console hosts that consume `D2.Shared.Auth` for JWT validation in non-gRPC paths don't need to drag in the gRPC server framework. Sibling [`D2.Shared.Auth.Http`](../http/README.md) holds the HTTP-transport binding under the same logic. The two transport-binding csprojs are siblings (no inter-csproj dep): each registers an identical scoped `IRequestContext` resolver lambda that reads from a shared `HttpContext.Items` slot, so a single dual-transport host wires both extensions and resolves `IRequestContext` correctly under either transport.
+Lives in its own csproj (separate from `DcsvIo.D2.Auth`) so the `Grpc.AspNetCore.Server` framework reference is opt-in: HTTP-only services / worker processes / console hosts that consume `DcsvIo.D2.Auth` for JWT validation in non-gRPC paths don't need to drag in the gRPC server framework. Sibling [`DcsvIo.D2.Auth.Http`](../http/README.md) holds the HTTP-transport binding under the same logic. The two transport-binding csprojs are siblings (no inter-csproj dep): each registers an identical scoped `IRequestContext` resolver lambda that reads from a shared `HttpContext.Items` slot, so a single dual-transport host wires both extensions and resolves `IRequestContext` correctly under either transport.
 
-The codegen-emitted `D2GrpcUserStateKeys.g.cs` (sourced from `contracts/in-process-keys/keys.spec.json` via `D2.Shared.InProcessKeys.SourceGen`) lands in the tracked `Generated/D2.Shared.InProcessKeys.SourceGen/...` directory — committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit.
+The codegen-emitted `D2GrpcUserStateKeys.g.cs` (sourced from `contracts/in-process-keys/keys.spec.json` via `DcsvIo.D2.InProcessKeys.SourceGen`) lands in the tracked `Generated/DcsvIo.D2.InProcessKeys.SourceGen/...` directory — committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit.
 
 ## Public API surface
 
@@ -38,9 +38,9 @@ Alongside its `IRequestContext` dual-write, the interceptor captures the validat
 
 ### Ambient-scope adapter — `GrpcHttpContextAmbientRequestScopeAccessor`
 
-The read-back door for the forwarded-JWT holder on a gRPC-inbound forwarding host — the gRPC-inbound sibling of `D2.Shared.Auth.Http`'s `HttpContextAmbientRequestScopeAccessor`. The outbound forwarding credential ([`ForwardedJwtCallCredentials`](../outbound/README.md#forwarded-transaction-token--per-request-callcredentials-the-forward-unchanged-rail-of-adr-0022) in `D2.Shared.Auth.Outbound`) must reach the _current_ call's request-scoped holder on each outbound RPC, but a gRPC `CallCredentials` runs outside the DI request-scope ambient flow. It depends on the framework-free `IAmbientRequestScopeAccessor` port (declared in `D2.Shared.Auth.Abstractions`, referenced by both transport libs and the outbound lib) rather than on `IHttpContextAccessor` directly — so the outbound lib stays free of any AspNetCore framework reference. gRPC services are hosted inside Kestrel (`Grpc.AspNetCore.Server`), so each call has a per-call `HttpContext` set on the same `AsyncLocal<>` seam the HTTP pipeline uses; `GrpcHttpContextAmbientRequestScopeAccessor` reads `IHttpContextAccessor.HttpContext?.RequestServices` exactly as the HTTP sibling does, and the interceptor's capture writes the holder into that same scope. `AddD2AuthGrpc()` registers it as a singleton (stateless — per-call state flows through the AsyncLocal accessor), symmetric to where it registers the holder write-side, so a gRPC-inbound forwarding host self-wires the read-back door without `AddD2AuthHttp()`.
+The read-back door for the forwarded-JWT holder on a gRPC-inbound forwarding host — the gRPC-inbound sibling of `DcsvIo.D2.Auth.Http`'s `HttpContextAmbientRequestScopeAccessor`. The outbound forwarding credential ([`ForwardedJwtCallCredentials`](../outbound/README.md#forwarded-transaction-token--per-request-callcredentials-the-forward-unchanged-rail-of-adr-0022) in `DcsvIo.D2.Auth.Outbound`) must reach the _current_ call's request-scoped holder on each outbound RPC, but a gRPC `CallCredentials` runs outside the DI request-scope ambient flow. It depends on the framework-free `IAmbientRequestScopeAccessor` port (declared in `DcsvIo.D2.Auth.Abstractions`, referenced by both transport libs and the outbound lib) rather than on `IHttpContextAccessor` directly — so the outbound lib stays free of any AspNetCore framework reference. gRPC services are hosted inside Kestrel (`Grpc.AspNetCore.Server`), so each call has a per-call `HttpContext` set on the same `AsyncLocal<>` seam the HTTP pipeline uses; `GrpcHttpContextAmbientRequestScopeAccessor` reads `IHttpContextAccessor.HttpContext?.RequestServices` exactly as the HTTP sibling does, and the interceptor's capture writes the holder into that same scope. `AddD2AuthGrpc()` registers it as a singleton (stateless — per-call state flows through the AsyncLocal accessor), symmetric to where it registers the holder write-side, so a gRPC-inbound forwarding host self-wires the read-back door without `AddD2AuthHttp()`.
 
-This is a deliberate tiny duplicate of the HTTP adapter, not a shared type: the two transport-binding libs are siblings with no inter-csproj dependency, so a single shared adapter would force either a forbidden inter-lib edge or a new shared lib for one trivial property. Both adapters implement the same `D2.Shared.Auth.Abstractions` port and read the same `IHttpContextAccessor` seam, so a dual-transport host (HTTP + gRPC on one Kestrel) sees identical behavior regardless of which transport's `TryAddSingleton` wins (first-wins is harmless).
+This is a deliberate tiny duplicate of the HTTP adapter, not a shared type: the two transport-binding libs are siblings with no inter-csproj dependency, so a single shared adapter would force either a forbidden inter-lib edge or a new shared lib for one trivial property. Both adapters implement the same `DcsvIo.D2.Auth.Abstractions` port and read the same `IHttpContextAccessor` seam, so a dual-transport host (HTTP + gRPC on one Kestrel) sees identical behavior regardless of which transport's `TryAddSingleton` wins (first-wins is harmless).
 
 `AddD2AuthGrpc()` does NOT call `AddGrpc()` itself — the host owns that registration so per-host gRPC settings (`MaxReceiveMessageSize`, `EnableDetailedErrors`, etc.) stay under host control.
 
@@ -135,7 +135,7 @@ The interceptor resolves the effective scope declaration from the endpoint's met
 
 #### Deny-by-default boot guard
 
-The `AuthEndpointGuardStartupFilter` (wired by `D2.Shared.Auth.Startup` — see [`../startup/README.md`](../startup/README.md)) requires **every** mapped `RouteEndpoint` to carry a declared auth intent (fluent or attribute). If any gRPC method lacks a declaration, the host fails to start with an `InvalidOperationException` listing the undeclared routes — before serving any traffic. Declare intent on every method or the host won't start.
+The `AuthEndpointGuardStartupFilter` (wired by `DcsvIo.D2.Auth.Startup` — see [`../startup/README.md`](../startup/README.md)) requires **every** mapped `RouteEndpoint` to carry a declared auth intent (fluent or attribute). If any gRPC method lacks a declaration, the host fails to start with an `InvalidOperationException` listing the undeclared routes — before serving any traffic. Declare intent on every method or the host won't start.
 
 #### Harmless endpoints
 
@@ -163,11 +163,11 @@ Builds an `RpcException(Status, Trailers)`:
 | --- | --- |
 | `Status.StatusCode` | `D2Result.StatusCode` mapped: 401 → `Unauthenticated` (16); 503 → `Unavailable` (14); other → `Internal` (13). |
 | `Status.Detail` | DELIBERATELY EMPTY. Telling an attacker which validation step failed (signature vs expired vs claim missing) is an info leak; the granular `d2_error_code` trailer carries the machine-readable taxonomy for legitimate operators. |
-| `Trailers[D2GrpcTrailers.ERROR_CODE]` (`"d2_error_code"`) | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`). |
+| `Trailers[D2GrpcTrailers.ERROR_CODE]` (`"d2_error_code"`) | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `DcsvIo.D2.Auth.Errors.AuthErrorCodes`). |
 | `Trailers[D2GrpcTrailers.MESSAGES]` (`"d2_messages"`) | `D2Result.Messages` array serialized as JSON text (TK keys + bounded params). Same wire shape as the HTTP middleware's ProblemDetails `d2_messages` extension. |
 | `Trailers[D2GrpcTrailers.TRACE_ID]` (`"traceId"`) | `Activity.Current?.TraceId` (W3C lower-hex format, 32 chars). camelCase matches the HTTP ProblemDetails extension key `traceId`. Omitted when no Activity is on the execution context — never surfaced as null. |
 
-The trailer keys are spec-driven via `contracts/grpc-trailers/grpc-trailers.spec.json` — the `D2.Shared.Grpc.Trailers.SourceGen` Roslyn generator emits `D2GrpcTrailers` into this csproj from the spec, and `tools/ts-codegen` emits the cross-language sibling `D2GrpcTrailers` into `@d2/grpc-client`. Both sides reference identical wire values byte-for-byte.
+The trailer keys are spec-driven via `contracts/grpc-trailers/grpc-trailers.spec.json` — the `DcsvIo.D2.Grpc.Trailers.SourceGen` Roslyn generator emits `D2GrpcTrailers` into this csproj from the spec, and `tools/ts-codegen` emits the cross-language sibling `D2GrpcTrailers` into `@dcsv-io/d2-grpc-client`. Both sides reference identical wire values byte-for-byte.
 
 Side-effect: increments `AuthTelemetry.SR_ProblemEmitted` tagged with `d2_error_code` (single sink across HTTP + gRPC, intentionally so dashboards aggregate cleanly).
 
@@ -259,15 +259,15 @@ All four server-side handler methods — `UnaryServerHandler`, `ClientStreamingS
 
 | Package | Why |
 | --- | --- |
-| `D2.Shared.Auth` | `JwtValidator` (consumed via `InternalsVisibleTo`), `AuthFailures`, `AuthErrorCodes`, `AuthLog`, `AuthTelemetry`. |
-| `D2.Shared.Auth.Abstractions` | `ISessionLivenessTracker` contract + `JwtClaimTypes` + `IForwardedJwtAccessor` holder + `IAmbientRequestScopeAccessor` port — this lib hosts the `IHttpContextAccessor`-backed gRPC-side adapter for it so the outbound lib stays framework-free. |
-| `D2.Shared.Context.Abstractions` | `IRequestContext` shape. |
-| `D2.Shared.Result` | `D2Result` typed factories. |
-| `D2.Shared.I18n.Abstractions` | `TKMessage` shape. |
-| `D2.Shared.Utilities` | `Falsey()` / `Truthy()` extensions. |
-| `D2.Shared.Time` | `IClock` / `SystemClock` — timestamps the call-path entry `RequestOriginCrossProcessInterceptor` appends on each inbound hop. |
-| `D2.Shared.Headers.Grpc` | `GrpcHeaders.PROPAGATED_CONTEXT` (`"x-d2-context"`) — the wire constant `RequestOriginCrossProcessInterceptor` reads on inbound calls (the same generated constant the outbound `PropagatedContextClientInterceptor` writes). |
-| `D2.Shared.AspNetCore` | `PeerWorkloadIdentityAccessor.GetD2PeerWorkloadIdentity()` — the capability-general mTLS peer-identity accessor `RequestOriginCrossProcessInterceptor` calls (via `ServerCallContext.GetHttpContext()`) to derive `ImmediateCaller` from the validated client certificate. |
+| `DcsvIo.D2.Auth` | `JwtValidator` (consumed via `InternalsVisibleTo`), `AuthFailures`, `AuthErrorCodes`, `AuthLog`, `AuthTelemetry`. |
+| `DcsvIo.D2.Auth.Abstractions` | `ISessionLivenessTracker` contract + `JwtClaimTypes` + `IForwardedJwtAccessor` holder + `IAmbientRequestScopeAccessor` port — this lib hosts the `IHttpContextAccessor`-backed gRPC-side adapter for it so the outbound lib stays framework-free. |
+| `DcsvIo.D2.Context.Abstractions` | `IRequestContext` shape. |
+| `DcsvIo.D2.Result` | `D2Result` typed factories. |
+| `DcsvIo.D2.I18n.Abstractions` | `TKMessage` shape. |
+| `DcsvIo.D2.Utilities` | `Falsey()` / `Truthy()` extensions. |
+| `DcsvIo.D2.Time` | `IClock` / `SystemClock` — timestamps the call-path entry `RequestOriginCrossProcessInterceptor` appends on each inbound hop. |
+| `DcsvIo.D2.Headers.Grpc` | `GrpcHeaders.PROPAGATED_CONTEXT` (`"x-d2-context"`) — the wire constant `RequestOriginCrossProcessInterceptor` reads on inbound calls (the same generated constant the outbound `PropagatedContextClientInterceptor` writes). |
+| `DcsvIo.D2.AspNetCore` | `PeerWorkloadIdentityAccessor.GetD2PeerWorkloadIdentity()` — the capability-general mTLS peer-identity accessor `RequestOriginCrossProcessInterceptor` calls (via `ServerCallContext.GetHttpContext()`) to derive `ImmediateCaller` from the validated client certificate. |
 | `Grpc.AspNetCore.Server` | Server-side gRPC binding (`Interceptor`, `ServerCallContext`, `Metadata`, `Status`, `RpcException`, `IServerCallContextFeature`). |
 | `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`) | Hosts gRPC services; provides `HttpContext`, `IEndpointConventionBuilder`, `IApplicationBuilder`. |
 | `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options. |
@@ -335,6 +335,6 @@ Pre-auth / missing-slot resolution returns Unestablished Mutable so hosted Syste
 - [`../startup/README.md`](../startup/README.md) — deny-by-default boot guard
 - [`../abstractions/README.md`](../abstractions/README.md) — `ISessionLivenessTracker`, `JwtClaimTypes`, `Audiences`, `Scopes`
 - [`../outbound/README.md`](../outbound/README.md) — the caller-side auth lib: the per-request forwarded-JWT `CallCredentials` and the workload-certificate mTLS leaf. Cross-process gRPC workload identity is mTLS ([ADR-0023](../../../../../public/docs/adrs/0023-mtls-workload-identity.md)) — a verified client certificate on a mutually-authenticated channel — and the bearer a gRPC client carries downstream is the single Edge-minted token forwarded unchanged ([ADR-0022](../../../../../public/docs/adrs/0022-service-auth-mint-once-forward.md)).
-- [`../../result/grpc/README.md`](../../result/grpc/README.md) — business-result `D2ResultProto` envelope codec (`ToProto` / `HandleAsync`). This lib (`D2.Shared.Auth.Grpc`) handles the auth/transport-reject path (`RpcException` + `D2GrpcTrailers`); `D2.Shared.Result.Grpc` handles the business-result path. The two are structurally separate — a `401` from the JWT interceptor never becomes a `D2ResultProto` envelope, and a `404` from a handler never becomes an `RpcException`.
+- [`../../result/grpc/README.md`](../../result/grpc/README.md) — business-result `D2ResultProto` envelope codec (`ToProto` / `HandleAsync`). This lib (`DcsvIo.D2.Auth.Grpc`) handles the auth/transport-reject path (`RpcException` + `D2GrpcTrailers`); `DcsvIo.D2.Result.Grpc` handles the business-result path. The two are structurally separate — a `401` from the JWT interceptor never becomes a `D2ResultProto` envelope, and a `404` from a handler never becomes an `RpcException`.
 - [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) — Bearer Token Usage
 - [gRPC status codes](https://grpc.io/docs/guides/status-codes/) — canonical status code semantics

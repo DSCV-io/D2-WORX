@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
 
 using System.Collections.Concurrent;
-using D2.Private.Encryption;
-using D2.Shared.WorkloadIdentity;
+using DcsvIo.D2.Private.Encryption;
+using DcsvIo.D2.Spiffe;
 
 /// <summary>
 /// Strong-typed value object identifying which independently-rotated keyring

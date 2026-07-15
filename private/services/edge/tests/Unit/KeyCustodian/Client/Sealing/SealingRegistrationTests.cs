@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Sealing;
 
 using System.Reflection;
 using System.Text;
 using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Application.Sealing;
-using D2.Edge.KeyCustodian.Client.Sealing;
-using D2.Shared.Encryption;
-using D2.Shared.Logging.Destructuring;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.Logging.Destructuring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Sealing;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Sealing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog.Core;
@@ -175,12 +175,12 @@ public sealed class SealingRegistrationTests
         var secretBase64 = Convert.ToBase64String(secretBytes);
 
         // Type-level attribute pin (the hand-authored partial in the Client assembly).
-        typeof(D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry)
+        typeof(global::D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry)
             .GetCustomAttribute<RedactDataAttribute>().Should().NotBeNull(
                 "the promoted seal-private wire proto must carry a type-level "
                 + "[RedactData(SecretInformation)] partial so no PKCS#8 bytes ever render");
 
-        var protoEntry = new D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry
+        var protoEntry = new global::D2.Services.Protos.KeyCustodian.V2Alpha.SealPrivateEntry
         {
             Kid = "fixture-kid-1",
             PrivatePkcs8 = Google.Protobuf.ByteString.CopyFrom(secretBytes),

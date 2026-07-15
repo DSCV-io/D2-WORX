@@ -58,7 +58,7 @@ extern dec d2GrpcMethod(
 /**
  * Marks a model property as sensitive — redacted from structured logs. The
  * REQUIRED `reason` names the data class and must be one of the
- * `D2.Shared.Utilities.Enums.RedactReason` member names: `Unspecified`,
+ * `DcsvIo.D2.Utilities.Enums.RedactReason` member names: `Unspecified`,
  * `PersonalInformation`, `FinancialInformation`, `SecretInformation`,
  * `VerboseContent`, `Other`. The C# DTO emitter maps it to
  * `[property: RedactData(Reason = RedactReason.<reason>)]`. The reason is

@@ -4,32 +4,32 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Edge.Tests.TypeSpecGrpc.Generated;
-using D2.Edge.Tests.TypeSpecGrpcPredicate.Generated;
-using D2.Services.Protos.PredicateFixtures.V1;
-using D2.Services.Protos.SignFixtures.V2Alpha;
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Resilience.Retry;
-using D2.Shared.Result;
-using D2.Shared.Result.Grpc;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.Pipeline;
+using DcsvIo.D2.Resilience.Retry;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.PredicateFixtures.V1;
+using global::D2.Services.Protos.SignFixtures.V2Alpha;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using DtoPlaceOrderFixtureInput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureInput;
-using DtoPlaceOrderFixtureOutput = D2.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureOutput;
-using DtoSignFixtureInput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
-using DtoSignFixtureOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
-using ProtoPlaceOrderFixtureOutput = D2.Services.Protos.PredicateFixtures.V1.PlaceOrderFixtureOutput;
-using ProtoSignFixtureOutput = D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
+using DtoPlaceOrderFixtureInput = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureInput;
+using DtoPlaceOrderFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated.PlaceOrderFixtureOutput;
+using DtoSignFixtureInput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
+using DtoSignFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+using ProtoPlaceOrderFixtureOutput = global::D2.Services.Protos.PredicateFixtures.V1.PlaceOrderFixtureOutput;
+using ProtoSignFixtureOutput = global::D2.Services.Protos.SignFixtures.V2Alpha.SignFixtureOutput;
 
 /// <summary>
 /// Over-the-wire resilience and envelope integration tests. Re-proves the resilience /

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.AdvisoryLocks.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.AdvisoryLocks.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using D2.Shared.AdvisoryLocks.SourceGen;
+using DcsvIo.D2.AdvisoryLocks.SourceGen;
 using Xunit;
 
 /// <summary>
@@ -31,7 +31,7 @@ public sealed class AdvisoryLocksEmitterTests
 
         result.Diagnostics.Should().BeEmpty();
         result.GeneratedSource.Should()
-            .Contain("namespace D2.Edge.KeyCustodian.Infra;");
+            .Contain("namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra;");
         result.GeneratedSource.Should()
             .Contain("public static class AdvisoryLocks");
         result.GeneratedSource.Should()

@@ -18,7 +18,7 @@ import type { DeprecationInfo } from "../deprecation-info.js";
  * pseudo-zones. `coApplicableCountries` carries other countries
  * sharing the same IANA zone (beyond the primary). Both nav refs
  * populated in the wire-nav step. Mirrors .NET
- * `D2.Shared.Geo.Abstractions.Timezone` field-for-field.
+ * `DcsvIo.D2.Geo.Abstractions.Timezone` field-for-field.
  */
 export interface Timezone {
   readonly ianaName: TimezoneCode;

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Errors;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Errors;
 
 using System.Collections.Generic;
 using System.IO;
@@ -12,10 +12,10 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth.Errors;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 

@@ -6,7 +6,7 @@
 
 // ReSharper disable once CheckNamespace -- a hand-authored partial for the
 // protobuf-generated KeyringEntry MUST declare the proto's own namespace
-// (D2.Services.Protos.KeyCustodian.V2Alpha) to merge with it; see the summary.
+// (global::D2.Services.Protos.KeyCustodian.V2Alpha) to merge with it; see the summary.
 namespace D2.Services.Protos.KeyCustodian.V2Alpha;
 
 /// <summary>
@@ -17,7 +17,7 @@ namespace D2.Services.Protos.KeyCustodian.V2Alpha;
 /// as <c>[REDACTED: SecretInformation]</c> wherever a destructured log capture would
 /// otherwise render it, including recursively through <c>GetKeyringOutput.Entries</c>
 /// and a full <c>GetKeyringResponse</c>. Mirrors the <c>[RedactData]</c> the emitted
-/// leaf DTO (<c>D2.Edge.KeyCustodian.Client.Keyring.KeyringEntry.KeyBytes</c>) already carries.
+/// leaf DTO (<c>DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring.KeyringEntry.KeyBytes</c>) already carries.
 /// </summary>
 [RedactData(Reason = RedactReason.SecretInformation)]
 public sealed partial class KeyringEntry;

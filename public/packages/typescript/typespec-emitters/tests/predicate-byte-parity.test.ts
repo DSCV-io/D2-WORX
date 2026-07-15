@@ -30,8 +30,8 @@ import {
   parseResultPredicate,
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
-} from "@d2/typespec-decorators";
-import type { PredicateNode } from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
+import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 import {
   emitResultPredicates,
   emitBusinessRetrySignal,
@@ -48,10 +48,10 @@ import { emitHandlerInterface } from "../src/lib/handler-interface-emitter.js";
 import type { FieldInfo } from "../src/lib/model-walk.js";
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -60,14 +60,15 @@ const D2DecoratorTestLibrary = createTestLibrary({
 });
 
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
 });
 
 // The committed fixture homes (the byte-pinned snapshots).
-const CLIENTS_NS = "D2.Edge.Tests.TypeSpecGrpcPredicate.Generated";
+const CLIENTS_NS =
+  "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated";
 const PROTO_NS = "D2.Services.Protos.PredicateFixtures.V1";
 const SPEC = "contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
 

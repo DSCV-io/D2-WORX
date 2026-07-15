@@ -4,16 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Http.Establishment;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Http.Establishment;
 
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Http;
-using D2.Shared.Auth.Http.Middleware;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Time;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Auth.Http.Middleware;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Time;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;

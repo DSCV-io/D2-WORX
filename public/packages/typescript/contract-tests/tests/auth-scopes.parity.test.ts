@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { ALL_SCOPES, Scopes } from "@d2/auth-abstractions";
+import { ALL_SCOPES, Scopes } from "@dcsv-io/d2-auth-abstractions";
 
 import { canonicalize, loadFixture } from "../src/index.js";
 

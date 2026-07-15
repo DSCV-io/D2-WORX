@@ -11,7 +11,7 @@
 // so the unit tests drive the runner with synthetic commit histories and fixed
 // dates — no real git or filesystem IO required in tests.
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 import { computeBumpPlans } from "./bump-engine.js";
 import { propagateBumps } from "./dependency-graph.js";
 import { writeManifestVersion } from "./manifest-editor.js";

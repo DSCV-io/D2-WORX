@@ -3,13 +3,13 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { EncryptionFrame } from "@d2/encryption-abstractions";
+import { EncryptionFrame } from "@dcsv-io/d2-encryption-abstractions";
 
 import { FrameMalformedError, FrameVersionMismatchError } from "./errors.js";
 
 /**
  * Codec for the on-wire SYMMETRIC (version-1) encryption frame — the twin of
- * .NET `D2.Shared.Encryption.EncryptionFrame`. Layout:
+ * .NET `DcsvIo.D2.Encryption.EncryptionFrame`. Layout:
  * `[version=1:1][kid_len:1][kid:UTF-8 N][nonce:12][ciphertext+tag:M]`.
  *
  * Version dispatch is structural: this codec hard-rejects the sealed (v2)

@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-// @d2/key-custodian-client — the Node workload-leaf certificate client. The
+// @dcsv-io/d2-private-key-custodian-client — the Node workload-leaf certificate client. The
 // behavioral twin of the .NET WorkloadLeafClient: fresh ECDSA P-256 keypair per
 // (re)issue (private key never leaves the process), PKCS#10 CSR over the emitted
 // KeyCustodian gRPC wire client, leaf↔local-key mismatch defense, CA-chain fetch

@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Api.Composition;
+namespace DcsvIo.D2.Private.Audit.Api.Composition;
 
-using D2.Audit.Api.Kestrel;
-using D2.Audit.Api.Mtls;
-using D2.Audit.App.Application;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Grpc;
-using D2.Shared.Caching.Distributed.Redis;
-using D2.Shared.Caching.Tiered;
-using D2.Shared.ServiceDefaults;
-using D2.Shared.Utilities.Configuration;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Grpc;
+using DcsvIo.D2.Caching.Distributed.Redis;
+using DcsvIo.D2.Caching.Tiered;
+using DcsvIo.D2.Private.Audit.Api.Kestrel;
+using DcsvIo.D2.Private.Audit.Api.Mtls;
+using DcsvIo.D2.Private.Audit.App.Application;
+using DcsvIo.D2.ServiceDefaults;
+using DcsvIo.D2.Utilities.Configuration;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

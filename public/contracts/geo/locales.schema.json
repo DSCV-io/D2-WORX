@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://d2-worx.dev/contracts/geo/locales.schema.json",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/locales.schema.json",
   "title": "Locale catalog (codegen-ready)",
   "description": "Tier 2 codegen-ready Locale catalog. Matches the LocaleSpec record shape consumed by .NET SourceGen + TS emitter. Region-derived fields (firstDayOfWeek) are denormalized from Country at clean-pass time.",
   "type": "object",

@@ -31,10 +31,10 @@
 // The retry + breaker PRIMITIVES + the controllable outbound dependency are out
 // of scope (the spike supplies stand-in primitives + a fake dependency); the
 // spike is about codegen completeness of the PIPELINE, not the exact
-// D2.Shared.Resilience integration (prod swaps the stand-in for it).
+// DcsvIo.D2.Resilience integration (prod swaps the stand-in for it).
 // ============================================================================
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 
 using D2;
 

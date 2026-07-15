@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { ILogger } from "@d2/logging";
+import type { ILogger } from "@dcsv-io/d2-logging";
 
 // Twin of .NET TieredCacheLog EventId meanings: Warning on L1 invalidation
 // failure and on L1 write failure after L2 success. Structured redis-style

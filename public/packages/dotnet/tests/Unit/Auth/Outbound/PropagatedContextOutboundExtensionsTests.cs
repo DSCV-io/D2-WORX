@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Outbound;
+namespace DcsvIo.D2.Tests.Unit.Auth.Outbound;
 
 using System;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Outbound.Grpc;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Protos;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Outbound.Grpc;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Protos;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

@@ -9,15 +9,15 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { AuthFailures } from "@d2/auth-abstractions";
-import { SupportedLocales, Translator } from "@d2/i18n";
-import * as resultFactories from "@d2/result";
-import type { D2Result } from "@d2/result";
+import { AuthFailures } from "@dcsv-io/d2-auth-abstractions";
+import { SupportedLocales, Translator } from "@dcsv-io/d2-i18n";
+import * as resultFactories from "@dcsv-io/d2-result";
+import type { D2Result } from "@dcsv-io/d2-result";
 
 // ---------------------------------------------------------------------------
 // Cross-runtime TK-validity RENDER test (TS half). For EVERY auth error-code
 // spec entry, assert the ACTUAL wire TKMessage the emitted AuthFailures factory
-// produces RENDERS to real text — not the raw key — via the @d2/i18n Translator
+// produces RENDERS to real text — not the raw key — via the @dcsv-io/d2-i18n Translator
 // over contracts/messages/en-US.json. This is the guard that catches the
 // symbol-vs-snake drift: a factory could reference a real TK symbol whose WIRE
 // key still doesn't render. The .NET half (AuthFailuresTkValidityTests) asserts
@@ -129,7 +129,7 @@ describe("error-codes TK-validity (TS: every auth factory's wire message renders
 // ---------------------------------------------------------------------------
 // Cross-runtime TK-validity RENDER test (TS half, GENERIC catalog). For every
 // generic spec entry that ships a constructing factory (factoryShape != none),
-// invoke the ACTUAL generated @d2/result factory and assert its wire TKMessage
+// invoke the ACTUAL generated @dcsv-io/d2-result factory and assert its wire TKMessage
 // renders to real en-US text — not the raw key. The .NET half
 // (ErrorCodesTkValidityTests) asserts the same invariant on the .NET catalog;
 // both must render the same text. This is the guard that PROVES the render fix:

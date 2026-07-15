@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Logging;
+namespace DcsvIo.D2.Logging;
 
-using D2.Shared.AspNetCore;
-using D2.Shared.Logging.Internal;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.Logging.Internal;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -16,11 +16,11 @@ using Serilog.AspNetCore;
 using Serilog.Events;
 
 /// <summary>
-/// ASP.NET Core middleware extensions for <see cref="D2.Shared.Logging"/> —
+/// ASP.NET Core middleware extensions for <see cref="DcsvIo.D2.Logging"/> —
 /// installs the Serilog request-completion log middleware with infrastructure
 /// path suppression, conservative diagnostic-context enrichment, and
 /// <see cref="Microsoft.AspNetCore.Http.HttpContext"/>-derived
-/// <see cref="D2.Shared.Context.Abstractions.IRequestContext"/> projection
+/// <see cref="DcsvIo.D2.Context.Abstractions.IRequestContext"/> projection
 /// onto the log line when registered.
 /// </summary>
 public static class WebApplicationLoggingExtensions
@@ -35,7 +35,7 @@ public static class WebApplicationLoggingExtensions
         /// and a curated set of <see cref="HttpRequest"/>-derived properties
         /// (<c>RequestScheme</c>, <c>UserAgent</c>, <c>TraceId</c>,
         /// <c>RequestHost</c>) plus the
-        /// <see cref="D2.Shared.Context.Abstractions.IRequestContext"/>
+        /// <see cref="DcsvIo.D2.Context.Abstractions.IRequestContext"/>
         /// projection (when registered).
         /// </summary>
         /// <remarks>
@@ -54,7 +54,7 @@ public static class WebApplicationLoggingExtensions
         /// services it's the upstream Edge IP, not the user's; at Edge it's
         /// PII). Geo / network-privacy / ASN fields are sourced from the
         /// spec-driven
-        /// <see cref="D2.Shared.Context.Abstractions.IRequestContext"/> via
+        /// <see cref="DcsvIo.D2.Context.Abstractions.IRequestContext"/> via
         /// <see cref="D2RequestContextEnricher"/> — see the README's
         /// "Network/IP enrichment design" section.
         /// </para>

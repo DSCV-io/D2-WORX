@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Utilities.Configuration;
+namespace DcsvIo.D2.Utilities.Configuration;
 
 using dotenv.net;
 

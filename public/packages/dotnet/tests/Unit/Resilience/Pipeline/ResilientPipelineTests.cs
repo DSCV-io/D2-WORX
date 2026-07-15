@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Resilience.Pipeline;
+namespace DcsvIo.D2.Tests.Unit.Resilience.Pipeline;
 
 using AwesomeAssertions;
-using D2.Shared.Resilience.CircuitBreaker;
-using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Resilience.RateLimiting;
+using DcsvIo.D2.Resilience.CircuitBreaker;
+using DcsvIo.D2.Resilience.Pipeline;
+using DcsvIo.D2.Resilience.RateLimiting;
 using Xunit;
-using SingleflightT = D2.Shared.Resilience.Singleflight.Singleflight<string, int>;
+using SingleflightT = DcsvIo.D2.Resilience.Singleflight.Singleflight<string, int>;
 
 public sealed class ResilientPipelineTests
 {

@@ -51,15 +51,15 @@ interface ListEntry {
 
 const SAMPLE_PACKAGES: ListEntry[] = [
   {
-    name: "D2.Shared.Result",
+    name: "DcsvIo.D2.Result",
     ecosystem: "nuget",
     currentVersion: "0.1.0",
     dir: "public/packages/dotnet/result/core",
     manifestPath:
-      "/repo/public/packages/dotnet/result/core/D2.Shared.Result.csproj",
+      "/repo/public/packages/dotnet/result/core/DcsvIo.D2.Result.csproj",
   },
   {
-    name: "@d2/result",
+    name: "@dcsv-io/d2-result",
     ecosystem: "npm",
     currentVersion: "0.1.0",
     dir: "public/packages/typescript/result",
@@ -130,7 +130,7 @@ describe("buildManifestJson — output shape", () => {
   it("package version field uses currentVersion from ListEntry", () => {
     const pkgs: ListEntry[] = [
       {
-        name: "D2.Shared.Result",
+        name: "DcsvIo.D2.Result",
         ecosystem: "nuget",
         currentVersion: "0.3.7",
         dir: "some/dir",
@@ -222,14 +222,14 @@ describe("buildHowToUse — content", () => {
   it("handles all-nuget input without error", () => {
     const nugetOnly: ListEntry[] = [
       {
-        name: "D2.Shared.Result",
+        name: "DcsvIo.D2.Result",
         ecosystem: "nuget",
         currentVersion: "0.1.0",
         dir: "a",
         manifestPath: "/a.csproj",
       },
       {
-        name: "D2.Shared.Utilities",
+        name: "DcsvIo.D2.Utilities",
         ecosystem: "nuget",
         currentVersion: "0.1.0",
         dir: "b",
@@ -244,7 +244,7 @@ describe("buildHowToUse — content", () => {
   it("handles all-npm input without error", () => {
     const npmOnly: ListEntry[] = [
       {
-        name: "@d2/result",
+        name: "@dcsv-io/d2-result",
         ecosystem: "npm",
         currentVersion: "0.1.0",
         dir: "a",

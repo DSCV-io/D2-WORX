@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`public/packages/dotnet/`](../README.md)
 
-The D² wire-protocol header catalogs, split per transport, for every service that reads or writes D² headers on HTTP, AMQP, or gRPC. All catalogs are codegen-emitted from a single `contracts/headers/headers.spec.json` spec, so a header that appears on multiple transports carries an identical wire value across all of them — drift is structurally impossible. The same spec drives the TS-side `@d2/headers-*` packages. Each per-transport catalog has zero runtime dependencies.
+The D² wire-protocol header catalogs, split per transport, for every service that reads or writes D² headers on HTTP, AMQP, or gRPC. All catalogs are codegen-emitted from a single `contracts/headers/headers.spec.json` spec, so a header that appears on multiple transports carries an identical wire value across all of them — drift is structurally impossible. The same spec drives the TS-side `@dcsv-io/d2-headers-*` packages. Each per-transport catalog has zero runtime dependencies.
 
 ## Packages
 

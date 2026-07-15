@@ -1,5 +1,5 @@
 {
-  "name": "@d2/headers-common",
+  "name": "@dcsv-io/d2-headers-common",
   "version": "0.1.0",
   "private": true,
   "type": "module",

@@ -11,7 +11,7 @@
 import { z } from "zod";
 
 /**
- * Catalog of supranational geopolitical short-codes (EU, NATO, USMCA, continents, trade blocs, military alliances, etc.). Branded string type. Mirrors .NET `D2.Shared.Geo.Abstractions.GeopoliticalEntityCode` byte-for-byte over the wire.
+ * Catalog of supranational geopolitical short-codes (EU, NATO, USMCA, continents, trade blocs, military alliances, etc.). Branded string type. Mirrors .NET `DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode` byte-for-byte over the wire.
  */
 export const GeopoliticalEntityCode = {
   /** Africa */

@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 /**
- * The rotation-event subscription port — the host adapts `@d2/messaging-rabbitmq`
+ * The rotation-event subscription port — the host adapts `@dcsv-io/d2-messaging-rabbitmq`
  * `subscribe` (domain-filtered) to this shape. Modeled as an injected port so the
  * KC-backed crypto wiring stays broker-decoupled and unit-testable (the TS
  * "composition instead of registration" divergence). The behavioral twin of the

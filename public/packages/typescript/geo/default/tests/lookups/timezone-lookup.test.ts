@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { CountryCode, type TimezoneCode } from "@d2/geo-abstractions";
+import { CountryCode, type TimezoneCode } from "@dcsv-io/d2-geo-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { TimezoneLookup } from "../../src/timezones.js";

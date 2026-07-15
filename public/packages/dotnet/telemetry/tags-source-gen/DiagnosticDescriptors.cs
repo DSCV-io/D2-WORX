@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry.Tags.SourceGen;
+namespace DcsvIo.D2.Telemetry.Tags.SourceGen;
 
 using Microsoft.CodeAnalysis;
 
@@ -76,5 +76,5 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    private const string _CATEGORY = "D2.Shared.Telemetry.Tags.SourceGen";
+    private const string _CATEGORY = "DcsvIo.D2.Telemetry.Tags.SourceGen";
 }

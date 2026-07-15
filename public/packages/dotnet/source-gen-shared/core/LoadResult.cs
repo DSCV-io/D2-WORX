@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.SourceGen;
+namespace DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Outcome of a JSON spec parse. Either <paramref name="Spec"/> is non-null

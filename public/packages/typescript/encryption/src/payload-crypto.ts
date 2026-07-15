@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { EncryptionFrame } from "@d2/encryption-abstractions";
+import { EncryptionFrame } from "@dcsv-io/d2-encryption-abstractions";
 
 import { KidNotInKeyringError } from "./errors.js";
 import { decodeFrame, encodeFrame } from "./frame.js";
@@ -14,7 +14,7 @@ import { aesGcmDecrypt, aesGcmEncrypt, randomBytes } from "./subtle.js";
 /**
  * Default {@link IPayloadCrypto} implementation: AES-256-GCM with a JWKS-style
  * multi-kid keyring and AAD bound to the keyring's AAD context. The twin of
- * .NET `D2.Shared.Encryption.PayloadCrypto`.
+ * .NET `DcsvIo.D2.Encryption.PayloadCrypto`.
  *
  * A fresh 12-byte nonce is generated per encrypt; the content-encryption key is
  * the keyring's active key. Thread-safe by JS's single-threaded event loop — no

@@ -27,7 +27,7 @@ The codebase spans multiple shared libraries (`Handler`, `Auth`, `Auth.Outbound`
 
 **4. Telemetry tag constants are codegen'd from the spec** (an instance of ADR-0002). The generator in `telemetry/tags-source-gen/` reads `public/contracts/telemetry/telemetry.spec.json` and emits per-meter `*TelemetryTags.g.cs` typed constants; cross-spec references resolve via `CrossSpecResolver` (e.g. the `d2.auth.problem.emitted` tag values are sourced from `auth-error-codes.spec.json`, not duplicated). Hand-written tag-name literals are forbidden for any tag with a spec entry.
 
-**5. One canonical `InfrastructurePathMatcher`** (`D2.Shared.AspNetCore`) is the single source of truth for the infra path set. The telemetry instrumentation `Filter` and the logging `UseD2RequestLogging` level callback both call the same static matcher with the same default path list — the two filters cannot diverge.
+**5. One canonical `InfrastructurePathMatcher`** (`DcsvIo.D2.AspNetCore`) is the single source of truth for the infra path set. The telemetry instrumentation `Filter` and the logging `UseD2RequestLogging` level callback both call the same static matcher with the same default path list — the two filters cannot diverge.
 
 ## Consequences
 
@@ -42,7 +42,7 @@ The codebase spans multiple shared libraries (`Handler`, `Auth`, `Auth.Outbound`
 **Negative / risks.**
 
 - Dual-write constructs two overlapping data structures (Activity tags + log-scope dictionary) per invocation — a modest allocation that auto-instrumentation-only approaches avoid.
-- `AggregatedTelemetrySources` is a manual registry: adding a new library's telemetry needs a PR there, and forgetting produces no compile error — only missing dashboards (partially mitigated by the spec-pin presence tests, which must be updated in the same PR). When the service-identity components of `D2.Shared.Auth.Outbound` are removed (superseded by mTLS workload identity per [ADR-0023](0023-mtls-workload-identity.md), a later deliverable), the enumerated `ActivitySource` / `Meter` counts and the owning-library list here are re-verified against the trimmed lib; the token-exchange half of `Auth.Outbound` and its lib-level telemetry are retained, so the lib stays in the list and the current counts hold until that removal lands.
+- `AggregatedTelemetrySources` is a manual registry: adding a new library's telemetry needs a PR there, and forgetting produces no compile error — only missing dashboards (partially mitigated by the spec-pin presence tests, which must be updated in the same PR). When the service-identity components of `DcsvIo.D2.Auth.Outbound` are removed (superseded by mTLS workload identity per [ADR-0023](0023-mtls-workload-identity.md), a later deliverable), the enumerated `ActivitySource` / `Meter` counts and the owning-library list here are re-verified against the trimmed lib; the token-exchange half of `Auth.Outbound` and its lib-level telemetry are retained, so the lib stays in the list and the current counts hold until that removal lands.
 - `writeToProviders: true` means each Serilog line is processed twice (Serilog pipeline + MEL→OTel bridge); operators must size the OTLP log collector accordingly.
 - `InternalIpFilter` uses byte-prefix matching with no `IPNetwork` abstraction; IPv6 private ranges other than `::1` are not admitted — deliberate for now, but a revisit point on IPv6-primary pod networks.
 

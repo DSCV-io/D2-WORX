@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/problem-details-abstractions
+# @dcsv-io/d2-problem-details-abstractions
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
@@ -10,7 +10,7 @@ Foundational, zero-dependency package that declares the RFC 7807
 ProblemDetails wire-format catalog: the type-URI prefix, the
 `application/problem+json` content type, the extension-key wire names, the
 per-status coarse titles, and the `defaultTitleForStatus` lookup. Mirrors
-`D2.Shared.ProblemDetails.Abstractions` on the .NET side — a leaf package
+`DcsvIo.D2.ProblemDetails.Abstractions` on the .NET side — a leaf package
 with no outbound dependencies, so any package can import these wire constants
 without pulling JWT-parsing or route-guard machinery.
 
@@ -35,10 +35,10 @@ None. Zero runtime deps — this is a foundational leaf in the dependency graph.
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.ProblemDetails.Abstractions` — both declare the
+Mirrors `DcsvIo.D2.ProblemDetails.Abstractions` — both declare the
 spec-derived ProblemDetails wire constants, generated from the same
 `contracts/problem-details/problem-details.spec.json` source. Single spec,
 two emitters, cross-language wire drift structurally impossible. The
 body-builder that consumes these constants lives one layer up — `toProblemDetails`
-in `@d2/headers` (TS) and `D2ProblemDetailsExtensions.ToProblemDetails` in
-`D2.Shared.Auth.Http` (.NET) — so the leaf stays free of the result envelope.
+in `@dcsv-io/d2-headers` (TS) and `D2ProblemDetailsExtensions.ToProblemDetails` in
+`DcsvIo.D2.Auth.Http` (.NET) — so the leaf stays free of the result envelope.

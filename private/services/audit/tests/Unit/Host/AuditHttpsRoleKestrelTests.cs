@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Audit.Tests.Unit.Host;
+namespace DcsvIo.D2.Private.Audit.Tests.Unit.Host;
 
 using System.Net;
 using System.Reflection;
-using D2.Audit.Api.Composition;
-using D2.Audit.Api.Kestrel;
+using DcsvIo.D2.Private.Audit.Api.Composition;
+using DcsvIo.D2.Private.Audit.Api.Kestrel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;

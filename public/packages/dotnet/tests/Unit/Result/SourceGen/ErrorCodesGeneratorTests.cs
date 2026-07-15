@@ -6,7 +6,7 @@
 
 extern alias ResultErrorCodesSourceGen;
 
-namespace D2.Shared.Tests.Unit.Result.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Result.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
@@ -16,9 +16,9 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Xunit;
-using DiagnosticIds = ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.DiagnosticIds;
+using DiagnosticIds = ResultErrorCodesSourceGen::DcsvIo.D2.ResultErrorCodes.SourceGen.DiagnosticIds;
 using ErrorCodesGenerator =
-    ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.ErrorCodesGenerator;
+    ResultErrorCodesSourceGen::DcsvIo.D2.ResultErrorCodes.SourceGen.ErrorCodesGenerator;
 
 /// <summary>
 /// IIncrementalGenerator integration tests for the generic ErrorCodes SrcGen
@@ -43,7 +43,7 @@ public sealed class ErrorCodesGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsConstantsAndConstructingFactoriesAndBooleans()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Result",
+            assemblyName: "DcsvIo.D2.Result",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -83,7 +83,7 @@ public sealed class ErrorCodesGeneratorTests
     {
         // No AdditionalText supplied — generator silently no-ops (no spec).
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Result",
+            assemblyName: "DcsvIo.D2.Result",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -95,7 +95,7 @@ public sealed class ErrorCodesGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Result",
+            assemblyName: "DcsvIo.D2.Result",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -108,14 +108,14 @@ public sealed class ErrorCodesGeneratorTests
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Result",
+                assemblyName: "DcsvIo.D2.Result",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)
             .Select(t => t.ToString())
             .ToList();
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Result",
+                assemblyName: "DcsvIo.D2.Result",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)

@@ -26,9 +26,9 @@ function makeNpm(name: string, version = "0.1.0"): PackageDescriptor {
   return {
     name,
     ecosystem: "npm",
-    dir: `public/packages/typescript/${name.replace("@d2/", "")}`,
-    manifestPath: `/repo/public/packages/typescript/${name.replace("@d2/", "")}/package.json`,
-    changelogPath: `/repo/public/packages/typescript/${name.replace("@d2/", "")}/CHANGELOG.md`,
+    dir: `public/packages/typescript/${name.replace("@dcsv-io/d2-", "")}`,
+    manifestPath: `/repo/public/packages/typescript/${name.replace("@dcsv-io/d2-", "")}/package.json`,
+    changelogPath: `/repo/public/packages/typescript/${name.replace("@dcsv-io/d2-", "")}/CHANGELOG.md`,
     currentVersion: version,
     dependencies: [],
   };
@@ -52,25 +52,25 @@ function makeNuget(name: string, version = "0.1.0"): PackageDescriptor {
 
 describe("formatPackageList — output shape", () => {
   it("returns valid JSON", () => {
-    const pkgs = [makeNpm("@d2/result"), makeNuget("D2.Shared.Result")];
+    const pkgs = [makeNpm("@dcsv-io/d2-result"), makeNuget("DcsvIo.D2.Result")];
     const output = formatPackageList(pkgs);
     expect(() => JSON.parse(output)).not.toThrow();
   });
 
   it("output ends with a trailing newline", () => {
-    const pkgs = [makeNpm("@d2/result")];
+    const pkgs = [makeNpm("@dcsv-io/d2-result")];
     const output = formatPackageList(pkgs);
     expect(output.endsWith("\n")).toBe(true);
   });
 
   it("returns an array with one entry per input descriptor", () => {
-    const pkgs = [makeNpm("@d2/result"), makeNuget("D2.Shared.Result")];
+    const pkgs = [makeNpm("@dcsv-io/d2-result"), makeNuget("DcsvIo.D2.Result")];
     const entries = JSON.parse(formatPackageList(pkgs)) as ListEntry[];
     expect(entries).toHaveLength(2);
   });
 
   it("each entry has all five required fields", () => {
-    const pkgs = [makeNpm("@d2/result")];
+    const pkgs = [makeNpm("@dcsv-io/d2-result")];
     const entries = JSON.parse(formatPackageList(pkgs)) as ListEntry[];
     const entry = entries[0];
     expect(entry).toBeDefined();
@@ -83,44 +83,44 @@ describe("formatPackageList — output shape", () => {
 
   it("npm entry carries ecosystem='npm'", () => {
     const entries = JSON.parse(
-      formatPackageList([makeNpm("@d2/result")]),
+      formatPackageList([makeNpm("@dcsv-io/d2-result")]),
     ) as ListEntry[];
     expect(entries[0]!.ecosystem).toBe("npm");
   });
 
   it("nuget entry carries ecosystem='nuget'", () => {
     const entries = JSON.parse(
-      formatPackageList([makeNuget("D2.Shared.Result")]),
+      formatPackageList([makeNuget("DcsvIo.D2.Result")]),
     ) as ListEntry[];
     expect(entries[0]!.ecosystem).toBe("nuget");
   });
 
   it("entry name matches the descriptor name", () => {
-    const pkg = makeNpm("@d2/result");
+    const pkg = makeNpm("@dcsv-io/d2-result");
     const entries = JSON.parse(formatPackageList([pkg])) as ListEntry[];
-    expect(entries[0]!.name).toBe("@d2/result");
+    expect(entries[0]!.name).toBe("@dcsv-io/d2-result");
   });
 
   it("entry currentVersion matches the descriptor currentVersion", () => {
-    const pkg = makeNpm("@d2/result", "0.3.7");
+    const pkg = makeNpm("@dcsv-io/d2-result", "0.3.7");
     const entries = JSON.parse(formatPackageList([pkg])) as ListEntry[];
     expect(entries[0]!.currentVersion).toBe("0.3.7");
   });
 
   it("entry dir matches the descriptor dir", () => {
-    const pkg = makeNpm("@d2/result");
+    const pkg = makeNpm("@dcsv-io/d2-result");
     const entries = JSON.parse(formatPackageList([pkg])) as ListEntry[];
     expect(entries[0]!.dir).toBe(pkg.dir);
   });
 
   it("entry manifestPath matches the descriptor manifestPath", () => {
-    const pkg = makeNuget("D2.Shared.Result");
+    const pkg = makeNuget("DcsvIo.D2.Result");
     const entries = JSON.parse(formatPackageList([pkg])) as ListEntry[];
     expect(entries[0]!.manifestPath).toBe(pkg.manifestPath);
   });
 
   it("entry does NOT include changelogPath (not in the list output)", () => {
-    const pkg = makeNpm("@d2/result");
+    const pkg = makeNpm("@dcsv-io/d2-result");
     const entries = JSON.parse(formatPackageList([pkg])) as Record<
       string,
       unknown
@@ -135,15 +135,19 @@ describe("formatPackageList — output shape", () => {
 
 describe("formatPackageList — ordering", () => {
   it("preserves input order (loader already sorts by name)", () => {
-    const pkgs = [makeNpm("@d2/a"), makeNpm("@d2/b"), makeNuget("D2.Shared.Z")];
+    const pkgs = [
+      makeNpm("@dcsv-io/d2-a"),
+      makeNpm("@dcsv-io/d2-b"),
+      makeNuget("DcsvIo.D2.Z"),
+    ];
     const entries = JSON.parse(formatPackageList(pkgs)) as ListEntry[];
-    expect(entries[0]!.name).toBe("@d2/a");
-    expect(entries[1]!.name).toBe("@d2/b");
-    expect(entries[2]!.name).toBe("D2.Shared.Z");
+    expect(entries[0]!.name).toBe("@dcsv-io/d2-a");
+    expect(entries[1]!.name).toBe("@dcsv-io/d2-b");
+    expect(entries[2]!.name).toBe("DcsvIo.D2.Z");
   });
 
   it("handles a mixed npm+nuget set correctly", () => {
-    const pkgs = [makeNpm("@d2/result"), makeNuget("D2.Shared.Result")];
+    const pkgs = [makeNpm("@dcsv-io/d2-result"), makeNuget("DcsvIo.D2.Result")];
     const entries = JSON.parse(formatPackageList(pkgs)) as ListEntry[];
     const npmEntry = entries.find((e) => e.ecosystem === "npm");
     const nugetEntry = entries.find((e) => e.ecosystem === "nuget");
@@ -158,12 +162,12 @@ describe("formatPackageList — ordering", () => {
 
 describe("formatPackageList — determinism", () => {
   it("produces identical output when called twice with the same input", () => {
-    const pkgs = [makeNpm("@d2/result"), makeNuget("D2.Shared.Result")];
+    const pkgs = [makeNpm("@dcsv-io/d2-result"), makeNuget("DcsvIo.D2.Result")];
     expect(formatPackageList(pkgs)).toBe(formatPackageList(pkgs));
   });
 
   it("single-package list produces a JSON array (not a bare object)", () => {
-    const output = formatPackageList([makeNpm("@d2/result")]);
+    const output = formatPackageList([makeNpm("@dcsv-io/d2-result")]);
     const parsed: unknown = JSON.parse(output);
     expect(Array.isArray(parsed)).toBe(true);
   });
@@ -178,11 +182,11 @@ describe("formatPackageList — full consumable set shape", () => {
     const pkgs: PackageDescriptor[] = [];
 
     for (let i = 0; i < 54; i++) {
-      pkgs.push(makeNuget(`D2.Shared.Lib${i.toString()}`));
+      pkgs.push(makeNuget(`DcsvIo.D2.Lib${i.toString()}`));
     }
 
     for (let i = 0; i < 29; i++) {
-      pkgs.push(makeNpm(`@d2/lib${i.toString()}`));
+      pkgs.push(makeNpm(`@dcsv-io/d2-lib${i.toString()}`));
     }
 
     const output = formatPackageList(pkgs);

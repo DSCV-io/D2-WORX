@@ -6,12 +6,12 @@
 
 extern alias RegistrySourceGen;
 
-namespace D2.Shared.Tests.Unit.ErrorCodesRegistry;
+namespace DcsvIo.D2.Tests.Unit.ErrorCodesRegistry;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
-using RegistrySourceGen::D2.Shared.ErrorCodes.Registry.SourceGen;
-using RegistrySourceGen::D2.Shared.SourceGen;
+using RegistrySourceGen::DcsvIo.D2.ErrorCodes.Registry.SourceGen;
+using RegistrySourceGen::DcsvIo.D2.SourceGen;
 using Xunit;
 
 /// <summary>

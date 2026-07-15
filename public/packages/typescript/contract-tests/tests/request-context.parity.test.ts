@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import type { IRequestContext } from "@d2/request-context-abstractions";
+import type { IRequestContext } from "@dcsv-io/d2-request-context-abstractions";
 import { loadFixture } from "../src/index.js";
 
 interface RequestContextPayload {

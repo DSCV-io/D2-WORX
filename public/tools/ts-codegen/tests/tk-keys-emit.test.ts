@@ -20,9 +20,11 @@ describe("emitTkKeys — TKMessage-instance emission", () => {
     expect(r.source).toContain('UNAUTHORIZED: tk("auth_errors_UNAUTHORIZED")');
   });
 
-  it("imports tk from the zero-dep @d2/i18n-abstractions leaf", () => {
+  it("imports tk from the zero-dep @dcsv-io/d2-i18n-abstractions leaf", () => {
     const r = emitTkKeys(sampleCatalog);
-    expect(r.source).toContain('import { tk } from "@d2/i18n-abstractions";');
+    expect(r.source).toContain(
+      'import { tk } from "@dcsv-io/d2-i18n-abstractions";',
+    );
     // The constants are no longer bare string literals — the wire key only
     // appears inside a tk() call, never as a standalone `: "snake_key"` leaf.
     expect(r.source).not.toContain('NOT_FOUND: "common_errors_NOT_FOUND"');

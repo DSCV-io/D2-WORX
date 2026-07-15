@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Caching.Tiered
+# DcsvIo.D2.Caching.Tiered
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 

@@ -4,32 +4,32 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian;
 
 using System.Security.Cryptography;
-using D2.Edge.Api.Grpc.KeyCustodian;
-using D2.Edge.KeyCustodian.App.Application;
-using D2.Edge.KeyCustodian.App.Application.CertificateAuthority;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Client.Keyring;
-using D2.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
-using D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
-using D2.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
-using D2.Private.Auth;
-using D2.Shared.Auth.Events;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Encryption;
-using D2.Shared.EntityFrameworkCore.Postgres;
-using D2.Shared.Handler;
-using D2.Shared.Handler.Repo.Postgres;
-using D2.Shared.Messaging;
-using D2.Shared.Messaging.RabbitMq;
+using DcsvIo.D2.Auth.Events;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Encryption;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Handler.Repo.Postgres;
+using DcsvIo.D2.Messaging;
+using DcsvIo.D2.Messaging.RabbitMq;
+using DcsvIo.D2.Private.Auth;
+using DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.CertificateAuthority;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Configuration;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Messaging;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Keyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Messaging.RabbitMq;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.Client.Keyring;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -41,7 +41,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Testcontainers.RabbitMq;
 using Xunit;
-using KeyringClientStub = D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient;
+using KeyringClientStub = global::D2.Services.Protos.KeyCustodian.V2Alpha.KeyCustodianKeyring.KeyCustodianKeyringClient;
 
 /// <summary>
 /// The full keyring rotation hot-swap, every seam REAL: the real KeyCustodian handler graph

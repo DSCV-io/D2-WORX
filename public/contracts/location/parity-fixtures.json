@@ -1,5 +1,5 @@
 {
-  "$comment": "Parity fixture for D2.Shared.Location. Hand-maintained (.NET-only; the @d2/location TS package and its emit-fixture.mjs generator were removed). The .NET parity test asserts byte-identical hash output for every row. Update this file by hand when adding new cases.",
+  "$comment": "Parity fixture for DcsvIo.D2.Location. Hand-maintained (.NET-only; the @dcsv-io/d2-location TS package and its emit-fixture.mjs generator were removed). The .NET parity test asserts byte-identical hash output for every row. Update this file by hand when adding new cases.",
   "version": "1.0",
   "cases": [
     {

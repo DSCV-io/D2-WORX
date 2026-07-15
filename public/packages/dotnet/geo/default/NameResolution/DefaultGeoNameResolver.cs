@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Default.NameResolution;
+namespace DcsvIo.D2.Geo.Default.NameResolution;
 
 using System;
 using System.Collections.Concurrent;
@@ -12,11 +12,11 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Geo.Abstractions.NameResolution;
-using D2.Shared.I18n;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Geo.Abstractions.NameResolution;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Default implementation of <see cref="IGeoNameResolver"/> over the

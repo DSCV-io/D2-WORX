@@ -58,7 +58,7 @@ export interface TryGetResult {
  * so no atomic primitive is needed — assigning the snapshot in one
  * statement IS atomic from JS's perspective.
  *
- * The `@d2/resilience` Singleflight layer on the token client ensures that
+ * The `@dcsv-io/d2-resilience` Singleflight layer on the token client ensures that
  * N concurrent callers all entering the aging or expired window collapse to
  * ONE upstream OAuth call, regardless of how many fire-and-forget refreshes
  * are triggered.

@@ -24,7 +24,7 @@ Copyright (c) DCSV. All rights reserved.
   - [Deprecate-not-delete workflow](#deprecate-not-delete-workflow)
 - [Versioning](#versioning)
   - [Product version](#product-version-the-deployable-d2-version)
-  - [Per-package version](#per-package-version-consumable-libs-d2shared--d2)
+  - [Per-package version](#per-package-version-consumable-libs-dcsviode2--dcsv-iod2-)
 - [Cutting a library release](#cutting-a-library-release)
   - [Dry-run first (always)](#dry-run-first-always)
   - [Cut a real release](#cut-a-real-release)
@@ -62,8 +62,8 @@ docker compose -f infra/compose/compose.yml \
 dotnet build D2.slnx                                                # Full .NET solution
 dotnet build private/services/{service}/api/{service}.API.csproj            # Single project
 cd private/services/web && pnpm install && pnpm exec svelte-check                    # SvelteKit type check
-pnpm --filter @d2/key-custodian-client build                               # KeyCustodian Node client twin (dist for the mTLS harness)
-pnpm --filter @d2/messaging-rabbitmq build                                 # RabbitMQ consumer runtime twin
+pnpm --filter @dcsv-io/d2-private-key-custodian-client build                               # KeyCustodian Node client twin (dist for the mTLS harness)
+pnpm --filter @dcsv-io/d2-messaging-rabbitmq build                                 # RabbitMQ consumer runtime twin
 ```
 
 ## Rider/ReSharper Inspections (.NET)
@@ -95,9 +95,9 @@ cd private/services/web && pnpm exec vitest run                                 
 cd private/services/web && pnpm exec playwright test                                  # Playwright (mocked by default)
 
 # KeyCustodian Node client twin + RabbitMQ consumer runtime
-pnpm --filter @d2/key-custodian-client test                                 # client-ts unit + CSR/handshake suite
-pnpm --filter @d2/messaging-rabbitmq test                                    # consumer runtime unit suite (excludes integration/)
-pnpm --filter @d2/messaging-rabbitmq test:integration                        # Testcontainers RabbitMQ integration suite
+pnpm --filter @dcsv-io/d2-private-key-custodian-client test                                 # client-ts unit + CSR/handshake suite
+pnpm --filter @dcsv-io/d2-messaging-rabbitmq test                                    # consumer runtime unit suite (excludes integration/)
+pnpm --filter @dcsv-io/d2-messaging-rabbitmq test:integration                        # Testcontainers RabbitMQ integration suite
 pnpm --filter geo-data-pipeline test                                         # geo pipeline unit + parity suite
 node --test public/tools/scripts/tests/*.test.mjs                            # public repo script guards
 node --test private/tools/scripts/tests/*.test.mjs                           # private script guards (explicit files; Node 24)
@@ -110,7 +110,7 @@ pnpm --filter ts-codegen test                                                # v
 
 ### NodeLeafClient cross-runtime mTLS harness prereq
 
-The `.NET` `D2.Edge.Tests` `Integration/KeyCustodian/NodeLeafClient/` suite drives the REAL `@d2/key-custodian-client` over a live Node↔Kestrel loopback handshake. Its cert-presenting cases EXECUTE only when **all three** hold: (1) `node` is on `PATH`, (2) the client dist is built (`pnpm --filter @d2/key-custodian-client build`), and (3) a live loopback mutual-TLS handshake is feasible on the host (the harness spike). If any gate fails, those cases SKIP-WITH-REASON (they never silently pass). Build the client dist before `dotnet test D2.slnx` so (1)+(2) are satisfied; (3) is host/platform-dependent. The CI `Edge Integration Tests` lane installs workspace deps, builds the client dist, and asserts none of the node / dist / live-handshake-infeasibility skip-reason strings appear in the test log — so those cases EXECUTE in CI when the runner can complete the handshake. Unlike the Schannel-limited `MutualTlsSignerHarnessTests` below, this harness passes on Windows when node+dist are present (Node/OpenSSL presents the private-CA leaf).
+The `.NET` `DcsvIo.D2.Private.Edge.Tests` `Integration/KeyCustodian/NodeLeafClient/` suite drives the REAL `@dcsv-io/d2-private-key-custodian-client` over a live Node↔Kestrel loopback handshake. Its cert-presenting cases EXECUTE only when **all three** hold: (1) `node` is on `PATH`, (2) the client dist is built (`pnpm --filter @dcsv-io/d2-private-key-custodian-client build`), and (3) a live loopback mutual-TLS handshake is feasible on the host (the harness spike). If any gate fails, those cases SKIP-WITH-REASON (they never silently pass). Build the client dist before `dotnet test D2.slnx` so (1)+(2) are satisfied; (3) is host/platform-dependent. The CI `Edge Integration Tests` lane installs workspace deps, builds the client dist, and asserts none of the node / dist / live-handshake-infeasibility skip-reason strings appear in the test log — so those cases EXECUTE in CI when the runner can complete the handshake. Unlike the Schannel-limited `MutualTlsSignerHarnessTests` below, this harness passes on Windows when node+dist are present (Node/OpenSSL presents the private-CA leaf).
 
 ### Real-socket mutual-TLS harness proof (Linux/OpenSSL)
 
@@ -146,7 +146,7 @@ node public/tools/contract-gate/dist/cli.js --against <baseline> --skip-proto
 node public/tools/contract-gate/dist/cli.js --against <baseline> --proto-only
 
 # Or run buf directly over the shared protos (substitute <baseline>):
-pnpm --filter @d2/typespec-emitters exec buf breaking public/contracts/protos \
+pnpm --filter @dcsv-io/d2-typespec-emitters exec buf breaking public/contracts/protos \
   --against '.git#branch=<baseline>,subdir=public/contracts/protos'
 
 # Gate unit tests (owned-code validation):
@@ -169,7 +169,7 @@ A `type!: subject` breaking shorthand on the subject line is also recognized.
 Any breaking footer opens **all gate arms** for the PR.
 
 **One conscious act**: the footer alone is not enough. Also:
-1. The `public/tools/release-runner` reads the footer and bumps the affected package(s) to MAJOR automatically — run it after the PR merges (see [Per-package version](#per-package-version-consumable-libs-d2shared--d2) below). Do not hand-edit the version slot or CHANGELOG.
+1. The `public/tools/release-runner` reads the footer and bumps the affected package(s) to MAJOR automatically — run it after the PR merges (see [Per-package version](#per-package-version-consumable-libs-dcsviode2--dcsv-iod2-) below). Do not hand-edit the version slot or CHANGELOG.
 2. The runner prepends a `CHANGELOG.md` breaking entry automatically; you may add migration details to the `[Unreleased]` block before running with `--apply`.
 
 ### Deprecate-not-delete workflow
@@ -191,7 +191,7 @@ dotnet versionize                                                          # Bum
 git push --follow-tags
 ```
 
-### Per-package version (consumable libs: `D2.Shared.*` + `@d2/*`)
+### Per-package version (consumable libs: `DcsvIo.D2.*` + `@dcsv-io/d2-*`)
 
 The release runner derives each package's bump from a **build-free artifact diff** — the
 public-API surface diff (a git-ref text diff of the committed API report) and a source-based
@@ -208,7 +208,7 @@ changelog category only. Nothing builds to compute the bump, so a dry-run is fas
 pnpm --filter release-runner exec tsx src/cli.ts --against <baseline>
 
 # Dry-run scoped to one package:
-pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --package D2.Shared.Result
+pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --package DcsvIo.D2.Result
 
 # Suppress dependent propagation (dry-run of the direct package only):
 pnpm --filter release-runner exec tsx src/cli.ts --against <baseline> --no-propagate
@@ -248,7 +248,7 @@ regenerate them with the seed scripts, never hand-edit:
 # Regenerate the 54 .NET PublicAPI + .release-fingerprint baselines:
 node public/tools/scripts/seed-publicapi-baselines.mjs
 # (optional) one package only:
-node public/tools/scripts/seed-publicapi-baselines.mjs --package D2.Shared.Result
+node public/tools/scripts/seed-publicapi-baselines.mjs --package DcsvIo.D2.Result
 
 # Regenerate the 29 TS api-extractor (.api.md) + etc/.release-fingerprint baselines
 # (build the dists first — api-extractor consumes dist/index.d.ts to write the report):
@@ -335,12 +335,12 @@ Run locally to validate packaging metadata before a PR.
 
 ```bash
 # .NET — pack one consumable (exercises the transitive ProjectReference closure):
-dotnet pack public/packages/dotnet/result/core/D2.Shared.Result.csproj \
+dotnet pack public/packages/dotnet/result/core/DcsvIo.D2.Result.csproj \
   --configuration Release --output /tmp/pack-smoke
 
 # TS — build then pack one consumable (verifies files: ["dist"] allowlist):
-pnpm --filter @d2/result build
-pnpm --filter @d2/result pack --pack-destination /tmp/pack-smoke
+pnpm --filter @dcsv-io/d2-result build
+pnpm --filter @dcsv-io/d2-result pack --pack-destination /tmp/pack-smoke
 
 # Inspect the tarball contents:
 tar -tzf /tmp/pack-smoke/d2-result-*.tgz | head -20

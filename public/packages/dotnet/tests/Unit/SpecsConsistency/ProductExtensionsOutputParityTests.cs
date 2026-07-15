@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.SpecsConsistency;
+namespace DcsvIo.D2.Tests.Unit.SpecsConsistency;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Auth.Audiences.SourceGen;
-using D2.Shared.Auth.Scopes.SourceGen;
-using D2.Shared.EncryptionDomains.SourceGen;
-using D2.Shared.I18n.SourceGen;
-using D2.Shared.Tests.Unit.Auth;
+using DcsvIo.D2.Auth.Audiences.SourceGen;
+using DcsvIo.D2.Auth.Scopes.SourceGen;
+using DcsvIo.D2.EncryptionDomains.SourceGen;
+using DcsvIo.D2.I18n.SourceGen;
+using DcsvIo.D2.Tests.Unit.Auth;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -42,8 +42,8 @@ public sealed class ProductExtensionsOutputParityTests
             "auth",
             "abstractions-extensions",
             "Generated",
-            "D2.Shared.Auth.Scopes.SourceGen",
-            "D2.Shared.Auth.Scopes.SourceGen.ScopesGenerator",
+            "DcsvIo.D2.Auth.Scopes.SourceGen",
+            "DcsvIo.D2.Auth.Scopes.SourceGen.ScopesGenerator",
             "ProductScopes.g.cs");
 
     private static readonly string sr_productAudiencesPath =
@@ -55,8 +55,8 @@ public sealed class ProductExtensionsOutputParityTests
             "auth",
             "abstractions-extensions",
             "Generated",
-            "D2.Shared.Auth.Audiences.SourceGen",
-            "D2.Shared.Auth.Audiences.SourceGen.AudiencesGenerator",
+            "DcsvIo.D2.Auth.Audiences.SourceGen",
+            "DcsvIo.D2.Auth.Audiences.SourceGen.AudiencesGenerator",
             "ProductAudiences.g.cs");
 
     private static readonly string sr_productEncryptionPath =
@@ -68,8 +68,8 @@ public sealed class ProductExtensionsOutputParityTests
             "encryption",
             "extensions",
             "Generated",
-            "D2.Shared.EncryptionDomains.SourceGen",
-            "D2.Shared.EncryptionDomains.SourceGen.EncryptionDomainsGenerator",
+            "DcsvIo.D2.EncryptionDomains.SourceGen",
+            "DcsvIo.D2.EncryptionDomains.SourceGen.EncryptionDomainsGenerator",
             "ProductEncryptionDomains.g.cs");
 
     private static readonly string sr_productTkPath =
@@ -81,8 +81,8 @@ public sealed class ProductExtensionsOutputParityTests
             "i18n",
             "keys-extensions",
             "Generated",
-            "D2.Shared.I18n.SourceGen",
-            "D2.Shared.I18n.SourceGen.TKGenerator",
+            "DcsvIo.D2.I18n.SourceGen",
+            "DcsvIo.D2.I18n.SourceGen.TKGenerator",
             "ProductTK.g.cs");
 
     [Fact]
@@ -103,7 +103,7 @@ public sealed class ProductExtensionsOutputParityTests
             Normalize(committed),
             because:
                 "committed ProductScopes.g.cs must match public∪private regeneration "
-                + "under D2.Shared.Auth.Abstractions.Extensions; run dotnet build to regenerate");
+                + "under DcsvIo.D2.Private.Auth.Abstractions.Extensions; run dotnet build to regenerate");
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public sealed class ProductExtensionsOutputParityTests
             Normalize(committed),
             because:
                 "committed ProductAudiences.g.cs must match public∪private regeneration "
-                + "under D2.Shared.Auth.Abstractions.Extensions");
+                + "under DcsvIo.D2.Private.Auth.Abstractions.Extensions");
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public sealed class ProductExtensionsOutputParityTests
             Normalize(committed),
             because:
                 "committed ProductEncryptionDomains.g.cs must match public∪private regeneration "
-                + "under D2.Shared.Encryption.Extensions");
+                + "under DcsvIo.D2.Private.Encryption.Extensions");
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public sealed class ProductExtensionsOutputParityTests
             Normalize(committed),
             because:
                 "committed ProductTK.g.cs must match public∪private regeneration "
-                + "under D2.Shared.I18n.Keys.Extensions");
+                + "under DcsvIo.D2.Private.I18n.Keys.Extensions");
     }
 
     [Fact]
@@ -215,7 +215,7 @@ public sealed class ProductExtensionsOutputParityTests
         var roleSource = File.ReadAllText(Path.Combine(sr_authAbstractionsBase, "Role.cs"));
 
         var compilation = CSharpCompilation.Create(
-            assemblyName: "D2.Shared.Auth.Abstractions.Extensions",
+            assemblyName: "DcsvIo.D2.Private.Auth.Abstractions.Extensions",
             syntaxTrees:
             [
                 CSharpSyntaxTree.ParseText(orgTypeSource),
@@ -251,7 +251,7 @@ public sealed class ProductExtensionsOutputParityTests
         string privateSpec)
     {
         var compilation = CSharpCompilation.Create(
-            assemblyName: "D2.Shared.Auth.Abstractions.Extensions",
+            assemblyName: "DcsvIo.D2.Private.Auth.Abstractions.Extensions",
             syntaxTrees: [],
             references:
             [
@@ -282,7 +282,7 @@ public sealed class ProductExtensionsOutputParityTests
         string privateSpec)
     {
         var compilation = CSharpCompilation.Create(
-            assemblyName: "D2.Shared.Encryption.Extensions",
+            assemblyName: "DcsvIo.D2.Private.Encryption.Extensions",
             syntaxTrees: [],
             references:
             [
@@ -313,7 +313,7 @@ public sealed class ProductExtensionsOutputParityTests
         string privateEnUs)
     {
         var compilation = CSharpCompilation.Create(
-            assemblyName: "D2.Shared.I18n.Keys.Extensions",
+            assemblyName: "DcsvIo.D2.Private.I18n.Keys.Extensions",
             syntaxTrees: [],
             references:
             [

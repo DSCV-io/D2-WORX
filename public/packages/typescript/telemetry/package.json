@@ -1,5 +1,5 @@
 {
-  "name": "@d2/telemetry",
+  "name": "@dcsv-io/d2-telemetry",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,8 +22,8 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/logging": "workspace:*",
-    "@d2/utilities": "workspace:*",
+    "@dcsv-io/d2-logging": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/auto-instrumentations-node": "0.70.1",
     "@opentelemetry/core": "2.5.1",

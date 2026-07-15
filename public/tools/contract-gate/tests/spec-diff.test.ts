@@ -523,7 +523,7 @@ describe("diffNestedCatalog — telemetry catalog", () => {
 
   it("returns no findings when telemetry catalog is unchanged", () => {
     const doc = makeDoc(
-      "D2.Shared.Auth",
+      "DcsvIo.D2.Auth",
       "d2.auth.jwt.validations",
       "outcome",
       ["success", "failure"],
@@ -540,7 +540,7 @@ describe("diffNestedCatalog — telemetry catalog", () => {
 
   it("returns a finding when a meter is removed", () => {
     const before = makeDoc(
-      "D2.Shared.Auth",
+      "DcsvIo.D2.Auth",
       "d2.auth.jwt.validations",
       "outcome",
       ["success"],
@@ -554,18 +554,18 @@ describe("diffNestedCatalog — telemetry catalog", () => {
       "telemetry.spec.json",
     );
     expect(findings).toHaveLength(1);
-    expect(findings[0]?.message).toContain("D2.Shared.Auth");
+    expect(findings[0]?.message).toContain("DcsvIo.D2.Auth");
   });
 
   it("returns a finding when an instrument is removed from a meter", () => {
     const before = makeDoc(
-      "D2.Shared.Auth",
+      "DcsvIo.D2.Auth",
       "d2.auth.jwt.validations",
       "outcome",
       ["success"],
     );
     const after = {
-      meters: [{ meter: "D2.Shared.Auth", instruments: [] }],
+      meters: [{ meter: "DcsvIo.D2.Auth", instruments: [] }],
     };
 
     const findings = diffNestedCatalog(
@@ -580,7 +580,7 @@ describe("diffNestedCatalog — telemetry catalog", () => {
 
   it("returns a finding when a tag is removed from an instrument", () => {
     const before = makeDoc(
-      "D2.Shared.Auth",
+      "DcsvIo.D2.Auth",
       "d2.auth.jwt.validations",
       "outcome",
       ["success"],
@@ -588,7 +588,7 @@ describe("diffNestedCatalog — telemetry catalog", () => {
     const after = {
       meters: [
         {
-          meter: "D2.Shared.Auth",
+          meter: "DcsvIo.D2.Auth",
           instruments: [{ name: "d2.auth.jwt.validations", tags: [] }],
         },
       ],
@@ -606,13 +606,13 @@ describe("diffNestedCatalog — telemetry catalog", () => {
 
   it("returns a finding when a tag VALUE is removed", () => {
     const before = makeDoc(
-      "D2.Shared.Auth",
+      "DcsvIo.D2.Auth",
       "d2.auth.jwt.validations",
       "outcome",
       ["success", "failure", "expired"],
     );
     const after = makeDoc(
-      "D2.Shared.Auth",
+      "DcsvIo.D2.Auth",
       "d2.auth.jwt.validations",
       "outcome",
       ["success", "failure"],
@@ -630,13 +630,13 @@ describe("diffNestedCatalog — telemetry catalog", () => {
 
   it("adding a new tag value is not a break", () => {
     const before = makeDoc(
-      "D2.Shared.Auth",
+      "DcsvIo.D2.Auth",
       "d2.auth.jwt.validations",
       "outcome",
       ["success"],
     );
     const after = makeDoc(
-      "D2.Shared.Auth",
+      "DcsvIo.D2.Auth",
       "d2.auth.jwt.validations",
       "outcome",
       ["success", "new_value"],
@@ -653,7 +653,7 @@ describe("diffNestedCatalog — telemetry catalog", () => {
 
   it("adding a new instrument to an existing meter is not a break", () => {
     const before = makeDoc(
-      "D2.Shared.Auth",
+      "DcsvIo.D2.Auth",
       "d2.auth.jwt.validations",
       "outcome",
       ["success"],
@@ -661,7 +661,7 @@ describe("diffNestedCatalog — telemetry catalog", () => {
     const after = {
       meters: [
         {
-          meter: "D2.Shared.Auth",
+          meter: "DcsvIo.D2.Auth",
           instruments: [
             {
               name: "d2.auth.jwt.validations",

@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Integration.KeyCustodian;
+namespace DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian;
 
-using D2.Shared.Handler;
-using I = D2.Edge.Tests.Integration.KeyCustodian.SealedMessagingFixtureEvent;
-using O = D2.Shared.Result.Unit;
+using DcsvIo.D2.Handler;
+using I = DcsvIo.D2.Private.Edge.Tests.Integration.KeyCustodian.SealedMessagingFixtureEvent;
+using O = DcsvIo.D2.Result.Unit;
 
 /// <summary>
 /// Fixture subscriber for the sealed-messaging headline integration test: captures

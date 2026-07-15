@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.App;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
-using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.SeedCertificateAuthority;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Observability;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

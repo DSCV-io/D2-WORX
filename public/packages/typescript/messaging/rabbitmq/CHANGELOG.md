@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# Changelog — @d2/messaging-rabbitmq
+# Changelog — @dcsv-io/d2-messaging-rabbitmq
 
 All notable changes to this package are documented here. Versions follow the
 per-package semver + build-free-diff convention.
@@ -26,14 +26,14 @@ per-package semver + build-free-diff convention.
   `CatalogEncryption`) plus `readEncryptionKid`. An unwired encrypted
   domain is a COMPILE error, with a runtime default-deny second lock — retiring
   the prior consumer-only fence. The publisher's `message-id` is minted by
-  `uuidv7`, now homed in `@d2/utilities` (was briefly exported here).
+  `uuidv7`, now homed in `@dcsv-io/d2-utilities` (was briefly exported here).
 
 ### Fixed
 
 ## 0.1.0
 
 Initial release: the service-agnostic RabbitMQ **consumer** runtime — the
-TypeScript twin of the .NET `D2.Shared.Messaging.RabbitMq` consumer path.
+TypeScript twin of the .NET `DcsvIo.D2.Messaging.RabbitMq` consumer path.
 
 - `subscribe` / `createConnection` public surface (consumer-only; no publisher).
 - Topology declaration matching the .NET contract exactly (primary + `{q}.dlx`

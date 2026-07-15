@@ -8,11 +8,11 @@
 
 /* eslint-disable */
 
-import { tk } from "@d2/i18n-abstractions";
+import { tk } from "@dcsv-io/d2-i18n-abstractions";
 
 /**
  * Type-safe i18n key catalog. Mirrors the .NET `TK` class emitted by
- * D2.Shared.I18n.SourceGen from the same `contracts/messages/en-US.json`
+ * DcsvIo.D2.I18n.SourceGen from the same `contracts/messages/en-US.json`
  * source — single spec, two emitters, cross-language drift structurally
  * impossible.
  *

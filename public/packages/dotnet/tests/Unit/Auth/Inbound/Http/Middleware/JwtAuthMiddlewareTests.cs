@@ -4,22 +4,22 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Http.Middleware;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Http.Middleware;
 
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Http.Endpoints;
-using D2.Shared.Auth.Http.Middleware;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Tests.Unit.Auth.Inbound.Http.Fixtures;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Http.Endpoints;
+using DcsvIo.D2.Auth.Http.Middleware;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Http.Fixtures;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;

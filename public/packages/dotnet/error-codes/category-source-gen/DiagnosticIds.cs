@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ErrorCodes.Category.SourceGen;
+namespace DcsvIo.D2.ErrorCodes.Category.SourceGen;
 
 /// <summary>Diagnostic IDs for error-category source-gen.</summary>
 internal static class DiagnosticIds

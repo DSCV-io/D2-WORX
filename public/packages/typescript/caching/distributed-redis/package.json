@@ -1,5 +1,5 @@
 {
-  "name": "@d2/caching-distributed-redis",
+  "name": "@dcsv-io/d2-caching-distributed-redis",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,11 +22,11 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/caching-abstractions": "workspace:*",
-    "@d2/i18n-keys": "workspace:*",
-    "@d2/logging": "workspace:*",
-    "@d2/result": "workspace:*",
-    "@d2/utilities": "workspace:*",
+    "@dcsv-io/d2-caching-abstractions": "workspace:*",
+    "@dcsv-io/d2-i18n-keys": "workspace:*",
+    "@dcsv-io/d2-logging": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*",
     "@opentelemetry/api": "1.9.0",
     "ioredis": "5.10.0"
   },

@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Location
+# DcsvIo.D2.Location
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
@@ -12,7 +12,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Purpose
 
-Three immutable, content-addressable value objects + one free hash composer + one boundary validator. Every factory returns `D2Result<T>` (smart-constructor pattern); same content produces the same `HashId` (`"v1." + SHA-256 hex`), so duplicate insertions across services or repeated submissions naturally collapse to the same row. Pure-domain layer policy: depends on `D2.Shared.Geo.Abstractions` (typed code enums), `D2.Shared.Result` (D2Result factories), `D2.Shared.Utilities` (Falsey/Truthy/CleanStr boundary helpers and the canonical `NormalizeForHash` extension), and `D2.Shared.Validation.Abstractions` (FieldConstraints length caps) — no infrastructure deps, no NodaTime, no observability surface.
+Three immutable, content-addressable value objects + one free hash composer + one boundary validator. Every factory returns `D2Result<T>` (smart-constructor pattern); same content produces the same `HashId` (`"v1." + SHA-256 hex`), so duplicate insertions across services or repeated submissions naturally collapse to the same row. Pure-domain layer policy: depends on `DcsvIo.D2.Geo.Abstractions` (typed code enums), `DcsvIo.D2.Result` (D2Result factories), `DcsvIo.D2.Utilities` (Falsey/Truthy/CleanStr boundary helpers and the canonical `NormalizeForHash` extension), and `DcsvIo.D2.Validation.Abstractions` (FieldConstraints length caps) — no infrastructure deps, no NodaTime, no observability surface.
 
 ## Public API surface
 
@@ -22,26 +22,26 @@ Three immutable, content-addressable value objects + one free hash composer + on
   - `Coordinates.FromPlusCode(plusCode, accuracyMeters?)` — from a valid OLC plus-code.
 
   All three converge on the canonical geohash-10 cell-center so inputs in different forms representing the same physical ~1m cell produce byte-identical `HashId` values. Accuracy is metadata — NOT included in the hash.
-- [`ValueObjects/StreetAddress.cs`](ValueObjects/StreetAddress.cs) — `sealed record` with 5 free-text lines (`Line1` required, `Line2..Line5` optional, no gap rule). Two-stage normalization: stored form preserves case + strips decorative punctuation; hash form forwards to `D2.Shared.Utilities` `NormalizeForHash` extension (upper-case + NFD-strip combining marks + Unicode-category filter: Letter / Decimal-digit / ASCII space). Each line is capped at `FieldConstraints.STREET_LINE_MAX` (255 chars, measured on the post-clean stored value).
+- [`ValueObjects/StreetAddress.cs`](ValueObjects/StreetAddress.cs) — `sealed record` with 5 free-text lines (`Line1` required, `Line2..Line5` optional, no gap rule). Two-stage normalization: stored form preserves case + strips decorative punctuation; hash form forwards to `DcsvIo.D2.Utilities` `NormalizeForHash` extension (upper-case + NFD-strip combining marks + Unicode-category filter: Letter / Decimal-digit / ASCII space). Each line is capped at `FieldConstraints.STREET_LINE_MAX` (255 chars, measured on the post-clean stored value).
   - `StreetAddress.Create(line1, line2?, line3?, line4?, line5?)` returns `D2Result<StreetAddress>`.
   - Failure keys: `TK.Geo.Validation.ADDRESS_LINE1_REQUIRED` (line1 empty after clean), `TK.Geo.Validation.STREET_LINE_TOO_LONG` (any line exceeds `STREET_LINE_MAX` after clean).
 - [`ValueObjects/AdminLocation.cs`](ValueObjects/AdminLocation.cs) — `sealed record` with administrative hierarchy: country, subdivision, city, postal code (any subset). Cross-field coherence is enforced when both country + subdivision are supplied; subdivision-only callers have country auto-populated from `SubdivisionCode.ParentCountry`. City is capped at `FieldConstraints.CITY_MAX` (255 chars) and postal code at `FieldConstraints.POSTAL_CODE_MAX` (16 chars), both measured on the post-clean value. The length cap is an unconditional structural floor that fires before the optional `IPostalCodeValidator`.
   - `AdminLocation.Create(countryIso31661Alpha2Code?, subdivisionIso31662Code?, city?, postalCode?, postalCodeValidator?)` returns `D2Result<AdminLocation>`.
   - Failure keys: `TK.Geo.Validation.ADMIN_EMPTY_RECORD` (all fields null/empty), `TK.Geo.Validation.ADMIN_COUNTRY_SUBDIVISION_MISMATCH` (country/subdivision mismatch), `TK.Geo.Validation.CITY_TOO_LONG` (city exceeds `CITY_MAX`), `TK.Geo.Validation.POSTAL_CODE_TOO_LONG` (postal exceeds `POSTAL_CODE_MAX`), `TK.Geo.Validation.POSTAL_CODE_INVALID` (validator failure).
 - [`ComposeLocationHash.cs`](ComposeLocationHash.cs) — `static class` with `Compose(Coordinates?, StreetAddress?, AdminLocation?): string?` — joins the three component `HashId`s into a single `"v1."`-prefixed hash. All-null input returns `null` (location absent; not an error).
-- [`IPostalCodeValidator.cs`](IPostalCodeValidator.cs) — boundary contract `D2Result<string> Validate(string?, CountryCode?)`. Lives in `D2.Shared.Location` (not Abstractions) so the DI seam stays out of pure-vocabulary projects.
+- [`IPostalCodeValidator.cs`](IPostalCodeValidator.cs) — boundary contract `D2Result<string> Validate(string?, CountryCode?)`. Lives in `DcsvIo.D2.Location` (not Abstractions) so the DI seam stays out of pure-vocabulary projects.
 - [`DefaultPostalCodeValidator.cs`](DefaultPostalCodeValidator.cs) — `sealed class` implementing the global-range shape check (3-10 alphanumeric characters; internal spaces and hyphens allowed; alphanumeric at both ends). Country-blind by design; consumers override for strict per-country validation.
 - [`DependencyInjection.cs`](DependencyInjection.cs) — `extension(IServiceCollection)` block-form `AddD2Location()` registers `IPostalCodeValidator → DefaultPostalCodeValidator` (singleton, idempotent via `TryAddSingleton`).
 
 ## Dependencies
 
-- `D2.Shared.Geo.Abstractions` — typed `CountryCode` enum + `SubdivisionCode` wrapper struct (including `SubdivisionCode.ParentCountry` for `AdminLocation` coherence).
-- `D2.Shared.Result` — `D2Result<T>` semantic factories (`Ok`, `ValidationFailed`).
-- `D2.Shared.Utilities` — `Falsey()` / `Truthy()` / `CleanStr()` / `NormalizeForHash()` extension methods. The `NormalizeForHash` extension is the canonical implementation for hash canonicalization; `StreetAddress.NormalizeForHash` is a thin internal forwarder to it.
-- `D2.Shared.Validation.Abstractions` — `FieldConstraints` length cap constants (`STREET_LINE_MAX`, `CITY_MAX`, `POSTAL_CODE_MAX`) consumed by the VO `Create` gates.
+- `DcsvIo.D2.Geo.Abstractions` — typed `CountryCode` enum + `SubdivisionCode` wrapper struct (including `SubdivisionCode.ParentCountry` for `AdminLocation` coherence).
+- `DcsvIo.D2.Result` — `D2Result<T>` semantic factories (`Ok`, `ValidationFailed`).
+- `DcsvIo.D2.Utilities` — `Falsey()` / `Truthy()` / `CleanStr()` / `NormalizeForHash()` extension methods. The `NormalizeForHash` extension is the canonical implementation for hash canonicalization; `StreetAddress.NormalizeForHash` is a thin internal forwarder to it.
+- `DcsvIo.D2.Validation.Abstractions` — `FieldConstraints` length cap constants (`STREET_LINE_MAX`, `CITY_MAX`, `POSTAL_CODE_MAX`) consumed by the VO `Create` gates.
 - `Microsoft.Extensions.DependencyInjection.Abstractions` (NuGet) — `IServiceCollection` receiver for the `AddD2Location` registration extension.
 
-**NO `D2.Shared.Geo.Default`, NO NodaTime, NO logging, NO observability — pure-domain by design.**
+**NO `DcsvIo.D2.Geo.Default`, NO NodaTime, NO logging, NO observability — pure-domain by design.**
 
 ## Security / PII
 
@@ -75,9 +75,9 @@ N/A — no env vars, no appsettings, no Options record. `DefaultPostalCodeValida
 ## Usage examples
 
 ```csharp
-using D2.Shared.Geo.Abstractions;
-using D2.Shared.Location;
-using D2.Shared.Location.ValueObjects;
+using DcsvIo.D2.Geo.Abstractions;
+using DcsvIo.D2.Location;
+using DcsvIo.D2.Location.ValueObjects;
 
 // 1. Construct any subset of the three value objects (each returns D2Result<T>).
 var coordsResult = Coordinates.Create(40.7128, -74.0060);
@@ -122,13 +122,13 @@ services.Replace(ServiceDescriptor // optional: override with country-specific v
 
 Locations are **immutable**. "Updates" are modeled as create-new + repoint-references + delete-old. Same hash content = same `HashId` = same row in any consumer's local table. Built-in deduplication via the hash ID.
 
-Hash-algorithm stability is enforced by the [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) fixture — every `HashId` / `expectedOutcome` row is asserted by `LocationHashDeterminismTests` in `D2.Shared.Tests`. A byte divergence means the hash algorithm changed and would silently produce duplicate records for previously-identical content-addressable entities.
+Hash-algorithm stability is enforced by the [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) fixture — every `HashId` / `expectedOutcome` row is asserted by `LocationHashDeterminismTests` in `DcsvIo.D2.Tests`. A byte divergence means the hash algorithm changed and would silently produce duplicate records for previously-identical content-addressable entities.
 
 `ComposeLocationHash.Compose` returns `string?` (NOT `D2Result<string>`) — the operation cannot fail (inputs are already-validated VOs or null); `null` means location is absent, not an error. Returning a plain value rather than a `D2Result` is appropriate here because the method has no failure mode — it is a pure composition of already-validated inputs.
 
 ## References
 
-- [`../entity-framework-core/README.md`](../entity-framework-core/README.md) — the sibling `D2.Shared.Location.EntityFrameworkCore` lib that maps these VOs onto a host's EF Core model (`MapStreetAddress` / `MapAdminLocation` / `MapCoordinates` + per-field anonymize defaults).
+- [`../entity-framework-core/README.md`](../entity-framework-core/README.md) — the sibling `DcsvIo.D2.Location.EntityFrameworkCore` lib that maps these VOs onto a host's EF Core model (`MapStreetAddress` / `MapAdminLocation` / `MapCoordinates` + per-field anonymize defaults).
 - [`docs/PATTERNS.md`](../../../docs/PATTERNS.md) — content-addressable entities + hash composition.
 - [`../geo/abstractions/README.md`](../../geo/abstractions/README.md) — the typed `CountryCode` + `SubdivisionCode` surface this lib consumes.
 - [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) — hash-determinism fixture file.

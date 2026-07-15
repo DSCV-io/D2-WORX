@@ -11,7 +11,7 @@
 import { z } from "zod";
 
 /**
- * ISO 639-1 alpha-2 language code catalog. Branded string type. Mirrors .NET `D2.Shared.Geo.Abstractions.LanguageCode` (real enum) byte-for-byte over the wire.
+ * ISO 639-1 alpha-2 language code catalog. Branded string type. Mirrors .NET `DcsvIo.D2.Geo.Abstractions.LanguageCode` (real enum) byte-for-byte over the wire.
  */
 export const LanguageCode = {
   /** Afar */

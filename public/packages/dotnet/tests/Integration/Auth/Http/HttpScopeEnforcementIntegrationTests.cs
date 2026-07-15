@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Auth.Http;
+namespace DcsvIo.D2.Tests.Integration.Auth.Http;
 
 using System.Collections.Frozen;
 using System.Collections.Generic;
@@ -12,19 +12,19 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.Auth;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Http;
-using D2.Shared.Auth.Http.Endpoints;
-using D2.Shared.Auth.Validation;
-using D2.Shared.Caching;
-using D2.Shared.Caching.Local.Default;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
-using D2.Shared.Handler.Abstractions;
-using D2.Shared.ProblemDetails;
-using D2.Shared.Result;
-using D2.Shared.Tests.Unit.Auth.Inbound.Http.Fixtures;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Auth.Http.Endpoints;
+using DcsvIo.D2.Auth.Validation;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Caching.Local.Default;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Handler.Abstractions;
+using DcsvIo.D2.ProblemDetails;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Http.Fixtures;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -363,14 +363,14 @@ public sealed class HttpScopeEnforcementIntegrationTests
 
                         // Swap the network-touching JWKS provider for the in-memory
                         // fake — same pattern as GrpcAuthIntegrationTests.
-                        services.RemoveAll<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>();
-                        services.RemoveAll<D2.Shared.Auth.Jwks.HttpJwksProvider>();
-                        services.AddSingleton<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(
+                        services.RemoveAll<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>();
+                        services.RemoveAll<DcsvIo.D2.Auth.Jwks.HttpJwksProvider>();
+                        services.AddSingleton<DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(
                             new FakeJwksProvider(jwtBuilder.PublicKey));
                         services.RemoveAll<JwtValidator>();
                         services.AddSingleton(sp => new JwtValidator(
                             sp.GetRequiredService<
-                                D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(),
+                                DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider>(),
                             sp.GetRequiredService<IOptions<AuthOptions>>(),
                             sp.GetRequiredService<ClaimsToContextMapper>(),
                             NullLogger<JwtValidator>.Instance));
@@ -378,8 +378,8 @@ public sealed class HttpScopeEnforcementIntegrationTests
                         // Swap the session liveness tracker for the in-memory fake
                         // (always alive — tests focus on scope enforcement, not
                         // session revocation).
-                        services.RemoveAll<D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker>();
-                        services.AddSingleton<D2.Shared.Auth.Abstractions.Sessions.ISessionLivenessTracker>(
+                        services.RemoveAll<DcsvIo.D2.Auth.Abstractions.Sessions.ISessionLivenessTracker>();
+                        services.AddSingleton<DcsvIo.D2.Auth.Abstractions.Sessions.ISessionLivenessTracker>(
                             new FakeSessionLivenessTracker());
                     })
                     .Configure(app =>

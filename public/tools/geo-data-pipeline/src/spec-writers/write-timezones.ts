@@ -150,7 +150,7 @@ export async function buildTimezonesSpec(): Promise<TimezonesSpec> {
     $schema: "./timezones.schema.json",
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
-      "codegen / D2.Shared.Geo.Default. A clean/transform pass to the sibling " +
+      "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
       "contracts/geo/timezones.spec.json (one level up) is a separate step. Sources: " +
       "IANA zone1970.tab + backward (public domain — canonical zones, primary/co-applicable " +
       "country FKs, aliases, ISO 6709 coordinates) + Node's built-in ICU Intl.DateTimeFormat " +

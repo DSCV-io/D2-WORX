@@ -8,9 +8,9 @@ import {
   canceled,
   serviceUnavailable,
   bubbleFail,
-} from "@d2/result";
-import { CircuitBreaker, Singleflight } from "@d2/resilience";
-import { sanitizedErrorRender, type ILogger } from "@d2/logging";
+} from "@dcsv-io/d2-result";
+import { CircuitBreaker, Singleflight } from "@dcsv-io/d2-resilience";
+import { sanitizedErrorRender, type ILogger } from "@dcsv-io/d2-logging";
 import type { ChannelCredentials } from "@grpc/grpc-js";
 import type { WorkloadCertificateIssuer } from "./workload-certificate-issuer.js";
 import type { CaTrustBundle, LeafSnapshot } from "./workload-leaf-material.js";

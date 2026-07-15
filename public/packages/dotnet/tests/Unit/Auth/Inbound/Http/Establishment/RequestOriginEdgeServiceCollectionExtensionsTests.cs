@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Http.Establishment;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Http.Establishment;
 
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Http;
-using D2.Shared.Time;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Http;
+using DcsvIo.D2.Time;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;

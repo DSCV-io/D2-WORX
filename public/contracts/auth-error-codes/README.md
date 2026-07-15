@@ -8,8 +8,8 @@ Auth error-code catalog — the closed set of authentication and authorization f
 
 ## Consumed by
 
-- **.NET** — [`public/packages/dotnet/auth/error-codes-source-gen/`](../../public/packages/dotnet/auth/error-codes-source-gen/README.md) (Roslyn source-gen → `AuthErrorCodes` constants + `AuthFailures` typed `D2Result` factories in `D2.Shared.Auth.Core`)
-- **TypeScript** — [`tools/ts-codegen` › `error-codes-emit.ts`](../../tools/ts-codegen/README.md) (→ `AuthErrorCodes` constants + `AuthFailures.*` factories in `@d2/auth-abstractions`)
+- **.NET** — [`public/packages/dotnet/auth/error-codes-source-gen/`](../../public/packages/dotnet/auth/error-codes-source-gen/README.md) (Roslyn source-gen → `AuthErrorCodes` constants + `AuthFailures` typed `D2Result` factories in `DcsvIo.D2.Auth.Core`)
+- **TypeScript** — [`tools/ts-codegen` › `error-codes-emit.ts`](../../tools/ts-codegen/README.md) (→ `AuthErrorCodes` constants + `AuthFailures.*` factories in `@dcsv-io/d2-auth-abstractions`)
 - **TypeSpec** — [`public/packages/typescript/typespec-decorators/`](../../public/packages/typescript/typespec-decorators/README.md) reads every `*-error-codes.spec.json` to validate decorator arguments at compile time
 
 This catalog is also merged into the cross-service registry — see [`contracts/error-codes/`](../error-codes/README.md).

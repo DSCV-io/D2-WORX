@@ -8,8 +8,8 @@
 
 /* eslint-disable */
 
-import type { IAuthContext } from "@d2/auth-context-abstractions";
-import type { CallPathEntry, RequestOrigin } from "@d2/auth-context-abstractions";
+import type { IAuthContext } from "@dcsv-io/d2-auth-context-abstractions";
+import type { CallPathEntry, RequestOrigin } from "@dcsv-io/d2-auth-context-abstractions";
 export type { CallPathEntry, RequestOrigin };
 
 /**
@@ -56,7 +56,7 @@ export interface IRequestContext extends IAuthContext {
    */
   readonly currentFingerprint?: string;
   /**
-   * Composite request-risk score (0-100; higher = more risky) computed by Edge's risk engine for THIS request. Inputs include geo-velocity drift from the sign-in baseline, ASN reputation, Tor / proxy / hosting flags, per-org and per-user policy contributions, and fingerprint-mismatch components (SessionFingerprint vs CurrentFingerprint). 0 = no risk; ≥ user/org step-up threshold = OTP step-up; ≥ user/org block threshold = block + invalidate session. Null on internal services and pre-risk-engine paths. Propagated via x-d2-context so audit rows record Edge's verdict at the moment of the originating request. Edge owns the contribution math + thresholds; consumer-side libs (D2.Shared.Auth) only read this field, never compute it.
+   * Composite request-risk score (0-100; higher = more risky) computed by Edge's risk engine for THIS request. Inputs include geo-velocity drift from the sign-in baseline, ASN reputation, Tor / proxy / hosting flags, per-org and per-user policy contributions, and fingerprint-mismatch components (SessionFingerprint vs CurrentFingerprint). 0 = no risk; ≥ user/org step-up threshold = OTP step-up; ≥ user/org block threshold = block + invalidate session. Null on internal services and pre-risk-engine paths. Propagated via x-d2-context so audit rows record Edge's verdict at the moment of the originating request. Edge owns the contribution math + thresholds; consumer-side libs (DcsvIo.D2.Auth) only read this field, never compute it.
    */
   readonly riskScore?: number;
   // --- Infrastructure ---
@@ -70,11 +70,11 @@ export interface IRequestContext extends IAuthContext {
    */
   readonly localeIetfBcp47Tag?: string;
   /**
-   * Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference > org default preference > X-D2-Timezone header > WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via D2.Shared.Geo.Default) > fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps.
+   * Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference > org default preference > X-D2-Timezone header > WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via DcsvIo.D2.Geo.Default) > fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps.
    */
   readonly timezoneIanaName?: string;
   /**
-   * Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference > org default preference > X-D2-Currency header > CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via D2.Shared.Geo.Default) > fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required).
+   * Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference > org default preference > X-D2-Currency header > CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via DcsvIo.D2.Geo.Default) > fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required).
    */
   readonly currencyIso4217Code?: string;
   // --- Entitlements ---
@@ -92,7 +92,7 @@ export interface IRequestContext extends IAuthContext {
    */
   readonly whoIsHashId?: string;
   /**
-   * Hash of the admin-location component only (city + region + country + postal). Matches D2.Shared.Location.AdminLocation.HashId for content-addressable lookup.
+   * Hash of the admin-location component only (city + region + country + postal). Matches DcsvIo.D2.Location.AdminLocation.HashId for content-addressable lookup.
    */
   readonly adminLocationHashId?: string;
   /**
@@ -113,7 +113,7 @@ export interface IRequestContext extends IAuthContext {
   readonly postalCode?: string;
   // --- WhoIs — Coordinates ---
   /**
-   * Latitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object per D2.Shared.Location.
+   * Latitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object per DcsvIo.D2.Location.
    */
   readonly latitude?: number;
   /**

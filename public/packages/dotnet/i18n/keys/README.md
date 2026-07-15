@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.I18n.Keys
+# DcsvIo.D2.I18n.Keys
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
 Foundational slice that exposes the type-safe `TK` constants catalog — one `static readonly TKMessage` per translation key, Source-Generated from `contracts/messages/en-US.json`. Every producer that emits a user-facing message references a `TK.*` constant (e.g. `TK.Common.Errors.NOT_FOUND`) rather than a raw string, so the wire stays language-neutral and the client resolves the final copy.
 
-Its only dependency is the sibling [`D2.Shared.I18n.Abstractions`](../abstractions/README.md) — the project that defines the `TKMessage` type each constant is an instance of. Keeping the constants in this shallow project lets any layer reference them without dragging in the runtime `Translator` (DI / configuration / file IO), which lives in the separate [`D2.Shared.I18n`](../core/README.md) project.
+Its only dependency is the sibling [`DcsvIo.D2.I18n.Abstractions`](../abstractions/README.md) — the project that defines the `TKMessage` type each constant is an instance of. Keeping the constants in this shallow project lets any layer reference them without dragging in the runtime `Translator` (DI / configuration / file IO), which lives in the separate [`DcsvIo.D2.I18n`](../core/README.md) project.
 
 ---
 
@@ -30,18 +30,18 @@ Its only dependency is the sibling [`D2.Shared.I18n.Abstractions`](../abstractio
 ## Dependency edge
 
 ```
-D2.Shared.I18n.Keys  ──►  D2.Shared.I18n.Abstractions   (TKMessage type)
+DcsvIo.D2.I18n.Keys  ──►  DcsvIo.D2.I18n.Abstractions   (TKMessage type)
 ```
 
-Each generated `TK.*` constant is a `TKMessage` instance — `new("common_errors_NOT_FOUND")` — so this project references Abstractions for the `TKMessage` type. That constructor is internal (producers can only synthesize a `TKMessage` via these constants, never from a raw string), so Abstractions grants this assembly access with `[InternalsVisibleTo("D2.Shared.I18n.Keys")]`.
+Each generated `TK.*` constant is a `TKMessage` instance — `new("common_errors_NOT_FOUND")` — so this project references Abstractions for the `TKMessage` type. That constructor is internal (producers can only synthesize a `TKMessage` via these constants, never from a raw string), so Abstractions grants this assembly access with `[InternalsVisibleTo("DcsvIo.D2.I18n.Keys")]`.
 
-The TS side mirrors this exactly: `@d2/i18n-keys → @d2/i18n-abstractions`, where TS `TK` constants are likewise `TKMessage` instances (not bare strings). Single `contracts/messages/en-US.json` spec, two emitters, drift structurally impossible.
+The TS side mirrors this exactly: `@dcsv-io/d2-i18n-keys → @dcsv-io/d2-i18n-abstractions`, where TS `TK` constants are likewise `TKMessage` instances (not bare strings). Single `contracts/messages/en-US.json` spec, two emitters, drift structurally impossible.
 
 ---
 
 ## The TK source generator
 
-`D2.Shared.I18n.SourceGen.TKGenerator` (at [`../source-gen/`](../source-gen/README.md), referenced here as a Roslyn Analyzer) emits `TK.g.cs` into this assembly. It:
+`DcsvIo.D2.I18n.SourceGen.TKGenerator` (at [`../source-gen/`](../source-gen/README.md), referenced here as a Roslyn Analyzer) emits `TK.g.cs` into this assembly. It:
 
 1. Reads `contracts/messages/*.json` via the `<AdditionalFiles>` declared in this csproj.
 2. Treats `en-US.json` as the source of truth.
@@ -84,14 +84,14 @@ All diagnostics include the offending key/locale in the message — they appear 
 
 ### Inspecting generated TK
 
-The emitted file is at `Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs`. This csproj declares `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` so the output lands in the tracked `Generated/` directory — committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build` from the spec; do not hand-edit. Rider also surfaces it under `Dependencies → Analyzers → D2.Shared.I18n.SourceGen → TKGenerator`.
+The emitted file is at `Generated/DcsvIo.D2.I18n.SourceGen/DcsvIo.D2.I18n.SourceGen.TKGenerator/TK.g.cs`. This csproj declares `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` so the output lands in the tracked `Generated/` directory — committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build` from the spec; do not hand-edit. Rider also surfaces it under `Dependencies → Analyzers → DcsvIo.D2.I18n.SourceGen → TKGenerator`.
 
 ---
 
 ## Dependencies
 
 ```xml
-<ProjectReference Include="..\abstractions\D2.Shared.I18n.Abstractions.csproj" />
+<ProjectReference Include="..\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
 ```
 
 Runtime reference to Abstractions (for `TKMessage`). The TK generator is referenced as an Analyzer (`OutputItemType="Analyzer" ReferenceOutputAssembly="false"`), so its dll doesn't propagate to consumers.

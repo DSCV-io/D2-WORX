@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Configuration;
 
-using D2.Private.Encryption;
-using D2.Shared.WorkloadIdentity;
+using DcsvIo.D2.Private.Encryption;
+using DcsvIo.D2.Spiffe;
 
 /// <summary>
 /// Configuration-bindable shape of the keyring-domain authority policy: which payload

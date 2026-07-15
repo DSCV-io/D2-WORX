@@ -46,10 +46,10 @@ vi.mock("@typespec/compiler", async (importOriginal) => {
 const { $onEmit } = await import("../src/emitter.js");
 
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -71,7 +71,7 @@ describe("openApiEmitDirect_OnEmitDispatch", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;

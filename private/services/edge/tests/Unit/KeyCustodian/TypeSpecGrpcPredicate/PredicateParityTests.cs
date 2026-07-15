@@ -4,15 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcPredicate;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpcPredicate;
 
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text.Json;
-using D2.Edge.Tests.TypeSpecGrpcPredicate.Generated;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.Result;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// The C# half of the cross-language @d2Resilience predicate-behavior parity suite. Drives the

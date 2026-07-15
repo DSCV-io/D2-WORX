@@ -4,23 +4,23 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.WellKnown;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.WellKnown;
 
-using D2.Edge.Api.Routes.KeyCustodian;
-using D2.Edge.KeyCustodian.App.Application.Facade;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
-using D2.Edge.KeyCustodian.App.Application.Issuance;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Client.Facade;
-using D2.Edge.Tests.Unit.KeyCustodian.App;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Handler;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Handler;
+using DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Facade;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionOwnSealPrivateKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.GetOrLazyProvisionSealPublicKey;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueLeaf;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Commands.IssueWorkloadCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetCaCertificate;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.GetKeyring;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Handlers.Queries.Sign;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Issuance;
+using DcsvIo.D2.Private.Edge.KeyCustodian.App.Infrastructure.Vault;
+using DcsvIo.D2.Private.Edge.KeyCustodian.Client.Facade;
+using DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -196,7 +196,7 @@ public sealed class OidcDiscoveryEndToEndTests
                         // dedicated extension is the composition-root opt-in — plus a
                         // clock and the DB-exception classifier.
                         services.AddD2CaLeafSigningCapability();
-                        services.AddSingleton<D2.Shared.Time.IClock>(
+                        services.AddSingleton<DcsvIo.D2.Time.IClock>(
                             new TestClock(KcAppTestKit.SR_BaseInstant));
 
                         services.AddSingleton(KcAppTestKit.NullClassifier());

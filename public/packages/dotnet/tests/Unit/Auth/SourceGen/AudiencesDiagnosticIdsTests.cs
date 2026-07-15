@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Auth.SourceGen;
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.Auth.Audiences.SourceGen;
+using DcsvIo.D2.Auth.Audiences.SourceGen;
 using Xunit;
 
 /// <summary>
-/// Pins every <c>D2.Shared.Auth.Audiences.SourceGen.DiagnosticIds</c> constant
+/// Pins every <c>DcsvIo.D2.Auth.Audiences.SourceGen.DiagnosticIds</c> constant
 /// to its documented identifier shape and confirms there are no duplicates.
 /// Diagnostic IDs ship as part of the lib's contract — accidental renames break
 /// operator tooling that greps build logs for these IDs.

@@ -16,7 +16,7 @@
 // `SignFixture` marker (op, models, gRPC service/method, route, served-by owner,
 // wire identity) so it can never be read as a real shipping operation.
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 import "@typespec/http";
 
 using D2;

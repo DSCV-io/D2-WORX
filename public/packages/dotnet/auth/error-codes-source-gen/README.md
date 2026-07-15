@@ -2,15 +2,15 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Auth.ErrorCodes.SourceGen
+# DcsvIo.D2.Auth.ErrorCodes.SourceGen
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
 **Input contract:** [`contracts/auth-error-codes/`](../../../../../contracts/auth-error-codes/README.md)
 
-A thin `[Generator]` shell over the shared unified error-codes engine ([`source-gen-shared/error-codes-emit`](../../source-gen-shared/error-codes-emit/README.md)). It emits the `AuthErrorCodes` const-string catalog + the `AuthFailures` semantic-factory class + the typed `AuthFailures<T>` twin into `D2.Shared.Auth` by reading `contracts/auth-error-codes/auth-error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Shared.Auth`. The shell owns only the auth catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN, both load-bearing for the on-disk generated path) + its `CatalogConfig`; all generation logic lives in the shared engine.
+A thin `[Generator]` shell over the shared unified error-codes engine ([`source-gen-shared/error-codes-emit`](../../source-gen-shared/error-codes-emit/README.md)). It emits the `AuthErrorCodes` const-string catalog + the `AuthFailures` semantic-factory class + the typed `AuthFailures<T>` twin into `DcsvIo.D2.Auth` by reading `contracts/auth-error-codes/auth-error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `DcsvIo.D2.Auth`. The shell owns only the auth catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN, both load-bearing for the on-disk generated path) + its `CatalogConfig`; all generation logic lives in the shared engine.
 
-The spec file is the single source of truth for the platform's auth-error taxonomy. Every `d2_error_code` constant a transport binding surfaces, every `D2Result` factory the validator picks, and the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` (resolved by `D2.Shared.Telemetry.Tags.SourceGen` via `valuesFromSpec`) all derive from one JSON file — no hand-written parallel constants, no per-feature drift.
+The spec file is the single source of truth for the platform's auth-error taxonomy. Every `d2_error_code` constant a transport binding surfaces, every `D2Result` factory the validator picks, and the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` (resolved by `DcsvIo.D2.Telemetry.Tags.SourceGen` via `valuesFromSpec`) all derive from one JSON file — no hand-written parallel constants, no per-feature drift.
 
 **Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring) and [`source-gen-shared/error-codes-emit`](../../source-gen-shared/error-codes-emit/README.md) for the shared engine + the add-a-catalog recipe.
 
@@ -28,7 +28,7 @@ The spec file is the single source of truth for the platform's auth-error taxono
 | `D2ERC001` | Error    | A `code` does not start with the enforced `AUTH_` domain prefix (catalog-neutral engine diagnostic)                          |
 | `D2ERC002` | Error    | A `userMessageKey` does not inverse-resolve to a key in `contracts/messages/en-US.json` (catalog-neutral engine diagnostic)  |
 
-The `D2ERC*` rows are the shared engine's catalog-neutral diagnostics (they fire for any catalog); the `D2AEC*` rows are this catalog's own validation diagnostics. The `D2ERC002` cross-check requires `contracts/messages/en-US.json` to be surfaced via `<AdditionalFiles>` on the consuming `D2.Shared.Auth.csproj` (the generator reduces it to just its key set so a translation-value edit does not re-run codegen).
+The `D2ERC*` rows are the shared engine's catalog-neutral diagnostics (they fire for any catalog); the `D2AEC*` rows are this catalog's own validation diagnostics. The `D2ERC002` cross-check requires `contracts/messages/en-US.json` to be surfaced via `<AdditionalFiles>` on the consuming `DcsvIo.D2.Auth.csproj` (the generator reduces it to just its key set so a translation-value edit does not re-run codegen).
 
 ---
 
@@ -74,11 +74,11 @@ The `D2ERC*` rows are the shared engine's catalog-neutral diagnostics (they fire
 
 ## Emitted output (three `.g.cs` files)
 
-All three files emit into the consuming assembly (`D2.Shared.Auth`) from the same spec:
+All three files emit into the consuming assembly (`DcsvIo.D2.Auth`) from the same spec:
 
-1. **`AuthErrorCodes.g.cs`** — `D2.Shared.Auth.Errors.AuthErrorCodes` static class with one `public const string` per spec entry, `IReadOnlyList<string> AllCodes`, `int GetHttpStatus(string)`, and `string KebabCase(string)` for the ProblemDetails `type` URI helper.
-2. **`AuthFailures.g.cs`** — `D2.Shared.Auth.Errors.AuthFailures` static class with one `public static D2Result FactoryName()` per spec entry (delegating to the `httpStatus`-selected base factory — `401 → Unauthorized`, `503 → ServiceUnavailable`), plus a typed `D2Result<T> FactoryName<T>()` overload for every `503` entry.
-3. **`AuthFailures.Generic.g.cs`** — `D2.Shared.Auth.Errors.AuthFailures<T>`, the typed twin: identical method names, each delegating to the typed `D2Result<T>` base factory so callers can produce a typed domain failure (e.g. `AuthFailures<Session>.BearerMissing()`). A distinct sibling file (distinct `AddSource` hint name) so `AuthFailures.g.cs` stays byte-identical. `AuthFailures` (non-generic) and `AuthFailures<T>` (generic) are distinct types — arity differs — exactly as `D2Result` / `D2Result<T>` coexist.
+1. **`AuthErrorCodes.g.cs`** — `DcsvIo.D2.Auth.Errors.AuthErrorCodes` static class with one `public const string` per spec entry, `IReadOnlyList<string> AllCodes`, `int GetHttpStatus(string)`, and `string KebabCase(string)` for the ProblemDetails `type` URI helper.
+2. **`AuthFailures.g.cs`** — `DcsvIo.D2.Auth.Errors.AuthFailures` static class with one `public static D2Result FactoryName()` per spec entry (delegating to the `httpStatus`-selected base factory — `401 → Unauthorized`, `503 → ServiceUnavailable`), plus a typed `D2Result<T> FactoryName<T>()` overload for every `503` entry.
+3. **`AuthFailures.Generic.g.cs`** — `DcsvIo.D2.Auth.Errors.AuthFailures<T>`, the typed twin: identical method names, each delegating to the typed `D2Result<T>` base factory so callers can produce a typed domain failure (e.g. `AuthFailures<Session>.BearerMissing()`). A distinct sibling file (distinct `AddSource` hint name) so `AuthFailures.g.cs` stays byte-identical. `AuthFailures` (non-generic) and `AuthFailures<T>` (generic) are distinct types — arity differs — exactly as `D2Result` / `D2Result<T>` coexist.
 
 The multi-emitter split lives in one sourcegen because all outputs derive from the same spec rows — keeping them co-located ensures any spec edit re-emits every file together and prevents the constants catalog from drifting from the factory surface.
 
@@ -90,5 +90,5 @@ The multi-emitter split lives in one sourcegen because all outputs derive from t
 - [`source-gen-shared/error-codes-emit`](../../source-gen-shared/error-codes-emit/README.md) — the shared unified engine this shell drives
 - [`contracts/auth-error-codes/schema.json`](../../../../../contracts/auth-error-codes/schema.json) — JSON Schema for the spec (a domain-specialized copy of the canonical schema)
 - [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Auth.Scopes.SourceGen`](../scopes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
-- [`D2.Shared.Telemetry.Tags.SourceGen`](../../telemetry/tags-source-gen/README.md) — sibling SrcGen consumes this spec via `valuesFromSpec=auth-error-codes` to drive the `d2.auth.problem.emitted` tag-value enumeration
+- [`DcsvIo.D2.Auth.Scopes.SourceGen`](../scopes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`DcsvIo.D2.Telemetry.Tags.SourceGen`](../../telemetry/tags-source-gen/README.md) — sibling SrcGen consumes this spec via `valuesFromSpec=auth-error-codes` to drive the `d2.auth.problem.emitted` tag-value enumeration

@@ -7,15 +7,15 @@ import type {
   ICacheInvalidationBackplane,
   IDistributedCache,
   ILocalCache,
-} from "@d2/caching-abstractions";
-import type { ILogger, LogBindings } from "@d2/logging";
+} from "@dcsv-io/d2-caching-abstractions";
+import type { ILogger, LogBindings } from "@dcsv-io/d2-logging";
 import {
   notFound,
   ok,
   serviceUnavailable,
   someFound,
   type D2Result,
-} from "@d2/result";
+} from "@dcsv-io/d2-result";
 
 /** No-op logger for unit tests (required ctor seam). */
 export class NoOpTestLogger implements ILogger {

@@ -6,7 +6,7 @@
 import {
   type IPropagatedContext,
   PropagatedContextSerializer,
-} from "@d2/request-context-abstractions";
+} from "@dcsv-io/d2-request-context-abstractions";
 
 /**
  * Mutable per-message context the consumer builds fresh for every delivery.

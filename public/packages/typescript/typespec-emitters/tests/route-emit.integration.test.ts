@@ -26,10 +26,10 @@ import { HttpTestLibrary } from "@typespec/http/testing";
 
 // Mount the decorators library.
 const D2DecoratorTestLibrary = createTestLibrary({
-  name: "@d2/typespec-decorators",
+  name: "@dcsv-io/d2-typespec-decorators",
   packageRoot: await findTestPackageRoot(
     new URL(
-      "../node_modules/@d2/typespec-decorators/package.json",
+      "../node_modules/@dcsv-io/d2-typespec-decorators/package.json",
       import.meta.url,
     ).href,
   ),
@@ -39,7 +39,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 
 // Mount the emitter package.
 const D2EmitterTestLibrary = createTestLibrary({
-  name: "@d2/typespec-emitters",
+  name: "@dcsv-io/d2-typespec-emitters",
   packageRoot: await findTestPackageRoot(import.meta.url),
   jsFileFolder: "dist",
   typespecFileFolder: "lib",
@@ -88,7 +88,7 @@ describe("routeEmitIntegration_Sign_EmitsRouteRegistration", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -111,8 +111,8 @@ describe("routeEmitIntegration_Sign_EmitsRouteRegistration", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 
@@ -161,7 +161,7 @@ describe("routeEmitIntegration_MissingAuthIntent_D2TSP004", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -181,8 +181,8 @@ describe("routeEmitIntegration_MissingAuthIntent_D2TSP004", () => {
 
     // diagnose() returns diagnostics without throwing on errors.
     const diagnostics = await host.diagnose("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 
@@ -215,7 +215,7 @@ describe("routeEmitIntegration_NoRoute_NoRegistrationEmitted", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.KeyCustodian;
 
@@ -230,8 +230,8 @@ describe("routeEmitIntegration_NoRoute_NoRegistrationEmitted", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 
@@ -271,7 +271,7 @@ describe("routeEmitIntegration_InProcess_FacadeDelegation", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -291,8 +291,8 @@ describe("routeEmitIntegration_InProcess_FacadeDelegation", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 
@@ -332,7 +332,7 @@ describe("routeEmitIntegration_UnsupportedVerb_D2TSP005", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -353,8 +353,8 @@ describe("routeEmitIntegration_UnsupportedVerb_D2TSP005", () => {
 
     // diagnose() returns diagnostics without throwing on errors.
     const diagnostics = await host.diagnose("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 
@@ -386,7 +386,7 @@ describe("routeEmitIntegration_AllScopes_RequireAllScopesEmitted", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -406,8 +406,8 @@ describe("routeEmitIntegration_AllScopes_RequireAllScopesEmitted", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 
@@ -449,7 +449,7 @@ describe("routeEmitIntegration_Harmless_MarkAsHarmlessEmitted", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -469,8 +469,8 @@ describe("routeEmitIntegration_Harmless_MarkAsHarmlessEmitted", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 
@@ -508,7 +508,7 @@ describe("routeEmitIntegration_GrpcRePoint_BothSurfacesDelegateThroughFacade", (
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -531,8 +531,8 @@ describe("routeEmitIntegration_GrpcRePoint_BothSurfacesDelegateThroughFacade", (
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 
@@ -582,7 +582,7 @@ describe("routeEmitIntegration_IdempotentWithoutRoute_D2TSP006", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       using D2;
       namespace D2.Fixtures;
 
@@ -598,8 +598,8 @@ describe("routeEmitIntegration_IdempotentWithoutRoute_D2TSP006", () => {
     );
 
     const diagnostics = await host.diagnose("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 
@@ -632,7 +632,7 @@ describe("routeEmitIntegration_Idempotent_Header_GatedRouteEmitted", () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
-      import "@d2/typespec-decorators";
+      import "@dcsv-io/d2-typespec-decorators";
       import "@typespec/http";
       using D2;
       using Http;
@@ -653,8 +653,8 @@ describe("routeEmitIntegration_Idempotent_Header_GatedRouteEmitted", () => {
     );
 
     await host.compile("main.tsp", {
-      emit: ["@d2/typespec-emitters"],
-      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      emit: ["@dcsv-io/d2-typespec-emitters"],
+      options: { "@dcsv-io/d2-typespec-emitters": FIXTURE_OPTIONS },
       outputDir: "testing:/out",
     });
 

@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.InProcessKeys;
+namespace DcsvIo.D2.Tests.Unit.InProcessKeys;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.InProcessKeys.SourceGen;
+using DcsvIo.D2.InProcessKeys.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -56,7 +56,7 @@ public sealed class InProcessKeysGeneratorTests
     public void Generator_HttpConsumingAssembly_EmitsHttpContextItemsOnly()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -66,7 +66,7 @@ public sealed class InProcessKeysGeneratorTests
         Path.GetFileName(generated.FilePath).Should().Be("D2HttpContextItems.g.cs");
 
         var src = generated.ToString();
-        src.Should().Contain("namespace D2.Shared.Auth.Abstractions.Http");
+        src.Should().Contain("namespace DcsvIo.D2.Auth.Abstractions.Http");
         src.Should().Contain("public static class D2HttpContextItems");
         src.Should().Contain("REQUEST_CONTEXT = \"d2.request_context\"");
         src.Should().Contain("HTTP_ONLY = \"d2.http_only\"");
@@ -77,7 +77,7 @@ public sealed class InProcessKeysGeneratorTests
     public void Generator_GrpcConsumingAssembly_EmitsGrpcUserStateKeysOnly()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Grpc",
+            assemblyName: "DcsvIo.D2.Auth.Grpc",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -87,7 +87,7 @@ public sealed class InProcessKeysGeneratorTests
         Path.GetFileName(generated.FilePath).Should().Be("D2GrpcUserStateKeys.g.cs");
 
         var src = generated.ToString();
-        src.Should().Contain("namespace D2.Shared.Auth.Grpc.Interceptors");
+        src.Should().Contain("namespace DcsvIo.D2.Auth.Grpc.Interceptors");
         src.Should().Contain("internal static class D2GrpcUserStateKeys");
         src.Should().Contain("REQUEST_CONTEXT = \"d2.request_context\"");
         src.Should().Contain("GRPC_ONLY = \"d2.grpc_only\"");
@@ -116,7 +116,7 @@ public sealed class InProcessKeysGeneratorTests
         // No AdditionalText supplied — generator must fire D2IPK004 (MissingSpec)
         // because the consuming assembly DOES expect the catalog.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -130,7 +130,7 @@ public sealed class InProcessKeysGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -156,7 +156,7 @@ public sealed class InProcessKeysGeneratorTests
         """;
 
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: spec);
 
         var result = driver.GetRunResult();
@@ -181,7 +181,7 @@ public sealed class InProcessKeysGeneratorTests
         """;
 
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Auth.Abstractions",
+            assemblyName: "DcsvIo.D2.Auth.Abstractions",
             specJson: spec);
 
         var result = driver.GetRunResult();
@@ -195,12 +195,12 @@ public sealed class InProcessKeysGeneratorTests
         // Cache stability — identical inputs must produce identical generator
         // output (otherwise downstream incremental builds re-run unnecessarily).
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Abstractions",
+                assemblyName: "DcsvIo.D2.Auth.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees.Single().ToString();
 
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Auth.Abstractions",
+                assemblyName: "DcsvIo.D2.Auth.Abstractions",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees.Single().ToString();
 

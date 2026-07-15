@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Abstractions.NameResolution;
+namespace DcsvIo.D2.Geo.Abstractions.NameResolution;
 
 using System.Globalization;
 using System.Text;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Pure helper that normalizes free-form place names (countries,
@@ -20,7 +20,7 @@ using D2.Shared.Utilities.Extensions;
 /// <remarks>
 /// <para>
 /// <b>Cross-language parity:</b> the TypeScript mirror in
-/// <c>@d2/geo-abstractions</c> (<c>src/name-resolution/name-normalizer.ts</c>)
+/// <c>@dcsv-io/d2-geo-abstractions</c> (<c>src/name-resolution/name-normalizer.ts</c>)
 /// implements the byte-equivalent algorithm using
 /// <c>String.prototype.normalize("NFD")</c> + a combining-mark strip +
 /// <c>toLocaleLowerCase("en-US")</c>. The two implementations MUST

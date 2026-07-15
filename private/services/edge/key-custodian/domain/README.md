@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge.KeyCustodian.Domain
+# DcsvIo.D2.Private.Edge.KeyCustodian.Domain
 
 > Parent: [`private/services/edge/key-custodian/`](../README.md)
 
@@ -130,7 +130,7 @@ policy and owns the counter / log on a deny.
 
 | Method                | Keyed on                                                                 | Notes |
 | ---------------------- | ------------------------------------------------------------------------ | ----- |
-| `AuthorizeSigning`     | `RequestOrigin` (the locally-established, never-propagated hop fact, from `D2.Shared.Auth.Abstractions`) + `ImmediateCaller` + the target `KeyDomain` + the caller's allowed-signing-domains set | Fail-closed layered decision: `Unestablished` origin denies; the cluster-signing root `jwks-signing` is STRUCTURALLY unreachable here for EVERY established origin (`MinterCapabilityRequired`) — reachable only via `AuthorizeMinterSigning`; every other `NeverCrossProcessSignableDomains` member (the CA trust anchors) is denied for EVERY origin (`CrossProcessDomainRejected`); every other domain requires `CrossProcessHop` + an authenticated peer + membership in the caller's allowed set. |
+| `AuthorizeSigning`     | `RequestOrigin` (the locally-established, never-propagated hop fact, from `DcsvIo.D2.Auth.Abstractions`) + `ImmediateCaller` + the target `KeyDomain` + the caller's allowed-signing-domains set | Fail-closed layered decision: `Unestablished` origin denies; the cluster-signing root `jwks-signing` is STRUCTURALLY unreachable here for EVERY established origin (`MinterCapabilityRequired`) — reachable only via `AuthorizeMinterSigning`; every other `NeverCrossProcessSignableDomains` member (the CA trust anchors) is denied for EVERY origin (`CrossProcessDomainRejected`); every other domain requires `CrossProcessHop` + an authenticated peer + membership in the caller's allowed set. |
 | `AuthorizeMinterSigning` | `RequestOrigin` only                                                    | The dedicated JWT-minter capability's own gate — requires `Origin == InProcessModule`; possession of the capability (registered only in the auth-module composition) plus this plane check IS the authority. |
 | `AuthorizeSealEncrypt` | The caller's authenticated workload id (presence only)                   | Broad — any authenticated caller may fetch any public seal key (public material is harmless to over-share). |
 | `AuthorizeSealDecrypt` | The caller's authenticated workload id (presence only)                   | Self-only, enforced by the op SHAPE (`getOrLazyProvisionOwnSealPrivateKey()` carries no target) — no in-handler `caller == target` comparison exists because there is no target. |
@@ -155,7 +155,7 @@ All transition methods and VO smart constructors use the generated `KeyCustodian
 
 ## Dependencies
 
-`D2.Shared.Result`, `D2.Shared.Utilities`, `D2.Shared.Time` (NodaTime `IClock` + `Instant`), `D2.Shared.Auth.Abstractions` (the domain-safe `RequestOrigin` enum `WorkloadCapabilityAuthority` keys its fail-closed decision on — pure enums/records only, so the domain dependency law holds), `D2.Shared.Encryption` (the `EncryptionDomains` catalog consumed by `KeyDomain`'s static catalog builder), `D2.Shared.I18n` (the generated `TK.*` keys — injected via the Tier-1 global using in `private/services/Directory.Build.targets`; not a direct `<ProjectReference>`), and the BCL `System.Security.Cryptography` (used by the `Rules/` generators + verifiers).
+`DcsvIo.D2.Result`, `DcsvIo.D2.Utilities`, `DcsvIo.D2.Time` (NodaTime `IClock` + `Instant`), `DcsvIo.D2.Auth.Abstractions` (the domain-safe `RequestOrigin` enum `WorkloadCapabilityAuthority` keys its fail-closed decision on — pure enums/records only, so the domain dependency law holds), `DcsvIo.D2.Encryption` (the `EncryptionDomains` catalog consumed by `KeyDomain`'s static catalog builder), `DcsvIo.D2.I18n` (the generated `TK.*` keys — injected via the Tier-1 global using in `private/services/Directory.Build.targets`; not a direct `<ProjectReference>`), and the BCL `System.Security.Cryptography` (used by the `Rules/` generators + verifiers).
 
 Zero EF Core, zero DI, zero I/O.
 

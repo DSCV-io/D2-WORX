@@ -10,7 +10,7 @@
 
 /**
  * D2 wire-protocol headers applicable to the amqp catalog.
- * Generated from headers.spec.json. Mirrors .NET D2.Shared.Headers.Amqp.AmqpHeaders.
+ * Generated from headers.spec.json. Mirrors .NET DcsvIo.D2.Headers.Amqp.AmqpHeaders.
  */
 export const AmqpHeaders = {
   /**

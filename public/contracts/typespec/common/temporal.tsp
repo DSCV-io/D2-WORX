@@ -11,11 +11,11 @@
 // instant / wall-clock.
 //
 // The wire form is NOT the domain form: the handler body maps each composite to
-// and from the D2.Shared.Time smart-constructor (ZonedInstant.Create /
-// LocalAnchoredEvent.Create) — and the @d2/time mirror on the TypeScript side —
+// and from the DcsvIo.D2.Time smart-constructor (ZonedInstant.Create /
+// LocalAnchoredEvent.Create) — and the @dcsv-io/d2-time mirror on the TypeScript side —
 // at the transport boundary. The emitter only produces the flat wire record.
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 
 using D2;
 

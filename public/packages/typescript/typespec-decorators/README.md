@@ -2,7 +2,7 @@
   Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/typespec-decorators
+# @dcsv-io/d2-typespec-decorators
 
 TypeSpec decorator library defining the `@d2*` vocabulary for the D2 Operation Contract IDL.
 Authors apply these decorators to TypeSpec `op` and `model` definitions; emitters read the
@@ -50,7 +50,7 @@ op processPayment(): void;
 Emitters read back the stored `string[]`:
 
 ```ts
-import { D2_REQUIRE_ANY_SCOPE_KEY } from "@d2/typespec-decorators";
+import { D2_REQUIRE_ANY_SCOPE_KEY } from "@dcsv-io/d2-typespec-decorators";
 const scopes = program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).get(op); // string[]
 ```
 
@@ -67,7 +67,7 @@ op streamEvents(): void;
 Emitters read back `{ service, method, streaming }`:
 
 ```ts
-import { D2_GRPC_METHOD_KEY } from "@d2/typespec-decorators";
+import { D2_GRPC_METHOD_KEY } from "@dcsv-io/d2-typespec-decorators";
 const payload = program.stateMap(D2_GRPC_METHOD_KEY).get(op);
 // { service: "Events", method: "StreamEvents", streaming: "serverStream" }
 ```
@@ -89,8 +89,8 @@ op createPayment(): void;
 Emitters read back `{ keySource, ttlSeconds, fields }`:
 
 ```ts
-import { D2_IDEMPOTENT_KEY } from "@d2/typespec-decorators";
-import type { IdempotentPayload } from "@d2/typespec-decorators";
+import { D2_IDEMPOTENT_KEY } from "@dcsv-io/d2-typespec-decorators";
+import type { IdempotentPayload } from "@dcsv-io/d2-typespec-decorators";
 const payload = program
   .stateMap(D2_IDEMPOTENT_KEY)
   .get(op) as IdempotentPayload;
@@ -116,7 +116,7 @@ op callCriticalService(): void;
 Emitters read back the raw string or use `parse()` directly to walk the AST:
 
 ```ts
-import { D2_RESILIENCE_KEY, parse } from "@d2/typespec-decorators";
+import { D2_RESILIENCE_KEY, parse } from "@dcsv-io/d2-typespec-decorators";
 const raw = program.stateMap(D2_RESILIENCE_KEY).get(op); // string
 const result = parse(raw);
 if (result.ok) {
@@ -202,7 +202,7 @@ import {
   D2_RESILIENCE_RETRY_WHEN_KEY,
   D2_RESILIENCE_FAIL_WHEN_KEY,
   parseResultPredicate,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 const retryRaw = program.stateMap(D2_RESILIENCE_RETRY_WHEN_KEY).get(op); // string | undefined
 if (retryRaw !== undefined) {
   const parsed = parseResultPredicate(retryRaw);
@@ -273,7 +273,7 @@ import {
   D2_COMMAND_KEY,
   D2_QUERY_KEY,
   D2_INTERNAL_KEY,
-} from "@d2/typespec-decorators";
+} from "@dcsv-io/d2-typespec-decorators";
 const isCommand = program.stateMap(D2_COMMAND_KEY).has(op); // → Commands/ folder
 const isQuery = program.stateMap(D2_QUERY_KEY).has(op); // → Queries/ folder
 const isInternal = program.stateMap(D2_INTERNAL_KEY).has(op); // suppress cross-boundary surface
@@ -360,7 +360,7 @@ Emitter authors must read this section before generating code from any `@d2*` de
 
 ### Stock TypeSpec decorators consumed by the emitters
 
-The C# DTO emitter (`src/lib/csharp-dto-emitter.ts` in `@d2/typespec-emitters`) consumes
+The C# DTO emitter (`src/lib/csharp-dto-emitter.ts` in `@dcsv-io/d2-typespec-emitters`) consumes
 the stock TypeSpec `@encodedName("application/json", "<wire>")` decorator — not a `@d2*`
 decorator — via `resolveEncodedName` from `@typespec/compiler`, and emits
 `[property: JsonPropertyName("<wire>")]` on the generated record param. See the
@@ -426,9 +426,9 @@ call at emit time. `failWhen` takes precedence over `retryWhen` at runtime.
 ## Build
 
 ```bash
-pnpm --filter @d2/typespec-decorators build            # tsc -b → dist/
-pnpm --filter @d2/typespec-decorators test             # vitest run (380 tests across decorators + resilience-dsl + result-predicate suites)
-pnpm --filter @d2/typespec-decorators run test:coverage  # vitest run --coverage (100% threshold, requires dist/)
+pnpm --filter @dcsv-io/d2-typespec-decorators build            # tsc -b → dist/
+pnpm --filter @dcsv-io/d2-typespec-decorators test             # vitest run (380 tests across decorators + resilience-dsl + result-predicate suites)
+pnpm --filter @dcsv-io/d2-typespec-decorators run test:coverage  # vitest run --coverage (100% threshold, requires dist/)
 ```
 
 ## Dependencies

@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { DISPLAY_NAME_INVALID_RE } from "@d2/utilities";
+import { DISPLAY_NAME_INVALID_RE } from "@dcsv-io/d2-utilities";
 
 /**
  * Input event handler that strips characters not allowed in display names.

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AspNetCore;
+namespace DcsvIo.D2.AspNetCore;
 
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
 
 /// <summary>
@@ -22,11 +22,11 @@ using Microsoft.AspNetCore.Http;
 /// shared-lib stack. Consumed by:
 /// </para>
 /// <list type="bullet">
-///   <item><c>D2.Shared.Logging.WebApplicationLoggingExtensions.UseD2RequestLogging</c>
+///   <item><c>DcsvIo.D2.Logging.WebApplicationLoggingExtensions.UseD2RequestLogging</c>
 ///     to down-rank request-completion log lines for infrastructure
 ///     endpoints to <c>Verbose</c> level so the default minimum-level gate
 ///     filters them out.</item>
-///   <item><c>D2.Shared.Telemetry.TelemetryServiceCollectionExtensions.AddD2Telemetry</c>
+///   <item><c>DcsvIo.D2.Telemetry.TelemetryServiceCollectionExtensions.AddD2Telemetry</c>
 ///     in the AspNetCore-instrumentation <c>Filter</c> callback to suppress
 ///     auto-spans for infrastructure endpoints.</item>
 ///   <item><see cref="InfrastructureBypassApplicationBuilderExtensions.UseD2InfrastructureBypass"/>

@@ -6,7 +6,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type Redis from "ioredis";
 
-import { ErrorCodes, HttpStatusCode } from "@d2/result";
+import { ErrorCodes, HttpStatusCode } from "@dcsv-io/d2-result";
 
 import {
   createRedisCacheOptions,

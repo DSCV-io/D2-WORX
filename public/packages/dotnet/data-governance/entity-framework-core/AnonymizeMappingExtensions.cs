@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.EntityFrameworkCore;
+namespace DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
 using System.Reflection;
-using D2.Shared.DataGovernance.Abstractions;
+using DcsvIo.D2.DataGovernance.Abstractions;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 /// <summary>

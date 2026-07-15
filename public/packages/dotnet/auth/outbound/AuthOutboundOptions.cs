@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Outbound;
+namespace DcsvIo.D2.Auth.Outbound;
 
 /// <summary>
-/// Configuration for <c>D2.Shared.Auth.Outbound</c>'s token-exchange client and
+/// Configuration for <c>DcsvIo.D2.Auth.Outbound</c>'s token-exchange client and
 /// workload-certificate presentation. The single <c>D2_AUTH_ISSUER</c> URL drives
 /// OIDC discovery; <c>token_endpoint</c> is read from
 /// <c>{Issuer}/.well-known/openid-configuration</c> at startup.

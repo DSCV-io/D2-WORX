@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D² audience spec",
-  "description": "Schema for contracts/auth-audiences/audiences.spec.json — the source-of-truth catalog that D2.Shared.Auth.Audiences.SourceGen reads to emit the Audiences static class into D2.Shared.Auth.Abstractions. Each entry surfaces as a 'public const string {Name} = \"{url}\"' on the emitted Audiences class plus name→url / url→name lookup helpers.",
+  "description": "Schema for contracts/auth-audiences/audiences.spec.json — the source-of-truth catalog that DcsvIo.D2.Auth.Audiences.SourceGen reads to emit the Audiences static class into DcsvIo.D2.Auth.Abstractions. Each entry surfaces as a 'public const string {Name} = \"{url}\"' on the emitted Audiences class plus name→url / url→name lookup helpers.",
   "type": "object",
   "required": ["audiences"],
   "additionalProperties": false,

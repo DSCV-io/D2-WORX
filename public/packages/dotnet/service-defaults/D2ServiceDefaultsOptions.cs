@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.ServiceDefaults;
+namespace DcsvIo.D2.ServiceDefaults;
 
-using D2.Shared.AspNetCore;
-using D2.Shared.AspNetCore.Mtls;
-using D2.Shared.Auth;
-using D2.Shared.Caching;
-using D2.Shared.Logging;
-using D2.Shared.Telemetry;
+using DcsvIo.D2.AspNetCore;
+using DcsvIo.D2.AspNetCore.Mtls;
+using DcsvIo.D2.Auth;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Logging;
+using DcsvIo.D2.Telemetry;
 
 /// <summary>
 /// Options surface for

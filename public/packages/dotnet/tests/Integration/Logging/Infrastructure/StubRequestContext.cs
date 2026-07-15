@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Logging.Infrastructure;
+namespace DcsvIo.D2.Tests.Integration.Logging.Infrastructure;
 
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Context.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Context.Abstractions;
 
 /// <summary>
 /// Hand-rolled <see cref="IRequestContext"/> stub for integration tests of

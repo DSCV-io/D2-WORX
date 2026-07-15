@@ -8,7 +8,7 @@ import {
   CurrencyCode,
   LanguageCode,
   MeasurementSystem,
-} from "@d2/geo-abstractions";
+} from "@dcsv-io/d2-geo-abstractions";
 import { describe, expect, it } from "vitest";
 
 import { Countries, CountryLookup } from "../../src/countries.js";

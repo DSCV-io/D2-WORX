@@ -2,11 +2,11 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Edge.Api
+# DcsvIo.D2.Private.Edge.Api
 
 > Parent: [`../README.md`](../README.md)
 
-**Who / what:** Host integrators and operators — Edge **composition root** (`Microsoft.NET.Sdk.Web`, assembly `D2.Edge.Api`): DI, HTTP pipeline, three-bind Kestrel, production well-known Map, production KeyCustodian gRPC Map, and standalone Audit HTTP→gRPC bridges.
+**Who / what:** Host integrators and operators — Edge **composition root** (`Microsoft.NET.Sdk.Web`, assembly `DcsvIo.D2.Private.Edge.Api`): DI, HTTP pipeline, three-bind Kestrel, production well-known Map, production KeyCustodian gRPC Map, and standalone Audit HTTP→gRPC bridges.
 
 ## Surfaces
 
@@ -32,11 +32,11 @@ Exclusive `Listen*` via `EdgeHttpsRoleKestrelConfigure`. Server listen certs = s
 - `GET /.well-known/jwks.json` — `MapGetJwksRoute`
 - `GET /.well-known/openid-configuration` — `MapGetOidcConfigurationRoute`
 
-Home: `Routes/KeyCustodian/*.g.cs` (namespace `D2.Edge.Api.Routes.KeyCustodian`).
+Home: `Routes/KeyCustodian/*.g.cs` (namespace `DcsvIo.D2.Private.Edge.Api.Routes.KeyCustodian`).
 
 ## KeyCustodian gRPC (production)
 
-Six thin services under `Grpc/KeyCustodian/` (namespace `D2.Edge.Api.Grpc.KeyCustodian`), transport mappers under `Mappers/KeyCustodian/`, protos under `Protos/KeyCustodian/`. Mapped via `MapD2EdgeEndpoints` with `Scopes.Internal.Kc.*` only:
+Six thin services under `Grpc/KeyCustodian/` (namespace `DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian`), transport mappers under `Mappers/KeyCustodian/`, protos under `Protos/KeyCustodian/`. Mapped via `MapD2EdgeEndpoints` with `Scopes.Internal.Kc.*` only:
 
 | Service | Scope constant |
 | --- | --- |
@@ -47,7 +47,7 @@ Six thin services under `Grpc/KeyCustodian/` (namespace `D2.Edge.Api.Grpc.KeyCus
 | `KeyCustodianSealPublicKeyService` | `Scopes.Internal.Kc.Seal.Encrypt` |
 | `KeyCustodianOwnSealPrivateKeyService` | `Scopes.Internal.Kc.Seal.Open` |
 
-**Compile-once:** Edge.Api Grpc.Tools Both owns sign / issue / cacert protos; Client owns keyring + seal protos (physical files still under `api/Protos/KeyCustodian/`). Regen: `pnpm --filter @d2/typespec-emitters regen`.
+**Compile-once:** Edge.Api Grpc.Tools Both owns sign / issue / cacert protos; Client owns keyring + seal protos (physical files still under `api/Protos/KeyCustodian/`). Regen: `pnpm --filter @dcsv-io/d2-typespec-emitters regen`.
 
 ## Audit bridge (standalone multi-process)
 
@@ -55,8 +55,8 @@ Six thin services under `Grpc/KeyCustodian/` (namespace `D2.Edge.Api.Grpc.KeyCus
 | --- | --- |
 | DI | `AddD2AuditGrpcClients(new AuditGrpcClientOptions { Address = … })` — Address from `AUDIT_GRPC:Address` (default `https://d2-audit:8443`); fail-loud if missing or non-https |
 | Map | `MapAllAuditBridges()` → `MapPingAuditBridge()` (`GET /api/v1/audit/ping`) |
-| Generated home | `Bridges/Audit/*BridgeRegistration.g.cs` (namespace `D2.Edge.Api.Bridges.Audit`) |
-| Client package | ProjectReference `D2.Audit.Client` only — never Audit.Api |
+| Generated home | `Bridges/Audit/*BridgeRegistration.g.cs` (namespace `DcsvIo.D2.Private.Edge.Api.Bridges.Audit`) |
+| Client package | ProjectReference `DcsvIo.D2.Private.Audit.Client` only — never Audit.Api |
 
 Outbound dual-factor (`AddD2WorkloadCertificateOutbound` + `AddD2ForwardedJwtOutbound` + CSR PoC issuer) is already on Edge; generated client auto-chains both factors.
 

@@ -5,7 +5,7 @@
 
 /**
  * Base type for every error raised by this lib's framing or keyring path —
- * the behavioral twin of .NET `D2.Shared.Encryption.EncryptionException`.
+ * the behavioral twin of .NET `DcsvIo.D2.Encryption.EncryptionException`.
  * AEAD authentication failures surface as {@link AuthenticationTagMismatchError}
  * (the twin of the BCL `AuthenticationTagMismatchException`) and are kept a
  * distinct type from the framing errors: a tag mismatch is "tampering or wrong

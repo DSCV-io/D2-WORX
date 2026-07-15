@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.Abstractions.NameResolution;
+namespace DcsvIo.D2.Geo.Abstractions.NameResolution;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Contract for resolving a free-form place-name string (from a 3rd-party

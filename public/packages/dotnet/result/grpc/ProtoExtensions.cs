@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Result.Grpc;
+namespace DcsvIo.D2.Result.Grpc;
 
 using System.Net;
-using D2.Services.Protos.Common.V1;
-using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
-using D2.Shared.Utilities.Diagnostics;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.ErrorCodes.Category;
+using DcsvIo.D2.I18n;
+using DcsvIo.D2.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Extensions;
+using global::D2.Services.Protos.Common.V1;
 using global::Grpc.Core;
 using Microsoft.Extensions.Logging;
 
@@ -39,7 +39,7 @@ using Microsoft.Extensions.Logging;
 /// wrapping. Auth-middleware transport rejections (JWT validation failure,
 /// JWKS unavailable) correctly stay as <see cref="RpcException"/> +
 /// <see cref="StatusCode.Unauthenticated"/> / <see cref="StatusCode.Unavailable"/>
-/// via <c>D2RpcStatusExtensions</c> in <c>D2.Shared.Auth.Grpc</c> — those are
+/// via <c>D2RpcStatusExtensions</c> in <c>DcsvIo.D2.Auth.Grpc</c> — those are
 /// genuine transport/auth faults, not business results.
 /// </para>
 /// </remarks>
@@ -311,9 +311,9 @@ public static partial class ProtoExtensions
 
     private static TKMessage FromTKMessageProto(TKMessageProto proto)
     {
-        // TKMessage.ctor is internal; D2.Shared.I18n.Abstractions grants
-        // InternalsVisibleTo("D2.Shared.Result.Grpc") for deserialization
-        // partners — the same pattern as D2.Shared.I18n.Keys.
+        // TKMessage.ctor is internal; DcsvIo.D2.I18n.Abstractions grants
+        // InternalsVisibleTo("DcsvIo.D2.Result.Grpc") for deserialization
+        // partners — the same pattern as DcsvIo.D2.I18n.Keys.
         IReadOnlyDictionary<string, string>? parameters =
             proto.Params.Count > 0
                 ? new Dictionary<string, string>(proto.Params)

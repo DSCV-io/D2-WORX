@@ -4,28 +4,28 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Grpc.Trailers.SourceGen;
+namespace DcsvIo.D2.Grpc.Trailers.SourceGen;
 
 using System;
 using System.IO;
 using System.Linq;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
 /// Roslyn incremental source generator that emits the <c>D2GrpcTrailers</c>
-/// static class into <c>D2.Shared.Auth.Grpc</c> by reading
+/// static class into <c>DcsvIo.D2.Auth.Grpc</c> by reading
 /// <c>contracts/grpc-trailers/grpc-trailers.spec.json</c> via
 /// <c>AdditionalFiles</c>. Single-target — only emits when the consuming
-/// assembly is <c>D2.Shared.Auth.Grpc</c>.
+/// assembly is <c>DcsvIo.D2.Auth.Grpc</c>.
 /// </summary>
 [Generator]
 public sealed class GrpcTrailersGenerator : IIncrementalGenerator
 {
     private const string _SOURCE_NAME = "D2GrpcTrailers.g.cs";
     private const string _SPEC_FILE_NAME = "grpc-trailers.spec.json";
-    private const string _TARGET_ASSEMBLY_NAME = "D2.Shared.Auth.Grpc";
+    private const string _TARGET_ASSEMBLY_NAME = "DcsvIo.D2.Auth.Grpc";
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -46,7 +46,7 @@ public sealed class GrpcTrailersGenerator : IIncrementalGenerator
         {
             var (specFiles, compilation) = tuple;
 
-            // Only emit when the consuming assembly is D2.Shared.Auth.Grpc.
+            // Only emit when the consuming assembly is DcsvIo.D2.Auth.Grpc.
             if (!string.Equals(
                 compilation.AssemblyName,
                 _TARGET_ASSEMBLY_NAME,

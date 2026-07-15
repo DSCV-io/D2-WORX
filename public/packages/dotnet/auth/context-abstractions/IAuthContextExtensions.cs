@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AuthContext.Abstractions;
+namespace DcsvIo.D2.AuthContext.Abstractions;
 
 using System.Linq;
-using D2.Shared.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions;
 
 /// <summary>
 /// Convenience helpers on <see cref="IAuthContext"/>. Hand-written (not

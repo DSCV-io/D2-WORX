@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Messaging.RabbitMq.Idempotency;
+namespace DcsvIo.D2.Messaging.RabbitMq.Idempotency;
 
-using D2.Shared.Caching;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Extensions;
 
 /// <summary>
 /// Default <see cref="IMessageIdempotencyStore"/> implementation backed by

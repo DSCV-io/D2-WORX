@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.DataGovernance.EntityFrameworkCore;
+namespace DcsvIo.D2.DataGovernance.EntityFrameworkCore;
 
 /// <summary>
 /// Classifies an entity type into one of three anonymization tiers based on
@@ -21,7 +21,7 @@ namespace D2.Shared.DataGovernance.EntityFrameworkCore;
 /// Roll-up precedence is <see cref="TierC"/> &gt; <see cref="TierB"/> &gt; <see cref="TierA"/>:
 /// a single Tier-C shape anywhere in the entity's owned subtree demotes the whole entity to
 /// <see cref="TierC"/>; a single
-/// <see cref="D2.Shared.DataGovernance.Abstractions.AnonymizeKind.Template"/>
+/// <see cref="DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind.Template"/>
 /// field with no C-shape demotes the entity to <see cref="TierB"/>.
 /// </para>
 /// </remarks>
@@ -36,7 +36,7 @@ public enum AnonymizationTier
 
     /// <summary>
     /// At least one annotated property uses a
-    /// <see cref="D2.Shared.DataGovernance.Abstractions.AnonymizeKind.Template"/> rule, and
+    /// <see cref="DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind.Template"/> rule, and
     /// no property is in an unsupported shape. The anonymization engine must materialize each
     /// row, resolve the template against sibling values, mutate the instance, and call
     /// <c>SaveChangesAsync</c>.

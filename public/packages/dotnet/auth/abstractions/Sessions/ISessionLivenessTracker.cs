@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Abstractions.Sessions;
+namespace DcsvIo.D2.Auth.Abstractions.Sessions;
 
-using D2.Shared.Result;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Reads-side contract for session liveness — every authenticated request

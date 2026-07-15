@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.EntityFrameworkCore.Postgres;
+namespace DcsvIo.D2.EntityFrameworkCore.Postgres;
 
 using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Utilities.Extensions;
 using JetBrains.Annotations;
 using Npgsql;
 
@@ -175,7 +175,7 @@ public sealed class PgAdvisoryLock : IAsyncDisposable
     }
 
     // =========================================================================
-    // Test seam (InternalsVisibleTo D2.Shared.Tests)
+    // Test seam (InternalsVisibleTo DcsvIo.D2.Tests)
     // =========================================================================
 
     /// <summary>

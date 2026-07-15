@@ -18,7 +18,7 @@
 //   - Both throw on violation — no silent truncation or fallback (strict,
 //     fail-loud per project convention).
 
-import { falsey } from "@d2/utilities";
+import { falsey } from "@dcsv-io/d2-utilities";
 
 // ---------------------------------------------------------------------------
 // Module-level constants

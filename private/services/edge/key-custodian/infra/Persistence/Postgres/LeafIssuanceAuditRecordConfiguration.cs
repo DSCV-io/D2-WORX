@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
 
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

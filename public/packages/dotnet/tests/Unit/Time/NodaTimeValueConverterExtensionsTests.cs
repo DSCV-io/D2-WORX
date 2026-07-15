@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Time;
+namespace DcsvIo.D2.Tests.Unit.Time;
 
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Time.EfCore;
+using DcsvIo.D2.Time.EfCore;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using Xunit;

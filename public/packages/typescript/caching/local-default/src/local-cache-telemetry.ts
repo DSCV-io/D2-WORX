@@ -10,11 +10,11 @@ import { type Counter, metrics } from "@opentelemetry/api";
  * Hosts register this via MeterProvider setup so local-cache counters
  * reach OTLP / Prometheus exporters.
  */
-// Byte-identical twin of .NET LocalCacheTelemetry: meter "D2.Shared.Caching.Local" v1.0.0,
+// Byte-identical twin of .NET LocalCacheTelemetry: meter "DcsvIo.D2.Caching.Local" v1.0.0,
 // counters d2.cache.local.{hits,misses,sets,removes,evictions} with the same units and
 // descriptions. Aggregate counters only - no tags, no spans, no logs (matches the .NET meter).
 // Instrument tuples below MUST match LocalCacheTelemetry.cs Counter registrations.
-export const LOCAL_CACHE_METER_NAME = "D2.Shared.Caching.Local";
+export const LOCAL_CACHE_METER_NAME = "DcsvIo.D2.Caching.Local";
 
 /** Meter version twin of .NET `LocalCacheTelemetry.SR_Meter` version. */
 export const LOCAL_CACHE_METER_VERSION = "1.0.0";

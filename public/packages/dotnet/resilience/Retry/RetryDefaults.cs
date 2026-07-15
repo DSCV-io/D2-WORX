@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Resilience.Retry;
+namespace DcsvIo.D2.Resilience.Retry;
 
 /// <summary>
 /// Non-generic peer of <see cref="RetryOptions{T}"/> holding defaults that

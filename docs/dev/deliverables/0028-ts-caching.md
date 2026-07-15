@@ -16,18 +16,18 @@ Per-step journals remain local-only under docs/wip/0028-ts-caching/ (gitignored)
 
 ## Goal
 
-Ship the **full behavioral TypeScript twin** of the .NET `D2.Shared.Caching.*` stack — abstractions (markers + building blocks + backplane), local default, Redis distributed + invalidation backplane, and tiered composition — so multi-instance Node workloads (BFF as mesh member, future Node services) keep L1 coherent via the shared Redis pub/sub channel `d2:cache:invalidations` with the universal **"everyone acts"** rule.
+Ship the **full behavioral TypeScript twin** of the .NET `DcsvIo.D2.Caching.*` stack — abstractions (markers + building blocks + backplane), local default, Redis distributed + invalidation backplane, and tiered composition — so multi-instance Node workloads (BFF as mesh member, future Node services) keep L1 coherent via the shared Redis pub/sub channel `d2:cache:invalidations` with the universal **"everyone acts"** rule.
 
-Success = package layout mirrors `server/shared/dotnet/caching/`; every Basic / Atomic / Broadcast / Set surface that .NET exposes has a TS counterpart returning `@d2/result` shapes; unit + Testcontainers Redis integration prove package-local parity; dual-runtime **constants/semantics** parity pins defaults / meters / Lua / channel / tiered EventId bindings; V2/PHASE/PARITY/KEEP docs describe the twin as shipped (stale “cache packages dropped” framing removed).
+Success = package layout mirrors `server/shared/dotnet/caching/`; every Basic / Atomic / Broadcast / Set surface that .NET exposes has a TS counterpart returning `@dcsv-io/d2-result` shapes; unit + Testcontainers Redis integration prove package-local parity; dual-runtime **constants/semantics** parity pins defaults / meters / Lua / channel / tiered EventId bindings; V2/PHASE/PARITY/KEEP docs describe the twin as shipped (stale “cache packages dropped” framing removed).
 
 ## What shipped
 
 | Step | Commit / package | Notes |
 | --- | --- | --- |
-| 01-abstractions | `99724826` · `@d2/caching-abstractions` | Markers, building blocks, options, InputFailures, serializer seam |
-| 02-local-default | `b49f6b3d` · `@d2/caching-local-default` | In-process L1 + atomics; post-dispose + numeric hardening |
-| 03-distributed-redis | `0010d5aa` · `@d2/caching-distributed-redis` | Redis store + invalidation backplane; Lua pins; IT |
-| 04-tiered | `7b04bd70` · `@d2/caching-tiered` | L1+L2 composition; L2-first; everyone-acts L1 drop |
+| 01-abstractions | `99724826` · `@dcsv-io/d2-caching-abstractions` | Markers, building blocks, options, InputFailures, serializer seam |
+| 02-local-default | `b49f6b3d` · `@dcsv-io/d2-caching-local-default` | In-process L1 + atomics; post-dispose + numeric hardening |
+| 03-distributed-redis | `0010d5aa` · `@dcsv-io/d2-caching-distributed-redis` | Redis store + invalidation backplane; Lua pins; IT |
+| 04-tiered | `7b04bd70` · `@dcsv-io/d2-caching-tiered` | L1+L2 composition; L2-first; everyone-acts L1 drop |
 | 05-docs-parity + FR fixes | `04edf08d` | PARITY/PATTERNS/PHASE_3/ADR honesty; `setMany` pipeline error path; log-op named constants; harness renames; fingerprints |
 | Snapshot + T1 status | `32b6903b` | Deliverable snapshot + PHASE_3 T1 SHIPPED |
 | TS numeric hardening | `ed872ded` | Non-finite / non-safe-integer guards on local + redis (REVIEW item 2) |
@@ -38,16 +38,16 @@ Success = package layout mirrors `server/shared/dotnet/caching/`; every Basic / 
 
 ```
 server/shared/typescript/caching/
-  abstractions/      → @d2/caching-abstractions
-  local-default/     → @d2/caching-local-default
-  distributed-redis/ → @d2/caching-distributed-redis
-  tiered/            → @d2/caching-tiered
+  abstractions/      → @dcsv-io/d2-caching-abstractions
+  local-default/     → @dcsv-io/d2-caching-local-default
+  distributed-redis/ → @dcsv-io/d2-caching-distributed-redis
+  tiered/            → @dcsv-io/d2-caching-tiered
 ```
 
 ### Behavioral law (ADR-0008 — non-negotiable)
 
 - Markers compose building blocks; marker **name** is the inject-site intent.
-- Every op returns `@d2/result` shapes; miss → NotFound; partial bulk → SomeFound; bad input → ValidationFailed; store down → ServiceUnavailable; type mismatch on Increment → Conflict.
+- Every op returns `@dcsv-io/d2-result` shapes; miss → NotFound; partial bulk → SomeFound; bad input → ValidationFailed; store down → ServiceUnavailable; type mismatch on Increment → Conflict.
 - `*AndBroadcast*` after successful write → backplane publish; missing backplane = registration error (fail loud).
 - **Everyone acts** — no sender-ID filter; publisher drops own L1 too.
 - Delivery **at-most-once**; missed invalidation → next read hits L2.
@@ -86,7 +86,7 @@ server/shared/typescript/caching/
 
 | ID | Class | Detail | Follow-up |
 | --- | --- | --- | --- |
-| KOM-01..08 | §26.12 dual-runtime constants | Hand-mirrored defaults / meters / Lua / channel / tiered log semantics with package-local pins only | **CLOSED** via `aee86e90` — `CachingTwinFixtureEmitter` + `@d2/contract-tests` `caching-twin.parity.test.ts` + `fixtures/caching-twin/constants.json` (constants/semantics; tiered: EventId/bindings only, not LoggerMessage byte-equality) |
+| KOM-01..08 | §26.12 dual-runtime constants | Hand-mirrored defaults / meters / Lua / channel / tiered log semantics with package-local pins only | **CLOSED** via `aee86e90` — `CachingTwinFixtureEmitter` + `@dcsv-io/d2-contract-tests` `caching-twin.parity.test.ts` + `fixtures/caching-twin/constants.json` (constants/semantics; tiered: EventId/bindings only, not LoggerMessage byte-equality) |
 | FR product | §18 / §1.32 | `setMany` ignored ioredis per-command errors; hollow AbortSignal double | Fixed in `04edf08d` with regression units |
 | Process | §24 | Step journal Latest lag vs READY partials; FR Plan-Audit timing | Forensic journal merges + real FR Plan-Audit before SHIP |
 

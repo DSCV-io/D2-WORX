@@ -2,25 +2,25 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/caching-tiered
+# @dcsv-io/d2-caching-tiered
 
-> Parent: [`../README.md`](../README.md) · .NET mirror: `D2.Shared.Caching.Tiered`
+> Parent: [`../README.md`](../README.md) · .NET mirror: `DcsvIo.D2.Caching.Tiered`
 
-Node/BFF authors who need a composed L1+L2 `ITieredCache` inject this pure-composition implementation — reads check the in-process L1 first and fall through to the distributed L2, writes go L2-first so partial-write states are impossible, atomics route through L2 with L1 side-effects, and an optional invalidation backplane keeps every instance's L1 coherent under the universal everyone-acts rule. Every operation returns `@d2/result` shapes.
+Node/BFF authors who need a composed L1+L2 `ITieredCache` inject this pure-composition implementation — reads check the in-process L1 first and fall through to the distributed L2, writes go L2-first so partial-write states are impossible, atomics route through L2 with L1 side-effects, and an optional invalidation backplane keeps every instance's L1 coherent under the universal everyone-acts rule. Every operation returns `@dcsv-io/d2-result` shapes.
 
 ## Usage
 
 ```ts
-import { DefaultLocalCache } from "@d2/caching-local-default";
+import { DefaultLocalCache } from "@dcsv-io/d2-caching-local-default";
 import {
   connectRedis,
   createRedisCacheOptions,
   JsonCacheSerializer,
   RedisCacheInvalidationBackplane,
   RedisDistributedCache,
-} from "@d2/caching-distributed-redis";
-import { DefaultTieredCache } from "@d2/caching-tiered";
-import type { ILogger } from "@d2/logging";
+} from "@dcsv-io/d2-caching-distributed-redis";
+import { DefaultTieredCache } from "@dcsv-io/d2-caching-tiered";
+import type { ILogger } from "@dcsv-io/d2-logging";
 
 const logger = /* host ILogger */ undefined as unknown as ILogger;
 const l1 = new DefaultLocalCache({ keyPrefix: "bff:" });
@@ -158,20 +158,20 @@ Per-call validation and store failures surface from L1/L2 (`notFound`, `someFoun
 - Construction uses a deps object instead of MS.DI `AddD2TieredCache()`; hosts compose L1/L2/logger/backplane explicitly.
 - Durations on L1/L2 use millisecond numbers (`expirationMs`), not `TimeSpan`.
 - Registration errors throw a plain `Error` with a pinned message, not `InvalidOperationException`.
-- When the backplane is Redis-backed, channel-subscribe readiness is owned by `@d2/caching-distributed-redis` (`ready` Promise); this package keeps a sync constructor and a sync port `subscribe`.
+- When the backplane is Redis-backed, channel-subscribe readiness is owned by `@dcsv-io/d2-caching-distributed-redis` (`ready` Promise); this package keeps a sync constructor and a sync port `subscribe`.
 - Counter / lock numeric width follows the TS port (`number` within `Number.MAX_SAFE_INTEGER`).
 - Logging uses short structured redis-style Warning **message strings** + camelCase binding fields; dual-runtime parity is EventId **meanings** (L1 invalidation fail / L1 write fail after L2 ok), Warning-only, and `errorCode` presence — **not** LoggerMessage template byte-equality or .NET `"SetAsync"` / `"SetManyAsync"` operation-name strings (TS uses `"set"` / `"setMany"` / `"remove"` / `"removeMany"`).
-- Runtime dependencies are abstractions + result + logging only (no `@d2/utilities`; .NET tiered likewise has no Utilities package dependency).
+- Runtime dependencies are abstractions + result + logging only (no `@dcsv-io/d2-utilities`; .NET tiered likewise has no Utilities package dependency).
 
 ## Dependencies
 
 | Package | Role |
 | ------- | ---- |
-| `@d2/caching-abstractions` | Ports (`ITieredCache`, `ILocalCache`, `IDistributedCache`, `ICacheInvalidationBackplane`) |
-| `@d2/result` | Result factories |
-| `@d2/logging` | `ILogger` |
+| `@dcsv-io/d2-caching-abstractions` | Ports (`ITieredCache`, `ILocalCache`, `IDistributedCache`, `ICacheInvalidationBackplane`) |
+| `@dcsv-io/d2-result` | Result factories |
+| `@dcsv-io/d2-logging` | `ILogger` |
 
-No backing-store packages at runtime — this package is pure composition. No `@d2/utilities` (validation/falsey live in L1/L2). Typical hosts also depend on `@d2/caching-local-default` and `@d2/caching-distributed-redis` for L1/L2/backplane implementations.
+No backing-store packages at runtime — this package is pure composition. No `@dcsv-io/d2-utilities` (validation/falsey live in L1/L2). Typical hosts also depend on `@dcsv-io/d2-caching-local-default` and `@dcsv-io/d2-caching-distributed-redis` for L1/L2/backplane implementations.
 
 ## References
 

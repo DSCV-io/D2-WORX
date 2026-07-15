@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Utilities.Configuration;
+namespace DcsvIo.D2.Tests.Unit.Utilities.Configuration;
 
 using AwesomeAssertions;
-using D2.Shared.Utilities.Configuration;
+using DcsvIo.D2.Utilities.Configuration;
 using Xunit;
 
 [Collection("EnvVarMutating")]

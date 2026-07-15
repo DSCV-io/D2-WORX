@@ -2,13 +2,13 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.AuthContext.Abstractions
+# DcsvIo.D2.AuthContext.Abstractions
 
 > Parent: [`public/packages/dotnet/`](../../README.md)
 
-Read-only `IAuthContext` interface — the typed contract domain code uses to reason about caller identity, organization, scopes, and impersonation context. Codegen-emitted from `contracts/auth-context/IAuthContext.spec.json` by `D2.Shared.Context.SourceGen`. Plus hand-written `IAuthContextExtensions` convenience helpers.
+Read-only `IAuthContext` interface — the typed contract domain code uses to reason about caller identity, organization, scopes, and impersonation context. Codegen-emitted from `contracts/auth-context/IAuthContext.spec.json` by `DcsvIo.D2.Context.SourceGen`. Plus hand-written `IAuthContextExtensions` convenience helpers.
 
-This is the domain-safe slice. Anything heavier (HTTP middleware, JWT validation, runtime population) lives in sibling libs: `D2.Shared.Context.Abstractions` (request-context interfaces + `MutableRequestContext` + propagation codecs), `D2.Shared.Auth` (runtime JWT validation + KeyringClient).
+This is the domain-safe slice. Anything heavier (HTTP middleware, JWT validation, runtime population) lives in sibling libs: `DcsvIo.D2.Context.Abstractions` (request-context interfaces + `MutableRequestContext` + propagation codecs), `DcsvIo.D2.Auth` (runtime JWT validation + KeyringClient).
 
 ---
 
@@ -16,8 +16,8 @@ This is the domain-safe slice. Anything heavier (HTTP middleware, JWT validation
 
 | Path                                        | Contents                                                                                                                                                                                            |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.AuthContext.Abstractions.csproj` | csproj — `<EmitCompilerGeneratedFiles>` so SourceGen output lands in tracked `Generated/`; analyzer ref to `context/source-gen`; `<AdditionalFiles>` for both context specs                         |
-| `(generated) IAuthContext.g.cs`             | Generated interface — lives in tracked `Generated/D2.Shared.Context.SourceGen/...`; re-emitted on every `dotnet build` from `contracts/auth-context/IAuthContext.spec.json`; do not hand-edit       |
+| `DcsvIo.D2.AuthContext.Abstractions.csproj` | csproj — `<EmitCompilerGeneratedFiles>` so SourceGen output lands in tracked `Generated/`; analyzer ref to `context/source-gen`; `<AdditionalFiles>` for both context specs                         |
+| `(generated) IAuthContext.g.cs`             | Generated interface — lives in tracked `Generated/DcsvIo.D2.Context.SourceGen/...`; re-emitted on every `dotnet build` from `contracts/auth-context/IAuthContext.spec.json`; do not hand-edit       |
 | `IAuthContextExtensions.cs`                 | Hand-written convenience helpers — `HasScope`, `HasAnyScope`, `HasAllScopes`, `IsStaff`, `IsAdmin`, `IsForcedImpersonation`, `IsConsentImpersonation`, `IsImpersonatorStaff`, `IsImpersonatorAdmin` |
 
 ---
@@ -84,16 +84,16 @@ None — this lib is read-only abstractions + pure-function extension methods. C
 
 Project references:
 
-- `D2.Shared.Auth.Abstractions` — `OrgType`, `Role`, `ActorKind`, `ImpersonationKind`, `ActorEntry`
+- `DcsvIo.D2.Auth.Abstractions` — `OrgType`, `Role`, `ActorKind`, `ImpersonationKind`, `ActorEntry`
 
 Analyzer-only:
 
-- `D2.Shared.Context.SourceGen` — emits `IAuthContext.g.cs`
+- `DcsvIo.D2.Context.SourceGen` — emits `IAuthContext.g.cs`
 
 ---
 
 ## Reference
 
 - [`contracts/auth-context/IAuthContext.spec.json`](../../../../../contracts/auth-context/IAuthContext.spec.json) — source of truth for the interface shape
-- [`D2.Shared.Context.SourceGen`](../../context/source-gen/README.md) — the generator
-- [`D2.Shared.Auth.Abstractions`](../abstractions/README.md) — vocabulary types referenced by the interface
+- [`DcsvIo.D2.Context.SourceGen`](../../context/source-gen/README.md) — the generator
+- [`DcsvIo.D2.Auth.Abstractions`](../abstractions/README.md) — vocabulary types referenced by the interface

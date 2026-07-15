@@ -1,5 +1,5 @@
 {
-  "name": "@d2/problem-details-abstractions",
+  "name": "@dcsv-io/d2-problem-details-abstractions",
   "version": "0.1.0",
   "private": true,
   "type": "module",

@@ -16,7 +16,7 @@
  * Browser-only module — uses PUBLIC_GATEWAY_URL and fetch with credentials.
  */
 import { env } from "$env/dynamic/public";
-import { D2Result, unauthorized } from "@d2/result";
+import { D2Result, unauthorized } from "@dcsv-io/d2-result";
 import { getLocale } from "$lib/paraglide/runtime.js";
 import { executeFetch } from "$lib/shared/rest/gateway-response.js";
 

@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Domain.ValueObjects;
 
-using D2.Shared.WorkloadIdentity;
+using DcsvIo.D2.Spiffe;
 
 /// <summary>
 /// KeyCustodian's issuance-side view of a single workload's SPIFFE identity —
@@ -15,13 +15,13 @@ using D2.Shared.WorkloadIdentity;
 /// </summary>
 /// <remarks>
 /// <b>Delegates to the shared grammar.</b> The SPIFFE format lives once, in
-/// <see cref="SpiffeWorkloadIdentity"/> (<c>D2.Shared.WorkloadIdentity</c>). This
+/// <see cref="SpiffeWorkloadIdentity"/> (<c>DcsvIo.D2.Spiffe</c>). This
 /// type is KeyCustodian's domain wrapper over that grammar: <see cref="Create"/> /
 /// <see cref="Parse"/> defer all validation to the shared VO and re-map its
 /// generic <c>ValidationFailed</c> to KeyCustodian's domain-specific
 /// <c>KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY</c> code so the issuance path keeps
 /// its user-facing error code. The shared validator (in
-/// <c>D2.Shared.AspNetCore</c>) consumes the same grammar with a generic failure —
+/// <c>DcsvIo.D2.AspNetCore</c>) consumes the same grammar with a generic failure —
 /// one grammar, two consumers, never two parsers.
 ///
 /// <b>Not PII.</b> A workload identity is a service label such as <c>edge</c> or

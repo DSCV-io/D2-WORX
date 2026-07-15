@@ -29,7 +29,7 @@
 // A fixture mirroring server-push shapes for the purpose of exercising the
 // dispatch emitter. Every fixture-only leaf symbol carries a `Fixture` marker.
 
-import "@d2/typespec-decorators";
+import "@dcsv-io/d2-typespec-decorators";
 
 using D2;
 

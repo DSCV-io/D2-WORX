@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Location;
+namespace DcsvIo.D2.Tests.Unit.Location;
 
 /// <summary>Root shape of the location hash-determinism fixture JSON.</summary>
 public sealed class LocationHashFixture

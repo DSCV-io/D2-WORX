@@ -1,5 +1,5 @@
 {
-  "name": "@d2/headers",
+  "name": "@dcsv-io/d2-headers",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -21,13 +21,13 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/auth-abstractions": "workspace:*",
-    "@d2/auth-context-abstractions": "workspace:*",
-    "@d2/headers-common": "workspace:*",
-    "@d2/problem-details-abstractions": "workspace:*",
-    "@d2/request-context-abstractions": "workspace:*",
-    "@d2/result": "workspace:*",
-    "@d2/utilities": "workspace:*"
+    "@dcsv-io/d2-auth-abstractions": "workspace:*",
+    "@dcsv-io/d2-auth-context-abstractions": "workspace:*",
+    "@dcsv-io/d2-headers-common": "workspace:*",
+    "@dcsv-io/d2-problem-details-abstractions": "workspace:*",
+    "@dcsv-io/d2-request-context-abstractions": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.0.18",

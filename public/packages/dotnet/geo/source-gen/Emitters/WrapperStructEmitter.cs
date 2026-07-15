@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Geo.SourceGen.Emitters;
+namespace DcsvIo.D2.Geo.SourceGen.Emitters;
 
 using System.Collections.Immutable;
 using System.Text;
-using D2.Shared.Geo.SourceGen.Spec;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.Geo.SourceGen.Spec;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Emits the three wrapper <c>readonly struct</c> types used for
@@ -57,7 +57,7 @@ internal static class WrapperStructEmitter
         sb.AppendLine();
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Text.Json.Serialization;");
-        sb.AppendLine("using D2.Shared.Utilities.Extensions;");
+        sb.AppendLine("using DcsvIo.D2.Utilities.Extensions;");
         sb.AppendLine();
         sb.AppendLine($"namespace {_NAMESPACE};");
         sb.AppendLine();
@@ -197,7 +197,7 @@ internal static class WrapperStructEmitter
         sb.AppendLine();
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Text.Json.Serialization;");
-        sb.AppendLine("using D2.Shared.Utilities.Extensions;");
+        sb.AppendLine("using DcsvIo.D2.Utilities.Extensions;");
         sb.AppendLine();
         sb.AppendLine($"namespace {_NAMESPACE};");
         sb.AppendLine();
@@ -310,7 +310,7 @@ internal static class WrapperStructEmitter
         sb.AppendLine();
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Text.Json.Serialization;");
-        sb.AppendLine("using D2.Shared.Utilities.Extensions;");
+        sb.AppendLine("using DcsvIo.D2.Utilities.Extensions;");
         sb.AppendLine();
         sb.AppendLine($"namespace {_NAMESPACE};");
         sb.AppendLine();

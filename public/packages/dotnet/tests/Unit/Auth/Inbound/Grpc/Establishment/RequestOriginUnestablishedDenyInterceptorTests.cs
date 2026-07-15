@@ -4,18 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Establishment;
+namespace DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Establishment;
 
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Auth.Abstractions.Http;
-using D2.Shared.Auth.Errors;
-using D2.Shared.Auth.Grpc.Endpoints;
-using D2.Shared.Auth.Grpc.Interceptors;
-using D2.Shared.Auth.Grpc.Status;
-using D2.Shared.Context.Abstractions;
-using D2.Shared.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Auth.Abstractions.Http;
+using DcsvIo.D2.Auth.Errors;
+using DcsvIo.D2.Auth.Grpc.Endpoints;
+using DcsvIo.D2.Auth.Grpc.Interceptors;
+using DcsvIo.D2.Auth.Grpc.Status;
+using DcsvIo.D2.Context.Abstractions;
+using DcsvIo.D2.Tests.Unit.Auth.Inbound.Grpc.Fixtures;
 using global::Grpc.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;

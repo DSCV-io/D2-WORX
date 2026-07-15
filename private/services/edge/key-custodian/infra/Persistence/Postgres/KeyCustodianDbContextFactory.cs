@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.Infra.Persistence.Postgres;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.Infra.Persistence.Postgres;
 
-using D2.Shared.EntityFrameworkCore.Postgres;
+using DcsvIo.D2.EntityFrameworkCore.Postgres;
 
 /// <summary>
 /// Design-time <see cref="KeyCustodianDbContext"/> factory used by

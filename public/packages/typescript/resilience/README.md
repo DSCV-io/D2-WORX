@@ -2,12 +2,12 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# @d2/resilience
+# @dcsv-io/d2-resilience
 
 > Parent: [`public/packages/typescript/`](../README.md)
 
 Retry / circuit breaker / singleflight / timeout / rate-limiter / composable
-pipeline. Mirrors `D2.Shared.Resilience` (.NET).
+pipeline. Mirrors `DcsvIo.D2.Resilience` (.NET).
 
 ## Public API
 
@@ -28,9 +28,9 @@ pipeline. Mirrors `D2.Shared.Resilience` (.NET).
 
 ## Dependencies
 
-- `@d2/utilities` (boundary helpers)
-- `@d2/result` (D2Result-aware retry overload)
-- `@d2/logging` (reserved for transient-classification log enrichment; not currently consumed)
+- `@dcsv-io/d2-utilities` (boundary helpers)
+- `@dcsv-io/d2-result` (D2Result-aware retry overload)
+- `@dcsv-io/d2-logging` (reserved for transient-classification log enrichment; not currently consumed)
 
 ## Usage example
 
@@ -39,7 +39,7 @@ import {
   RetryHelper,
   CircuitBreaker,
   ResilientPipelineBuilder,
-} from "@d2/resilience";
+} from "@dcsv-io/d2-resilience";
 
 // Plain retry.
 const r = await RetryHelper.retryAsync(() => fetchUser(id));
@@ -250,7 +250,7 @@ and should be an explicit caller choice. Three usage modes:
 
 ## Parity with .NET
 
-Mirrors `D2.Shared.Resilience`:
+Mirrors `DcsvIo.D2.Resilience`:
 
 - `RetryHelper.retryAsync` ↔ `RetryHelper.RetryAsync<T>` — same conservative
   default classifier (`defaultIsTransient` ↔ `IsTransientException`): only

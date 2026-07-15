@@ -4,14 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.KeyCustodian.App.Application.Jwks;
+namespace DcsvIo.D2.Private.Edge.KeyCustodian.App.Application.Jwks;
 
 using System.Diagnostics;
-using D2.Shared.Auth.Abstractions.Jwks;
-using D2.Shared.Resilience.Singleflight;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Diagnostics;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions.Jwks;
+using DcsvIo.D2.Resilience.Singleflight;
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Utilities.Diagnostics;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 

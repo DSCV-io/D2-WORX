@@ -12,5 +12,5 @@ Spec-driven geographic reference data and lookup contracts for TS consumers — 
 
 | Package                                   | Description                                                                                                                          |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| [`abstractions/`](abstractions/README.md) | The minimal hand-written geo API surface — `IGeoReference`, `IGeoNameResolver` + normalization helpers, `DeprecationInfo`. Spec-derived types are codegen-emitted here. Mirrors `D2.Shared.Geo.Abstractions`. |
-| [`default/`](default/README.md)           | The codegen-emitted in-memory geo catalogs — per-entity records, nested lookup objects, flat lookup maps, and a module-init coordinator. Mirrors `D2.Shared.Geo.Default`. |
+| [`abstractions/`](abstractions/README.md) | The minimal hand-written geo API surface — `IGeoReference`, `IGeoNameResolver` + normalization helpers, `DeprecationInfo`. Spec-derived types are codegen-emitted here. Mirrors `DcsvIo.D2.Geo.Abstractions`. |
+| [`default/`](default/README.md)           | The codegen-emitted in-memory geo catalogs — per-entity records, nested lookup objects, flat lookup maps, and a module-init coordinator. Mirrors `DcsvIo.D2.Geo.Default`. |

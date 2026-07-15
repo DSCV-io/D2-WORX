@@ -4,13 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.Encryption.SourceGen;
+namespace DcsvIo.D2.Tests.Unit.Encryption.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.EncryptionDomains.SourceGen;
+using DcsvIo.D2.EncryptionDomains.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -68,7 +68,7 @@ public sealed class EncryptionDomainsGeneratorTests
     public void Generator_TargetAssemblyWithSpec_EmitsDomainsGeneratedSource()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
@@ -93,7 +93,7 @@ public sealed class EncryptionDomainsGeneratorTests
     public void Generator_TargetAssemblyButNoSpec_EmitsNothing()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specJson: null);
 
         var result = driver.GetRunResult();
@@ -105,7 +105,7 @@ public sealed class EncryptionDomainsGeneratorTests
     public void Generator_MalformedSpec_EmitsMalformedSpecDiagnostic()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specJson: "{not valid");
 
         var result = driver.GetRunResult();
@@ -129,7 +129,7 @@ public sealed class EncryptionDomainsGeneratorTests
         """;
 
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption",
+            assemblyName: "DcsvIo.D2.Encryption",
             specJson: sealedNoConsumer);
 
         var result = driver.GetRunResult();
@@ -142,14 +142,14 @@ public sealed class EncryptionDomainsGeneratorTests
     public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
     {
         var first = RunGenerator(
-                assemblyName: "D2.Shared.Encryption",
+                assemblyName: "DcsvIo.D2.Encryption",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)
             .Select(t => t.ToString())
             .ToList();
         var second = RunGenerator(
-                assemblyName: "D2.Shared.Encryption",
+                assemblyName: "DcsvIo.D2.Encryption",
                 specJson: _SAMPLE_SPEC)
             .GetRunResult().GeneratedTrees
             .OrderBy(t => t.FilePath)
@@ -169,7 +169,7 @@ public sealed class EncryptionDomainsGeneratorTests
     public void Generator_PrivateEncryptionExtensions_MultiSpec_EmitsProductEncryptionDomainsUnion()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.Encryption.Extensions",
+            assemblyName: "DcsvIo.D2.Private.Encryption.Extensions",
             specJson: null,
             multiSpecs:
             [
@@ -183,7 +183,7 @@ public sealed class EncryptionDomainsGeneratorTests
             .Should().Be("ProductEncryptionDomains.g.cs");
 
         var src = result.GeneratedTrees.Single().ToString();
-        src.Should().Contain("namespace D2.Private.Encryption;");
+        src.Should().Contain("namespace DcsvIo.D2.Private.Encryption;");
         src.Should().Contain("public static class ProductEncryptionDomains");
         src.Should().Contain("PLAINTEXT");
         src.Should().Contain("NOTIFICATIONS");

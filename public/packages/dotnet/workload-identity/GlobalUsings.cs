@@ -5,5 +5,5 @@
 // -----------------------------------------------------------------------
 
 global using System.Globalization;
-global using D2.Shared.Result;
-global using D2.Shared.Utilities.Extensions;
+global using DcsvIo.D2.Result;
+global using DcsvIo.D2.Utilities.Extensions;

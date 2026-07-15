@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Telemetry.Tags.SourceGen;
+namespace DcsvIo.D2.Telemetry.Tags.SourceGen;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.Json;
-using D2.Shared.SourceGen;
+using DcsvIo.D2.SourceGen;
 
 /// <summary>
 /// Resolves <c>valuesFromSpec</c> tag references against sibling spec files

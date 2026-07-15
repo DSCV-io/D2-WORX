@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.AdvisoryLocks.SourceGen;
+namespace DcsvIo.D2.AdvisoryLocks.SourceGen;
 
 /// <summary>Diagnostic IDs for the advisory-locks source generator.</summary>
 internal static class DiagnosticIds

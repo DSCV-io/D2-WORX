@@ -4,11 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.DataGovernance.Abstractions;
+namespace DcsvIo.D2.Tests.Unit.DataGovernance.Abstractions;
 
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.DataGovernance.Abstractions;
+using DcsvIo.D2.DataGovernance.Abstractions;
 using Xunit;
 
 /// <summary>

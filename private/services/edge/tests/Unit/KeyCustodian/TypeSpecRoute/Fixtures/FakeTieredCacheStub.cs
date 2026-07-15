@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 
-using D2.Shared.Caching;
-using D2.Shared.Result;
+using DcsvIo.D2.Caching;
+using DcsvIo.D2.Result;
 
 /// <summary>
 /// Stub <see cref="ITieredCache"/> — satisfies the transitive DI dependency of
@@ -15,7 +15,7 @@ using D2.Shared.Result;
 /// Route-policy enforcement tests focus on scope checking; the stub no-ops
 /// everything except <c>ExistsAsync</c> (returns <c>Ok(true)</c> so the session
 /// check treats the session as live).
-/// Local copy — the original in <c>D2.Shared.Tests</c> is a <c>private sealed</c>
+/// Local copy — the original in <c>DcsvIo.D2.Tests</c> is a <c>private sealed</c>
 /// nested class and cannot be referenced from another assembly.
 /// </summary>
 internal sealed class FakeTieredCacheStub : ITieredCache

@@ -3,9 +3,9 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import type { CountryCode } from "@d2/geo-abstractions";
-import { ok, validationFailed } from "@d2/result";
-import { falsey } from "@d2/utilities";
+import type { CountryCode } from "@dcsv-io/d2-geo-abstractions";
+import { ok, validationFailed } from "@dcsv-io/d2-result";
+import { falsey } from "@dcsv-io/d2-utilities";
 import { describe, expect, it } from "vitest";
 
 import type {
@@ -15,7 +15,7 @@ import type {
 } from "../src/index.js";
 
 // Branded-string fixtures — mirrors the cast pattern the sibling
-// `@d2/validation` default-impl tests use to materialize `CountryCode`
+// `@dcsv-io/d2-validation` default-impl tests use to materialize `CountryCode`
 // values without importing the runtime catalog.
 const US = "US" as CountryCode;
 const CA = "CA" as CountryCode;
@@ -26,11 +26,11 @@ const CA = "CA" as CountryCode;
  * tests assert that a conforming implementation satisfies each interface's
  * surface (method arity, optional parameters, `D2Result` return) and that the
  * structural-typing contract holds. Behavioral parity with the .NET
- * `D2.Shared.Validation.Abstractions` interfaces is covered by the
- * `@d2/validation` default-impl + contract-tests parity suites.
+ * `DcsvIo.D2.Validation.Abstractions` interfaces is covered by the
+ * `@dcsv-io/d2-validation` default-impl + contract-tests parity suites.
  *
  * The package ships these tests (rather than `passWithNoTests`) to mirror the
- * sibling `@d2/geo-abstractions` package, which carries real test files; this
+ * sibling `@dcsv-io/d2-geo-abstractions` package, which carries real test files; this
  * also keeps `vitest run` exiting 0 in CI.
  */
 

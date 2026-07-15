@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.EntityFrameworkCore.Postgres
+# DcsvIo.D2.EntityFrameworkCore.Postgres
 
 > Parent: [`public/packages/dotnet/entity-framework-core/`](../README.md)
 >
@@ -17,7 +17,7 @@ design-time factory so the two paths can never drift.
 
 **Mechanism only.** Domain advisory-lock key catalogs do **not** ship from this
 package. Callers pass domain-owned generated constants (e.g.
-`AdvisoryLocks.D2Keycustodian.MIGRATOR` from `D2.Edge.KeyCustodian.Infra`) into
+`AdvisoryLocks.D2Keycustodian.MIGRATOR` from `DcsvIo.D2.Private.Edge.KeyCustodian.Infra`) into
 `PgAdvisoryLock` / `AdvisoryLockMigrator`. The fleet catalog SoT remains
 [`contracts/advisory-locks/`](../../../../../contracts/advisory-locks/README.md);
 [`locks-source-gen`](../locks-source-gen/README.md) emits into the owning-module
@@ -123,6 +123,6 @@ No configuration of its own. Consumers supply:
   `IDesignTimeDbContextFactory`.
 - `Npgsql.EntityFrameworkCore.PostgreSQL` — `UseNpgsql`, `NpgsqlDbContextOptionsBuilder`.
 - `Npgsql` — raw `NpgsqlConnection` for advisory locks and ensure-db maintenance.
-- `D2.Shared.Time` — `AddD2NodaTime()` (NodaTime ↔ `TIMESTAMPTZ` value converters).
-- `D2.Shared.Utilities` — `ThrowIfFalsey` / `Falsey` guards.
+- `DcsvIo.D2.Time` — `AddD2NodaTime()` (NodaTime ↔ `TIMESTAMPTZ` value converters).
+- `DcsvIo.D2.Utilities` — `ThrowIfFalsey` / `Falsey` guards.
 - `JetBrains.Annotations` — `[MustDisposeResource]` on `PgAdvisoryLock`.

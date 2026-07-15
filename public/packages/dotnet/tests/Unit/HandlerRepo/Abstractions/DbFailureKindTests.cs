@@ -4,17 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Unit.HandlerRepo.Abstractions;
+namespace DcsvIo.D2.Tests.Unit.HandlerRepo.Abstractions;
 
 using System;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.Handler.Repo.Abstractions;
+using DcsvIo.D2.Handler.Repo.Abstractions;
 using Xunit;
 
 /// <summary>
 /// Pinning tests for the <see cref="DbFailureKind"/> enum. The
-/// <see cref="D2.Shared.Handler.Repo.BaseRepoHandler{TSelf,TInput,TOutput}"/>
+/// <see cref="DcsvIo.D2.Handler.Repo.BaseRepoHandler{TSelf,TInput,TOutput}"/>
 /// dispatch switch has one arm per value plus a wildcard that throws —
 /// adding an enum value WITHOUT updating the switch is a runtime crash on
 /// the first dispatch of the new kind. These tests force the conversation:

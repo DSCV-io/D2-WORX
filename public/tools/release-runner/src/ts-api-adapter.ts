@@ -3,7 +3,7 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-// TS extraction helpers — the @d2/* half of the build-free artifact-diff engine.
+// TS extraction helpers — the @dcsv-io/d2-* half of the build-free artifact-diff engine.
 //
 // The bump is driven by two signals:
 //

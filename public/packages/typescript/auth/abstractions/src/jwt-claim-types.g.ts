@@ -10,7 +10,7 @@
 
 /**
  * JWT claim name string constants used across the platform. Mirrors
- * .NET D2.Shared.Auth.Abstractions.JwtClaimTypes (same string values).
+ * .NET DcsvIo.D2.Auth.Abstractions.JwtClaimTypes (same string values).
  *
  * Standard OAuth/OIDC claims keep their canonical names (sub, aud,
  * scope, ...); D2-specific claims use the d2_ prefix; inside-act claims

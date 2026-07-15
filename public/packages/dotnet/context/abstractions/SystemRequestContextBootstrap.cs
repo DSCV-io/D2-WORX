@@ -4,12 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Context.Abstractions;
+namespace DcsvIo.D2.Context.Abstractions;
 
 using System;
-using D2.Shared.Auth.Abstractions;
-using D2.Shared.Time;
-using D2.Shared.Utilities.Extensions;
+using DcsvIo.D2.Auth.Abstractions;
+using DcsvIo.D2.Time;
+using DcsvIo.D2.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -68,7 +68,7 @@ public static class SystemRequestContextBootstrap
             // ILogger<SystemRequestContextBootstrap> would emit, staying symmetric
             // with the cross-process interceptor's establishment log.
             var logger = scopedServices.GetService<ILoggerFactory>()?
-                .CreateLogger("D2.Shared.Context.Abstractions.SystemRequestContextBootstrap");
+                .CreateLogger("DcsvIo.D2.Context.Abstractions.SystemRequestContextBootstrap");
             logger?.SystemContextEstablished(ctx.CallPath.Count, hostServiceId);
         }
     }

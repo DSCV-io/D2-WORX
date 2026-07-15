@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.AspNetCore;
+namespace DcsvIo.D2.Tests.Integration.AspNetCore;
 
 using AwesomeAssertions;
-using D2.Shared.AspNetCore;
+using DcsvIo.D2.AspNetCore;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.Extensions.DependencyInjection;
 using global::Microsoft.Extensions.Hosting;
