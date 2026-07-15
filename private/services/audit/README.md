@@ -45,7 +45,7 @@ private/services/audit/
 
 ### Prerequisites
 
-1. Run `./tools/scripts/gen-dev-keys.sh` so `secrets/keycustodian/ca-root.crt` and `secrets/listen/{edge,audit}-server.{crt,key}` exist (agents never read `secrets/`).
+1. Run `./private/tools/scripts/gen-dev-keys.sh` so `secrets/keycustodian/ca-root.crt` and `secrets/listen/{edge,audit}-server.{crt,key}` exist (agents never read `secrets/`).
 2. Infra up: postgres, redis, rabbitmq (Compose stack).
 3. `.env.local` / `.env.secrets` populated from examples.
 4. **Ping is not Harmless** — Edge bridge + Audit gRPC both require `Scopes.Internal.Audit.Ping` (`internal.audit.ping`). A successful dual-factor call needs a **valid Bearer** with that scope **and** mTLS Edge→Audit.

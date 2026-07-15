@@ -52,7 +52,7 @@ The rotation policy (cadence / grace / smoke-soak per domain) and generated-key 
 - **`root.key`** — REQUIRED. 64 hex chars (32 bytes), with an optional trailing newline. It is the active kid — all new key material is wrapped with it. A missing, empty, non-hex, or wrong-length primary fails host boot.
 - **`root-next.key`** — OPTIONAL. Same format. When present, it loads as a decrypt-only kid alongside the primary, enabling zero-downtime root rotation. It is **absent in steady state** — it exists only during a rotation window. A present-but-corrupt successor also fails host boot (a bad successor is an operator error mid-rotation, not "treat as absent").
 
-In local dev, `tools/scripts/gen-dev-keys.sh` generates `root.key` by default; stage a successor on demand with `gen-dev-keys.sh --rotate-root`. The root-key directory lives under the deny-ruled `secrets/` tree.
+In local dev, `private/tools/scripts/gen-dev-keys.sh` generates `root.key` by default; stage a successor on demand with `gen-dev-keys.sh --rotate-root`. The root-key directory lives under the deny-ruled `secrets/` tree.
 
 ## Database lifecycle
 
