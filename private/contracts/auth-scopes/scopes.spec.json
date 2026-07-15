@@ -1,0 +1,90 @@
+{
+  "$schema": "./schema.json",
+  "scopes": [
+    {
+      "name": "anon.auth.signin.attempt",
+      "description": "Anonymous sign-in attempt â€” issuing an authentication request before a session exists.",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": false
+    },
+    {
+      "name": "auth.password.change",
+      "description": "Change the caller\u0027s own password. Self-service.",
+      "actionSensitivity": "Sensitive",
+      "impersonationBlocked": true,
+      "grantedTo": {
+        "*": ["*"]
+      }
+    },
+    {
+      "name": "auth.user.impersonate.consent",
+      "description": "Initiate consent-based impersonation of another user. Requires OTP authorization from the target user.",
+      "actionSensitivity": "Sensitive",
+      "impersonationBlocked": true,
+      "grantedTo": {
+        "Support": ["Owner", "Officer"],
+        "Admin": ["Owner", "Officer", "Agent"]
+      }
+    },
+    {
+      "name": "auth.user.impersonate.force",
+      "description": "Initiate force impersonation (no consent â€” silent). Admin-org-only fallback for emergency support scenarios.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true,
+      "grantedTo": {
+        "Admin": ["Owner", "Officer", "Agent"]
+      }
+    },
+    {
+      "name": "billing.payment.charge",
+      "description": "Initiate a payment charge against a customer\u0027s billing instrument.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true,
+      "grantedTo": {
+        "Customer": ["Owner"]
+      }
+    },
+    {
+      "name": "internal.audit.ping",
+      "description": "Call the Audit multiproc S2S Ping surface (internal service-to-service). Gates Edgeâ†’Audit dual-factor JWT+mTLS hop for the standalone Audit host bridge.",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": true
+    },
+    {
+      "name": "internal.kc.sign",
+      "description": "Sign a payload with a KeyCustodian-managed signing key (internal service-to-service / in-process minter).",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true
+    },
+    {
+      "name": "internal.kc.keyring",
+      "description": "Fetch a payload-encryption keyring from KeyCustodian (internal service-to-service / in-process). The scope gates whether a caller may reach the keyring surface at all; a per-workload domain policy decides which domains it may fetch.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true
+    },
+    {
+      "name": "internal.kc.issue",
+      "description": "Request a workload leaf certificate from KeyCustodian by submitting a certificate-signing request (internal service-to-service, cross-process only). The scope gates whether a caller may reach the issuance surface at all; the leaf subject-alternative-name is always the authenticated mTLS peer identity, never caller-supplied.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true
+    },
+    {
+      "name": "internal.kc.cacert",
+      "description": "Fetch the certificate-authority chain (root + issuing intermediate) from KeyCustodian (internal service-to-service / in-process). Public trust-anchor material distributed over already-trusted internal channels only.",
+      "actionSensitivity": "Sensitive",
+      "impersonationBlocked": false
+    },
+    {
+      "name": "internal.kc.seal.encrypt",
+      "description": "Fetch a target service\u0027s PUBLIC sealing key from KeyCustodian to seal a payload TO it (internal service-to-service / in-process). Public key material is harmless to over-share; the scope gates whether a caller may reach the seal-public-key surface at all.",
+      "actionSensitivity": "Sensitive",
+      "impersonationBlocked": true
+    },
+    {
+      "name": "internal.kc.seal.open",
+      "description": "Fetch the caller\u0027s OWN PRIVATE sealing key from KeyCustodian to open payloads sealed to it (internal service-to-service, cross-process only). The op carries no target â€” the key is selected purely from the authenticated mTLS peer identity, so a caller can only ever obtain its own private key.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true
+    }
+  ]
+}

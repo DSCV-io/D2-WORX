@@ -1,0 +1,17 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Edge.App</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Thin host App shell for Edge host-level application types (not KeyCustodian).
+    Future host modules place handlers + ports here. No AspNetCore transport.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\domain\D2.Edge.Domain.csproj" />
+  </ItemGroup>
+</Project>

@@ -11,8 +11,8 @@ scheduling, wire serialization, and cross-language time comparisons.
 runtime, persistence, and wire boundaries; which NodaTime type to reach for in each scenario; and
 how to correctly consume `DateTimeOffset?` fields from the request / auth context.
 
-> Canonical runtime API reference: [D2.Shared.Time](../server/shared/dotnet/time/README.md) (.NET)
-> · [@d2/time](../server/shared/typescript/time/README.md) (TypeScript / Node 22+).
+> Canonical runtime API reference: [D2.Shared.Time](../public/packages/dotnet/time/README.md) (.NET)
+> · [@d2/time](../public/packages/typescript/time/README.md) (TypeScript / Node 22+).
 
 ---
 
@@ -93,7 +93,7 @@ DST gaps and overlaps occur in Category 3 (local-anchored events) only. `LocalAn
 - **Spring-forward gap** (e.g. `02:30` does not exist when clocks jump 02:00 → 03:00): map forward to the next valid wall-clock time after the gap (the result is `03:00`).
 - **Fall-back ambiguity** (e.g. `01:30` exists twice when clocks fall back): pick the earlier (pre-transition) instant. This is deterministic and never throws.
 
-The TypeScript counterpart (`@d2/time`) mirrors this via Temporal's `disambiguation: "compatible"`. Cross-language parity is verified by adversarial fixture tests at `contracts/temporal/temporal-adversarial.fixture.json` loaded by both .NET and TS test suites.
+The TypeScript counterpart (`@d2/time`) mirrors this via Temporal's `disambiguation: "compatible"`. Cross-language parity is verified by adversarial fixture tests at `public/contracts/temporal/temporal-adversarial.fixture.json` loaded by both .NET and TS test suites.
 
 **Category 1 and 2 timestamps are not DST-sensitive** — they are UTC instants and do not traverse timezone transitions.
 

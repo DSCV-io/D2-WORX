@@ -61,7 +61,7 @@ Directory of the core patterns + cross-cutting conventions every D²-WORX shared
 
 ## .NET project layout (`.csproj`)
 
-Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `GenerateDocumentationFile`, `StyleCop.Analyzers`, `stylecop.json` link) live in `server/Directory.Build.props` and apply to every csproj automatically. Per-project files only declare what's project-specific. Tier-1 global usings (`D2.Shared.Result`, `D2.Shared.Utilities.Extensions`/`.Attributes`/`.Enums`, `D2.Shared.I18n`) are scoped to **service projects** via `server/services/Directory.Build.targets` — shared libs keep explicit usings. Beyond Tier-1, each project carries a `GlobalUsings.cs` with any namespace repeated across roughly ≥3 files in that project — including `Microsoft.EntityFrameworkCore`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Options`, `System.Security.Cryptography`, or any vendor SDK; the dependency law is enforced by `<ProjectReference>` edges, not using-directive visibility. The established `global using IClock = D2.Shared.Time.IClock;` alias appears project-wide wherever both NodaTime and `D2.Shared.Time` are used, resolving the `NodaTime.IClock` vs `D2.Shared.Time.IClock` ambiguity. Never duplicate SDK ImplicitUsings or Tier-1 entries. Reference implementation and full rationale: [ADR-0020](adrs/0020-service-project-structure.md) + rules.md §5.26.
+Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `GenerateDocumentationFile`, `StyleCop.Analyzers`, `stylecop.json` link) live in `Directory.Build.props` and apply to every csproj automatically. Per-project files only declare what's project-specific. Tier-1 global usings (`D2.Shared.Result`, `D2.Shared.Utilities.Extensions`/`.Attributes`/`.Enums`, `D2.Shared.I18n`) are scoped to **service projects** via `private/services/Directory.Build.targets` — shared libs keep explicit usings. Beyond Tier-1, each project carries a `GlobalUsings.cs` with any namespace repeated across roughly ≥3 files in that project — including `Microsoft.EntityFrameworkCore`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Options`, `System.Security.Cryptography`, or any vendor SDK; the dependency law is enforced by `<ProjectReference>` edges, not using-directive visibility. The established `global using IClock = D2.Shared.Time.IClock;` alias appears project-wide wherever both NodaTime and `D2.Shared.Time` are used, resolving the `NodaTime.IClock` vs `D2.Shared.Time.IClock` ambiguity. Never duplicate SDK ImplicitUsings or Tier-1 entries. Reference implementation and full rationale: [ADR-0020](../public/docs/adrs/0020-service-project-structure.md) + rules.md §5.26.
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -76,15 +76,15 @@ Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `Impli
 
 **SDKs**: shared libs + services use `Microsoft.NET.Sdk`; HTTP/gRPC service entry projects use `Microsoft.NET.Sdk.Web`; test projects add `<IsPackable>false</IsPackable>` + `<IsTestProject>true</IsTestProject>` + `<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>` + `<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>` (xUnit v3 + MTP).
 
-**`RootNamespace`** is always declared explicitly and follows the **namespace structure**, not the directory path (e.g., `D2.Shared.Caching.Distributed.Redis.csproj` under `caching/distributed-redis/` has `RootNamespace=D2.Shared.Caching.Distributed.Redis` — path noise dropped). **Central Package Management** pins every version in `server/Directory.Packages.props`; csproj `<PackageReference>` items reference by ID only (CPM rejects `Version="..."`). **`dotnet build` enforces zero warnings** via `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — fix or `.editorconfig`-override with rationale; never suppress.
+**`RootNamespace`** is always declared explicitly and follows the **namespace structure**, not the directory path (e.g., `D2.Shared.Caching.Distributed.Redis.csproj` under `caching/distributed-redis/` has `RootNamespace=D2.Shared.Caching.Distributed.Redis` — path noise dropped). **Central Package Management** pins every version in `Directory.Packages.props`; csproj `<PackageReference>` items reference by ID only (CPM rejects `Version="..."`). **`dotnet build` enforces zero warnings** via `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — fix or `.editorconfig`-override with rationale; never suppress.
 
-Lib inventory + per-csproj READMEs → [`server/shared/dotnet/README.md`](../server/shared/dotnet/README.md).
+Lib inventory + per-csproj READMEs → [`public/packages/dotnet/README.md`](../public/packages/dotnet/README.md).
 
 ---
 
 ## Service project structure
 
-Every service project under `server/services/` takes one fixed layered shape. The canonical decision record — the full rationale, the module-within-host carve-out, the consequences — is [ADR-0020](adrs/0020-service-project-structure.md); this section is the daily-driver operational form.
+Every service project under `private/services/` takes one fixed layered shape. The canonical decision record — the full rationale, the module-within-host carve-out, the consequences — is [ADR-0020](../public/docs/adrs/0020-service-project-structure.md); this section is the daily-driver operational form.
 
 ### The layer set + the dependency law
 
@@ -101,7 +101,7 @@ Domain  ←  App  ←  Infra  ←  Api      (Tests reference what they test; Cli
 | `infra/` | `D2.<Area>.<Service>.Infra` | `Microsoft.NET.Sdk` | Adapters implementing the app's ports — the **only** vendor-SDK-touching layer. |
 | `api/` | `D2.<Area>.<Service>.Api` | `Microsoft.NET.Sdk.Web` | Composition root — `Program.cs` + host wiring + transport adapters (gRPC/REST/SSE) + transport mappers. The **only** project allowed to reference `infra/`. |
 | `tests/` | `D2.<Area>.<Service>.Tests` | `Microsoft.NET.Sdk` | One project per service — `Unit/` + `Integration/` mirroring source. |
-| `client/` | `D2.<Area>.<Service>.Client` | `Microsoft.NET.Sdk` | Consumer-facing client package (SINGULAR, matching its `.Client` assembly name) — references **contracts + shared libs only**, never the service's internals. Service-client RUNTIME code lives here, never under `server/shared/`. |
+| `client/` | `D2.<Area>.<Service>.Client` | `Microsoft.NET.Sdk` | Consumer-facing client package (SINGULAR, matching its `.Client` assembly name) — references **contracts + shared libs only**, never the service's internals. Service-client RUNTIME code lives here, never under `public/packages/`. |
 
 `<Area>` = `Edge` (or the service's own name when standalone). **WHY one direction:** vendor churn touches infra only; the domain stays testable with zero infrastructure; the api is the one place every concrete adapter + transport binding is named. The tie-breaker for an ambiguous placement: *"which layer still compiles if I delete the layer below the candidate?"*
 
@@ -170,13 +170,13 @@ infra/Outbound/Grpc/...  +  infra/Outbound/Rest/...   (protocol axis)
 infra/Observability/                                  (infra-side log delegates — same folder name as App's Application/Observability/)
 ```
 
-**WHY mandatory even for a sole impl:** the subfolder is the seam a second vendor lands on without a reshuffle — the day Resend gains an SES fallback, the new adapter drops into a sibling folder and nothing else moves. The generic `Providers/` wrapper is dead; concern + vendor replaces it. The concern-noun set is open-but-deliberate — adding a noun is a standard amendment (this doc + [ADR-0020](adrs/0020-service-project-structure.md)), not an ad-hoc per-service invention.
+**WHY mandatory even for a sole impl:** the subfolder is the seam a second vendor lands on without a reshuffle — the day Resend gains an SES fallback, the new adapter drops into a sibling folder and nothing else moves. The generic `Providers/` wrapper is dead; concern + vendor replaces it. The concern-noun set is open-but-deliberate — adding a noun is a standard amendment (this doc + [ADR-0020](../public/docs/adrs/0020-service-project-structure.md)), not an ad-hoc per-service invention.
 
 **Client package layout — same concern convention.** The consumer-facing `client/` package mirrors the app-layer concern convention: the package root holds metadata only (csproj / README / CHANGELOG / `PublicAPI.*.txt` / `.release-fingerprint`); a `Facade/` folder holds the generated module façade interface (`I<Module>Api.g.cs`, namespace `<clients-ns>.Facade`); and each op-aligned concern folder holds that concern's generated wire `.g.cs` DTOs **plus** the hand-written runtime that serves them (namespace `<clients-ns>.<Concern>`). KeyCustodian: `Jwks/`, `OidcConfiguration/`, `Signing/` (Sign DTOs + `IJwtSigningCapability`), `Keyring/` (GetKeyring DTOs + the rotation-aware consumer runtime + the proto redaction partial `KeyringEntry.Redaction.cs`), `Issuance/`, `CaCertificate/`. The concern-to-folder assignment is spec-driven via the TypeSpec `@d2Concern("<Segment>")` decorator ([SRC_GEN.md](SRC_GEN.md)), which drives the emitted DTO namespace AND the committed-home folder in lockstep, so folder and namespace never diverge.
 
 ### Multi-provider — the keyed-resolver recipe
 
-A service may run two vendors of one capability at once (Stripe AND Square), resolving one-of-many by key. App stays vendor-blind (ONE capability port per concern in `app/Infrastructure/<Concern>/`); infra registers keyed adapters under .NET keyed DI (one per vendor subfolder); when the handler picks the vendor at runtime, a resolver port `I<Capability>Resolver.Get(key) → D2Result<T>` wraps `IServiceProvider.GetKeyedService<T>(key)` and maps an unknown key to a typed `D2Result` failure (not a thrown `InvalidOperationException`). A handler that statically knows its vendor injects `[FromKeyedServices("vendor")] I<Capability>` directly. For messaging the resolver layers *on top of* `[MqPub]` — each concrete publisher keeps its compile-time descriptor; the resolver only selects which already-described publisher to use. **WHY a resolver over raw keyed injection when the key is dynamic:** `[FromKeyedServices]` needs a compile-time key; a runtime key (an org's configured vendor) needs a lookup, and a bad key is operator data → `D2Result`, not an exception. Full vertical → [ADR-0020](adrs/0020-service-project-structure.md).
+A service may run two vendors of one capability at once (Stripe AND Square), resolving one-of-many by key. App stays vendor-blind (ONE capability port per concern in `app/Infrastructure/<Concern>/`); infra registers keyed adapters under .NET keyed DI (one per vendor subfolder); when the handler picks the vendor at runtime, a resolver port `I<Capability>Resolver.Get(key) → D2Result<T>` wraps `IServiceProvider.GetKeyedService<T>(key)` and maps an unknown key to a typed `D2Result` failure (not a thrown `InvalidOperationException`). A handler that statically knows its vendor injects `[FromKeyedServices("vendor")] I<Capability>` directly. For messaging the resolver layers *on top of* `[MqPub]` — each concrete publisher keeps its compile-time descriptor; the resolver only selects which already-described publisher to use. **WHY a resolver over raw keyed injection when the key is dynamic:** `[FromKeyedServices]` needs a compile-time key; a runtime key (an org's configured vendor) needs a lookup, and a bad key is operator data → `D2Result`, not an exception. Full vertical → [ADR-0020](../public/docs/adrs/0020-service-project-structure.md).
 
 ### Options home + namespaces
 
@@ -208,7 +208,7 @@ public sealed class CreateUser(HandlerContext<CreateUser> ctx, IDbExceptionClass
 }
 ```
 
-> Duplicated from [`server/shared/dotnet/handler/core/README.md`](../server/shared/dotnet/handler/core/README.md) for at-a-glance directory access. Canonical full reference (pipeline shape, `MapDbException` override, typed booleans, observability surface) lives in the lib READMEs — update both in lockstep. See also: [`handler/repo/README.md`](../server/shared/dotnet/handler/repo/README.md), [`handler/repo-postgres/README.md`](../server/shared/dotnet/handler/repo-postgres/README.md).
+> Duplicated from [`public/packages/dotnet/handler/core/README.md`](../public/packages/dotnet/handler/core/README.md) for at-a-glance directory access. Canonical full reference (pipeline shape, `MapDbException` override, typed booleans, observability surface) lives in the lib READMEs — update both in lockstep. See also: [`handler/repo/README.md`](../public/packages/dotnet/handler/repo/README.md), [`handler/repo-postgres/README.md`](../public/packages/dotnet/handler/repo-postgres/README.md).
 
 ---
 
@@ -229,7 +229,7 @@ Partial-success ladder: `NotFound` (none resolved, Success=false) → `SomeFound
 
 `IsTransientRetryable` covers `IsServiceUnavailable || IsRateLimited`. **`IsUnhandledException` is intentionally excluded** — an unknown exception means unknown system state; retrying could mask bugs or double-execute a non-idempotent operation.
 
-> Duplicated from [`server/shared/dotnet/result/core/README.md`](../server/shared/dotnet/result/core/README.md) for at-a-glance directory access. Full factory catalog, `BubbleFail` / `Bubble`, per-code booleans (`IsTransientRetryable` / `IsTransientDbFailure`), monadic `Bind` / `Map` / `ThenAsync` / `Match`, and auto-injected `traceId` semantics live in the lib README — update both in lockstep.
+> Duplicated from [`public/packages/dotnet/result/core/README.md`](../public/packages/dotnet/result/core/README.md) for at-a-glance directory access. Full factory catalog, `BubbleFail` / `Bubble`, per-code booleans (`IsTransientRetryable` / `IsTransientDbFailure`), monadic `Bind` / `Map` / `ThenAsync` / `Match`, and auto-injected `traceId` semantics live in the lib README — update both in lockstep.
 
 ---
 
@@ -237,8 +237,8 @@ Partial-success ladder: `NotFound` (none resolved, Success=false) → `SomeFound
 
 Every error code is declared in a `*-error-codes.spec.json` catalog — one entry per code carrying its `httpStatus`, semantic `category`, and `userMessageKey`. The .NET + TS code constants, the typed `D2Result` failure factories, and the merged cross-service registry are all CODEGEN-emitted from that spec; nothing about a code is hand-written. There are two catalog kinds:
 
-- **Generic catalog** — `contracts/error-codes/` owns the reserved unprefixed namespace (`NOT_FOUND`, `CONFLICT`, `VALIDATION_FAILED`, `SERVICE_UNAVAILABLE`, …). These drive the framework-level `D2Result` factories.
-- **Per-domain catalog** — `contracts/<domain>-error-codes/` (e.g. `contracts/auth-error-codes/`) owns codes carrying the enforced `<DOMAIN>_` prefix. These drive a generated `<Domain>Failures` factory class.
+- **Generic catalog** — `public/contracts/error-codes/` owns the reserved unprefixed namespace (`NOT_FOUND`, `CONFLICT`, `VALIDATION_FAILED`, `SERVICE_UNAVAILABLE`, …). These drive the framework-level `D2Result` factories.
+- **Per-domain catalog** — `public/contracts/<domain>-error-codes/` or `private/contracts/<domain>-error-codes/` (e.g. `public/contracts/auth-error-codes/`) owns codes carrying the enforced `<DOMAIN>_` prefix. These drive a generated `<Domain>Failures` factory class.
 
 The call site NAMES the scope it's drawing from — the factory's receiver tells the reader which catalog owns the code:
 
@@ -255,7 +255,7 @@ Each factory stamps the spec-declared `(code, httpStatus, category, userMessageK
 
 **Merged-registry resolution boundary** — the codegen also emits a merged cross-service registry (`ErrorCodeRegistry` in .NET, `errorCodeRegistry` in TS) that aggregates EVERY `*-error-codes.spec.json` catalog into one `code → ErrorCodeInfo` lookup. This is what lets a consuming service branch on a wire code it didn't produce: given a code string from any producer, `TryResolve(code, out info)` returns the `httpStatus`, `category`, `userMessageKey`, and originating `domain` WITHOUT the consumer importing the producer's catalog. The registry is the resolution surface; the per-catalog factories are the production surface — produce with `D2Result.X()` / `<Domain>Failures.X()`, resolve a foreign code with the registry.
 
-> Duplicated from [`server/shared/dotnet/error-codes/registry/README.md`](../server/shared/dotnet/error-codes/registry/README.md) for at-a-glance directory access — the full per-catalog spec format, the `ErrorCodeInfo` field set, and the build-time cross-catalog collision diagnostics live in the lib README — update both in lockstep.
+> Duplicated from [`public/packages/dotnet/error-codes/registry/README.md`](../public/packages/dotnet/error-codes/registry/README.md) for at-a-glance directory access — the full per-catalog spec format, the `ErrorCodeInfo` field set, and the build-time cross-catalog collision diagnostics live in the lib README — update both in lockstep.
 
 ---
 
@@ -271,7 +271,7 @@ if (emailR.BubbleOnFailure<string, Contact>(out var bubbled, out var email))
 // `email` is non-null here; chain into the next primitive.
 ```
 
-Canonical: [`server/shared/dotnet/utilities/README.md`](../server/shared/dotnet/utilities/README.md).
+Canonical: [`public/packages/dotnet/utilities/README.md`](../public/packages/dotnet/utilities/README.md).
 
 ---
 
@@ -301,7 +301,7 @@ public sealed class SignInHandler(IClock clock, IUserRepo users) : ...
 }
 ```
 
-Canonical: [`server/shared/dotnet/time/README.md`](../server/shared/dotnet/time/README.md) (.NET) and [`server/shared/typescript/time/README.md`](../server/shared/typescript/time/README.md) (TS). Cross-language parity tracked in [PARITY.md](PARITY.md).
+Canonical: [`public/packages/dotnet/time/README.md`](../public/packages/dotnet/time/README.md) (.NET) and [`public/packages/typescript/time/README.md`](../public/packages/typescript/time/README.md) (TS). Cross-language parity tracked in [PARITY.md](PARITY.md).
 
 ---
 
@@ -321,15 +321,15 @@ services.AddResilientPipeline<string, MyDto>("my-key", p => p
     .UseRetries(new() { MaxAttempts = 5 }));
 ```
 
-**Layer order = protection semantic.** `CircuitBreaker → Retries` means retry-inside-CB (upstream-protecting; backoff gives a fragile upstream air). `Retries → CircuitBreaker` means retry-outside-CB (restart-recovery; retry layer treats `CircuitOpenException` as transient and backs off through it). Full state-machine semantics + composition trade-offs → [`server/shared/dotnet/resilience/README.md`](../server/shared/dotnet/resilience/README.md).
+**Layer order = protection semantic.** `CircuitBreaker → Retries` means retry-inside-CB (upstream-protecting; backoff gives a fragile upstream air). `Retries → CircuitBreaker` means retry-outside-CB (restart-recovery; retry layer treats `CircuitOpenException` as transient and backs off through it). Full state-machine semantics + composition trade-offs → [`public/packages/dotnet/resilience/README.md`](../public/packages/dotnet/resilience/README.md).
 
 ---
 
 ## Repository
 
-EF Core for all relational data, accessed **directly through the module `DbContext` contract + aggregates + LINQ** — the per-op Repository handler is retired ([ADR-0017](adrs/0017-ef-as-ddd-persistence.md)). Command/query handlers inherit `BaseRepoHandler` / `BaseHandler` (see [Handler](#handler)) for the cross-cutting pipeline; the registered `IDbExceptionClassifier` translates DB exceptions into typed `D2Result` failures (`UniqueViolation`, `ConcurrencyConflict`, `DbDeadlock`, `DbTimeout`, etc.). Callers branch on `result.IsUniqueViolation` / `IsTransientDbFailure` — never on raw SQLSTATE catches.
+EF Core for all relational data, accessed **directly through the module `DbContext` contract + aggregates + LINQ** — the per-op Repository handler is retired ([ADR-0017](../public/docs/adrs/0017-ef-as-ddd-persistence.md)). Command/query handlers inherit `BaseRepoHandler` / `BaseHandler` (see [Handler](#handler)) for the cross-cutting pipeline; the registered `IDbExceptionClassifier` translates DB exceptions into typed `D2Result` failures (`UniqueViolation`, `ConcurrencyConflict`, `DbDeadlock`, `DbTimeout`, etc.). Callers branch on `result.IsUniqueViolation` / `IsTransientDbFailure` — never on raw SQLSTATE catches.
 
-**Physical homes** ([ADR-0020](adrs/0020-service-project-structure.md)): the `I<Service>DbContext` port, the flat `<Entity>Record`, the pure `<Entity>RecordMapper`, and the `<Entity>RecordQueryExtensions` all live in `app/Infrastructure/Persistence/`; the concrete `<Service>DbContext`, the `IEntityTypeConfiguration<Record>`, and the `Migrations/` folder live in `infra/Persistence/Postgres/`. App speaks the query *language* (DbContext/DbSet/LINQ); infra owns the *database* (Npgsql, connection, migrations, `xmin`).
+**Physical homes** ([ADR-0020](../public/docs/adrs/0020-service-project-structure.md)): the `I<Service>DbContext` port, the flat `<Entity>Record`, the pure `<Entity>RecordMapper`, and the `<Entity>RecordQueryExtensions` all live in `app/Infrastructure/Persistence/`; the concrete `<Service>DbContext`, the `IEntityTypeConfiguration<Record>`, and the `Migrations/` folder live in `infra/Persistence/Postgres/`. App speaks the query *language* (DbContext/DbSet/LINQ); infra owns the *database* (Npgsql, connection, migrations, `xmin`).
 
 - **Batch chunking** — PG has a ~32K parameter cap per query (signed-int param index); default chunk size **500**. Use `input.HashIds.Chunk(_BATCH_SIZE)` with `_BATCH_SIZE` via the Options pattern. See [Batch operations](#batch-operations).
 - **Partial-success → D2Result mapping** — all resolved → `Ok`; some → `SomeFound`; none → `NotFound`. Never return `Ok` with empty data.
@@ -404,7 +404,7 @@ var rows = await ctx.SaveChangesAsync(ct);
 if (rows == 0) return D2Result.Conflict();   // xmin mismatch
 ```
 
-Canonical: [ADR-0016](adrs/0016-keycustodian-lifecycle-store.md) + [ADR-0017](adrs/0017-ef-as-ddd-persistence.md). Predicate enforcement: `rules.md §9.31` (sum-type shape) + `§9.38` (flat-record persistence) + `§9.37` (EF-as-DDD handler shape).
+Canonical: [ADR-0016](../private/docs/adrs/0016-keycustodian-lifecycle-store.md) + [ADR-0017](../public/docs/adrs/0017-ef-as-ddd-persistence.md). Predicate enforcement: `rules.md §9.31` (sum-type shape) + `§9.38` (flat-record persistence) + `§9.37` (EF-as-DDD handler shape).
 
 ---
 
@@ -432,15 +432,15 @@ public sealed class GetEntityByIdHandler(ITieredCache cache, IEntityRepo repo) :
 }
 ```
 
-Canonical: [`server/shared/dotnet/caching/abstractions/README.md`](../server/shared/dotnet/caching/abstractions/README.md). Default impls: [`caching/local-default/`](../server/shared/dotnet/caching/local-default/README.md), [`caching/distributed-redis/`](../server/shared/dotnet/caching/distributed-redis/README.md), [`caching/tiered/`](../server/shared/dotnet/caching/tiered/README.md). TypeScript cluster: [`caching/README.md`](../server/shared/typescript/caching/README.md).
+Canonical: [`public/packages/dotnet/caching/abstractions/README.md`](../public/packages/dotnet/caching/abstractions/README.md). Default impls: [`caching/local-default/`](../public/packages/dotnet/caching/local-default/README.md), [`caching/distributed-redis/`](../public/packages/dotnet/caching/distributed-redis/README.md), [`caching/tiered/`](../public/packages/dotnet/caching/tiered/README.md). TypeScript cluster: [`caching/README.md`](../public/packages/typescript/caching/README.md).
 
-**TypeScript twin:** full layout + behavioral mirror under [`server/shared/typescript/caching/`](../server/shared/typescript/caching/README.md) — `@d2/caching-abstractions` · `@d2/caching-local-default` · `@d2/caching-distributed-redis` · `@d2/caching-tiered`. Shared invalidation channel default `d2:cache:invalidations` (everyone acts). Cross-language parity: [PARITY.md](PARITY.md) caching stack row — package-local unit + Testcontainers ITs for algorithm behavior; dual-runtime **constants/semantics** suite `@d2/contract-tests` `caching-twin.parity.test.ts` + fixture `fixtures/caching-twin/constants.json` (dual-runtime constants catalog; not a full behavior interop harness).
+**TypeScript twin:** full layout + behavioral mirror under [`public/packages/typescript/caching/`](../public/packages/typescript/caching/README.md) — `@d2/caching-abstractions` · `@d2/caching-local-default` · `@d2/caching-distributed-redis` · `@d2/caching-tiered`. Shared invalidation channel default `d2:cache:invalidations` (everyone acts). Cross-language parity: [PARITY.md](PARITY.md) caching stack row — package-local unit + Testcontainers ITs for algorithm behavior; dual-runtime **constants/semantics** suite `@d2/contract-tests` `caching-twin.parity.test.ts` + fixture `fixtures/caching-twin/constants.json` (dual-runtime constants catalog; not a full behavior interop harness).
 
 ### Keyring-backed payload crypto — in-process-only, never a shared cache tier
 
 The KC client package `D2.Edge.KeyCustodian.Client` turns the KeyCustodian keyring surface into a keyed, hot-swappable `IPayloadCrypto` for a payload domain. The key material is held **in-process-memory-only** and refreshed by the `KeyRotatedEvent` rotation event (atomic hot-swap on receipt) — it is NEVER placed in Redis / `IDistributedCache` / `ITieredCache` / any shared cache tier, because the payload keyring is itself the key material that protects cache-bound data (caching it in the tier it protects would be circular). A failed refresh keeps serving the current keyring (bounded — no tight-loop, no dead-letter). Wire it with `AddD2EncryptionFromKeyCustodian(domain, callingModuleId)` (in-process leaf source, in the KC app) or `AddD2EncryptionForViaKeyring(domain)` (cross-process gRPC source, in the client package); consumers resolve `[FromKeyedServices(domain)] IPayloadCrypto` and call `Encrypt` / `Decrypt` — they never see a raw keyring.
 
-Canonical: [`server/services/edge/key-custodian/client/README.md`](../server/services/edge/key-custodian/client/README.md).
+Canonical: [`private/services/edge/key-custodian/client/README.md`](../private/services/edge/key-custodian/client/README.md).
 
 ---
 
@@ -466,7 +466,7 @@ await app.RunD2ServiceAsync("files");
 
 `AddD2ServiceDefaults` chains `D2Env.Load` → `AddD2Logging` → `AddD2Telemetry` → `AddD2I18n` → `AddD2Handler` → `AddD2Auth` (+ `.Http` + `.Grpc`) → `AddD2LocalCache` → `AddD2HealthChecks` → `AddD2ProblemDetails` → `AddD2Cors`. The aggregator owns ZERO logic; new options on owning libs flow through via pass-through `Action<TFromOwningLib>?` delegates. `UseD2DefaultPipeline` middleware order is **LOCKED** (no insertion points): security headers → request logging → CORS → routing → infrastructure bypass → authentication → `UseD2Auth` → authorization. Auth wiring is fail-fast (`AuthConfigure` MUST be non-null when `SkipAuthAutoWiring = false`). Resilience is NOT wired by this aggregator — it is caller-side + opt-in via `D2.Shared.Resilience`.
 
-> Duplicated from [`server/shared/dotnet/service-defaults/README.md`](../server/shared/dotnet/service-defaults/README.md) for at-a-glance directory access. Full call-order rationale + middleware-order rationale + opt-out matrix (`SkipAuthAutoWiring` / `SkipLocalCacheAutoWiring`) + thin-aggregator convention test live in the lib README — update both in lockstep.
+> Duplicated from [`public/packages/dotnet/service-defaults/README.md`](../public/packages/dotnet/service-defaults/README.md) for at-a-glance directory access. Full call-order rationale + middleware-order rationale + opt-out matrix (`SkipAuthAutoWiring` / `SkipLocalCacheAutoWiring`) + thin-aggregator convention test live in the lib README — update both in lockstep.
 
 ### 5-layer rename safety net (spec-driven codegen + nameof discipline)
 
@@ -493,7 +493,7 @@ logger.LogInformation("Processed {User}", user);    // bypasses destructuring �
 
 The middleware does NOT log the connection-remote IP — at internal services it's the upstream Edge IP, not the client's; at Edge it's PII. 8 NOT-LOGGED fields (`ClientIp`, `City`, `Region`, `SubdivisionCode`, `PostalCode`, `Latitude`, `Longitude`, `Geohash`) are pinned by integration test.
 
-Canonical (full 42 LOG-OK / 8 NOT-LOGGED enumeration + per-source overrides + precedence notes): [`server/shared/dotnet/logging/README.md`](../server/shared/dotnet/logging/README.md).
+Canonical (full 42 LOG-OK / 8 NOT-LOGGED enumeration + per-source overrides + precedence notes): [`public/packages/dotnet/logging/README.md`](../public/packages/dotnet/logging/README.md).
 
 ---
 
@@ -501,7 +501,7 @@ Canonical (full 42 LOG-OK / 8 NOT-LOGGED enumeration + per-source overrides + pr
 
 `D2.Shared.Telemetry` ships OpenTelemetry SDK setup (traces + metrics + logs) + per-signal OTLP exporters (env-var-gated truthy) + an IP-restricted Prometheus scraping endpoint (`MapD2PrometheusEndpoint` — 403 for non-loopback / non-RFC-1918) + cross-lib `ActivitySource` / `Meter` aggregation (4 ActivitySources + 6 Meters via `public const string` symbol references). `OTEL_SDK_DISABLED=true` symmetrically short-circuits BOTH `AddD2Telemetry` AND `MapD2PrometheusEndpoint`. Auto-instrumentations: AspNetCore inbound, HttpClient outbound, GrpcNetClient outbound, Process + Runtime metrics. AspNetCore `Filter` excludes infrastructure paths via the canonical `InfrastructurePathMatcher` from `D2.Shared.AspNetCore`.
 
-Canonical: [`server/shared/dotnet/telemetry/core/README.md`](../server/shared/dotnet/telemetry/core/README.md).
+Canonical: [`public/packages/dotnet/telemetry/core/README.md`](../public/packages/dotnet/telemetry/core/README.md).
 
 ---
 
@@ -509,7 +509,7 @@ Canonical: [`server/shared/dotnet/telemetry/core/README.md`](../server/shared/do
 
 `D2.Shared.AspNetCore` ships cross-cutting middleware + endpoint primitives: `UseD2SecurityHeaders` (OWASP defaults; HSTS only on HTTPS, preload opt-in), `AddD2Cors` / `UseD2Cors` (canonical `D2_CORS_ORIGINS__*` indexed env-var; fail-closed via `ValidateOnStart`), `UseD2InfrastructureBypass` (default short-circuit invokes the matched endpoint's `RequestDelegate` directly — heavy middleware does NOT run on `/health` / `/alive` / `/metrics` / `/.well-known`), `AddD2ProblemDetails` (RFC 7807 customizer; `traceId` / `correlationId` / `instance` enrichment), `AddD2HealthChecks` + `MapD2HealthEndpoints` (`/health` full + `/alive` live-tag split), `RunD2ServiceAsync` (PII-safe `Log.Fatal` rendering — type FullName + first stack frame, NEVER `ex.Message`).
 
-The public static `InfrastructurePathMatcher` is the **single source of truth** for the path set across Logging, Telemetry, and `UseD2InfrastructureBypass`. Canonical: [`server/shared/dotnet/aspnetcore/README.md`](../server/shared/dotnet/aspnetcore/README.md).
+The public static `InfrastructurePathMatcher` is the **single source of truth** for the path set across Logging, Telemetry, and `UseD2InfrastructureBypass`. Canonical: [`public/packages/dotnet/aspnetcore/README.md`](../public/packages/dotnet/aspnetcore/README.md).
 
 ---
 
@@ -528,7 +528,7 @@ app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 
 Per-validation pipeline: bearer extraction (transport layer) → signature + standard-claim validation (RS256 pinned, issuer / audience / lifetime with 30s clock skew, reactive-refresh-on-unknown-`kid`) → session liveness (`TieredCacheSessionLivenessTracker`; fail-closed on liveness store outage) → per-endpoint scope check with explicit match mode (any-of via `RequireAnyScope` / `[D2RequireAnyScope]`; all-of via `RequireAllScopes` / `[D2RequireAllScopes]`). JWKS at the OIDC-canonical `/.well-known/jwks.json`; cluster-wide JWKS rotation via `ICacheInvalidationBackplane` (Redis pub/sub on `d2.security.key-rotated:jwks`). Uniform **401** at the auth boundary regardless of "JWT bad" vs "scope insufficient" — granularity surfaces only on `d2_error_code`. `MarkAsD2HarmlessEndpoint()` / `[D2HarmlessEndpoint]` opts out of the full pipeline (reserved for k8s probes + OIDC discovery); `[AllowAnonymous]` is deliberately NOT recognized. Both transports register a scoped `IRequestContext` reading from a shared `HttpContext.Items` slot (`D2HttpContextItems.REQUEST_CONTEXT`); gRPC interceptor dual-writes to `ServerCallContext.UserState` for hot-path access. Every mapped endpoint must carry a declared auth intent or the host fails to start — see [Deny-by-default endpoint boot guard](#deny-by-default-endpoint-boot-guard).
 
-Canonical: [`server/shared/dotnet/auth/core/README.md`](../server/shared/dotnet/auth/core/README.md), [`auth/http/README.md`](../server/shared/dotnet/auth/http/README.md), [`auth/grpc/README.md`](../server/shared/dotnet/auth/grpc/README.md).
+Canonical: [`public/packages/dotnet/auth/core/README.md`](../public/packages/dotnet/auth/core/README.md), [`auth/http/README.md`](../public/packages/dotnet/auth/http/README.md), [`auth/grpc/README.md`](../public/packages/dotnet/auth/grpc/README.md).
 
 ---
 
@@ -536,15 +536,15 @@ Canonical: [`server/shared/dotnet/auth/core/README.md`](../server/shared/dotnet/
 
 Internal cross-process calls use three independent outbound factors from `D2.Shared.Auth.Outbound`, each opt-in:
 
-1. **Forwarded transaction-token (the business default).** Edge mints exactly one internal transaction-token at the trust boundary via RFC 8693 token exchange. Every downstream gRPC hop re-attaches that same token unchanged via `ForwardedJwtCallCredentials`. The downstream receiver re-validates the token and reads the user identity and scopes directly from it — no per-hop re-exchange. ([ADR-0022](adrs/0022-service-auth-mint-once-forward.md))
+1. **Forwarded transaction-token (the business default).** Edge mints exactly one internal transaction-token at the trust boundary via RFC 8693 token exchange. Every downstream gRPC hop re-attaches that same token unchanged via `ForwardedJwtCallCredentials`. The downstream receiver re-validates the token and reads the user identity and scopes directly from it — no per-hop re-exchange. ([ADR-0022](../public/docs/adrs/0022-service-auth-mint-once-forward.md))
 
-2. **Workload certificate (mTLS identity).** The calling workload presents a short-lived leaf certificate on the outbound gRPC channel. The mutually-authenticated TLS channel establishes *which workload is calling*. `AddD2WorkloadCertificate` + `AddD2WorkloadCertificateOutbound` wire both sides. ([ADR-0023](adrs/0023-mtls-workload-identity.md))
+2. **Workload certificate (mTLS identity).** The calling workload presents a short-lived leaf certificate on the outbound gRPC channel. The mutually-authenticated TLS channel establishes *which workload is calling*. `AddD2WorkloadCertificate` + `AddD2WorkloadCertificateOutbound` wire both sides. ([ADR-0023](../private/docs/adrs/0023-mtls-workload-identity.md))
 
 3. **RFC 8693 token exchange (explicit exception cases only).** The boundary mint that produces the forwarded token, plus the narrow set of legitimate exceptions: cross-trust-domain calls, justified scope narrowing, asynchronous scope reduction, and `act` chain establishment/extension. Never the per-hop business default — the forward-unchanged rail covers the common case.
 
-**Private-PKI OIDC / JWKS trust (present tense):** remote JWT consumers pin the public mesh CA via `AuthOptions.Jwks.TrustedRootCertificatePath` (hosts usually copy mTLS `TrustAnchorPath` into AuthConfigure). The OIDC discovery HttpClient uses `X509ChainTrustMode.CustomRootTrust` + hostname/SAN — never accept-any or Development free pass. Canonical: [`server/shared/dotnet/auth/core/README.md`](../server/shared/dotnet/auth/core/README.md).
+**Private-PKI OIDC / JWKS trust (present tense):** remote JWT consumers pin the public mesh CA via `AuthOptions.Jwks.TrustedRootCertificatePath` (hosts usually copy mTLS `TrustAnchorPath` into AuthConfigure). The OIDC discovery HttpClient uses `X509ChainTrustMode.CustomRootTrust` + hostname/SAN — never accept-any or Development free pass. Canonical: [`public/packages/dotnet/auth/core/README.md`](../public/packages/dotnet/auth/core/README.md).
 
-**Issuer-host in-process JWKS (present tense):** Edge (issuer) calls `AddD2InProcessJwksProvider()` after `AddD2Auth` + KeyCustodian so `IJwksProvider` loads Active + Retiring `jwks-signing` keys from the KC DB — no HTTP self-fetch to its own well-known endpoints. Remote hosts keep `HttpJwksProvider`. Well-known publish routes stay for consumers. Canonical: [`server/services/edge/key-custodian/README.md`](../server/services/edge/key-custodian/README.md). JWT boundary mint remains out of scope on the general Edge host (`AddD2JwtSigningCapability` absent by design).
+**Issuer-host in-process JWKS (present tense):** Edge (issuer) calls `AddD2InProcessJwksProvider()` after `AddD2Auth` + KeyCustodian so `IJwksProvider` loads Active + Retiring `jwks-signing` keys from the KC DB — no HTTP self-fetch to its own well-known endpoints. Remote hosts keep `HttpJwksProvider`. Well-known publish routes stay for consumers. Canonical: [`private/services/edge/key-custodian/README.md`](../private/services/edge/key-custodian/README.md). JWT boundary mint remains out of scope on the general Edge host (`AddD2JwtSigningCapability` absent by design).
 
 ```csharp
 // Forwarded-JWT factor — wire in the composition root of each calling service.
@@ -558,7 +558,7 @@ services.AddD2WorkloadCertificateOutbound();
 services.AddD2AuthOutbound(opts => { opts.Issuer = ...; opts.ClientId = ...; opts.ClientSecret = ...; });
 ```
 
-Canonical: [`server/shared/dotnet/auth/outbound/README.md`](../server/shared/dotnet/auth/outbound/README.md). Workload-identity background: [`server/shared/dotnet/workload-identity/README.md`](../server/shared/dotnet/workload-identity/README.md).
+Canonical: [`public/packages/dotnet/auth/outbound/README.md`](../public/packages/dotnet/auth/outbound/README.md). Workload-identity background: [`public/packages/dotnet/workload-identity/README.md`](../public/packages/dotnet/workload-identity/README.md).
 
 ---
 
@@ -596,7 +596,7 @@ builder.AddD2PropagatedContext();
 
 **Fail-closed by construction.** A freshly-constructed context's `Origin` is `RequestOrigin.Unestablished` — the enum's zero member — so any authority rule consulting `Origin` denies unless a boundary has positively established it. There is no "assume a plane" fallback; a missing establishment call is a loud, rejected request, not a silent over-grant.
 
-Canonical: [ADR-0025](adrs/0025-request-context-establishment.md).
+Canonical: [ADR-0025](../public/docs/adrs/0025-request-context-establishment.md).
 
 ### Minter capability — possession-gated authority over a cluster-root secret
 
@@ -615,7 +615,7 @@ services.AddD2JwtSigningCapability();
 
 **Possession of the resolved interface is the authority.** A provider built without the dedicated registration cannot resolve `IJwtSigningCapability` at all — there is no runtime flag to flip and no caller identity to spoof, because the capability either was wired into this composition root or it was not, and that is a build-time, review-visible fact. The implementation adds a second, independent guard — an origin check (`Origin == InProcessModule`) — so even a reference that somehow escaped its owning composition cannot be used from the wrong plane. The general-purpose authority rule structurally excludes the guarded target for every caller and every origin, so the capability is the *only* path to it, not merely the *recommended* one.
 
-Canonical: [ADR-0025](adrs/0025-request-context-establishment.md) §"The authority model."
+Canonical: [ADR-0025](../public/docs/adrs/0025-request-context-establishment.md) §"The authority model."
 
 ---
 
@@ -671,7 +671,7 @@ app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 opts.SkipAuthEndpointGuard = true;
 ```
 
-> Detailed implementation: `server/shared/dotnet/auth/startup/AuthEndpointGuardStartupFilter.cs` + `AuthEndpointGuardServiceCollectionExtensions.cs`. Opt-out surface: `server/shared/dotnet/service-defaults/D2ServiceDefaultsOptions.cs`. Architectural rationale: [ADR-0012](adrs/0012-self-rolled-dotnet-auth.md) §5.
+> Detailed implementation: `public/packages/dotnet/auth/startup/AuthEndpointGuardStartupFilter.cs` + `AuthEndpointGuardServiceCollectionExtensions.cs`. Opt-out surface: `public/packages/dotnet/service-defaults/D2ServiceDefaultsOptions.cs`. Architectural rationale: [ADR-0012](../public/docs/adrs/0012-self-rolled-dotnet-auth.md) §5.
 
 ---
 
@@ -693,7 +693,7 @@ Options pattern (`IOptions<T>` with defaults; configuration section convention) 
 
 ## i18n
 
-The i18n stack splits across three csprojs: **`D2.Shared.I18n.Abstractions`** (zero external deps — `TKMessage` primitive, `ITranslator` interface, SrcGen-emitted `TK.*` constants), **`D2.Shared.I18n.SourceGen`** (Roslyn `IIncrementalGenerator` referenced as Analyzer — emits `TK.*` from `contracts/messages/en-US.json`), **`D2.Shared.I18n`** (runtime `Translator` + `SupportedLocales` + `AddD2I18n` DI; consumed only by composition roots + outbound-notification handlers).
+The i18n stack splits across three csprojs: **`D2.Shared.I18n.Abstractions`** (zero external deps — `TKMessage` primitive, `ITranslator` interface, SrcGen-emitted `TK.*` constants), **`D2.Shared.I18n.SourceGen`** (Roslyn `IIncrementalGenerator` referenced as Analyzer — emits `TK.*` from `public/contracts/messages/en-US.json`), **`D2.Shared.I18n`** (runtime `Translator` + `SupportedLocales` + `AddD2I18n` DI; consumed only by composition roots + outbound-notification handlers).
 
 `TKMessage` ships verbatim over the wire — same JSON shape in code and on the wire:
 
@@ -705,15 +705,15 @@ D2Result<T>.ValidationFailed(inputErrors: [
     new InputError("email", [TK.Common.Validation.EMAIL_INVALID])]);
 ```
 
-`TKMessage`'s constructor is **internal** — producers can ONLY construct via the SrcGen-emitted `TK.*` constants. "Untranslated literal in `D2Result.Messages`" is structurally unrepresentable. Translation key conventions: `auth_{feature}_{purpose}`, `webclient_{section}_{purpose}`, `common_ui_*` / `common_errors_*`. When adding new keys, add to ALL locale files in `contracts/messages/` simultaneously — the SrcGen surfaces gaps via `D2I18N002` at build time. The 10-locale list is driven by env vars `PUBLIC_ENABLED_LOCALES__*` + `PUBLIC_DEFAULT_LOCALE`.
+`TKMessage`'s constructor is **internal** — producers can ONLY construct via the SrcGen-emitted `TK.*` constants. "Untranslated literal in `D2Result.Messages`" is structurally unrepresentable. Translation key conventions: `auth_{feature}_{purpose}`, `webclient_{section}_{purpose}`, `common_ui_*` / `common_errors_*`. When adding new keys, add to ALL locale files in `public/contracts/messages/` simultaneously — the SrcGen surfaces gaps via `D2I18N002` at build time. The 10-locale list is driven by env vars `PUBLIC_ENABLED_LOCALES__*` + `PUBLIC_DEFAULT_LOCALE`.
 
-Canonical: [`i18n/abstractions/README.md`](../server/shared/dotnet/i18n/abstractions/README.md), [`i18n/core/README.md`](../server/shared/dotnet/i18n/core/README.md), [`i18n/source-gen/README.md`](../server/shared/dotnet/i18n/source-gen/README.md).
+Canonical: [`i18n/abstractions/README.md`](../public/packages/dotnet/i18n/abstractions/README.md), [`i18n/core/README.md`](../public/packages/dotnet/i18n/core/README.md), [`i18n/source-gen/README.md`](../public/packages/dotnet/i18n/source-gen/README.md).
 
 ---
 
 ## Messaging
 
-Async cross-service messaging uses RabbitMQ. Producers mark message classes with `[MqPub(MqMessages.X)]`; consumers mark handler classes with `[MqSub(MqSubscriptions.Y)]`. Spec files at `contracts/mq-messages/` and `contracts/mq-subscriptions/` are the source of truth — a Roslyn `IIncrementalGenerator` emits typed constants + a runtime descriptor registry into `D2.Shared.Messaging.Abstractions`. The resolver hard-fails on FQN mismatch / unknown constant; the registrar hard-fails on handler-message-type mismatch.
+Async cross-service messaging uses RabbitMQ. Producers mark message classes with `[MqPub(MqMessages.X)]`; consumers mark handler classes with `[MqSub(MqSubscriptions.Y)]`. Spec files at `public/contracts/mq-messages/` and `public/contracts/mq-subscriptions/` are the source of truth — a Roslyn `IIncrementalGenerator` emits typed constants + a runtime descriptor registry into `D2.Shared.Messaging.Abstractions`. The resolver hard-fails on FQN mismatch / unknown constant; the registrar hard-fails on handler-message-type mismatch.
 
 Wire bodies are either plaintext UTF-8 JSON or AES-256-GCM-encrypted (the descriptor's `encryption` field is the keyring domain or the literal `plaintext`). Every published message carries the canonical AMQP header set (`message-id` UUIDv7, `traceparent`, `tracestate`, `x-d2-context`, optional `x-d2-encryption-kid`). **Headers stay plaintext at-rest — identity (UserId / OrgId / Scopes) is NEVER in headers; it rebuilds from the JWT at every sync hop.**
 
@@ -727,7 +727,7 @@ services
 
 Publishers inject `IMessageBus` and call `PublishAsync(message)`. Consumers inherit `BaseHandler<TSelf, TMessage, Unit>` and override `ExecuteAsync`. Failures route to `{queue}.dlx` with a JSON-encoded `DlqFailureMetadata` header; optional tiered-retry exchanges declared per-subscription when `tieredRetry` is set.
 
-Canonical (full wire format + topology + publisher path + consumer path + DLX / DLQ + tiered retry + encryption posture + operational anti-patterns): [`server/shared/dotnet/messaging/rabbitmq/README.md`](../server/shared/dotnet/messaging/rabbitmq/README.md). Spec authoring + codegen diagnostics → [`messaging/source-gen/README.md`](../server/shared/dotnet/messaging/source-gen/README.md). Transport-agnostic abstractions → [`messaging/abstractions/README.md`](../server/shared/dotnet/messaging/abstractions/README.md).
+Canonical (full wire format + topology + publisher path + consumer path + DLX / DLQ + tiered retry + encryption posture + operational anti-patterns): [`public/packages/dotnet/messaging/rabbitmq/README.md`](../public/packages/dotnet/messaging/rabbitmq/README.md). Spec authoring + codegen diagnostics → [`messaging/source-gen/README.md`](../public/packages/dotnet/messaging/source-gen/README.md). Transport-agnostic abstractions → [`messaging/abstractions/README.md`](../public/packages/dotnet/messaging/abstractions/README.md).
 
 ---
 
@@ -784,7 +784,7 @@ extension(KeyRecord record)
 }
 ```
 
-**WHY transport mapping lives in `api/`, not `app/`:** proto/REST is a transport concern and the api is the uppermost node of the transport path; placing it in app would force app to reference the generated proto types, coupling the orchestration layer to one wire format and breaking "App is reusable across transports." **WHY the persistence mapper stays in `app/`, not `infra/`:** under EF-as-DDD the handlers compose the queries and materialize the records, so app is the uppermost node of the persistence path; the record mapper is a pure mapper over the app-owned record shape with no EF dependency (and placing it in infra is impossible anyway — app may not reference infra). Full rationale → [ADR-0020](adrs/0020-service-project-structure.md) + [ADR-0017](adrs/0017-ef-as-ddd-persistence.md).
+**WHY transport mapping lives in `api/`, not `app/`:** proto/REST is a transport concern and the api is the uppermost node of the transport path; placing it in app would force app to reference the generated proto types, coupling the orchestration layer to one wire format and breaking "App is reusable across transports." **WHY the persistence mapper stays in `app/`, not `infra/`:** under EF-as-DDD the handlers compose the queries and materialize the records, so app is the uppermost node of the persistence path; the record mapper is a pure mapper over the app-owned record shape with no EF dependency (and placing it in infra is impossible anyway — app may not reference infra). Full rationale → [ADR-0020](../public/docs/adrs/0020-service-project-structure.md) + [ADR-0017](../public/docs/adrs/0017-ef-as-ddd-persistence.md).
 
 ---
 
@@ -820,7 +820,7 @@ string? locationHash = ComposeLocationHash.Compose(coords, street, admin);
 // `locationHash` is null only when all three inputs are null (location is absent).
 ```
 
-`WhoIs` follows the same content-addressable pattern with a single aggregate factory. See the per-lib READMEs for the full surface ([D2.Shared.Location](../server/shared/dotnet/location/core/README.md)).
+`WhoIs` follows the same content-addressable pattern with a single aggregate factory. See the per-lib READMEs for the full surface ([D2.Shared.Location](../public/packages/dotnet/location/core/README.md)).
 
 ---
 
@@ -909,7 +909,7 @@ Opt out for test hosts only: `DATA_GOVERNANCE__SKIPMODELVALIDATION=true`.
 
 **DI**: `services.AddD2DataGovernance(configuration)` — one call registers `IAnonymizationEngine`, `AnonymizationEngineOptions` (section `DATA_GOVERNANCE`), and the validator hosted service.
 
-Canonical references: [`data-governance/abstractions/README.md`](../server/shared/dotnet/data-governance/abstractions/README.md) (markers, attribute, rule, engine seam) · [`data-governance/entity-framework-core/README.md`](../server/shared/dotnet/data-governance/entity-framework-core/README.md) (full fluent API, options, DI, guard rules) · [ADR-0015](adrs/0015-anonymization-data-governance.md).
+Canonical references: [`data-governance/abstractions/README.md`](../public/packages/dotnet/data-governance/abstractions/README.md) (markers, attribute, rule, engine seam) · [`data-governance/entity-framework-core/README.md`](../public/packages/dotnet/data-governance/entity-framework-core/README.md) (full fluent API, options, DI, guard rules) · [ADR-0015](../public/docs/adrs/0015-anonymization-data-governance.md).
 
 ---
 
@@ -928,7 +928,7 @@ Canonical references: [`data-governance/abstractions/README.md`](../server/share
 
 All PII properties carry `[RedactData(Reason = RedactReason.PersonalInformation)]` — self-redacting in Serilog logs. `Personal.HashId` is visible (one-way digest, correlation-safe). Address fields reuse the `D2.Shared.Location` VOs directly — no new address VO.
 
-Canonical reference: [`contacts/core/README.md`](../server/shared/dotnet/contacts/core/README.md).
+Canonical reference: [`contacts/core/README.md`](../public/packages/dotnet/contacts/core/README.md).
 
 ---
 
@@ -959,7 +959,7 @@ The folded owned-component model (ADR-0001) maps contact and location VOs into t
 
 Available helpers — **Contacts** (`D2.Shared.Contacts.EntityFrameworkCore`): `MapPersonal`, `MapNameAffixes`, `MapDemographics`, `MapProfessional` (complex), `MapEmailAddress`, `MapPhoneNumber` (value converter). **Location** (`D2.Shared.Location.EntityFrameworkCore`): `MapStreetAddress`, `MapAdminLocation`, `MapCoordinates` (complex; `SubdivisionCode`/`CountryCode` converters encapsulated in `MapAdminLocation`; Coordinates tombstones on erasure).
 
-Canonical references: [`contacts/entity-framework-core/README.md`](../server/shared/dotnet/contacts/entity-framework-core/README.md) · [`location/entity-framework-core/README.md`](../server/shared/dotnet/location/entity-framework-core/README.md).
+Canonical references: [`contacts/entity-framework-core/README.md`](../public/packages/dotnet/contacts/entity-framework-core/README.md) · [`location/entity-framework-core/README.md`](../public/packages/dotnet/location/entity-framework-core/README.md).
 
 ---
 
@@ -992,13 +992,13 @@ migrationBuilder.CreateD2Index<Person>(
 
 Value-converter indexes and complex-member _queries_ have **no such limitation**.
 
-Canonical reference: [`entity-framework-core/README.md`](../server/shared/dotnet/entity-framework-core/README.md).
+Canonical reference: [`entity-framework-core/README.md`](../public/packages/dotnet/entity-framework-core/README.md).
 
 ---
 
 ## Field-constraints codegen catalog
 
-A spec-driven catalog (`contracts/validation/field-constraints.spec.json`) emits shared field-length constants and three taxonomy enums to both .NET and TypeScript — one source of truth for field-size caps and closed-list enumerations.
+A spec-driven catalog (`public/contracts/validation/field-constraints.spec.json`) emits shared field-length constants and three taxonomy enums to both .NET and TypeScript — one source of truth for field-size caps and closed-list enumerations.
 
 **What it emits:**
 
@@ -1007,23 +1007,23 @@ A spec-driven catalog (`contracts/validation/field-constraints.spec.json`) emits
 
 **.NET target** — emitted into `D2.Shared.Validation.Abstractions` by `validation/source-gen/` (Roslyn `IIncrementalGenerator`, `D2FC` diagnostic prefix, single-target dispatch gated on `AssemblyName == "D2.Shared.Validation.Abstractions"`). Files land in `validation/abstractions/Generated/`.
 
-**TypeScript target** — emitted into `@d2/validation-abstractions` by `tools/ts-codegen/src/field-constraints-emit.ts`. Files land in `server/shared/typescript/validation/abstractions/src/generated/`.
+**TypeScript target** — emitted into `@d2/validation-abstractions` by `public/tools/ts-codegen/src/field-constraints-emit.ts`. Files land in `public/packages/typescript/validation/abstractions/src/generated/`.
 
 **Consumers:** `D2.Shared.Contacts` VO `Create` factories; `D2.Shared.Location` VO `Create` factories; `@d2/validation-abstractions` Zod schemas; frontend form validators.
 
-Canonical references: [SRC_GEN.md](SRC_GEN.md) · [`validation/abstractions/README.md`](../server/shared/dotnet/validation/abstractions/README.md).
+Canonical references: [SRC_GEN.md](SRC_GEN.md) · [`validation/abstractions/README.md`](../public/packages/dotnet/validation/abstractions/README.md).
 
 ---
 
 ## Spec-driven codegen — the cross-cutting pattern
 
-Shared vocabularies that ship across language boundaries (.NET handlers, TS clients, ops dashboards) live in JSON spec files under `contracts/`. A Roslyn `IIncrementalGenerator` reads the spec at every build and emits typed constants directly into the consuming assembly. Hand-mirrored constants are forbidden — drift between spec and code is structurally impossible because the constants don't exist unless the spec entry does.
+Shared vocabularies that ship across language boundaries (.NET handlers, TS clients, ops dashboards) live in JSON spec files under `public/contracts/` / `private/contracts/`. A Roslyn `IIncrementalGenerator` reads the spec at every build and emits typed constants directly into the consuming assembly. Hand-mirrored constants are forbidden — drift between spec and code is structurally impossible because the constants don't exist unless the spec entry does.
 
-The pattern in one paragraph: spec at `contracts/{topic}/{topic}.spec.json` (paired with `schema.json`); SourceGen csproj at `server/shared/dotnet/{topic}-source-gen/` (`netstandard2.0`, `IsRoslynComponent=true`, gated by `Compilation.AssemblyName`); consumer csproj wires `<ProjectReference … OutputItemType="Analyzer" ReferenceOutputAssembly="false" />` + `<AdditionalFiles Include="…/{topic}.spec.json" />`; codegen output committed to git under `Generated/` with `linguist-generated=true`; source-gen tests use per-VALUE substring pins (`.Contain("public const string FOO = \"foo\";")`) — never framework snapshots.
+The pattern in one paragraph: spec at `public/contracts/{topic}/{topic}.spec.json` (or private dual-values home) (paired with `schema.json`); SourceGen csproj at `public/packages/dotnet/{topic}-source-gen/` (`netstandard2.0`, `IsRoslynComponent=true`, gated by `Compilation.AssemblyName`); consumer csproj wires `<ProjectReference … OutputItemType="Analyzer" ReferenceOutputAssembly="false" />` + `<AdditionalFiles Include="…/{topic}.spec.json" />`; codegen output committed to git under `Generated/` with `linguist-generated=true`; source-gen tests use per-VALUE substring pins (`.Contain("public const string FOO = \"foo\";")`) — never framework snapshots.
 
 When a hand-written constants catalog gets a spec backing, the migration is **outright deletion of the hand-written file plus net-new spec authoring** — not a parallel-emit-then-deprecate dance. A parallel-emit phase would let stale hand-written constants drift undetected.
 
-Canonical: [`docs/SRC_GEN.md`](SRC_GEN.md) — full how-to-author guide for both .NET (Roslyn `IIncrementalGenerator`) and TypeScript (`tools/ts-codegen`). Sourcegen registry (19 spec catalogs, grouped by purpose) → [`server/shared/dotnet/README.md` § Source generators](../server/shared/dotnet/README.md#source-generators-registry).
+Canonical: [`docs/SRC_GEN.md`](SRC_GEN.md) — full how-to-author guide for both .NET (Roslyn `IIncrementalGenerator`) and TypeScript (`public/tools/ts-codegen`). Sourcegen registry (19 spec catalogs, grouped by purpose) → [`public/packages/dotnet/README.md` § Source generators](../public/packages/dotnet/README.md#source-generators-registry).
 
 This pattern is the structural enforcement behind the [5-layer rename safety net](#composition-root) — every renamed spec field cascades through generated code, consumer compile sites, `nameof()`-bound emission sites, behavioral tests, and spec-pin literal tests, in that order.
 
@@ -1031,7 +1031,7 @@ This pattern is the structural enforcement behind the [5-layer rename safety net
 
 ## Per-package versioning & releases
 
-Each consumable shared library (`D2.Shared.*` for .NET, `@d2/*` for TypeScript) carries its own `MAJOR.MINOR.PATCH` version and `CHANGELOG.md`. The `tools/release-runner` derives per-package bumps from a **build-free artifact diff** — a source fingerprint (SHA-256 over committed source + API report + resolved dep versions + declared toolchain pin) plus a public-API-surface diff. Commit footers (`WIRE-BREAKING:` / `BREAKING CHANGE:`) are **escalation overrides only**: they can raise the diff-derived bump level but never lower it. The footer is also the ONE conscious force-valve act for breaks not detectable by the diff. Wire/contract breaks are auto-detected by `tools/contract-gate`; library public-API breaks are author-declared via footer. Registry publishing (npm / NuGet) is never automatic. Deployable services are excluded — they version on the product cadence.
+Each consumable shared library (`D2.Shared.*` for .NET, `@d2/*` for TypeScript) carries its own `MAJOR.MINOR.PATCH` version and `CHANGELOG.md`. The `public/tools/release-runner` derives per-package bumps from a **build-free artifact diff** — a source fingerprint (SHA-256 over committed source + API report + resolved dep versions + declared toolchain pin) plus a public-API-surface diff. Commit footers (`WIRE-BREAKING:` / `BREAKING CHANGE:`) are **escalation overrides only**: they can raise the diff-derived bump level but never lower it. The footer is also the ONE conscious force-valve act for breaks not detectable by the diff. Wire/contract breaks are auto-detected by `public/tools/contract-gate`; library public-API breaks are author-declared via footer. Registry publishing (npm / NuGet) is never automatic. Deployable services are excluded — they version on the product cadence.
 
 Canonical discipline: `rules.md §26.19`. Operational how-to: `CONTRIBUTING.md` (Per-package versioning) + `docs/COMMANDS.md` (Per-package version + Cutting a library release).
 
@@ -1098,13 +1098,13 @@ Every validator exposes a single `Validate(...)` / `validate(...)` method return
 - **Success** — the normalized value (trimmed + lowercased email; E.164 phone; trimmed + uppercased postal code).
 - **Failure** — `ValidationFailed` with a single per-field `InputError` keyed with `TK.Common.Validation.*_INVALID`. Field keys are `"email"`, `"phone"`, `"postalCode"`. Empty, whitespace-only, and structurally invalid input all collapse to the same `*_INVALID` failure.
 
-Cross-language behavior is pinned against `contracts/validation/fixtures/{email,phone,postcode}.json` parity fixtures — a value accepted on one runtime is accepted on the other. Postal-code validation fails closed: an unknown or absent country code always returns `ValidationFailed`; there is no permissive global-range fallback on either runtime.
+Cross-language behavior is pinned against `public/contracts/validation/fixtures/{email,phone,postcode}.json` parity fixtures — a value accepted on one runtime is accepted on the other. Postal-code validation fails closed: an unknown or absent country code always returns `ValidationFailed`; there is no permissive global-range fallback on either runtime.
 
 Canonical per-lib READMEs:
-[D2.Shared.Validation.Abstractions](../server/shared/dotnet/validation/abstractions/README.md) ·
-[D2.Shared.Validation](../server/shared/dotnet/validation/default/README.md) ·
-[@d2/validation-abstractions](../server/shared/typescript/validation/abstractions/README.md) ·
-[@d2/validation](../server/shared/typescript/validation/default/README.md).
+[D2.Shared.Validation.Abstractions](../public/packages/dotnet/validation/abstractions/README.md) ·
+[D2.Shared.Validation](../public/packages/dotnet/validation/default/README.md) ·
+[@d2/validation-abstractions](../public/packages/typescript/validation/abstractions/README.md) ·
+[@d2/validation](../public/packages/typescript/validation/default/README.md).
 
 ---
 
@@ -1133,7 +1133,7 @@ internal static readonly Lazy<FrozenDictionary<string, CountryCacheEntry>>
 
 **Deterministic iteration order during build**: when sentinel decisions depend on the iteration order of multiple records that normalize to the same key, sort the input by a stable key (e.g. `OrderBy(c => c.Iso31661Alpha2Code, StringComparer.Ordinal)`) so two processes building the cache independently agree byte-for-byte.
 
-Canonical implementation: `DefaultGeoNameResolver` in `server/shared/dotnet/geo/default/NameResolution/`. TS mirror: `server/shared/typescript/geo/default/src/name-resolution/default-geo-name-resolver.ts` (TS uses a module-scoped `Map | undefined` plus a build-count interlocked counter for thundering-herd safety under JS's single-thread execution).
+Canonical implementation: `DefaultGeoNameResolver` in `public/packages/dotnet/geo/default/NameResolution/`. TS mirror: `public/packages/typescript/geo/default/src/name-resolution/default-geo-name-resolver.ts` (TS uses a module-scoped `Map | undefined` plus a build-count interlocked counter for thundering-herd safety under JS's single-thread execution).
 
 ## Namespace-disambiguated extensions over a shared receiver
 
@@ -1170,7 +1170,7 @@ TypeScript has no equivalent of extension-method namespace shadowing, so the TS 
 
 Reference data is static, spec-driven, and versioned. Unlike user-generated entities it is read-only at runtime, ships with the binary, and changes only through a codegen rebuild cycle. D²-WORX manages reference data through three layers:
 
-1. **JSON specs** under `contracts/geo/` — the single source of truth for every country, subdivision, currency, language, locale, and timezone.
+1. **JSON specs** under `public/contracts/geo/` — the single source of truth for every country, subdivision, currency, language, locale, and timezone.
 2. **Codegen output** in `D2.Shared.Geo.Abstractions` (record shapes, typed enums, wrapper structs, lookup contracts) and `D2.Shared.Geo.Default` (static catalog instances, FrozenDictionary lookup tables, name-resolver warm-up).
 3. **Deprecation metadata** — the `DeprecationInfo` record on each entity communicates withdrawn or merged entries without deletion (ISO 3166 country changes, superseded subdivision codes, renamed currencies). Consumers check `entry.Deprecated` before use.
 
@@ -1202,7 +1202,7 @@ CountryCode? code = "US".TryParseTruthyNull<CountryCode>(ignoreCase: true, out v
     ? c : (CountryCode?)null;
 ```
 
-Canonical lib references: [D2.Shared.Geo.Abstractions](../server/shared/dotnet/geo/abstractions/README.md) · [@d2/geo-abstractions](../server/shared/typescript/geo/abstractions/README.md) · [D2.Shared.Geo.Default](../server/shared/dotnet/geo/default/README.md) · [@d2/geo-default](../server/shared/typescript/geo/default/README.md).
+Canonical lib references: [D2.Shared.Geo.Abstractions](../public/packages/dotnet/geo/abstractions/README.md) · [@d2/geo-abstractions](../public/packages/typescript/geo/abstractions/README.md) · [D2.Shared.Geo.Default](../public/packages/dotnet/geo/default/README.md) · [@d2/geo-default](../public/packages/typescript/geo/default/README.md).
 
 ### Typed access on IRequestContext
 
@@ -1276,7 +1276,7 @@ The `LocaleIetfBcp47Tag`, `TimezoneIanaName`, and `CurrencyIso4217Code` fields o
 4. `CountryIso31661Alpha2Code`-derived: ISO 3166 → ISO 4217 primary legal-tender mapping via `D2.Shared.Geo.Default`.
 5. Fallback: `NULL` — no sensible universal default. Consumers surface a validation error when `CurrencyIso4217Code` is required and absent.
 
-The `X-D2-Locale`, `X-D2-Timezone`, and `X-D2-Currency` headers are `http`-only constants in `HttpHeaders` (generated from `contracts/headers/headers.spec.json`). The Edge auth middleware that reads them is responsible for adding them to `Access-Control-Allow-Headers` in CORS configuration before any cross-origin client starts sending them.
+The `X-D2-Locale`, `X-D2-Timezone`, and `X-D2-Currency` headers are `http`-only constants in `HttpHeaders` (generated from `public/contracts/headers/headers.spec.json`). The Edge auth middleware that reads them is responsible for adding them to `Access-Control-Allow-Headers` in CORS configuration before any cross-origin client starts sending them.
 
 ---
 

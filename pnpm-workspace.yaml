@@ -1,15 +1,16 @@
-# -----------------------------------------------------------------------
+﻿# -----------------------------------------------------------------------
 # Copyright (c) DCSV. All rights reserved.
 # -----------------------------------------------------------------------
 
 packages:
-  - "server/shared/typescript/**"
-  - "server/services/**"
-  - "tools/ts-codegen"
-  - "tools/geo-data-pipeline"
-  - "tools/contract-gate"
-  - "tools/release-runner"
-  - "tools/commit-lint"
+  - "public/packages/typescript/**"
+  - "private/packages/typescript/**"
+  - "private/services/**"
+  - "public/tools/ts-codegen"
+  - "public/tools/geo-data-pipeline"
+  - "public/tools/contract-gate"
+  - "public/tools/release-runner"
+  - "public/tools/commit-lint"
 
 onlyBuiltDependencies:
   - "@bufbuild/buf"

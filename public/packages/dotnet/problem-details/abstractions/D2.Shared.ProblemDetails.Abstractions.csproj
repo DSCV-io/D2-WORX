@@ -1,0 +1,71 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.ProblemDetails</RootNamespace>
+
+    <!--
+      Emit SrcGen-emitted D2ProblemDetailsKeys.g.cs (driven by the
+      problem-details/source-gen analyzer wired below) to <project-dir>/Generated/.
+      The directory is tracked in git so PR reviewers see codegen diffs without
+      a local build.
+    -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <!--
+    D2.Shared.ProblemDetails.Abstractions — the single home for the RFC 7807
+    ProblemDetails wire-format catalog consumed by every .NET emit path:
+
+      - D2.Shared.Auth.Http      → D2ProblemDetailsExtensions.ToProblemDetails
+                                   (auth-middleware-emitted Shape A bodies)
+      - D2.Shared.AspNetCore     → D2ProblemDetailsCustomizer
+                                   (ASP.NET IProblemDetailsService Shape A bodies)
+
+    Zero runtime dependencies — declares only spec-derived constants. The
+    SourceGen analyzer is wired with PrivateAssets="all" so consuming csprojs
+    pull the constants via ProjectReference WITHOUT also pulling the generator.
+
+    Cross-language parity: the SAME spec drives the TS-side @d2/problem-details-abstractions
+    catalog (re-exported from @d2/headers for compat) via tools/ts-codegen/src/problem-details-emit.ts,
+    so .NET and TS consumers share byte-equal wire values for the URI prefix, MIME type,
+    extension keys, and per-status titles.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\source-gen\D2.Shared.ProblemDetails.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)problem-details\problem-details.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>D2.Shared.ProblemDetails.Abstractions</PackageId>
+    <Description>RFC 7807 ProblemDetails wire-format catalog for D2-WORX — type-URI prefix, extension keys, per-status titles, and the TitleFor helper.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

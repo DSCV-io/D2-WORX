@@ -258,7 +258,7 @@ Scales across sizes. **Small deliverable** — one csproj, one feature: `01-<fea
 ### What this process does NOT do
 
 - **Doesn't replace AGENTS.md** — AGENTS.md is the shared agent-directive root + conventions references; this doc defines the _process_ ensuring conventions are followed.
-- **Doesn't replace `docs/v2/`** — phase / wave tracking lives there; this process is per-deliverable, `docs/v2/` is the long-arc roadmap.
+- **Doesn't replace `private/docs/v2/`** — phase / wave tracking lives there; this process is per-deliverable, `private/docs/v2/` is the long-arc roadmap.
 - **Doesn't replace per-lib READMEs** — each lib documents its own public API.
 - **Doesn't run scripts** — no pre-commit hook fires `rules.md` mechanically; the discipline is the agent walking the rules each round and producing journal-verifiable evidence.
 
@@ -601,7 +601,7 @@ Tier-override reason (if the pinned tier was overridden — e.g. an Implementer 
 **Shared-context reminders every Auditor / Final-reviewer brief carries** (predicate-of-record in parens):
 
 - Read every modified `.cs` / `.ts` for the three tool-invisible lenses neither `dotnet build` nor `jb inspectcode` enforces: line length ≤ 100 + SA1519/SA1516 cascades; a blank line after any multi-line statement before the next statement; `var` for locals where the type is evident. Gate-green does NOT imply convention-clean. (§24.20)
-- Gate-verify at FULL-solution scope: `dotnet build server/D2.slnx` (or the tests-csproj build) AND `jb inspectcode server/D2.slnx --severity=WARNING` — never a per-lib / per-project inspectcode (it hides test-file findings). (§24.21)
+- Gate-verify at FULL-solution scope: `dotnet build D2.slnx` (or the tests-csproj build) AND `jb inspectcode D2.slnx --severity=WARNING` — never a per-lib / per-project inspectcode (it hides test-file findings). (§24.21)
 - Scan modified source xmldocs + `//` / `/* */` comments + `.csproj` XML comments (not just READMEs) for deliverable-step / phase / SHIP / forward-ref / rules-§ / AGENTS.md-§ framing. (§24.22)
 - Read from the on-disk WORKING TREE, not `git diff HEAD` / `git show HEAD:` — the latest Implementer / Fixer output is uncommitted; a HEAD reader reports stale pre-change findings and misses post-change issues. (§24.19; omit once all step output is committed.)
 

@@ -1,0 +1,142 @@
+{
+  "spike": "A — multi-hop server-push pipeline (ADR-0021 de-risk)",
+  "sc1": null,
+  "sc1Decorators": null,
+  "a": {
+    "a1_multiHopGeneration": {
+      "status": "GO",
+      "generatedFiles": [
+        "Spike.Contracts/Protos/notifications.proto",
+        "Spike.Sse/Generated/SseEmit.cs",
+        "Spike.Edge/Generated/EdgeReceiver.cs",
+        "Spike.Edge/Generated/GeneratedWiring.cs"
+      ],
+      "handWrittenChassisFiles": [
+        "Spike.Edge/Program.cs",
+        "Spike.Sse/StubSseEmitSink.cs (incl. ISseEmitSink contract)",
+        "Spike.Test/PushPipelineTests.cs (acts as service A)"
+      ],
+      "claim": "Emitter generates proto + receiver + SSE-emit + wiring from one spec; the only hand-written C# is the 3-file chassis (host Program.cs, stub sink, service-A test).",
+      "evidence": "CONFIRMED — Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects) | Passed! - Failed: 0, Passed: 1, Skipped: 0, Total: 1 (Spike.Test.dll, net10.0)"
+    },
+    "a2_hopsConnected": {
+      "status": "GO",
+      "chain": [
+        "service-A gRPC client (test)",
+        "Edge PushReceiver.PushNotificationCreated (generated)",
+        "NotificationCreatedSseEmitter.EmitAsync (generated)",
+        "ISseEmitSink stub (chassis) — captures payload"
+      ],
+      "claim": "One fired gRPC event traverses all generated hops to the stub sink with no manual glue.",
+      "evidence": "CONFIRMED — Passed! - Failed: 0, Passed: 1, Skipped: 0, Total: 1 (Spike.Test.dll, net10.0)"
+    },
+    "a3_payloadIdentity": {
+      "status": "GO",
+      "sharedDto": "D2.Spike.Push.V1.NotificationCreated",
+      "usedAt": [
+        "gRPC request message (proto)",
+        "EdgeReceiver method param (generated)",
+        "SseEmitter.EmitAsync arg (generated)",
+        "ISseEmitSink.SendAsync arg (chassis contract, generated DTO)"
+      ],
+      "fields": [
+        "id",
+        "message"
+      ],
+      "claim": "The SAME Grpc.Tools-generated type is the message, the forward arg, and the SSE emit arg; proven by compile (one type name everywhere) + a typeof identity assertion in the test."
+    },
+    "a4_locationTransparency": {
+      "status": "DEFERRED",
+      "note": "STRETCH not exercised in this compile (no @d2InProcess op present). Recorded honestly as deferred, not claimed."
+    },
+    "runner": {
+      "buildSummary": "Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)",
+      "testSummary": "Passed! - Failed: 0, Passed: 1, Skipped: 0, Total: 1 (Spike.Test.dll, net10.0)",
+      "inprocBuildSummary": "Build succeeded. 0 Warning(s), 0 Error(s) (Spike.InProc.csproj — in-process variant compiles standalone)",
+      "note": "dotnet build + dotnet test (service A) confirmed the generated pipeline at runtime."
+    }
+  },
+  "b": {
+    "requestedProfiles": [
+      "retry-fast",
+      "breaker-standard"
+    ],
+    "resolvedOrderInnerToOuter": [
+      "retry-fast",
+      "breaker-standard"
+    ],
+    "lockedSignature": "@d2Resilience(...profiles: valueof string[]) /* ordered; first-named = innermost */",
+    "profileRegistryShape": "A named map (emitter-owned, exported from @d2/typespec-decorators): { \"<name>\": { kind: \"retry\" | \"breaker\", ...tunables } }. retry => { maxAttempts, backoffMs }; breaker => { failureThreshold, breakMs }. The emitter resolves each @d2Resilience name against it; the generated ResilienceProfiles constants materialize the resolved tunables.",
+    "b1_orderedComposition": {
+      "status": "GO",
+      "composedOrderInnerToOuter": "retry-fast -> breaker-standard",
+      "claim": "The generated pipeline nests the named policies in DECLARATION ORDER (first-named innermost, last-named outermost) around the raw outbound call. The emitted source literally shows the nesting; ComposedOrder constant == the spec order. Flipping the spec order regenerates with the nesting flipped (proven by the order-flipped variant).",
+      "evidence": "CONFIRMED — Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9 (Spike.Resilience.Test.dll, net10.0) + order-flip variant (resilience-flip.tsp): ComposedOrder flips to 'breaker-standard -> retry-fast', compiles clean"
+    },
+    "b2_behavioral": {
+      "status": "GO",
+      "claim": "Transient-fault test: N failures then success within the retry budget -> the pipeline RETRIES and ultimately SUCCEEDS (handler eventually returns Ok). Sustained-fault test: failures past the breaker threshold -> the breaker OPENS and the pipeline FAST-FAILS with a typed circuit_open Outcome.",
+      "evidence": "CONFIRMED — Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9 (Spike.Resilience.Test.dll, net10.0) + order-flip variant (resilience-flip.tsp): ComposedOrder flips to 'breaker-standard -> retry-fast', compiles clean"
+    },
+    "b3_registryResolution": {
+      "status": "GO",
+      "claim": "Every profile resolves from the SINGLE registry — the generated ResilienceProfiles constants are the only source of the tunables (no per-op magic numbers at the call site). An UNKNOWN profile name FAILS THE BUILD: the emitter reports an `error` diagnostic (@d2/spike-emitter/unknown-resilience-profile) so `tsp compile` exits non-zero — NOT a runtime error.",
+      "knownProfiles": [
+        "retry-fast",
+        "retry-standard",
+        "breaker-standard"
+      ],
+      "buildFailureEvidence": "$ npx tsp compile resilience-unknown.tsp --config resilience.tspconfig.yaml  =>  exit 1. error @d2/spike-emitter/unknown-resilience-profile: @d2Resilience on op \"submitPayment\" names unknown profile \"retry-WARP-SPEED\". Known profiles: retry-fast, retry-standard, breaker-standard. Found 1 error. (compile-time failure — no .NET artifacts emitted)",
+      "evidence": "CONFIRMED (registry resolution) — Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)"
+    },
+    "b4_targetsAbstraction": {
+      "status": "GO",
+      "claim": "The generated pipeline composes IAsyncResiliencePolicy instances minted by the injected IResiliencePolicyFactory — it NEVER inlines a raw retry/breaker primitive at the call site. The chassis supplies the concrete primitives (stand-in here; D2.Shared.Resilience in prod). Structural: the pipeline ctor takes (ISubmitPaymentOutbound, IResiliencePolicyFactory) only.",
+      "evidence": "CONFIRMED (compile + injected fakes) — Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)"
+    },
+    "d2ResultNote": "Spike isolation: the pipeline returns a minimal generated Outcome<T> stand-in and targets a stand-in IAsyncResiliencePolicy/IResiliencePolicyFactory. The REAL emitter would return D2Result<T> and target D2.Shared.Resilience's policy + builder types — the pipeline shape is identical, only the result + policy types swap (the same swap Spike C notes for Outcome).",
+    "runner": {
+      "buildSummary": "Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)",
+      "testSummary": "Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9 (Spike.Resilience.Test.dll, net10.0) + order-flip variant (resilience-flip.tsp): ComposedOrder flips to 'breaker-standard -> retry-fast', compiles clean",
+      "note": "dotnet build + dotnet test confirmed the generated resilience pipeline at runtime."
+    }
+  },
+  "c": {
+    "keySource": "header",
+    "ttlSeconds": 300,
+    "derivedFields": [],
+    "lockedSignature": "@d2Idempotent(keySource: valueof string /* \"header\" | \"derived\" */, ttlSeconds: valueof int32, ...fields: valueof string[])",
+    "c1_dedupeShortCircuit": {
+      "status": "GO",
+      "claim": "Same op fired twice with the same key -> handler invocation count is 1 (second short-circuited by the generated gate) and both calls return the same result.",
+      "evidence": "CONFIRMED — Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9 (Spike.Idempotency.Test.dll, net10.0) + derived variant: 4 passed"
+    },
+    "c2_ttlRespected": {
+      "status": "GO",
+      "claim": "Advance the fake clock past ttlSeconds -> the entry is a miss -> a replay re-invokes the handler (count -> 2). Proven with a controllable IClock, no wall-clock sleep.",
+      "evidence": "CONFIRMED — Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9 (Spike.Idempotency.Test.dll, net10.0) + derived variant: 4 passed"
+    },
+    "c3_typedFailureOnBadKey": {
+      "status": "GO",
+      "claim": "Missing/blank Idempotency-Key -> Outcome.Fail(\"idempotency_key_missing\"), a TYPED failure per posture, NOT an exception/500.",
+      "evidence": "CONFIRMED — Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9 (Spike.Idempotency.Test.dll, net10.0) + derived variant: 4 passed"
+    },
+    "c4_storeSeamInjected": {
+      "status": "GO",
+      "claim": "The generated gate ctor takes ISubmitOrderHandler + IIdempotencyStore only — ZERO hardcoded store dependency, and time-agnostic (the store owns ttl expiry, hence the controllable IClock — C2). Test injects the in-memory fake store (+ FakeClock); prod injects the distributed/tiered cache.",
+      "evidence": "CONFIRMED (compile + injected fakes) — Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)"
+    },
+    "d2ResultNote": "Spike isolation: the gate returns a minimal generated Outcome<T> stand-in. The REAL emitter would return D2Result<T> from D2.Shared (semantic factories) — the gate shape is identical, only the result type swaps.",
+    "runner": {
+      "buildSummary": "Build succeeded. 0 Warning(s), 0 Error(s) (Spike.slnx, all 9 projects)",
+      "testSummary": "Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9 (Spike.Idempotency.Test.dll, net10.0) + derived variant: 4 passed",
+      "note": "dotnet build + dotnet test confirmed the generated idempotency gate at runtime."
+    }
+  },
+  "namedFringes": [],
+  "bNamedFringes": [],
+  "cNamedFringes": [],
+  "bottomLine": "GO — one spec generated the whole multi-hop push pipeline; dotnet build (0 errors) + service-A gRPC test (1 passed) confirm it works with only the 3-file chassis hand-written.",
+  "bBottomLine": "GO — one @d2Resilience(\"retry-fast\", \"breaker-standard\") generated the full pipeline composing the named profiles in declared order (retry-fast -> breaker-standard, innermost->outermost); dotnet build (0 errors) + dotnet test confirm ordered composition + transient-retry-success + sustained-breaker-open + registry resolution + abstraction-targeting, with only the 3-file chassis hand-written. Unknown profile fails the build via a reported diagnostic.",
+  "cBottomLine": "GO — one @d2Idempotent(\"header\", 300) generated the full dedupe gate; dotnet build (0 errors) + dotnet test confirm dedupe short-circuit + ttl replay + typed bad-key failure + injected store seam with only the 3-file chassis hand-written."
+}

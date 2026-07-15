@@ -23,7 +23,7 @@ _[← rules index](../rules.md) · §8 of the D2-WORX rules catalog._
 - **8.4** If Docker Compose was running, were affected containers verified healthy (`docker compose --env-file .env.local --env-file .env.secrets ps`) after changes? Were any unhealthy containers restarted?
   - Evidence: `ps` output + restart trace.
 
-- **8.5** When editing shared `.NET` libs in `server/shared/dotnet/`, was `dotnet build server/D2.slnx` run to verify all consumers still compile?
+- **8.5** When editing shared `.NET` libs in `public/packages/dotnet/`, was `dotnet build D2.slnx` run to verify all consumers still compile?
   - **Container coordination (cross-ref §8.2)**: before running the host build with Compose up, stop active .NET containers (or build inside a container). Mirrors the §5.21 container-coordination clause; the two predicates co-apply for shared-lib edits.
   - Evidence: build output, plus `docker compose ps` snapshot showing .NET containers stopped (or build-in-container trace) when Compose was active.
 

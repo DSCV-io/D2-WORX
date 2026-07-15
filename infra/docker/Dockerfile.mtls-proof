@@ -9,8 +9,8 @@
 # they EXECUTE, presenting the full leaf -> intermediate chain on the wire and
 # exercising the shipped mutual-TLS validator over a genuine TCP socket.
 #
-# obj/bin isolation: the build COPYs only server/ + contracts/, and the repo
-# `.dockerignore` excludes **/obj + **/bin, so the Windows host's build
+# obj/bin isolation: the build COPYs dual public/private trees + root props;
+# the repo `.dockerignore` excludes **/obj + **/bin, so the Windows host's build
 # artifacts never seed this Linux build — every project restores + compiles
 # fresh inside the image. The image is the only writable surface; the host
 # tree is never touched.
@@ -20,55 +20,34 @@
 # validator). It needs NO Postgres / Redis / RabbitMQ — it runs standalone.
 # =============================================================================
 
-# --- Build + test stage: restore the harness's project graph, run the filter ---
-# SDK 10.0 (GA) — global.json pins 10.0.200 with rollForward latestFeature, which
-# the 10.0 GA SDK satisfies. Matches the repo's other .NET Docker SDK pin.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS proof
 WORKDIR /src
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 ENV DOTNET_NOLOGO=1
 
-# The root .editorconfig (root = true) carries the solution's StyleCop rule
-# overrides (e.g. the codebase's _UPPER const / sr_ static-readonly naming, the
-# brace-free single-statement convention). .editorconfig resolution walks UP
-# the directory tree, so it MUST sit at the parent of server/ — without it, the
-# source-generator projects fail the build under TreatWarningsAsErrors with
-# StyleCop defaults that conflict with the repo's conventions.
+# Root editorconfig (root = true) carries StyleCop rule overrides.
 COPY .editorconfig .editorconfig
 
-# The LoggerMessage-splitter tool. server/shared/dotnet/Directory.Build.targets
-# runs it AfterTargets="Compile" for every project that emits a committed
-# Generated/LoggerMessage.g.cs (a git-determinism step). The on-disk Generated/
-# tree is copied with the source, so that target's Exists() guard fires and it
-# builds this tool — copying it keeps the container build a faithful mirror of
-# the host build (rather than diverging via a suppression hack). It is a tiny
-# standalone Exe with no project/package references.
-COPY tools/loggermessage-splitter/ tools/loggermessage-splitter/
+# Root MSBuild dual-root props + NuGet + StyleCop.
+COPY Directory.Build.props Directory.Packages.props D2.slnx stylecop.json global.json NuGet.config ./
+COPY public/stylecop.public.json ./public/
 
-# Copy the .NET source tree + the proto/i18n contracts (Grpc.Tools reads the
-# proto fixtures from contracts/ at codegen time). `.dockerignore` excludes
-# **/obj + **/bin, so the host's Windows build artifacts are NOT copied — the
-# Linux build is clean. The fixed glob order keeps the layer cache stable.
-COPY server/ server/
-COPY contracts/ contracts/
+# LoggerMessage-splitter tool (Directory.Build.targets AfterTargets Compile).
+COPY public/tools/loggermessage-splitter/ public/tools/loggermessage-splitter/
 
-# Restore the splitter tool's own NuGet assets. The splitter is invoked via an
-# <MSBuild> task from Directory.Build.targets (not part of the test project's
-# restore graph), so it needs its obj/project.assets.json present before that
-# target's incremental build fires during the test-project build. On the host
-# the tool is already restored locally; this reproduces that state in the image.
-RUN dotnet restore tools/loggermessage-splitter/D2.Tools.LoggerMessageSplitter.csproj
+# Dual package roots + dual contracts + Edge tests graph + private product hosts.
+COPY public/packages/dotnet/ public/packages/dotnet/
+COPY private/packages/dotnet/ private/packages/dotnet/
+COPY private/services/ private/services/
+COPY public/contracts/ public/contracts/
+COPY private/contracts/ private/contracts/
+COPY private/services/Directory.Build.targets private/services/
 
-# Build + run the mutual-TLS harness on Linux. The test project uses xunit.v3
-# on Microsoft.Testing.Platform, whose native filter (--filter-class) is passed
-# to the test executable after `--` via `dotnet run` — the VSTest `--filter`
-# format is NOT honored by xunit.v3 under MTP. The filter scopes the run to the
-# real-socket harness class; on Linux all 7 cases execute (the 6 cert-presenting
-# cases that skip on Windows + the no-client-cert canary). The test project
-# pulls its own transitive project graph — no solution-wide build. Scoping to
-# the harness also avoids the Testcontainers-PostgreSQL integration suite, which
-# would need a Docker daemon inside this container (not provided, by design).
+# Restore the splitter tool's own NuGet assets before test-project build.
+RUN dotnet restore public/tools/loggermessage-splitter/D2.Tools.LoggerMessageSplitter.csproj
+
+# Build + run the mutual-TLS harness on Linux (xunit.v3 MTP filter-class).
 ENTRYPOINT ["dotnet", "run", "--no-launch-profile", \
-    "--project", "server/services/edge/tests/D2.Edge.Tests.csproj", \
+    "--project", "private/services/edge/tests/D2.Edge.Tests.csproj", \
     "--", "--filter-class", "*MutualTlsSignerHarnessTests*"]

@@ -143,10 +143,10 @@ jobs:
       # Proven pattern from test.yml ts-shared-unit-tests lane.
       # -----------------------------------------------------------------------
       - name: pnpm install (shared-TS subtree + ts-codegen)
-        run: pnpm install --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
+        run: pnpm install --filter "./public/packages/typescript/**..." --filter "ts-codegen..."
 
       - name: Build all shared-TS packages (dep-order)
-        run: pnpm --filter "./server/shared/typescript/**" -r build
+        run: pnpm --filter "./public/packages/typescript/**" -r build
 
       - name: Pack all TypeScript consumables
         run: |

@@ -7,7 +7,7 @@ Copyright (c) DCSV. All rights reserved.
 Canonical reference for D²-WORX's spec-driven codegen pattern — module authors
 adding new shared catalogs, codegen-emitter authors, and consumers of generated
 constants find here the single source for how JSON specs become typed code in
-both .NET (Roslyn `IIncrementalGenerator`) and TypeScript (`tools/ts-codegen`).
+both .NET (Roslyn `IIncrementalGenerator`) and TypeScript (`public/tools/ts-codegen`).
 
 ---
 
@@ -19,7 +19,8 @@ both .NET (Roslyn `IIncrementalGenerator`) and TypeScript (`tools/ts-codegen`).
   - [§1.2. Diagnostic ID convention](#12-diagnostic-id-convention)
   - [§1.3. Generator anatomy (incremental + filter + emit)](#13-generator-anatomy-incremental--filter--emit)
   - [§1.4. Example walkthrough — i18n](#14-example-walkthrough--i18n)
-- [§2. TypeScript — tools/ts-codegen](#2-typescript--toolstscodegen)
+  - [§1.5. Dual-target dispatch — public twin + private Extensions](#15-dual-target-dispatch--public-twin--private-extensions)
+- [§2. TypeScript — public/tools/ts-codegen](#2-typescript--publictoolstscodegen)
   - [§2.1. JSON specs as inputs](#21-json-specs-as-inputs)
   - [§2.2. Emitter pattern](#22-emitter-pattern)
   - [§2.3. Output shape](#23-output-shape)
@@ -39,7 +40,8 @@ error codes, scopes, audiences, JWT claim names, wire-format headers, OTel
 attribute names, encryption-frame byte offsets, RFC 7807 ProblemDetails keys,
 the messaging registry, and more. The pattern's key properties:
 
-- **Single source of truth.** A JSON spec under `contracts/<topic>/<topic>.spec.json`
+- **Single source of truth.** A JSON spec under `public/contracts/<topic>/` (or the
+  private dual-values half under `private/contracts/<topic>/` for product rows)
   is the canonical declaration; both .NET and TypeScript consumers derive their
   typed constants from the same file. Drift between the two language sides is
   structurally impossible.
@@ -61,12 +63,15 @@ the messaging registry, and more. The pattern's key properties:
 The two halves of the system mirror each other:
 
 - **.NET side**: Roslyn `IIncrementalGenerator` per topic, csproj-named
-  `*-source-gen/`, lives under `server/shared/dotnet/`. Emits per-target-assembly
-  via single-target dispatch keyed on the consuming assembly name.
-- **TypeScript side**: per-topic `tsx` scripts under `tools/ts-codegen/src/`,
+  `*-source-gen/`, lives under `public/packages/dotnet/`. Emits per-target-assembly
+  via assembly-name dispatch: public hosts emit public-only types; dual-target
+  catalogs also emit product-union types into private **`D2.Shared.*.Extensions`**
+  hosts (see §1.5).
+- **TypeScript side**: per-topic `tsx` scripts under `public/tools/ts-codegen/src/`,
   invoked via `pnpm codegen`. Emits one `.g.ts` per consuming package.
 
-Both halves consume the same JSON specs under `contracts/<topic>/`. The
+Both halves consume the same JSON specs under `public/contracts/<topic>/` (public
+framework rows) with private product dual-values under `private/contracts/`. The
 emitters re-use the same diagnostic IDs (`D2I18N*`, `D2SCP*`, `D2AEC*`, etc.)
 because a malformed spec is malformed regardless of which language is reading
 it.
@@ -116,33 +121,33 @@ abbreviation, 3-digit number). Examples currently in use:
 
 | Topic                   | Prefix   | Owning source-gen                                                                                                                                                         |
 | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| i18n                    | `D2I18N` | [`i18n/source-gen`](../server/shared/dotnet/i18n/source-gen/README.md)                                                                                                   |
-| Auth scopes             | `D2SCP`  | [`auth/scopes-source-gen`](../server/shared/dotnet/auth/scopes-source-gen/README.md)                                                                                     |
-| Auth audiences          | `D2AUD`  | [`auth/audiences-source-gen`](../server/shared/dotnet/auth/audiences-source-gen/README.md)                                                                               |
-| Auth protocol audiences | `D2PAUD` | [`auth/protocol-audiences-source-gen`](../server/shared/dotnet/auth/protocol-audiences-source-gen/) (no README)                                                          |
-| Auth error codes        | `D2AEC`  | [`auth/error-codes-source-gen`](../server/shared/dotnet/auth/error-codes-source-gen/README.md) (shell)                                                                   |
-| Generic error codes     | `D2EC`   | [`source-gen-shared/error-codes-source-gen`](../server/shared/dotnet/source-gen-shared/error-codes-source-gen/README.md) (shell)                                         |
-| Error-codes engine      | `D2ERC`  | [`source-gen-shared/error-codes-emit`](../server/shared/dotnet/source-gen-shared/error-codes-emit/README.md) (shared engine — catalog-neutral; `D2ERC006`/`D2ERC007` owned by `error-codes/registry-source-gen`) |
-| Error category          | `D2ECAT` | [`error-codes/category-source-gen`](../server/shared/dotnet/error-codes/category/README.md)                                                                              |
-| D2Result envelope       | `D2RES`  | [`result/envelope-source-gen`](../server/shared/dotnet/result/envelope-source-gen/README.md)                                                                             |
-| Headers                 | `D2HDR`  | [`headers/source-gen`](../server/shared/dotnet/headers/source-gen/README.md)                                                                                             |
-| JWT claims              | `D2JWT`  | [`auth/jwt-claims-source-gen`](../server/shared/dotnet/auth/jwt-claims-source-gen/README.md)                                                                             |
-| Messaging registry      | `D2MQ`   | [`messaging/source-gen`](../server/shared/dotnet/messaging/source-gen/README.md)                                                                                         |
-| DLQ failure metadata    | `D2DLQ`  | [`messaging/dlq-failure-metadata-source-gen`](../server/shared/dotnet/messaging/dlq-failure-metadata-source-gen/README.md)                                               |
-| OTel messaging tags     | `D2OTM`  | [`messaging/otel-messaging-tags-source-gen`](../server/shared/dotnet/messaging/otel-messaging-tags-source-gen/README.md)                                                 |
-| Telemetry tags          | `D2TT`   | [`telemetry/tags-source-gen`](../server/shared/dotnet/telemetry/tags-source-gen/README.md)                                                                               |
-| Encryption domains      | `D2ED`   | [`encryption/domains-source-gen`](../server/shared/dotnet/encryption/domains-source-gen/README.md) — emits `EncryptionDomains` constants + `EncryptionDomainMode` enum + `EncryptionDomainModes` mode/consumer lookups; `D2ED001-005` catalog shape, `D2ED006-009` per-domain `mode`/`consumerService` validation |
-| Encryption frame        | `D2EF`   | [`encryption/frame-source-gen`](../server/shared/dotnet/encryption/frame-source-gen/README.md) — two arms: symmetric v1 (`D2EF001-005`, `EncryptionFrameLayout`) + sealed v2 (`D2EF006-012`, `SealedFrameLayout` from the sibling `contracts/encryption-frame-sealed/` spec; adds the `variable_binary_u16be` field kind — raw binary behind a 2-byte big-endian length prefix — with a build-time rule that such a field must sit immediately behind its `byte_fixed` length-prefix field) |
-| ProblemDetails          | `D2PD`   | [`problem-details/source-gen`](../server/shared/dotnet/problem-details/source-gen/README.md)                                                                             |
-| Wire shapes             | `D2WS`   | [`source-gen-shared/wire-shapes-source-gen`](../server/shared/dotnet/source-gen-shared/wire-shapes-source-gen/README.md)                                                 |
-| Context                 | `D2CTX`  | [`context/source-gen`](../server/shared/dotnet/context/source-gen/README.md)                                                                                             |
-| gRPC trailers           | `D2GT`   | [`result/grpc-trailers-source-gen`](../server/shared/dotnet/result/grpc-trailers-source-gen/README.md)                                                                   |
-| In-process keys         | `D2IPK`  | [`encryption/in-process-keys-source-gen`](../server/shared/dotnet/encryption/in-process-keys-source-gen/README.md)                                                       |
-| Geo catalogs            | `D2GEO`  | [`geo/source-gen`](../server/shared/dotnet/geo/source-gen/README.md)                                                                                                     |
-| Field constraints       | `D2FC`   | [`validation/source-gen`](../server/shared/dotnet/validation/source-gen/README.md)                                                                                       |
-| Advisory locks          | `D2LCK`  | [`entity-framework-core/locks-source-gen`](../server/shared/dotnet/entity-framework-core/locks-source-gen/README.md) — emits `AdvisoryLocks` into owning-module assembly (currently `D2.Edge.KeyCustodian.Infra`); shared Postgres = mechanism only |
-| KC error codes          | `D2KEC`  | [`key-custodian/error-codes-source-gen`](../server/services/edge/key-custodian/error-codes-source-gen/README.md) (shell)                                                 |
-| TypeSpec emitters       | `D2TSP`  | [`server/shared/typescript/typespec-emitters`](../server/shared/typescript/typespec-emitters/README.md) — see [§2.7](#27-typespec-emitter-fleet--decorator-vocabulary--wire-channel-identity) for diagnostics |
+| i18n                    | `D2I18N` | [`i18n/source-gen`](../public/packages/dotnet/i18n/source-gen/README.md)                                                                                                   |
+| Auth scopes             | `D2SCP`  | [`auth/scopes-source-gen`](../public/packages/dotnet/auth/scopes-source-gen/README.md)                                                                                     |
+| Auth audiences          | `D2AUD`  | [`auth/audiences-source-gen`](../public/packages/dotnet/auth/audiences-source-gen/README.md)                                                                               |
+| Auth protocol audiences | `D2PAUD` | [`auth/protocol-audiences-source-gen`](../public/packages/dotnet/auth/protocol-audiences-source-gen/) (no README)                                                          |
+| Auth error codes        | `D2AEC`  | [`auth/error-codes-source-gen`](../public/packages/dotnet/auth/error-codes-source-gen/README.md) (shell)                                                                   |
+| Generic error codes     | `D2EC`   | [`source-gen-shared/error-codes-source-gen`](../public/packages/dotnet/source-gen-shared/error-codes-source-gen/README.md) (shell)                                         |
+| Error-codes engine      | `D2ERC`  | [`source-gen-shared/error-codes-emit`](../public/packages/dotnet/source-gen-shared/error-codes-emit/README.md) (shared engine — catalog-neutral; `D2ERC006`/`D2ERC007` owned by `error-codes/registry-source-gen`) |
+| Error category          | `D2ECAT` | [`error-codes/category-source-gen`](../public/packages/dotnet/error-codes/category/README.md)                                                                              |
+| D2Result envelope       | `D2RES`  | [`result/envelope-source-gen`](../public/packages/dotnet/result/envelope-source-gen/README.md)                                                                             |
+| Headers                 | `D2HDR`  | [`headers/source-gen`](../public/packages/dotnet/headers/source-gen/README.md)                                                                                             |
+| JWT claims              | `D2JWT`  | [`auth/jwt-claims-source-gen`](../public/packages/dotnet/auth/jwt-claims-source-gen/README.md)                                                                             |
+| Messaging registry      | `D2MQ`   | [`messaging/source-gen`](../public/packages/dotnet/messaging/source-gen/README.md)                                                                                         |
+| DLQ failure metadata    | `D2DLQ`  | [`messaging/dlq-failure-metadata-source-gen`](../public/packages/dotnet/messaging/dlq-failure-metadata-source-gen/README.md)                                               |
+| OTel messaging tags     | `D2OTM`  | [`messaging/otel-messaging-tags-source-gen`](../public/packages/dotnet/messaging/otel-messaging-tags-source-gen/README.md)                                                 |
+| Telemetry tags          | `D2TT`   | [`telemetry/tags-source-gen`](../public/packages/dotnet/telemetry/tags-source-gen/README.md)                                                                               |
+| Encryption domains      | `D2ED`   | [`encryption/domains-source-gen`](../public/packages/dotnet/encryption/domains-source-gen/README.md) — emits `EncryptionDomains` constants + `EncryptionDomainMode` enum + `EncryptionDomainModes` mode/consumer lookups; `D2ED001-005` catalog shape, `D2ED006-009` per-domain `mode`/`consumerService` validation |
+| Encryption frame        | `D2EF`   | [`encryption/frame-source-gen`](../public/packages/dotnet/encryption/frame-source-gen/README.md) — two arms: symmetric v1 (`D2EF001-005`, `EncryptionFrameLayout`) + sealed v2 (`D2EF006-012`, `SealedFrameLayout` from the sibling `public/contracts/encryption-frame-sealed/` spec; adds the `variable_binary_u16be` field kind — raw binary behind a 2-byte big-endian length prefix — with a build-time rule that such a field must sit immediately behind its `byte_fixed` length-prefix field) |
+| ProblemDetails          | `D2PD`   | [`problem-details/source-gen`](../public/packages/dotnet/problem-details/source-gen/README.md)                                                                             |
+| Wire shapes             | `D2WS`   | [`source-gen-shared/wire-shapes-source-gen`](../public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/README.md)                                                 |
+| Context                 | `D2CTX`  | [`context/source-gen`](../public/packages/dotnet/context/source-gen/README.md)                                                                                             |
+| gRPC trailers           | `D2GT`   | [`result/grpc-trailers-source-gen`](../public/packages/dotnet/result/grpc-trailers-source-gen/README.md)                                                                   |
+| In-process keys         | `D2IPK`  | [`encryption/in-process-keys-source-gen`](../public/packages/dotnet/encryption/in-process-keys-source-gen/README.md)                                                       |
+| Geo catalogs            | `D2GEO`  | [`geo/source-gen`](../public/packages/dotnet/geo/source-gen/README.md)                                                                                                     |
+| Field constraints       | `D2FC`   | [`validation/source-gen`](../public/packages/dotnet/validation/source-gen/README.md)                                                                                       |
+| Advisory locks          | `D2LCK`  | [`entity-framework-core/locks-source-gen`](../public/packages/dotnet/entity-framework-core/locks-source-gen/README.md) — emits `AdvisoryLocks` into owning-module assembly (currently `D2.Edge.KeyCustodian.Infra`); shared Postgres = mechanism only |
+| KC error codes          | `D2KEC`  | [`key-custodian/error-codes-source-gen`](../private/services/edge/key-custodian/error-codes-source-gen/README.md) (shell)                                                 |
+| TypeSpec emitters       | `D2TSP`  | [`public/packages/typescript/typespec-emitters`](../public/packages/typescript/typespec-emitters/README.md) — see [§2.7](#27-typespec-emitter-fleet--decorator-vocabulary--wire-channel-identity) for diagnostics |
 
 Diagnostic IDs are declared in two parallel files:
 
@@ -169,7 +174,7 @@ public sealed class TKGenerator : IIncrementalGenerator
         // 1. Pipeline: AdditionalFiles → SpecFile records (value-equatable)
         var localeFiles = context.AdditionalTextsProvider
             .Where(at => at.Path.EndsWith(".json", StringComparison.Ordinal))
-            .Where(at => at.Path.Contains("contracts/messages/", StringComparison.Ordinal))
+            .Where(at => at.Path.Contains("public/contracts/messages/", StringComparison.Ordinal))
             .Select((at, ct) => new LocaleFile(
                 Path: at.Path,
                 LocaleCode: Path.GetFileNameWithoutExtension(at.Path),
@@ -224,13 +229,13 @@ Message, Location?)` carries everything the host needs but doesn't take a
 
 `i18n/source-gen` is the canonical pattern this codebase reaches for. It emits
 the `TK` static class — a hierarchical catalog of `TKMessage` constants — into
-`D2.Shared.I18n.Abstractions` by reading `contracts/messages/*.json`
+`D2.Shared.I18n.Abstractions` by reading `public/contracts/messages/*.json`
 translation catalogs.
 
 **1. Author the spec.**
 
 ```json
-// contracts/messages/en-US.json
+// public/contracts/messages/en-US.json
 {
   "common_errors_NOT_FOUND": "The requested resource was not found.",
   "common_errors_UNAUTHORIZED": "You are not authorized.",
@@ -296,19 +301,59 @@ The `TKMessage` type's `internal`-ctor design makes
 every consumer is forced through `TK.*`.
 
 **Per-source-gen details + diagnostic catalog**: see
-[`server/shared/dotnet/i18n/source-gen/README.md`](../server/shared/dotnet/i18n/source-gen/README.md).
+[`public/packages/dotnet/i18n/source-gen/README.md`](../public/packages/dotnet/i18n/source-gen/README.md).
+
+### §1.5. Dual-target dispatch — public twin + private Extensions
+
+Some catalogs carry **product rows** that must never ship on the public export
+surface. The generator engine still lives under `public/packages/dotnet/**`
+(catalog-driven, free of product hardcodes), but emit is **dual-target**:
+
+| Host assembly (PackageId) | AdditionalFiles | Emitted type FQN | Values |
+| --- | --- | --- | --- |
+| `D2.Shared.Auth.Abstractions` | public scopes + audiences only | `D2.Shared.Auth.Abstractions.Scopes` / `Audiences` | public |
+| `D2.Shared.Auth.Abstractions.Extensions` | public∪private scopes + audiences | `D2.Private.Auth.ProductScopes` / `ProductAudiences` | public∪private |
+| `D2.Shared.Encryption` | public encryption-domains only | `D2.Shared.Encryption.EncryptionDomains*` | public |
+| `D2.Shared.Encryption.Extensions` | public∪private encryption-domains | `D2.Private.Encryption.ProductEncryptionDomains*` | public∪private |
+| `D2.Shared.I18n.Keys` | public messages only | `D2.Shared.I18n.TK` | public |
+| `D2.Shared.I18n.Keys.Extensions` | public∪private messages | `D2.Private.I18n.ProductTK` | public∪private |
+
+**Law (hard):**
+
+1. **1:1 PackageId** — every private dual-target host is `D2.Shared.<PublicTail>.Extensions`
+   under `private/packages/dotnet/**`. Never a multi-concern bag; never a
+   non-Extensions twin brand.
+2. **Public twin ProjectReference** — each Extensions csproj ProjectReferences
+   its public twin (property-based `$(D2PublicPackagesDotnetRoot)…`).
+3. **Distinct dual-type FQNs** — private hosts emit `Product*` under `D2.Private.*`
+   namespaces. Re-emitting public class names (`Scopes` / `TK` / …) into the
+   Extensions assembly causes CS0433 when a consumer multi-refs public twin +
+   Extensions.
+4. **Merge** — Extensions hosts pass **public∪private** values via
+   `<AdditionalFiles>`; public hosts pass **public only**. Generators gate on
+   `compilation.AssemblyName`.
+5. **Never export** — Extensions packages are `IsPackable=false`, live only on
+   root `D2.slnx`, and never appear in `public/D2.Public.slnx`.
+6. **Tracked Generated/** — every Extensions host sets
+   `EmitCompilerGeneratedFiles=true`, `CompilerGeneratedFilesOutputPath=Generated`,
+   and `Compile Remove` on that path (same scaffold as public hosts).
+
+Private consumers take **concern-only** Extensions ProjectReferences measured
+from `Product*` call-sites (no sibling over-deps). Generator private assembly
+constants and `InternalsVisibleTo` (I18n `TKMessage` ctor) name the Extensions
+PackageIds, not interim bag names.
 
 ---
 
-## §2. TypeScript — tools/ts-codegen
+## §2. TypeScript — public/tools/ts-codegen
 
 ### §2.1. JSON specs as inputs
 
-The TypeScript side reads the same JSON specs under `contracts/<topic>/`. Each
-per-topic emitter is a `tsx` script under `tools/ts-codegen/src/`:
+The TypeScript side reads the same JSON specs under `public/contracts/<topic>/` (or private dual-values under `private/contracts/<topic>/`). Each
+per-topic emitter is a `tsx` script under `public/tools/ts-codegen/src/`:
 
 ```
-tools/ts-codegen/
+public/tools/ts-codegen/
 ├── README.md
 ├── package.json
 ├── src/
@@ -350,7 +395,7 @@ invokes `runXxxEmit` and exits non-zero on diagnostic count > 0.
 Each emitter mirrors the .NET pattern shape:
 
 ```typescript
-// tools/ts-codegen/src/error-codes-emit.ts
+// public/tools/ts-codegen/src/error-codes-emit.ts
 import { loadSpec } from "./lib/spec-loader.js";
 import { StringBuilder } from "./lib/string-builder.js";
 import { writeGeneratedFile, isOutputUpToDate } from "./lib/file-emit.js";
@@ -368,7 +413,7 @@ export function runErrorCodesEmit(force = false): Diagnostic[] {
   const sb = new StringBuilder();
   sb.appendLine("// <auto-generated />");
   sb.appendLine(
-    "// Generated from contracts/error-codes/error-codes.spec.json.",
+    "// Generated from public/contracts/error-codes/error-codes.spec.json.",
   );
   sb.appendLine("// Do not edit by hand.");
   sb.appendLine();
@@ -413,11 +458,11 @@ Five required properties:
 Each emitter writes one `.g.ts` file per consuming package:
 
 ```typescript
-// server/web/node_modules/@d2/result/src/generated/ErrorCodes.g.ts
+// private/services/web/node_modules/@d2/result/src/generated/ErrorCodes.g.ts
 // (during local dev these resolve to backends/node/shared/result/src/generated/ErrorCodes.g.ts)
 
 // <auto-generated />
-// Generated from contracts/error-codes/error-codes.spec.json.
+// Generated from public/contracts/error-codes/error-codes.spec.json.
 // Do not edit by hand.
 
 export const ErrorCodes = {
@@ -442,7 +487,7 @@ from one spec.
 **1. Author the spec.**
 
 ```json
-// contracts/auth-error-codes/auth-error-codes.spec.json
+// public/contracts/auth-error-codes/auth-error-codes.spec.json
 {
   "errorCodes": [
     {
@@ -474,7 +519,7 @@ The .NET `auth/error-codes-source-gen` shell drives the shared unified engine
 (constants + `AllCodes` set + `GetHttpStatus` switch + `KebabCase` helper) plus
 `AuthFailures.g.cs` + `AuthFailures.Generic.g.cs` (the delegating semantic
 `D2Result` / `D2Result<T>` factories, selected by `httpStatus` and shaped by
-`factoryShape`) into `server/shared/dotnet/auth/core/Generated/`. The SAME engine
+`factoryShape`) into `public/packages/dotnet/auth/core/Generated/`. The SAME engine
 drives the generic catalog from its own shell — but in `FactoryHost.Base` mode:
 the generic factories CONSTRUCT a `D2Result` directly and land ONTO the
 `D2Result` / `D2Result<TData>` partials (plus the per-code booleans), rather
@@ -522,7 +567,7 @@ impossible — the literal string `"AUTH_TOKEN_INVALID"` comes from the same
 spec field on both sides.
 
 **Per-emitter details**: see
-[`tools/ts-codegen/README.md`](../tools/ts-codegen/README.md) for the full
+[`public/tools/ts-codegen/README.md`](../public/tools/ts-codegen/README.md) for the full
 emitter catalog + `pnpm codegen --force` usage.
 
 ---
@@ -536,7 +581,7 @@ the same seven spec files on both the .NET and TypeScript sides.
 
 ### Spec inputs
 
-Seven spec files under `contracts/geo/`:
+Seven spec files under `public/contracts/geo/`:
 
 | Spec                              | Source           |
 | --------------------------------- | ---------------- |
@@ -549,11 +594,11 @@ Seven spec files under `contracts/geo/`:
 | `geopolitical-entities.spec.json` | Hand-rolled      |
 
 Each spec carries `{ catalogVersion, generatedAt, entries: [...] }`. The pipeline-derived specs are
-produced by the `contracts/geo/` build pipeline from canonical ISO source data + overlays.
+produced by the `public/contracts/geo/` build pipeline from canonical ISO source data + overlays.
 
 ### .NET emitters (`D2.Shared.Geo.SourceGen`)
 
-`D2.Shared.Geo.SourceGen` (`server/shared/dotnet/geo/source-gen/`) inspects
+`D2.Shared.Geo.SourceGen` (`public/packages/dotnet/geo/source-gen/`) inspects
 `compilation.AssemblyName` and dispatches per target:
 
 | Target assembly              | What is emitted                                                                                                                                                                                                                        |
@@ -588,9 +633,9 @@ Internal emitters (one per concern):
 
 (`D2GEO008` is reserved — not currently in use.)
 
-### TypeScript emitters (`tools/ts-codegen/src/geo-emitter/`)
+### TypeScript emitters (`public/tools/ts-codegen/src/geo-emitter/`)
 
-The TS side mirrors the .NET emitter structure under `tools/ts-codegen/src/geo-emitter/`:
+The TS side mirrors the .NET emitter structure under `public/tools/ts-codegen/src/geo-emitter/`:
 
 | Emitter                                                                                                                                                                                                | Output package         | Output artifact                                                                                 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- | ----------------------------------------------------------------------------------------------- |
@@ -609,7 +654,7 @@ The TS side mirrors the .NET emitter structure under `tools/ts-codegen/src/geo-e
 | `geo-enums.parity.test.ts`           | Fixture from `GeoEnumsFixtureEmitter` — per-VALUE wire form for every enum member                                     |
 | `geo-wrapper-structs.parity.test.ts` | Fixture from `GeoWrapperStructsFixtureEmitter` — known codes for the three wrapper struct types                       |
 | `geo-catalog.parity.test.ts`         | Fixture from `GeoCatalogFixtureEmitter` — `CatalogVersion` + `CatalogPublishedAt` byte shape                          |
-| `geo-name-resolver.parity.test.ts`   | `contracts/geo/fixtures/confusables.fixture.json` — name-resolver four-pass output across a shared confusables corpus |
+| `geo-name-resolver.parity.test.ts`   | `public/contracts/geo/fixtures/confusables.fixture.json` — name-resolver four-pass output across a shared confusables corpus |
 
 ---
 
@@ -619,7 +664,7 @@ The field-constraints catalog is the shared source of truth for all field-length
 
 ### Spec input
 
-`contracts/validation/field-constraints.spec.json` — two arrays:
+`public/contracts/validation/field-constraints.spec.json` — two arrays:
 
 | Array         | Contains                                                                                                                                                                                    |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -628,7 +673,7 @@ The field-constraints catalog is the shared source of truth for all field-length
 
 ### .NET emitter (`D2.Shared.Validation.SourceGen`)
 
-`server/shared/dotnet/validation/source-gen/` — Roslyn `IIncrementalGenerator`, `netstandard2.0`, `D2FC` diagnostic prefix, single-target dispatch (`AssemblyName == "D2.Shared.Validation.Abstractions"`).
+`public/packages/dotnet/validation/source-gen/` — Roslyn `IIncrementalGenerator`, `netstandard2.0`, `D2FC` diagnostic prefix, single-target dispatch (`AssemblyName == "D2.Shared.Validation.Abstractions"`).
 
 Emits two files into `validation/abstractions/Generated/`:
 
@@ -639,7 +684,7 @@ Emits two files into `validation/abstractions/Generated/`:
 
 ### TypeScript emitter
 
-`tools/ts-codegen/src/field-constraints-emit.ts` — mirrors the .NET pattern (mtime short-circuit, byte-equal atomic write, `--force` flag). Emits into `server/shared/typescript/validation/abstractions/src/generated/`:
+`public/tools/ts-codegen/src/field-constraints-emit.ts` — mirrors the .NET pattern (mtime short-circuit, byte-equal atomic write, `--force` flag). Emits into `public/packages/typescript/validation/abstractions/src/generated/`:
 
 | Output file              | Contents                                                                                           |
 | ------------------------ | -------------------------------------------------------------------------------------------------- |
@@ -668,11 +713,11 @@ Emits two files into `validation/abstractions/Generated/`:
 
 ## §2.7. TypeSpec emitter fleet — decorator vocabulary + wire-channel identity
 
-The TypeSpec pipeline is a separate, independent codegen path from the `tools/ts-codegen` JSON emitters described in §2.1–§2.4. It consumes TypeSpec `.tsp` specs (under [`contracts/typespec/`](../contracts/typespec/README.md)) rather than JSON specs, and produces the full operation-contract artifact fleet from a single authored `.tsp` file.
+The TypeSpec pipeline is a separate, independent codegen path from the `public/tools/ts-codegen` JSON emitters described in §2.1–§2.4. It consumes TypeSpec `.tsp` specs (under [`public/contracts/typespec/`](../public/contracts/typespec/README.md)) rather than JSON specs, and produces the full operation-contract artifact fleet from a single authored `.tsp` file.
 
 ### How it works
 
-TypeSpec ops and models in `contracts/typespec/` are annotated with the `@d2*` decorator vocabulary defined in [`server/shared/typescript/typespec-decorators/`](../server/shared/typescript/typespec-decorators/README.md). The emitter fleet in [`server/shared/typescript/typespec-emitters/`](../server/shared/typescript/typespec-emitters/README.md) reads that decorator state at `tsp compile` time and emits the complete artifact fleet for each operation:
+TypeSpec ops and models in `public/contracts/typespec/` are annotated with the `@d2*` decorator vocabulary defined in [`public/packages/typescript/typespec-decorators/`](../public/packages/typescript/typespec-decorators/README.md). The emitter fleet in [`public/packages/typescript/typespec-emitters/`](../public/packages/typescript/typespec-emitters/README.md) reads that decorator state at `tsp compile` time and emits the complete artifact fleet for each operation:
 
 - C# and TypeScript DTOs
 - `.proto` file + generated gRPC service stubs and clients
@@ -683,18 +728,18 @@ TypeSpec ops and models in `contracts/typespec/` are annotated with the `@d2*` d
 - OpenAPI extensions
 - Wire-identity constants (`WireVersion.g.cs`) and manifest (`wire-identity.manifest.g.json`)
 
-The regen script [`tools/scripts/regen-typespec-emitters.mjs`](../tools/scripts/regen-typespec-emitters.mjs) drives `tsp compile` and copies emitted artifacts to their target locations; it maintains a `COPY_MANIFEST` allowlist of namespace-agnostic artifacts.
+The regen script [`private/tools/scripts/regen-typespec-emitters.mjs`](../private/tools/scripts/regen-typespec-emitters.mjs) drives `tsp compile` and copies emitted artifacts to their target locations; it maintains a `COPY_MANIFEST` allowlist of namespace-agnostic artifacts.
 
 **Hub READMEs for navigating the TypeSpec stack:**
 
-- [`server/shared/typescript/README.md`](../server/shared/typescript/README.md) — TS shared-library hub
-- [`server/shared/typescript/typespec-emitters/README.md`](../server/shared/typescript/typespec-emitters/README.md) — emitter fleet: per-emitter list, emit options, diagnostic IDs, testing
-- [`server/shared/typescript/typespec-decorators/README.md`](../server/shared/typescript/typespec-decorators/README.md) — `@d2*` decorator vocabulary: what each decorator means, valid combinations, how the emitters read them
-- [`contracts/typespec/README.md`](../contracts/typespec/README.md) — TypeSpec spec root: file layout, how to author a new op, how to run `tsp compile`
+- [`public/packages/typescript/README.md`](../public/packages/typescript/README.md) — TS shared-library hub
+- [`public/packages/typescript/typespec-emitters/README.md`](../public/packages/typescript/typespec-emitters/README.md) — emitter fleet: per-emitter list, emit options, diagnostic IDs, testing
+- [`public/packages/typescript/typespec-decorators/README.md`](../public/packages/typescript/typespec-decorators/README.md) — `@d2*` decorator vocabulary: what each decorator means, valid combinations, how the emitters read them
+- [`public/contracts/typespec/README.md`](../public/contracts/typespec/README.md) — TypeSpec spec root: file layout, how to author a new op, how to run `tsp compile`
 
 ### D2TSP diagnostic IDs
 
-IDs are allocated in `server/shared/typescript/typespec-emitters/src/lib.ts`. All are error severity.
+IDs are allocated in `public/packages/typescript/typespec-emitters/src/lib.ts`. All are error severity.
 
 | ID        | Name                        | Meaning                                                                                                                                                                                                                                       |
 | --------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -745,7 +790,7 @@ When a spec contains at least one `@d2GrpcMethod` op and the channel is validate
 
 `WireVersion.g.cs` emits a `public static class WireVersion` with three `public const` fields (`CHANNEL`, `GENERATION`, `STABILITY`). The manifest records the identity facts (`protoPackage`, `protoCsharpNamespace`, `generation`, `stability`, `channel`) plus `x-d2-generated-by: "@d2/typespec-emitters"`. Neither artifact carries package names (those are deployment details, not wire-identity facts).
 
-Both artifacts are excluded from the `COPY_MANIFEST` allowlist in `tools/scripts/regen-typespec-emitters.mjs` because they are namespace-sensitive; they are governed by the byte-gate tests instead.
+Both artifacts are excluded from the `COPY_MANIFEST` allowlist in `private/tools/scripts/regen-typespec-emitters.mjs` because they are namespace-sensitive; they are governed by the byte-gate tests instead.
 
 ### `@versioned` adoption
 
@@ -757,26 +802,26 @@ Namespaces with gRPC ops adopt `@typespec/versioning @versioned(Namespace.Versio
 
 When introducing a brand-new spec-driven catalog, follow this checklist:
 
-1. **Author the spec.** Create `contracts/<topic>/<topic>.spec.json` + a sibling
+1. **Author the spec.** Create `public/contracts/<topic>/<topic>.spec.json` + a sibling
    `schema.json` describing the shape.
 2. **Author the .NET source-gen** under the owning cluster folder, e.g.
-   `server/shared/dotnet/<cluster>/<topic>-source-gen/` (or
-   `server/shared/dotnet/<cluster>/source-gen/` when the cluster owns a single
+   `public/packages/dotnet/<cluster>/<topic>-source-gen/` (or
+   `public/packages/dotnet/<cluster>/source-gen/` when the cluster owns a single
    source-gen):
    - csproj is `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"`
      on Roslyn deps + bundled `System.Text.Json`.
    - References `source-gen-shared/core/` files via
      `<Compile Include="$(D2SourceGenSharedRoot)**\*.cs">` (the
-     `D2SourceGenSharedRoot` property is defined in `server/Directory.Build.props`,
+     `D2SourceGenSharedRoot` property is defined in `Directory.Build.props`,
      so the include is nesting-agnostic) for the netstandard2.0 polyfills +
      cross-source-gen records (`SpecFile`, `LoadResult<TSpec>`, `EmitDiagnostic`).
    - **Error-codes catalogs** add a second glob:
      `<Compile Include="$(D2ErrorCodesEmitRoot)**\*.cs">` (also defined in
-     `server/Directory.Build.props`). This pulls in the shared
+     `Directory.Build.props`). This pulls in the shared
      `source-gen-shared/error-codes-emit/` engine — entry model, loader,
      `ConstantsEmitter`, `FailuresEmitter`, engine diagnostics (`D2ERC*`), and
      `TkKeyTransform`. See the
-     [error-codes-emit README](../server/shared/dotnet/source-gen-shared/error-codes-emit/README.md)
+     [error-codes-emit README](../public/packages/dotnet/source-gen-shared/error-codes-emit/README.md)
      for the full add-a-catalog recipe.
    - Allocates a `D2<TOPIC>NNN` diagnostic ID prefix (3-5 chars).
    - Loader (`<X>Loader.cs`) parses JSON → typed record; Emitter
@@ -786,12 +831,12 @@ When introducing a brand-new spec-driven catalog, follow this checklist:
 3. **Wire the consumer csproj** to reference the source-gen as Analyzer +
    declare the spec as `<AdditionalFiles>` per §1.1 above. Add the consumer to
    the sourcegen registry table in
-   [`server/shared/dotnet/README.md`](../server/shared/dotnet/README.md).
-4. **Author the TypeScript emitter** under `tools/ts-codegen/src/<topic>-emit.ts`:
+   [`public/packages/dotnet/README.md`](../public/packages/dotnet/README.md).
+4. **Author the TypeScript emitter** under `public/tools/ts-codegen/src/<topic>-emit.ts`:
    - Mirrors the .NET emitter shape — load spec, build string with
      `StringBuilder`, write via `writeGeneratedFile`.
    - Re-uses the same `D2<TOPIC>NNN` diagnostic IDs.
-   - Register in `tools/ts-codegen/src/orchestrator.ts` if there's a dep
+   - Register in `public/tools/ts-codegen/src/orchestrator.ts` if there's a dep
      ordering requirement.
 5. **Author per-source-gen tests** under `tests/`:
    - `<X>EmitterTests` — feed the emitter typed specs, assert against the
@@ -815,15 +860,15 @@ plumbing is a ~200-line copy-paste from any existing sibling source-gen.
 
 ## References
 
-- [`server/shared/dotnet/README.md`](../server/shared/dotnet/README.md) —
+- [`public/packages/dotnet/README.md`](../public/packages/dotnet/README.md) —
   sourcegen registry table covering all 19 `*-source-gen/` libs with one-line
   descriptions + per-source-gen README links.
-- [`tools/ts-codegen/README.md`](../tools/ts-codegen/README.md) — TypeScript
+- [`public/tools/ts-codegen/README.md`](../public/tools/ts-codegen/README.md) — TypeScript
   emitter catalog + library helpers + build integration + `--force` regen.
-- [`server/shared/dotnet/source-gen-shared/`](../server/shared/dotnet/source-gen-shared/)
+- [`public/packages/dotnet/source-gen-shared/`](../public/packages/dotnet/source-gen-shared/)
   — shared netstandard2.0 polyfills + cross-source-gen records (`SpecFile`,
   `LoadResult`, `EmitDiagnostic`) referenced by every `*-source-gen/` csproj.
-- [`server/shared/dotnet/i18n/source-gen/README.md`](../server/shared/dotnet/i18n/source-gen/README.md)
+- [`public/packages/dotnet/i18n/source-gen/README.md`](../public/packages/dotnet/i18n/source-gen/README.md)
   — the original SrcGen pattern this codebase mirrors elsewhere.
 - [PATTERNS.md](PATTERNS.md) — high-level entry for the spec-driven codegen
   philosophy.

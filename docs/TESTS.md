@@ -98,7 +98,7 @@ Duplicate submissions must produce duplicate-safe outcomes.
 
 - Run the same operation twice with the same input + same `Idempotency-Key` → second call returns the cached response (per `Idempotency.Default`)
 - Run the same content-addressable creation twice (e.g., `CreateLocation` with same address) → second call returns the existing entity, no duplicate row
-- Run a fanout consumer with the same payload twice → second call is a no-op (the at-least-once fanout contract requires consumer idempotency; see [`server/shared/dotnet/messaging/rabbitmq/README.md`](../server/shared/dotnet/messaging/rabbitmq/README.md))
+- Run a fanout consumer with the same payload twice → second call is a no-op (the at-least-once fanout contract requires consumer idempotency; see [`public/packages/dotnet/messaging/rabbitmq/README.md`](../public/packages/dotnet/messaging/rabbitmq/README.md))
 
 ### 8. Concurrency
 
@@ -219,10 +219,10 @@ CI runs each category in parallel. Don't lump categories together — separation
 
 | Category                    | Speed         | Spins up                                                               | Where                                                                 |
 | --------------------------- | ------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| **Unit**                    | ms            | Pure functions, mocked deps                                            | `server/services/{svc}/tests/Unit/` and `server/web/src/**/*.test.ts` |
-| **Per-service integration** | seconds–1 min | ONE service + its direct deps (PG, Redis, RabbitMQ) via Testcontainers | `server/services/{svc}/tests/Integration/`                            |
-| **Web component tests**     | ms–seconds    | JSDOM-like browser env, mocked fetch                                   | `server/web/src/**/*.test.ts` (Vitest browser mode)                   |
-| **Web Playwright (mocked)** | seconds–min   | Real browser, ALL `fetch()` mocked                                     | `server/web/tests/`                                                   |
+| **Unit**                    | ms            | Pure functions, mocked deps                                            | `private/services/{svc}/tests/Unit/` and `private/services/web/src/**/*.test.ts` |
+| **Per-service integration** | seconds–1 min | ONE service + its direct deps (PG, Redis, RabbitMQ) via Testcontainers | `private/services/{svc}/tests/Integration/`                            |
+| **Web component tests**     | ms–seconds    | JSDOM-like browser env, mocked fetch                                   | `private/services/web/src/**/*.test.ts` (Vitest browser mode)                   |
+| **Web Playwright (mocked)** | seconds–min   | Real browser, ALL `fetch()` mocked                                     | `private/services/web/tests/`                                                   |
 
 Explicitly **NOT** in scope:
 
@@ -250,7 +250,7 @@ The real-socket path itself is then proven in the deploy-target container — th
 
 ## Tracked CI gate — key-rotation integration (NOT IMPLEMENTED)
 
-`integration-key-rotation` is a **tracked deliverable (NOT IMPLEMENTED)** — no workflow job for it is present in `.github/workflows/test.yml` (active or commented). The KeyCustodian state machine and key lifecycle are shipped (see [KeyCustodian README](../server/services/edge/key-custodian/README.md)); the compromise-response runbook (executable CLI invocations, detection criteria, recovery procedures) and the non-skippable CI gate that pins them remain open design work. Intended coverage for that gate:
+`integration-key-rotation` is a **tracked deliverable (NOT IMPLEMENTED)** — no workflow job for it is present in `.github/workflows/test.yml` (active or commented). The KeyCustodian state machine and key lifecycle are shipped (see [KeyCustodian README](../private/services/edge/key-custodian/README.md)); the compromise-response runbook (executable CLI invocations, detection criteria, recovery procedures) and the non-skippable CI gate that pins them remain open design work. Intended coverage for that gate:
 
 - Graceful rotation under load (publishers + consumers; no message loss; in-flight old-kid messages still decrypt during grace)
 - Grace expiry (retired kids removed from production keyring; stale messages → DLQ with explicit error)

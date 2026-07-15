@@ -53,15 +53,15 @@ docker compose -f infra/compose/compose.yml \
 ```
 
 - Ports (host defaults): Edge HTTP `8080`, Issuer HTTPS `8443`, mTLS HTTPS `9444` (→ container `9443`; avoids Portainer host `9443`); Audit dual-bind internal.
-- Operator dual-process JWT+mTLS smoke (not agent automated proof): see [`server/services/audit/README.md`](../server/services/audit/README.md).
+- Operator dual-process JWT+mTLS smoke (not agent automated proof): see [`private/services/audit/README.md`](../private/services/audit/README.md).
 - **Never** long-lived `dotnet run` / Compose-up e2e from agent sessions as multiproc proof.
 
 ## Build
 
 ```bash
-dotnet build server/D2.slnx                                                # Full .NET solution
-dotnet build server/services/{service}/api/{service}.API.csproj            # Single project
-cd server/web && pnpm install && pnpm exec svelte-check                    # SvelteKit type check
+dotnet build D2.slnx                                                # Full .NET solution
+dotnet build private/services/{service}/api/{service}.API.csproj            # Single project
+cd private/services/web && pnpm install && pnpm exec svelte-check                    # SvelteKit type check
 pnpm --filter @d2/key-custodian-client build                               # KeyCustodian Node client twin (dist for the mTLS harness)
 pnpm --filter @d2/messaging-rabbitmq build                                 # RabbitMQ consumer runtime twin
 ```
@@ -72,13 +72,13 @@ pnpm --filter @d2/messaging-rabbitmq build                                 # Rab
 # Full solution (WARNING+ severity, text output, no build — run after dotnet build).
 # Always pass --settings so team DotSettings apply when inspecting .slnx (auto-load
 # of D2.sln.DotSettings is unreliable for slnx on clean CI checkouts).
-jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
+jb inspectcode D2.slnx --settings=D2.sln.DotSettings --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
 
 # Single project (faster — use during focused work)
-jb inspectcode server/D2.slnx --settings=server/D2.sln.DotSettings --project="Edge.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
+jb inspectcode D2.slnx --settings=D2.sln.DotSettings --project="Edge.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
 ```
 
-These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. **Required locally** (zero warnings) via `gates.sh` / Implementer handoff — **not** a PR CI job (slow, low merge-signal). **Shared zero-warning parse** (do not re-inline): `tools/scripts/count-inspectcode-findings.sh` counts indented finding-lines in Text format (inspectcode exits 0 even when findings exist). The local gate at `.claude/skills/gate-suite/scripts/gates.sh` calls that script; identity pin: `node --test tools/scripts/tests/count-inspectcode-findings.test.mjs`.
+These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. **Required locally** (zero warnings) via `gates.sh` / Implementer handoff — **not** a PR CI job (slow, low merge-signal). **Shared zero-warning parse** (do not re-inline): `public/tools/scripts/count-inspectcode-findings.sh` counts indented finding-lines in Text format (inspectcode exits 0 even when findings exist). The local gate at `.claude/skills/gate-suite/scripts/gates.sh` calls that script; identity pin: `node --test public/tools/scripts/tests/count-inspectcode-findings.test.mjs`.
 
 ## Test
 
@@ -86,22 +86,23 @@ These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource
 # .NET (xUnit v3 — Microsoft.Testing.Platform)
 # Trait filters go after `--` as `--filter-trait "name=value"`.
 # The VSTest-style `--filter` flag is silently ignored by MTP (warning MTP0001).
-dotnet test server/D2.slnx                                                 # Full solution
-dotnet test server/D2.slnx -- --filter-trait "Category=Unit"              # Unit-tagged only
-dotnet test server/services/edge/tests                                      # Specific service
+dotnet test D2.slnx                                                 # Full solution
+dotnet test D2.slnx -- --filter-trait "Category=Unit"              # Unit-tagged only
+dotnet test private/services/edge/tests                                      # Specific service
 
 # SvelteKit
-cd server/web && pnpm exec vitest run                                       # Unit tests (browser mode)
-cd server/web && pnpm exec playwright test                                  # Playwright (mocked by default)
+cd private/services/web && pnpm exec vitest run                                       # Unit tests (browser mode)
+cd private/services/web && pnpm exec playwright test                                  # Playwright (mocked by default)
 
 # KeyCustodian Node client twin + RabbitMQ consumer runtime
 pnpm --filter @d2/key-custodian-client test                                 # client-ts unit + CSR/handshake suite
 pnpm --filter @d2/messaging-rabbitmq test                                    # consumer runtime unit suite (excludes integration/)
 pnpm --filter @d2/messaging-rabbitmq test:integration                        # Testcontainers RabbitMQ integration suite
 pnpm --filter geo-data-pipeline test                                         # geo pipeline unit + parity suite
-node --test tools/scripts/tests/*.test.mjs                                   # repo script guards (explicit files; Node 24)
+node --test public/tools/scripts/tests/*.test.mjs                            # public repo script guards
+node --test private/tools/scripts/tests/*.test.mjs                           # private script guards (explicit files; Node 24)
 
-# tools/ts-codegen (local mirror of the ts-shared-unit-tests CI steps)
+# public/tools/ts-codegen (local mirror of the ts-shared-unit-tests CI steps)
 pnpm --filter ts-codegen typecheck                                           # tsc over src + tests
 pnpm --filter ts-codegen test                                                # vitest unit suite
 # CI: both steps run in the `TS Shared Unit Tests` job of `.github/workflows/test.yml`
@@ -109,21 +110,21 @@ pnpm --filter ts-codegen test                                                # v
 
 ### NodeLeafClient cross-runtime mTLS harness prereq
 
-The `.NET` `D2.Edge.Tests` `Integration/KeyCustodian/NodeLeafClient/` suite drives the REAL `@d2/key-custodian-client` over a live Node↔Kestrel loopback handshake. Its cert-presenting cases EXECUTE only when **all three** hold: (1) `node` is on `PATH`, (2) the client dist is built (`pnpm --filter @d2/key-custodian-client build`), and (3) a live loopback mutual-TLS handshake is feasible on the host (the harness spike). If any gate fails, those cases SKIP-WITH-REASON (they never silently pass). Build the client dist before `dotnet test server/D2.slnx` so (1)+(2) are satisfied; (3) is host/platform-dependent. The CI `Edge Integration Tests` lane installs workspace deps, builds the client dist, and asserts none of the node / dist / live-handshake-infeasibility skip-reason strings appear in the test log — so those cases EXECUTE in CI when the runner can complete the handshake. Unlike the Schannel-limited `MutualTlsSignerHarnessTests` below, this harness passes on Windows when node+dist are present (Node/OpenSSL presents the private-CA leaf).
+The `.NET` `D2.Edge.Tests` `Integration/KeyCustodian/NodeLeafClient/` suite drives the REAL `@d2/key-custodian-client` over a live Node↔Kestrel loopback handshake. Its cert-presenting cases EXECUTE only when **all three** hold: (1) `node` is on `PATH`, (2) the client dist is built (`pnpm --filter @d2/key-custodian-client build`), and (3) a live loopback mutual-TLS handshake is feasible on the host (the harness spike). If any gate fails, those cases SKIP-WITH-REASON (they never silently pass). Build the client dist before `dotnet test D2.slnx` so (1)+(2) are satisfied; (3) is host/platform-dependent. The CI `Edge Integration Tests` lane installs workspace deps, builds the client dist, and asserts none of the node / dist / live-handshake-infeasibility skip-reason strings appear in the test log — so those cases EXECUTE in CI when the runner can complete the handshake. Unlike the Schannel-limited `MutualTlsSignerHarnessTests` below, this harness passes on Windows when node+dist are present (Node/OpenSSL presents the private-CA leaf).
 
 ### Real-socket mutual-TLS harness proof (Linux/OpenSSL)
 
 ```bash
-bash tools/scripts/run-mtls-proof.sh                                        # Build a Linux SDK image + run the mTLS harness over a real socket
+bash private/tools/scripts/run-mtls-proof.sh                                # Build a Linux SDK image + run the mTLS harness over a real socket
 ```
 
-The `MutualTlsSignerHarnessTests` exercise the shipped `AddD2MutualTls` require-and-validate path over a genuine TLS handshake on a loopback Kestrel endpoint. The six client-cert-presenting cases SKIP on Windows — Schannel cannot build a certificate context for a leaf chaining to a private CA without installing the root into the OS store (a clean-box limitation, not a harness defect). The deployment target is Linux/OpenSSL, where those cases EXECUTE: the script builds a small `mcr.microsoft.com/dotnet/sdk:10.0` image (`server/` + `contracts/` only; the repo `.dockerignore` excludes `obj/`+`bin/`, so the Windows host's build artifacts never seed the Linux build) and runs the harness filter inside a `--rm` container. It needs no Postgres/Redis/RabbitMQ — the harness is self-contained loopback. The cross-platform proof of the validator's conjunct matrix is the `SpiffeSanPeerValidatorTests` unit suite, which runs everywhere.
+The `MutualTlsSignerHarnessTests` exercise the shipped `AddD2MutualTls` require-and-validate path over a genuine TLS handshake on a loopback Kestrel endpoint. The six client-cert-presenting cases SKIP on Windows — Schannel cannot build a certificate context for a leaf chaining to a private CA without installing the root into the OS store (a clean-box limitation, not a harness defect). The deployment target is Linux/OpenSSL, where those cases EXECUTE: the script builds a small `mcr.microsoft.com/dotnet/sdk:10.0` image (dual public/private monorepo layout under `/src`; the repo `.dockerignore` excludes `obj/`+`bin/`, so the Windows host's build artifacts never seed the Linux build) and runs the harness filter inside a `--rm` container. It needs no Postgres/Redis/RabbitMQ — the harness is self-contained loopback. The cross-platform proof of the validator's conjunct matrix is the `SpiffeSanPeerValidatorTests` unit suite, which runs everywhere.
 
 ## Lint/Style
 
 ```bash
-cd server/web && pnpm exec eslint .                                         # ESLint
-cd server/web && pnpm exec prettier --check .                               # Prettier check
+cd private/services/web && pnpm exec eslint .                                         # ESLint
+cd private/services/web && pnpm exec prettier --check .                               # Prettier check
 ```
 
 ## Contract breaking-change gate
@@ -136,17 +137,17 @@ The always-on gate runs three arms against the integration baseline branch. Run 
 git fetch origin <baseline>
 
 # All arms (proto + spec/i18n/OpenAPI):
-node tools/contract-gate/dist/cli.js --against <baseline>
+node public/tools/contract-gate/dist/cli.js --against <baseline>
 
 # Spec / i18n / OpenAPI arms only (no buf required):
-node tools/contract-gate/dist/cli.js --against <baseline> --skip-proto
+node public/tools/contract-gate/dist/cli.js --against <baseline> --skip-proto
 
 # Proto arm only (buf breaking at FILE level):
-node tools/contract-gate/dist/cli.js --against <baseline> --proto-only
+node public/tools/contract-gate/dist/cli.js --against <baseline> --proto-only
 
 # Or run buf directly over the shared protos (substitute <baseline>):
-pnpm --filter @d2/typespec-emitters exec buf breaking contracts/protos \
-  --against '.git#branch=<baseline>,subdir=contracts/protos'
+pnpm --filter @d2/typespec-emitters exec buf breaking public/contracts/protos \
+  --against '.git#branch=<baseline>,subdir=public/contracts/protos'
 
 # Gate unit tests (owned-code validation):
 pnpm --filter contract-gate test
@@ -168,7 +169,7 @@ A `type!: subject` breaking shorthand on the subject line is also recognized.
 Any breaking footer opens **all gate arms** for the PR.
 
 **One conscious act**: the footer alone is not enough. Also:
-1. The `tools/release-runner` reads the footer and bumps the affected package(s) to MAJOR automatically — run it after the PR merges (see [Per-package version](#per-package-version-consumable-libs-d2shared--d2) below). Do not hand-edit the version slot or CHANGELOG.
+1. The `public/tools/release-runner` reads the footer and bumps the affected package(s) to MAJOR automatically — run it after the PR merges (see [Per-package version](#per-package-version-consumable-libs-d2shared--d2) below). Do not hand-edit the version slot or CHANGELOG.
 2. The runner prepends a `CHANGELOG.md` breaking entry automatically; you may add migration details to the `[Unreleased]` block before running with `--apply`.
 
 ### Deprecate-not-delete workflow
@@ -237,7 +238,7 @@ suppress that forwarding, e.g. when scoping a dry-run to a single package in iso
 Each consumable carries committed baselines next to its manifest. The fingerprint is a
 **source-based, portable** SHA-256 over committed text only — git-tracked source (incl.
 committed `.g.cs`/`.g.ts`), the API report, the resolved dependency versions, and the declared
-toolchain pin (`server/global.json` + `server/Directory.Build.props` / the root `package.json`
+toolchain pin (`global.json` + `Directory.Build.props` / the root `package.json`
 + `tsconfig.base.json`) — so a Windows-generated baseline equals a Linux recompute with no
 build. The .NET set is `PublicAPI.Shipped.txt` + `PublicAPI.Unshipped.txt` + `.release-fingerprint`;
 the TS set is `etc/<pkg>.api.md` + `etc/.release-fingerprint`. These are PIPELINE OUTPUT —
@@ -245,14 +246,14 @@ regenerate them with the seed scripts, never hand-edit:
 
 ```bash
 # Regenerate the 54 .NET PublicAPI + .release-fingerprint baselines:
-node tools/scripts/seed-publicapi-baselines.mjs
+node public/tools/scripts/seed-publicapi-baselines.mjs
 # (optional) one package only:
-node tools/scripts/seed-publicapi-baselines.mjs --package D2.Shared.Result
+node public/tools/scripts/seed-publicapi-baselines.mjs --package D2.Shared.Result
 
 # Regenerate the 29 TS api-extractor (.api.md) + etc/.release-fingerprint baselines
 # (build the dists first — api-extractor consumes dist/index.d.ts to write the report):
-pnpm --filter "./server/shared/typescript/**" -r build
-node tools/scripts/seed-apiextractor-baselines.mjs
+pnpm --filter "./public/packages/typescript/**" -r build
+node public/tools/scripts/seed-apiextractor-baselines.mjs
 ```
 
 #### Baseline currency check (pre-commit gate)
@@ -334,7 +335,7 @@ Run locally to validate packaging metadata before a PR.
 
 ```bash
 # .NET — pack one consumable (exercises the transitive ProjectReference closure):
-dotnet pack server/shared/dotnet/result/core/D2.Shared.Result.csproj \
+dotnet pack public/packages/dotnet/result/core/D2.Shared.Result.csproj \
   --configuration Release --output /tmp/pack-smoke
 
 # TS — build then pack one consumable (verifies files: ["dist"] allowlist):
@@ -350,4 +351,4 @@ the same commands above.
 
 ## Important
 
-When editing shared `.NET` libs in `server/shared/dotnet/`, run `dotnet build server/D2.slnx` to verify all consumers still compile. SvelteKit changes are isolated — `cd server/web && pnpm exec svelte-check`.
+When editing shared `.NET` libs in `public/packages/dotnet/`, run `dotnet build D2.slnx` to verify all consumers still compile. SvelteKit changes are isolated — `cd private/services/web && pnpm exec svelte-check`.

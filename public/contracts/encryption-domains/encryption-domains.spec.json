@@ -1,0 +1,17 @@
+{
+  "$schema": "./schema.json",
+  "domains": [
+    {
+      "constName": "PLAINTEXT",
+      "value": "plaintext",
+      "doc": "Sentinel value indicating the message body MUST NOT be encrypted (always serialized as cleartext JSON). Surfaces on mq-messages.spec entries whose payload is non-PII; the message author MUST also document `encryptionReason` on the spec entry justifying the choice."
+    },
+    {
+      "constName": "FIXTURE_SEALED",
+      "value": "payload-fixture-sealed",
+      "mode": "sealed",
+      "consumerService": "payload-fixture-sealed",
+      "doc": "Public framework fixture domain for Shared.Tests sealed-path unit coverage of EncryptionDomainModes + EncryptedBodyComposer. Not a product keyring domain — product sealed domains (audit / notifications / courier) live in private/contracts/encryption-domains."
+    }
+  ]
+}

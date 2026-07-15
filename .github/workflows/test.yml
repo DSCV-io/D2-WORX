@@ -250,11 +250,11 @@ jobs:
         run: >
           pnpm install --fail-if-no-match
           --filter "release-runner..."
-          --filter "./server/shared/typescript/**..."
+          --filter "./public/packages/typescript/**..."
           --filter "ts-codegen..."
       # The gated TS `.api.md` currency gate runs api-extractor against dist/.
       - name: build the shared-TS dists
-        run: pnpm --fail-if-no-match --filter "./server/shared/typescript/**" -r build
+        run: pnpm --fail-if-no-match --filter "./public/packages/typescript/**" -r build
       # Build release-runner's workspace dependency closure (contract-gate,
       # ts-codegen, etc.) so import { ... } from "contract-gate" resolves at
       # test/runtime. Mirrors the release-runner-unit lane's build step.
@@ -265,7 +265,7 @@ jobs:
       - name: Baseline drift check (API reports + source-based fingerprint)
         run: pnpm --fail-if-no-match --filter release-runner exec tsx src/drift-check-cli.ts
 
-  # lint-and-format (web half) — blocked: server/web/ SvelteKit workspace is not
+  # lint-and-format (web half) — blocked: private/services/web/ SvelteKit workspace is not
   # yet resolvable (missing @d2/auth-bff-client workspace package; tracked B18).
   # lint-and-format:
   #   name: Lint + format (web)
@@ -276,14 +276,14 @@ jobs:
   #       with:
   #         node-version: "24"
   #     - uses: pnpm/action-setup@v4
-  #     - name: pnpm install (server/web)
+  #     - name: pnpm install (private/services/web)
   #       run: pnpm install --frozen-lockfile
-  #       working-directory: server/web
-  #     - name: ESLint + Prettier (server/web)
+  #       working-directory: private/services/web
+  #     - name: ESLint + Prettier (private/services/web)
   #       run: |
   #         pnpm exec eslint .
   #         pnpm exec prettier --check .
-  #       working-directory: server/web
+  #       working-directory: private/services/web
 
   # ==========================================================================
   # Per-service lanes — active for shipped paths; remaining blocks wait on web.
@@ -297,7 +297,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet build server/D2.slnx --configuration Release
+      - run: dotnet build D2.slnx --configuration Release
 
   dotnet-shared-unit-tests:
     name: .NET Shared Unit Tests
@@ -308,7 +308,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Unit*"
+      - run: dotnet test public/packages/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Unit*"
 
   dotnet-shared-integration-tests:
     name: .NET Shared Integration Tests
@@ -319,7 +319,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Integration*"
+      - run: dotnet test public/packages/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Integration*"
 
   edge-unit-tests:
     name: Edge Unit Tests
@@ -330,7 +330,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Unit*"
+      - run: dotnet test private/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Unit*"
 
   # ---------------------------------------------------------------------------
   # Edge integration tests — includes NodeLeafClient cross-runtime harness.
@@ -363,14 +363,14 @@ jobs:
           set -o pipefail
           # NODE_PATH so the mtls-probe (cwd=client-ts/scripts) resolves workspace
           # packages the same way pnpm links them for @d2/key-custodian-client.
-          export NODE_PATH="${GITHUB_WORKSPACE}/server/services/edge/key-custodian/client-ts/node_modules${NODE_PATH:+:$NODE_PATH}"
+          export NODE_PATH="${GITHUB_WORKSPACE}/private/services/edge/key-custodian/client-ts/node_modules${NODE_PATH:+:$NODE_PATH}"
           # Also ensure probe can resolve from package root when node walks parents.
           export NODE_OPTIONS="${NODE_OPTIONS:-}"
-          if ! dotnet test server/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*" 2>&1 | tee edge-integration.log; then
+          if ! dotnet test private/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*" 2>&1 | tee edge-integration.log; then
             echo "==== FAILED test names (MTP TestResults) ===="
             # Strip NULs so grep treats the MTP log as text (§24.33).
             # Prefer method/display-name lines; fall back to assert/exception stacks.
-            find server/services/edge/tests -path '*/TestResults/*.log' -type f 2>/dev/null | while IFS= read -r tl; do
+            find private/services/edge/tests -path '*/TestResults/*.log' -type f 2>/dev/null | while IFS= read -r tl; do
               echo "--- $tl ---"
               tr -d '\0' < "$tl" | grep -aiE 'SealProvisioning|Rotation_|HotSwap|keyring-refresher|OnlyContain|NOT_FOUND|ErrorCode|failed |error |exception|assert|should' | head -120 || true
             done || true
@@ -405,26 +405,26 @@ jobs:
         with:
           node-version: "24"
       - uses: pnpm/action-setup@v4
-      # Scoped install: pulls the server/shared/typescript/** subtree and their
+      # Scoped install: pulls the public/packages/typescript/** subtree and their
       # workspace deps only. The trailing `...` includes transitive workspace deps.
       # `tools/ts-codegen` is also included because several shared-lib prebuild
       # scripts invoke it via `pnpm --filter ts-codegen exec tsx ...`; without it
-      # those prebuilds would fail. `server/web` (B18 — missing @d2/auth-bff-client)
+      # those prebuilds would fail. `private/services/web` (B18 — missing @d2/auth-bff-client)
       # is NOT in the closure, so the frozen-lockfile install remains clean.
       - name: pnpm install (shared-TS subtree + ts-codegen)
-        run: pnpm install --fail-if-no-match --filter "./server/shared/typescript/**..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "./public/packages/typescript/**..." --filter "ts-codegen..."
       - name: build (shared-TS packages that need a dist/ before tests run)
-        run: pnpm --fail-if-no-match --filter "./server/shared/typescript/**" -r build
+        run: pnpm --fail-if-no-match --filter "./public/packages/typescript/**" -r build
       - name: ts-codegen typecheck (src + tests)
         run: pnpm --fail-if-no-match --filter ts-codegen typecheck
       - name: ts-codegen unit tests
         run: pnpm --fail-if-no-match --filter ts-codegen test
       - name: TS shared unit tests
-        run: pnpm --fail-if-no-match --filter "./server/shared/typescript/**" -r test
+        run: pnpm --fail-if-no-match --filter "./public/packages/typescript/**" -r test
 
   # ---------------------------------------------------------------------------
-  # TS services unit tests — service-owned client packages under server/services.
-  # The pnpm workspace includes server/services/**; path filters auto-adopt a
+  # TS services unit tests — service-owned client packages under private/services.
+  # The pnpm workspace includes private/services/**; path filters auto-adopt a
   # future service client-ts package. ts-codegen is in the install because
   # shared-lib prebuild scripts invoke it. The build uses the dependency-
   # closure filter (...) so @d2/* dep dists exist before vitest resolves them.
@@ -438,7 +438,7 @@ jobs:
         with:
           node-version: "24"
       - uses: pnpm/action-setup@v4
-      # Package-name `...` closure (not path `./server/services/**...`) — path
+      # Package-name `...` closure (not path `./private/services/**...`) — path
       # filters under-install shared-TS deps and tsc -b fails resolving @d2/*.
       # Matches edge-integration-tests / known-good client build graph.
       - name: pnpm install (key-custodian client + workspace deps + ts-codegen)
@@ -466,13 +466,13 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (shared-TS + services-TS subtrees + ts-codegen)
-        run: pnpm install --fail-if-no-match --filter "./server/shared/typescript/**..." --filter "./server/services/**..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "./public/packages/typescript/**..." --filter "./private/services/**..." --filter "ts-codegen..."
       - name: build (dists for the packages under test + their deps)
-        run: pnpm --fail-if-no-match --filter "./server/shared/typescript/**" --filter "./server/services/**..." -r build
+        run: pnpm --fail-if-no-match --filter "./public/packages/typescript/**" --filter "./private/services/**..." -r build
       - name: TS integration tests (Testcontainers)
         run: |
           set -o pipefail
-          pnpm --fail-if-no-match --filter "./server/shared/typescript/**" --filter "./server/services/**" -r test:integration 2>&1 | tee ts-integration.log
+          pnpm --fail-if-no-match --filter "./public/packages/typescript/**" --filter "./private/services/**" -r test:integration 2>&1 | tee ts-integration.log
       - name: assert integration suites executed
         # Residual silent-green if filters match packages but none define test:integration.
         run: |
@@ -481,7 +481,7 @@ jobs:
             exit 1
           fi
 
-  # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
+  # unit-tests-web — activates when `private/services/web/` SvelteKit workspace resolves
   # unit-tests-web:
   #   name: Unit tests (web — Vitest browser mode)
   #   runs-on: ubuntu-latest
@@ -494,11 +494,11 @@ jobs:
   #       with:
   #         version: 10
   #     - run: pnpm install --frozen-lockfile
-  #       working-directory: server/web
+  #       working-directory: private/services/web
   #     - run: pnpm exec vitest run
-  #       working-directory: server/web
+  #       working-directory: private/services/web
 
-  # web-component-tests — activates when `server/web/` SvelteKit workspace resolves
+  # web-component-tests — activates when `private/services/web/` SvelteKit workspace resolves
   # web-component-tests:
   #   name: Web component tests (Vitest browser mode)
   #   runs-on: ubuntu-latest
@@ -511,11 +511,11 @@ jobs:
   #       with:
   #         version: 10
   #     - run: pnpm install --frozen-lockfile
-  #       working-directory: server/web
+  #       working-directory: private/services/web
   #     - run: pnpm exec vitest run --browser
-  #       working-directory: server/web
+  #       working-directory: private/services/web
 
-  # web-mock-playwright-tests — activates when `server/web/` SvelteKit workspace resolves
+  # web-mock-playwright-tests — activates when `private/services/web/` SvelteKit workspace resolves
   # web-mock-playwright-tests:
   #   name: Web Playwright (mocked)
   #   runs-on: ubuntu-latest
@@ -528,11 +528,11 @@ jobs:
   #       with:
   #         version: 10
   #     - run: pnpm install --frozen-lockfile
-  #       working-directory: server/web
+  #       working-directory: private/services/web
   #     - run: pnpm exec playwright install chromium
-  #       working-directory: server/web
+  #       working-directory: private/services/web
   #     - run: pnpm exec playwright test
-  #       working-directory: server/web
+  #       working-directory: private/services/web
   #       env:
   #         D2_MOCK_INFRA: "true"
 
@@ -545,10 +545,10 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test server/shared/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-trait "Category=ContractFixtures"
+      - run: dotnet test public/packages/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-trait "Category=ContractFixtures"
       - name: assert no fixture drift (tracked changes AND untracked new files)
         run: |
-          fixtures_dir=server/shared/typescript/contract-tests/fixtures
+          fixtures_dir=public/packages/typescript/contract-tests/fixtures
           [ -d "$fixtures_dir" ] || { echo "fixtures dir missing: $fixtures_dir"; exit 1; }
           status=$(git status --porcelain -- "$fixtures_dir/")
           if [ -n "$status" ]; then
@@ -607,7 +607,7 @@ jobs:
       # D2.Shared.Result is compiled (not the full solution).
       - name: dotnet pack D2.Shared.Result
         run: >
-          dotnet pack server/shared/dotnet/result/core/D2.Shared.Result.csproj
+          dotnet pack public/packages/dotnet/result/core/D2.Shared.Result.csproj
           --configuration Release
           --output /tmp/pack-smoke
       - name: assert .nupkg produced

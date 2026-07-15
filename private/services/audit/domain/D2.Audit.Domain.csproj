@@ -1,0 +1,20 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Audit.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Thin Domain shell for the Audit standalone service (ADR-0020).
+    Product aggregates OUT OF SCOPE on this multiproc stub. ProjectReferences satisfy services/
+    Directory.Build.targets Tier-1 global usings so the empty shell compiles.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="$(D2PublicPackagesDotnetRoot)result\core\D2.Shared.Result.csproj" />
+    <ProjectReference Include="$(D2PublicPackagesDotnetRoot)utilities\D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="$(D2PublicPackagesDotnetRoot)i18n\core\D2.Shared.I18n.csproj" />
+  </ItemGroup>
+</Project>

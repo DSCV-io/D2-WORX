@@ -1,0 +1,13 @@
+{
+  "$comment": "Type-check config covering tests/ only — commit-lint has no src/. noEmit: no build artifacts produced. Run via `pnpm run typecheck` to enforce type safety on the hook test driver.",
+  "extends": "../../packages/typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "rootDir": ".",
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["tests/**/*", "vitest.config.ts"],
+  "exclude": ["node_modules"]
+}

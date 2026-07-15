@@ -113,7 +113,7 @@ Project-specific terms-of-art used across the predicates below. First-use in a p
 - **Meta-record** — small hand-coded type the source-gen pipeline uses to surface generated-catalog metadata to consumers (e.g., `SpecMetadata`, `EmitResult`); carved out from the §26.1 spec-mirror-DTO ban because its shape is NOT a spec mirror. See §26.1 "Allowed".
 - **Behavioral interface** — interface defining API surface (methods consumers call) rather than data shape (fields a spec declares); NOT a §26.1 spec-mirror violation even alongside spec-derived data. See §26.1 "Allowed".
 - **Source-gen destination assembly** — any csproj/package that ships to consumers (anything a consumer can `using`/`import`), distinct from a source-gen INTERNAL csproj (Roslyn analyzer, `IsRoslynComponent=true`) whose types never leak. The §26.1 ban applies to destination assemblies only; §26.2 carves out internals. See §26.1 / §26.2.
-- **Meta-doc** — a doc that DIRECTS the work (process, predicates, orchestration) vs a KEEP doc that DESCRIBES the code. Canonical set: `docs/dev/rules.md`, `docs/dev/process.md`, `AGENTS.md`, `.github/copilot-instructions.md`. Runtime adapter files such as `CLAUDE.md` are thin entrypoints that `@AGENTS.md`-import (or otherwise point at) the shared canonical instruction doc — they do not create a fifth law surface and must not carry a second full condensed body. Cross-refs between meta-docs (and to `docs/v2/`) are exempt from the §11.9 KEEP-doc citation ban. See §11.9 META-DOC ALLOWLIST + §14.1 meta-doc empirical-citation allowlist + §24.15.
+- **Meta-doc** — a doc that DIRECTS the work (process, predicates, orchestration) vs a KEEP doc that DESCRIBES the code. Canonical set: `docs/dev/rules.md`, `docs/dev/process.md`, `AGENTS.md`, `.github/copilot-instructions.md`. Runtime adapter files such as `CLAUDE.md` are thin entrypoints that `@AGENTS.md`-import (or otherwise point at) the shared canonical instruction doc — they do not create a fifth law surface and must not carry a second full condensed body. Cross-refs between meta-docs (and to `private/docs/v2/`) are exempt from the §11.9 KEEP-doc citation ban. See §11.9 META-DOC ALLOWLIST + §14.1 meta-doc empirical-citation allowlist + §24.15.
 - **PASS-borderline** — big-table status for a row that passes the literal check but the Auditor flags for orchestrator review (e.g., a defensible-but-worth-surfacing carve-out); counts as PASS for convergence; emoji prefix `🟡`. See §24.10.
 
 <sup>[↑ jump to top](#top)</sup>
@@ -267,8 +267,8 @@ For each step `NN-<step-name>` in `docs/wip/<deliverable>/`:
 - [ ] **Final round of sweep** in the findings log shows zero FINDINGs (closure proven by absence)?
 - [ ] **Self-audit rows §24.0 through §24.16** (incl. §24.0a-i + §24.13.1-4 + §24.13.3a-d) present in the latest big table, each PASS-cited against the journal file itself?
 - [ ] **Step's code change** has corresponding test coverage (per §1.x predicates)? **Pure-meta** steps may mark this **N/A** with `META`/`NO_CS` + path-set cite — never forge green product tests.
-- [ ] **Build clean**: `dotnet build server/D2.slnx` zero StyleCop / CS warnings against current state? **Pure-meta** / no C#: **N/A** with `META`/`NO_CS` + path-set — never forge green build.
-- [ ] **JetBrains inspect clean**: `jb inspectcode server/D2.slnx --severity=WARNING` zero warnings? Same pure-meta N/A rule.
+- [ ] **Build clean**: `dotnet build D2.slnx` zero StyleCop / CS warnings against current state? **Pure-meta** / no C#: **N/A** with `META`/`NO_CS` + path-set — never forge green build.
+- [ ] **JetBrains inspect clean**: `jb inspectcode D2.slnx --severity=WARNING` zero warnings? Same pure-meta N/A rule.
 - [ ] **Test suite passes** at the most recent test run citation in the journal? Same pure-meta N/A rule.
 
 #### Final-review gate (the deliverable-wide sweep)
@@ -288,8 +288,8 @@ Mode-aware (see [process.md Audit wave policy](process.md#audit-wave-policy) + �
 - [ ] **Root README** at `docs/wip/<deliverable>/README.md` updated with the final report (kinds-of-misses log, candidate rule additions, summary)?
 - [ ] **Cross-cutting docs** updated per AGENTS.md §3.5 Doc Update Map (PATTERNS.md / TESTS.md / PARITY.md / SRC_GEN.md as relevant)?
 - [ ] **Per-lib / per-service READMEs** updated for new public APIs?
-- [ ] **Parent `server/shared/dotnet/README.md`** updated for any new lib (status row + Mermaid graph + redundant-edges enumeration)?
-- [ ] **Tracking doc** `docs/v2/PHASE_*.md` updated (or successor) with the deliverable's status?
+- [ ] **Parent `public/packages/dotnet/README.md`** updated for any new lib (status row + Mermaid graph + redundant-edges enumeration)?
+- [ ] **Tracking doc** `private/docs/v2/PHASE_*.md` updated (or successor) with the deliverable's status?
 - [ ] **No phase / sweep / audit verbiage** leaked into KEEP docs or source code (per §14.x)?
 - [ ] **No conversation-scoped IDs** (Q-IDs, F#-IDs, R# refs) leaked into KEEP docs or source code?
 

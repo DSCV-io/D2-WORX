@@ -1,0 +1,315 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Solution>
+  <!--
+    DÂ²-WORX v2 solution (modern XML format, .NET 10).
+    Project list and ordering for the DÂ²-WORX backend â€” every csproj built
+    by `dotnet build D2.slnx` is registered here.
+  -->
+  <Folder Name="/public/packages/" />
+  <Folder Name="/public/packages/dotnet/">
+    <File Path="public/packages/dotnet/README.md" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/aspnetcore/">
+    <Project Path="public/packages/dotnet/aspnetcore/D2.Shared.AspNetCore.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/core/">
+    <Project Path="public/packages/dotnet/auth/core/D2.Shared.Auth.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/abstractions/">
+    <Project Path="public/packages/dotnet/auth/abstractions/D2.Shared.Auth.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/http/">
+    <Project Path="public/packages/dotnet/auth/http/D2.Shared.Auth.Http.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/grpc/">
+    <Project Path="public/packages/dotnet/auth/grpc/D2.Shared.Auth.Grpc.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/startup/">
+    <Project Path="public/packages/dotnet/auth/startup/D2.Shared.Auth.Startup.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/scopes-source-gen/">
+    <Project Path="public/packages/dotnet/auth/scopes-source-gen/D2.Shared.Auth.Scopes.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/audiences-source-gen/">
+    <Project Path="public/packages/dotnet/auth/audiences-source-gen/D2.Shared.Auth.Audiences.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/protocol-audiences-source-gen/">
+    <Project Path="public/packages/dotnet/auth/protocol-audiences-source-gen/D2.Shared.Auth.ProtocolAudiences.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/error-codes-source-gen/">
+    <Project Path="public/packages/dotnet/auth/error-codes-source-gen/D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/events/">
+    <Project Path="public/packages/dotnet/auth/events/D2.Shared.Auth.Events.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/result/grpc-trailers-source-gen/">
+    <Project Path="public/packages/dotnet/result/grpc-trailers-source-gen/D2.Shared.Grpc.Trailers.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/messaging/otel-messaging-tags-source-gen/">
+    <Project Path="public/packages/dotnet/messaging/otel-messaging-tags-source-gen/D2.Shared.OtelMessagingTags.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/encryption/domains-source-gen/">
+    <Project Path="public/packages/dotnet/encryption/domains-source-gen/D2.Shared.EncryptionDomains.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/messaging/dlq-failure-metadata-source-gen/">
+    <Project Path="public/packages/dotnet/messaging/dlq-failure-metadata-source-gen/D2.Shared.Messaging.DlqMetadata.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/encryption/frame-source-gen/">
+    <Project Path="public/packages/dotnet/encryption/frame-source-gen/D2.Shared.EncryptionFrame.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/source-gen-shared/error-codes-source-gen/">
+    <Project Path="public/packages/dotnet/source-gen-shared/error-codes-source-gen/D2.Shared.Result.ErrorCodes.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/result/envelope-source-gen/">
+    <Project Path="public/packages/dotnet/result/envelope-source-gen/D2.Shared.Result.Envelope.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/problem-details/source-gen/">
+    <Project Path="public/packages/dotnet/problem-details/source-gen/D2.Shared.ProblemDetails.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/problem-details/abstractions/">
+    <Project Path="public/packages/dotnet/problem-details/abstractions/D2.Shared.ProblemDetails.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/">
+    <Project Path="public/packages/dotnet/source-gen-shared/wire-shapes-source-gen/D2.Shared.WireShapes.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/telemetry/tags-source-gen/">
+    <Project Path="public/packages/dotnet/telemetry/tags-source-gen/D2.Shared.Telemetry.Tags.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/outbound/">
+    <Project Path="public/packages/dotnet/auth/outbound/D2.Shared.Auth.Outbound.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/context-abstractions/">
+    <Project Path="public/packages/dotnet/auth/context-abstractions/D2.Shared.AuthContext.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/context/source-gen/">
+    <Project Path="public/packages/dotnet/context/source-gen/D2.Shared.Context.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/messaging/source-gen/">
+    <Project Path="public/packages/dotnet/messaging/source-gen/D2.Shared.Messaging.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/caching/abstractions/">
+    <Project Path="public/packages/dotnet/caching/abstractions/D2.Shared.Caching.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/caching/local-default/">
+    <Project Path="public/packages/dotnet/caching/local-default/D2.Shared.Caching.Local.Default.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/caching/distributed-redis/">
+    <Project Path="public/packages/dotnet/caching/distributed-redis/D2.Shared.Caching.Distributed.Redis.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/caching/tiered/">
+    <Project Path="public/packages/dotnet/caching/tiered/D2.Shared.Caching.Tiered.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/encryption/core/">
+    <Project Path="public/packages/dotnet/encryption/core/D2.Shared.Encryption.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/context/abstractions/">
+    <Project Path="public/packages/dotnet/context/abstractions/D2.Shared.Context.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/handler/core/">
+    <Project Path="public/packages/dotnet/handler/core/D2.Shared.Handler.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/headers/source-gen/">
+    <Project Path="public/packages/dotnet/headers/source-gen/D2.Shared.Headers.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/headers/common/">
+    <Project Path="public/packages/dotnet/headers/common/D2.Shared.Headers.Common.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/headers/http/">
+    <Project Path="public/packages/dotnet/headers/http/D2.Shared.Headers.Http.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/headers/amqp/">
+    <Project Path="public/packages/dotnet/headers/amqp/D2.Shared.Headers.Amqp.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/headers/grpc/">
+    <Project Path="public/packages/dotnet/headers/grpc/D2.Shared.Headers.Grpc.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/encryption/in-process-keys-source-gen/">
+    <Project Path="public/packages/dotnet/encryption/in-process-keys-source-gen/D2.Shared.InProcessKeys.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/auth/jwt-claims-source-gen/">
+    <Project Path="public/packages/dotnet/auth/jwt-claims-source-gen/D2.Shared.Auth.JwtClaims.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/handler/abstractions/">
+    <Project Path="public/packages/dotnet/handler/abstractions/D2.Shared.Handler.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/handler/repo/">
+    <Project Path="public/packages/dotnet/handler/repo/D2.Shared.Handler.Repo.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/handler/repo-abstractions/">
+    <Project Path="public/packages/dotnet/handler/repo-abstractions/D2.Shared.Handler.Repo.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/handler/repo-postgres/">
+    <Project Path="public/packages/dotnet/handler/repo-postgres/D2.Shared.Handler.Repo.Postgres.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/i18n/core/">
+    <Project Path="public/packages/dotnet/i18n/core/D2.Shared.I18n.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/i18n/abstractions/">
+    <Project Path="public/packages/dotnet/i18n/abstractions/D2.Shared.I18n.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/i18n/keys/">
+    <Project Path="public/packages/dotnet/i18n/keys/D2.Shared.I18n.Keys.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/i18n/source-gen/">
+    <Project Path="public/packages/dotnet/i18n/source-gen/D2.Shared.I18n.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/geo/abstractions/">
+    <Project Path="public/packages/dotnet/geo/abstractions/D2.Shared.Geo.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/geo/default/">
+    <Project Path="public/packages/dotnet/geo/default/D2.Shared.Geo.Default.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/geo/source-gen/">
+    <Project Path="public/packages/dotnet/geo/source-gen/D2.Shared.Geo.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/error-codes/category/">
+    <Project Path="public/packages/dotnet/error-codes/category/D2.Shared.ErrorCodes.Category.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/error-codes/category-source-gen/">
+    <Project Path="public/packages/dotnet/error-codes/category-source-gen/D2.Shared.ErrorCodes.Category.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/error-codes/registry/">
+    <Project Path="public/packages/dotnet/error-codes/registry/D2.Shared.ErrorCodes.Registry.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/error-codes/registry-source-gen/">
+    <Project Path="public/packages/dotnet/error-codes/registry-source-gen/D2.Shared.ErrorCodes.Registry.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/logging/">
+    <Project Path="public/packages/dotnet/logging/D2.Shared.Logging.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/messaging/abstractions/">
+    <Project Path="public/packages/dotnet/messaging/abstractions/D2.Shared.Messaging.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/messaging/rabbitmq/">
+    <Project Path="public/packages/dotnet/messaging/rabbitmq/D2.Shared.Messaging.RabbitMq.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/resilience/">
+    <Project Path="public/packages/dotnet/resilience/D2.Shared.Resilience.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/result/core/">
+    <Project Path="public/packages/dotnet/result/core/D2.Shared.Result.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/result/grpc/">
+    <Project Path="public/packages/dotnet/result/grpc/D2.Shared.Result.Grpc.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/service-defaults/">
+    <Project Path="public/packages/dotnet/service-defaults/D2.Shared.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/telemetry/core/">
+    <Project Path="public/packages/dotnet/telemetry/core/D2.Shared.Telemetry.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/time/">
+    <Project Path="public/packages/dotnet/time/D2.Shared.Time.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/location/core/">
+    <Project Path="public/packages/dotnet/location/core/D2.Shared.Location.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/location/entity-framework-core/">
+    <Project Path="public/packages/dotnet/location/entity-framework-core/D2.Shared.Location.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/data-governance/abstractions/">
+    <Project Path="public/packages/dotnet/data-governance/abstractions/D2.Shared.DataGovernance.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/data-governance/entity-framework-core/">
+    <Project Path="public/packages/dotnet/data-governance/entity-framework-core/D2.Shared.DataGovernance.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/entity-framework-core/core/">
+    <Project Path="public/packages/dotnet/entity-framework-core/core/D2.Shared.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/entity-framework-core/postgres/">
+    <Project Path="public/packages/dotnet/entity-framework-core/postgres/D2.Shared.EntityFrameworkCore.Postgres.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/entity-framework-core/locks-source-gen/">
+    <Project Path="public/packages/dotnet/entity-framework-core/locks-source-gen/D2.Shared.AdvisoryLocks.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/validation/abstractions/">
+    <Project Path="public/packages/dotnet/validation/abstractions/D2.Shared.Validation.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/validation/source-gen/">
+    <Project Path="public/packages/dotnet/validation/source-gen/D2.Shared.Validation.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/validation/default/">
+    <Project Path="public/packages/dotnet/validation/default/D2.Shared.Validation.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/contacts/core/">
+    <Project Path="public/packages/dotnet/contacts/core/D2.Shared.Contacts.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/contacts/entity-framework-core/">
+    <Project Path="public/packages/dotnet/contacts/entity-framework-core/D2.Shared.Contacts.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/tests/">
+    <Project Path="public/packages/dotnet/tests/D2.Shared.Tests.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/utilities/">
+    <Project Path="public/packages/dotnet/utilities/D2.Shared.Utilities.csproj" />
+  </Folder>
+  <Folder Name="/public/packages/dotnet/workload-identity/">
+    <Project Path="public/packages/dotnet/workload-identity/D2.Shared.WorkloadIdentity.csproj" />
+  </Folder>
+  <Folder Name="/private/services/" />
+  <Folder Name="/private/services/edge/" />
+  <Folder Name="/private/services/edge/domain/">
+    <Project Path="private/services/edge/domain/D2.Edge.Domain.csproj" />
+  </Folder>
+  <Folder Name="/private/services/edge/app/">
+    <Project Path="private/services/edge/app/D2.Edge.App.csproj" />
+  </Folder>
+  <Folder Name="/private/services/edge/infra/">
+    <Project Path="private/services/edge/infra/D2.Edge.Infra.csproj" />
+  </Folder>
+  <Folder Name="/private/services/edge/api/">
+    <Project Path="private/services/edge/api/D2.Edge.Api.csproj" />
+  </Folder>
+  <Folder Name="/private/services/edge/key-custodian/domain/">
+    <Project Path="private/services/edge/key-custodian/domain/D2.Edge.KeyCustodian.Domain.csproj" />
+  </Folder>
+  <Folder Name="/private/services/edge/key-custodian/error-codes-source-gen/">
+    <Project Path="private/services/edge/key-custodian/error-codes-source-gen/D2.Edge.KeyCustodian.ErrorCodes.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/private/services/edge/key-custodian/app/">
+    <Project Path="private/services/edge/key-custodian/app/D2.Edge.KeyCustodian.App.csproj" />
+  </Folder>
+  <Folder Name="/private/services/edge/key-custodian/infra/">
+    <Project Path="private/services/edge/key-custodian/infra/D2.Edge.KeyCustodian.Infra.csproj" />
+  </Folder>
+  <Folder Name="/private/services/edge/key-custodian/client/">
+    <Project Path="private/services/edge/key-custodian/client/D2.Edge.KeyCustodian.Client.csproj" />
+  </Folder>
+  <Folder Name="/private/services/edge/tests/">
+    <Project Path="private/services/edge/tests/D2.Edge.Tests.csproj" />
+  </Folder>
+  <Folder Name="/private/services/audit/" />
+  <Folder Name="/private/services/audit/domain/">
+    <Project Path="private/services/audit/domain/D2.Audit.Domain.csproj" />
+  </Folder>
+  <Folder Name="/private/services/audit/app/">
+    <Project Path="private/services/audit/app/D2.Audit.App.csproj" />
+  </Folder>
+  <Folder Name="/private/services/audit/infra/">
+    <Project Path="private/services/audit/infra/D2.Audit.Infra.csproj" />
+  </Folder>
+  <Folder Name="/private/services/audit/api/">
+    <Project Path="private/services/audit/api/D2.Audit.Api.csproj" />
+  </Folder>
+  <Folder Name="/private/services/audit/clients/dotnet/">
+    <Project Path="private/services/audit/clients/dotnet/D2.Audit.Client.csproj" />
+  </Folder>
+  <Folder Name="/private/services/audit/tests/">
+    <Project Path="private/services/audit/tests/D2.Audit.Tests.csproj" />
+  </Folder>
+
+  <Folder Name="/private/packages/dotnet/auth/abstractions-extensions/">
+    <Project Path="private/packages/dotnet/auth/abstractions-extensions/D2.Shared.Auth.Abstractions.Extensions.csproj" />
+  </Folder>
+  <Folder Name="/private/packages/dotnet/encryption/extensions/">
+    <Project Path="private/packages/dotnet/encryption/extensions/D2.Shared.Encryption.Extensions.csproj" />
+  </Folder>
+  <Folder Name="/private/packages/dotnet/i18n/keys-extensions/">
+    <Project Path="private/packages/dotnet/i18n/keys-extensions/D2.Shared.I18n.Keys.Extensions.csproj" />
+  </Folder>
+  <Folder Name="/private/packages/dotnet/tests/">
+    <Project Path="private/packages/dotnet/tests/D2.Private.Packages.Tests.csproj" />
+  </Folder>
+</Solution>

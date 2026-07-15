@@ -27,36 +27,45 @@ services:
     develop:
       watch:
         - action: sync
-          path: ../../server/services/edge
-          target: /src/server/services/edge
+          path: ../../private/services/edge
+          target: /src/private/services/edge
           ignore:
             - "**/bin/**"
             - "**/obj/**"
         - action: sync
-          path: ../../server/shared/dotnet
-          target: /src/server/shared/dotnet
+          path: ../../public/packages/dotnet
+          target: /src/public/packages/dotnet
           ignore:
             - "**/bin/**"
             - "**/obj/**"
         - action: sync
-          path: ../../server/services/audit/clients
-          target: /src/server/services/audit/clients
+          path: ../../private/packages/dotnet
+          target: /src/private/packages/dotnet
           ignore:
             - "**/bin/**"
             - "**/obj/**"
         - action: sync
-          path: ../../contracts
-          target: /src/contracts
+          path: ../../private/services/audit/clients
+          target: /src/private/services/audit/clients
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../public/contracts
+          target: /src/public/contracts
+        - action: sync
+          path: ../../private/contracts
+          target: /src/private/contracts
         - action: rebuild
-          path: ../../server/services/edge
-          target: /src/server/services/edge
+          path: ../../private/services/edge
+          target: /src/private/services/edge
           ignore:
             - "**/*"
             - "!**/*.csproj"
         - action: rebuild
-          path: ../../server/Directory.Packages.props
+          path: ../../Directory.Packages.props
         - action: rebuild
-          path: ../../server/Directory.Build.props
+          path: ../../Directory.Build.props
 
   d2-audit:
     build:
@@ -66,27 +75,36 @@ services:
     develop:
       watch:
         - action: sync
-          path: ../../server/services/audit
-          target: /src/server/services/audit
+          path: ../../private/services/audit
+          target: /src/private/services/audit
           ignore:
             - "**/bin/**"
             - "**/obj/**"
         - action: sync
-          path: ../../server/shared/dotnet
-          target: /src/server/shared/dotnet
+          path: ../../public/packages/dotnet
+          target: /src/public/packages/dotnet
           ignore:
             - "**/bin/**"
             - "**/obj/**"
         - action: sync
-          path: ../../contracts
-          target: /src/contracts
+          path: ../../private/packages/dotnet
+          target: /src/private/packages/dotnet
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../public/contracts
+          target: /src/public/contracts
+        - action: sync
+          path: ../../private/contracts
+          target: /src/private/contracts
         - action: rebuild
-          path: ../../server/services/audit
-          target: /src/server/services/audit
+          path: ../../private/services/audit
+          target: /src/private/services/audit
           ignore:
             - "**/*"
             - "!**/*.csproj"
         - action: rebuild
-          path: ../../server/Directory.Packages.props
+          path: ../../Directory.Packages.props
         - action: rebuild
-          path: ../../server/Directory.Build.props
+          path: ../../Directory.Build.props

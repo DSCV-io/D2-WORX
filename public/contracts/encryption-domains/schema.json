@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 encryption domains spec",
+  "description": "Schema for contracts/encryption-domains/encryption-domains.spec.json — the source-of-truth catalog of encryption-domain identifiers. Each domain corresponds to an independently-rotated keyring registered via services.AddD2EncryptionFor(domain, factory). The 'plaintext' sentinel is included as a closed-catalog entry so spec validation on mq-messages.spec's 'encryption' field cleanly enumerates the only acceptable values. D2.Shared.EncryptionDomains.SourceGen reads it to emit EncryptionDomains into D2.Shared.Encryption; tools/ts-codegen/src/encryption-domains-emit.ts reads it to emit encryption-domains.g.ts into @d2/encryption-abstractions.",
+  "type": "object",
+  "required": ["domains"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/domain" }
+    }
+  },
+  "definitions": {
+    "domain": {
+      "type": "object",
+      "required": ["constName", "value", "doc"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$comment": "A sealed domain MUST name its single decrypting consumer service.",
+          "if": {
+            "properties": { "mode": { "const": "sealed" } },
+            "required": ["mode"]
+          },
+          "then": { "required": ["consumerService"] }
+        },
+        {
+          "$comment": "consumerService is meaningful ONLY for sealed domains; its presence without mode:sealed is a spec error.",
+          "if": { "required": ["consumerService"] },
+          "then": {
+            "properties": { "mode": { "const": "sealed" } },
+            "required": ["mode"]
+          }
+        },
+        {
+          "$comment": "The plaintext sentinel is never encrypted, so it carries no mode.",
+          "if": {
+            "properties": { "value": { "const": "plaintext" } },
+            "required": ["value"]
+          },
+          "then": { "not": { "required": ["mode"] } }
+        }
+      ],
+      "properties": {
+        "constName": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Public C# / TS constant identifier — UPPER_SNAKE_CASE. Must be unique across the spec."
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Wire-format domain identifier value. Must be unique across the spec."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["symmetric", "sealed"],
+          "default": "symmetric",
+          "description": "Encryption mode for the domain. 'symmetric' (default when absent — strict back-compat) = shared-keyring AES-256-GCM (version-1 frame), every grant-holder both encrypts and decrypts. 'sealed' = per-consumer-service ephemeral-static ECDH (version-2 frame), producers seal to the recipient service's public key and only that service opens. Forbidden on the 'plaintext' sentinel."
+        },
+        "consumerService": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]{1,64}$",
+          "description": "The single decrypting recipient's ServiceId (SpiffeWorkloadIdentity.ServiceId), lowercase [a-z0-9-]. REQUIRED iff mode == 'sealed'; FORBIDDEN otherwise. The routing anchor: the messaging composer resolves domain → consumerService → that service's public seal key, and the seal-open authority check reads it to know whose private key may be fetched. Two sealed domains consumed by the same service share one keypair (per-service reuse)."
+        },
+        "doc": {
+          "type": "string",
+          "minLength": 1,
+          "description": "XML <summary> / JSDoc text rendered on the emitted constant."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    }
+  }
+}

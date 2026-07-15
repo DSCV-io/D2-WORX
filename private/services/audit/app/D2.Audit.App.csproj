@@ -1,0 +1,25 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Audit.App</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Application layer for the Audit standalone multiproc stub.
+    NIE PingAuditHandler + AddD2AuditApp. Product store ports OUT OF SCOPE.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\domain\D2.Audit.Domain.csproj" />
+    <ProjectReference Include="..\clients\dotnet\D2.Audit.Client.csproj" />
+    <ProjectReference Include="$(D2PublicPackagesDotnetRoot)handler\core\D2.Shared.Handler.csproj" />
+    <ProjectReference Include="$(D2PublicPackagesDotnetRoot)result\core\D2.Shared.Result.csproj" />
+    <ProjectReference Include="$(D2PublicPackagesDotnetRoot)utilities\D2.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,39 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
+# buf v2 module configuration for the shared D2 proto contracts.
+#
+# Module scope: contracts/protos/ — the STABLE shared protos (package d2.common.v1).
+# These protos are gate-enforced at FILE level: a removed or renumbered field is
+# a breaking change. The proto-arm wrapper (tools/contract-gate/src/proto-arm.ts)
+# verifies stability and runs `buf breaking` at FILE level against the nova baseline.
+#
+# Emitted service protos (*.g.proto under private/services/) are MANAGED SEPARATELY
+# by the proto-arm wrapper, which classifies them by their `package` stability
+# (vNalpha/vNbeta → exempt; vN → enforced) before including them in the buf run.
+#
+# Baseline for CI: `buf breaking --against '.git#branch=nova,subdir=contracts/protos'`
+# Lint (activated in CI once this file exists): `buf lint` (STANDARD rule set).
+# Format check: `buf format --diff --exit-code` (hand-authored protos only).
+
+# NOTE: `version: v2` below is the buf CONFIG-FILE FORMAT version (buf's own
+# schema for this file — v2 supports multiple module roots via `modules:`).
+# It is NOT the proto package version. Proto packages are versioned independently
+# in their package declarations (e.g. `package d2.common.v1;` in common/v1/).
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+  # PACKAGE_DIRECTORY_MATCH is excepted because the hand-authored common protos
+  # (common/v1/*.proto) declare `package d2.common.v1;` but live at common/v1/
+  # relative to the module root rather than d2/common/v1/. The layout is retained
+  # until the proto-unification follow-on, which will tsp-emit these shared protos
+  # at the buf-idiomatic d2/common/vN path; this exception is removed at that point.
+  except:
+    - PACKAGE_DIRECTORY_MATCH
+breaking:
+  use:
+    - FILE

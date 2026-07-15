@@ -1,0 +1,21 @@
+{
+  "extends": "../../../../../public/packages/typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "tests"],
+  "references": [
+    { "path": "../../../../../public/packages/typescript/encryption" },
+    {
+      "path": "../../../../../public/packages/typescript/encryption-abstractions"
+    },
+    { "path": "../../../../../public/packages/typescript/grpc-client" },
+    { "path": "../../../../../public/packages/typescript/logging" },
+    { "path": "../../../../../public/packages/typescript/resilience" },
+    { "path": "../../../../../public/packages/typescript/result" },
+    { "path": "../../../../../public/packages/typescript/utilities" }
+  ]
+}

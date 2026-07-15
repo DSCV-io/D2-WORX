@@ -57,7 +57,8 @@ Merge commits (`Merge …`), revert commits (`Revert "…"`), and rebase autosqu
 ## Breaking changes
 
 D²-WORX enforces an always-on, PR-blocking breaking-change gate over its wire contracts:
-proto files, spec catalogs (`contracts/**/*.spec.json`), i18n keys (`contracts/messages/*.json`),
+proto files, spec catalogs (`public/contracts/**/*.spec.json` + `private/contracts/**/*.spec.json`),
+i18n keys (`public/contracts/messages/*.json` + `private/contracts/messages/*.json`),
 and committed OpenAPI documents. Test trees (`tests/` directories) and package/build directories
 are never contract surface.
 
@@ -163,7 +164,7 @@ library API surface the runner diffs.
 
 ### Release runner
 
-The release runner (`tools/release-runner`) reads the commit range since the baseline
+The release runner (`public/tools/release-runner`) reads the commit range since the baseline
 branch, maps each commit to the packages it touched (by file-path containment), applies
 the semver table above per package, and writes the version slot + prepends a `CHANGELOG.md`
 block.
