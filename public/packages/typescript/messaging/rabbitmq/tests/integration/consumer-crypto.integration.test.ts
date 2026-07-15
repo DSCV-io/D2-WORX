@@ -215,8 +215,8 @@ describe("@dcsv-io/d2-messaging-rabbitmq consumer — real-broker encrypted decr
   });
 
   it("row 2 — sealed: consumes + opens a real v2 sealed frame off the broker via CryptoBodyOpener.sealed", async () => {
-    // `audit` is a real SEALED catalog domain — every service seals to the audit
-    // service's public key; only the holder of the private keyring opens.
+    // Public catalog sealed domain (`payload-fixture-sealed`) — seals to the
+    // recipient public keyring; only the private-keyring holder opens.
     const domain = "payload-fixture-sealed";
     const kid = "seal-fixture-1";
     const { sealer, opener } = await makeSealerOpener(domain, kid);
@@ -230,6 +230,7 @@ describe("@dcsv-io/d2-messaging-rabbitmq consumer — real-broker encrypted decr
     // because the compile-time type-witness is scoped to the production catalog
     // (fixture messages intentionally live outside it — runtime default-deny +
     // the injected registry are the enforcement here).
+    // crypto map key MUST equal descriptor.encryption (composeBody domain lookup).
     const fixtureRegistry: Readonly<Record<string, MqMessageDescriptor>> = {
       SealedAuditFixture: {
         constant: "SealedAuditFixture",
@@ -240,7 +241,7 @@ describe("@dcsv-io/d2-messaging-rabbitmq consumer — real-broker encrypted decr
       },
     };
     const publisher = createPublisher(connection, {
-      crypto: { audit: sealer },
+      crypto: { "payload-fixture-sealed": sealer },
       logger: silentLogger(),
       descriptors: fixtureRegistry,
     });
