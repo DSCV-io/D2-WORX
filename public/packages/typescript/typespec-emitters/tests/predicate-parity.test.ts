@@ -5,7 +5,7 @@
 
 // The TypeScript half of the cross-language @d2Resilience predicate-behavior
 // parity suite. Drives the SAME shared fixture
-// (contracts/resilience/predicate-parity.fixture.json) as the .NET
+// (public/contracts/resilience/predicate-parity.fixture.json) as the .NET
 // PredicateParityTests, importing the ACTUAL emitted predicate twin
 // (place-order-fixture-resilience-predicates.g.ts — the committed byte-gated fixture)
 // and evaluating placeOrderFixtureRetryWhen / placeOrderFixtureFailWhen over every row. An
@@ -99,7 +99,7 @@ interface FixtureFile {
 function loadFixture(): FixtureFile {
   const path = join(
     _REPO,
-    "contracts/resilience/predicate-parity.fixture.json",
+    "public/contracts/resilience/predicate-parity.fixture.json",
   );
   return JSON.parse(readFileSync(path, "utf8")) as FixtureFile;
 }
@@ -198,7 +198,7 @@ interface FixtureFileV2 {
 function loadFixtureV2(): FixtureFileV2 {
   const path = join(
     _REPO,
-    "contracts/resilience/predicate-parity-nested.fixture.json",
+    "public/contracts/resilience/predicate-parity-nested.fixture.json",
   );
   return JSON.parse(readFileSync(path, "utf8")) as FixtureFileV2;
 }

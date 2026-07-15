@@ -618,7 +618,7 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
       parameters: model,
       returnType: { kind: "Intrinsic", name: "void" },
       // Provide the node.file.path that tryGetSpecPath reads.
-      node: { file: { path: "contracts/typespec/test.tsp" } },
+      node: { file: { path: "public/contracts/typespec/test.tsp" } },
     } as unknown as Operation;
 
     directUnitOps.push(op);
@@ -643,7 +643,7 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
       e.path.endsWith("WithSpecInput.g.cs"),
     );
     expect(csFile).toBeDefined();
-    expect(csFile!.content).toContain("contracts/typespec/test.tsp");
+    expect(csFile!.content).toContain("public/contracts/typespec/test.tsp");
   });
 
   it("op with @d2GrpcMethod + concrete models → proto + service + mapper emitted", async () => {
@@ -1762,9 +1762,9 @@ describe("resolveRepoRootFromProjectRoot_NestedAndHistorical", () => {
   it("on-disk nested projectRoot finds monorepo via D2.slnx + contracts/typespec", async () => {
     const { findRepoRoot } = await import("./repo-root.js");
     const realRepo = findRepoRoot(import.meta.url);
-    const nestedKc = join(realRepo, "contracts/typespec/key-custodian");
-    const nestedAudit = join(realRepo, "contracts/typespec/audit");
-    const historical = join(realRepo, "contracts/typespec");
+    const nestedKc = join(realRepo, "private/contracts/typespec/key-custodian");
+    const nestedAudit = join(realRepo, "private/contracts/typespec/audit");
+    const historical = join(realRepo, "public/contracts/typespec");
 
     expect(resolveRepoRootFromProjectRoot(nestedKc)).toBe(realRepo);
     expect(resolveRepoRootFromProjectRoot(nestedAudit)).toBe(realRepo);

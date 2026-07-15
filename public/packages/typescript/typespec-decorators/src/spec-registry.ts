@@ -6,47 +6,99 @@
 // Compile-time registry reader for scope, audience, error-code, and
 // error-category names.
 //
-// Reads contracts/auth-scopes/scopes.spec.json,
-// contracts/auth-audiences/audiences.spec.json,
-// contracts/auth-protocol-audiences/protocol-audiences.spec.json, every
-// contracts/*-error-codes/*.spec.json, and
-// contracts/error-category/error-category.spec.json at process startup.
+// Reads public/contracts/auth-scopes/scopes.spec.json,
+// public/contracts/auth-audiences/audiences.spec.json,
+// public/contracts/auth-protocol-audiences/protocol-audiences.spec.json, every
+// public/contracts/*-error-codes/*.spec.json, and
+// public/contracts/error-category/error-category.spec.json at process startup.
 // These are the single sources of truth for valid scope / audience /
 // protocol-audience / error-code / error-category values.
 //
 // Resolution uses import.meta.url to locate the repo root regardless of cwd
 // (mirrors tools/ts-codegen/src/lib/paths.ts).  The anchor is the compiled
-// dist/spec-registry.js file: dist/ → package/ → typescript/ → shared/ →
-// server/ → repo-root = 5 ".." steps.
+// dist/spec-registry.js file: dist/ → package/ → typescript/ → packages/ →
+// public/ → repo-root = 5 ".." steps.
 //
 // The narrow { name } / { code } / { wire } read-projections here are NOT
 // spec-mirror DTOs (rules.md §26.1 applies to full published shapes).  They are
 // membership-check projections of a single field from each spec — only the name
 // set is needed.
 
-import { readFileSync, readdirSync } from "fs";
+import { existsSync, readFileSync, readdirSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-// dist/ → typespec-decorators/ → typescript/ → shared/ → server/ → repo-root
+// dist/ → typespec-decorators/ → typescript/ → packages/ → public/ → repo-root
 const REPO_ROOT = resolve(here, "..", "..", "..", "..", "..");
 
+/** Public open contracts root (always present in dual-tree monorepo / export). */
+function publicContractsPath(...segments: string[]): string {
+  return resolve(REPO_ROOT, "public", "contracts", ...segments);
+}
+
+/**
+ * Private product contracts root (monorepo only). Absent on pure-public
+ * export trees — loaders must tolerate missing private/ and still succeed.
+ */
+function privateContractsPath(...segments: string[]): string {
+  return resolve(REPO_ROOT, "private", "contracts", ...segments);
+}
+
+/** @deprecated Prefer publicContractsPath; kept as alias for call-site clarity. */
 function contractsPath(...segments: string[]): string {
-  return resolve(REPO_ROOT, "contracts", ...segments);
+  return publicContractsPath(...segments);
+}
+
+/**
+ * Union names from a public contracts JSON file with an optional private
+ * sibling (same relative path under private/contracts). Private is additive —
+ * public remains the baseline open catalog.
+ */
+function loadUnionNamedSet(
+  relDir: string,
+  fileName: string,
+  arrayKey: string,
+  nameField: string,
+  shapeHint: string,
+): ReadonlySet<string> {
+  const names = new Set<string>();
+
+  const loadOne = (absPath: string, label: string): void => {
+    if (!existsSync(absPath)) return;
+    const raw = readFileSync(absPath, "utf8");
+    const spec = JSON.parse(raw) as Record<string, unknown>;
+    const arr = spec[arrayKey];
+    if (!Array.isArray(arr))
+      throw new Error(`${label} has unexpected shape — expected ${shapeHint}`);
+    for (const entry of arr) {
+      if (entry === null || typeof entry !== "object") continue;
+      const value = (entry as Record<string, unknown>)[nameField];
+      if (typeof value === "string") names.add(value);
+    }
+  };
+
+  loadOne(
+    publicContractsPath(relDir, fileName),
+    `public/contracts/${relDir}/${fileName}`,
+  );
+  loadOne(
+    privateContractsPath(relDir, fileName),
+    `private/contracts/${relDir}/${fileName}`,
+  );
+
+  if (names.size === 0) {
+    throw new Error(
+      `no entries loaded for ${relDir}/${fileName} under public|private contracts`,
+    );
+  }
+
+  return names;
 }
 
 // ----------------------------------------------------------------
 // Narrow read-projection types (membership check only — not full spec mirrors)
 // ----------------------------------------------------------------
-
-interface ScopesSpec {
-  readonly scopes: ReadonlyArray<{ readonly name: string }>;
-}
-
-interface AudiencesSpec {
-  readonly audiences: ReadonlyArray<{ readonly name: string }>;
-}
 
 interface ProtocolAudiencesSpec {
   readonly protocolAudiences: ReadonlyArray<{ readonly value: string }>;
@@ -70,37 +122,29 @@ let _protocolAudienceValues: ReadonlySet<string> | undefined;
 let _errorCodeNames: ReadonlySet<string> | undefined;
 let _errorCategoryNames: ReadonlySet<string> | undefined;
 
-/** Returns the set of declared scope names from scopes.spec.json. */
+/** Returns the set of declared scope names from scopes.spec.json (public∪private). */
 export function loadScopeNames(): ReadonlySet<string> {
   if (_scopeNames) return _scopeNames;
-  const raw = readFileSync(
-    contractsPath("auth-scopes", "scopes.spec.json"),
-    "utf8",
+  _scopeNames = loadUnionNamedSet(
+    "auth-scopes",
+    "scopes.spec.json",
+    "scopes",
+    "name",
+    "{ scopes: [{ name: string }] }",
   );
-  const spec = JSON.parse(raw) as ScopesSpec;
-  if (!Array.isArray((spec as { scopes?: unknown }).scopes))
-    throw new Error(
-      "contracts/auth-scopes/scopes.spec.json has unexpected shape — " +
-        "expected { scopes: [{ name: string }] }",
-    );
-  _scopeNames = new Set(spec.scopes.map((s) => s.name));
   return _scopeNames;
 }
 
-/** Returns the set of declared audience names from audiences.spec.json. */
+/** Returns the set of declared audience names from audiences.spec.json (public∪private). */
 export function loadAudienceNames(): ReadonlySet<string> {
   if (_audienceNames) return _audienceNames;
-  const raw = readFileSync(
-    contractsPath("auth-audiences", "audiences.spec.json"),
-    "utf8",
+  _audienceNames = loadUnionNamedSet(
+    "auth-audiences",
+    "audiences.spec.json",
+    "audiences",
+    "name",
+    "{ audiences: [{ name: string }] }",
   );
-  const spec = JSON.parse(raw) as AudiencesSpec;
-  if (!Array.isArray((spec as { audiences?: unknown }).audiences))
-    throw new Error(
-      "contracts/auth-audiences/audiences.spec.json has unexpected shape — " +
-        "expected { audiences: [{ name: string }] }",
-    );
-  _audienceNames = new Set(spec.audiences.map((a) => a.name));
   return _audienceNames;
 }
 
@@ -140,30 +184,41 @@ export function loadProtocolAudienceValues(): ReadonlySet<string> {
 export function loadErrorCodeNames(): ReadonlySet<string> {
   if (_errorCodeNames) return _errorCodeNames;
 
-  const contractsRoot = resolve(REPO_ROOT, "contracts");
   // The generic dir is exactly `error-codes`; per-domain dirs are
-  // `<domain>-error-codes`. Both forms end in `error-codes`.
-  const dirs = readdirSync(contractsRoot, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && e.name.endsWith("error-codes"))
-    .map((e) => e.name);
-
+  // `<domain>-error-codes`. Both forms end in `error-codes`. Scan public and
+  // (when present) private contracts trees so monorepo product codes validate.
   const codes = new Set<string>();
-  for (const dir of dirs) {
-    const files = readdirSync(contractsPath(dir)).filter((f) =>
-      f.endsWith(".spec.json"),
-    );
+  const roots = [
+    resolve(REPO_ROOT, "public", "contracts"),
+    resolve(REPO_ROOT, "private", "contracts"),
+  ];
 
-    for (const file of files) {
-      const raw = readFileSync(contractsPath(dir, file), "utf8");
-      const spec = JSON.parse(raw) as ErrorCodesSpec;
+  for (const contractsRoot of roots) {
+    if (!existsSync(contractsRoot)) continue;
 
-      if (!Array.isArray((spec as { errorCodes?: unknown }).errorCodes))
-        throw new Error(
-          `contracts/${dir}/${file} has unexpected shape — ` +
-            "expected { errorCodes: [{ code: string }] }",
-        );
+    const dirs = readdirSync(contractsRoot, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && e.name.endsWith("error-codes"))
+      .map((e) => e.name);
 
-      for (const entry of spec.errorCodes) codes.add(entry.code);
+    for (const dir of dirs) {
+      const dirPath = resolve(contractsRoot, dir);
+      const files = readdirSync(dirPath).filter((f) =>
+        f.endsWith(".spec.json"),
+      );
+
+      for (const file of files) {
+        const label = `${contractsRoot.includes("private") ? "private" : "public"}/contracts/${dir}/${file}`;
+        const raw = readFileSync(resolve(dirPath, file), "utf8");
+        const spec = JSON.parse(raw) as ErrorCodesSpec;
+
+        if (!Array.isArray((spec as { errorCodes?: unknown }).errorCodes))
+          throw new Error(
+            `${label} has unexpected shape — ` +
+              "expected { errorCodes: [{ code: string }] }",
+          );
+
+        for (const entry of spec.errorCodes) codes.add(entry.code);
+      }
     }
   }
 

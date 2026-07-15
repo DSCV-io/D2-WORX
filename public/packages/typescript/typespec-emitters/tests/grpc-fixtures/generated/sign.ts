@@ -51,10 +51,7 @@ function createBaseSignFixtureRequest(): SignFixtureRequest {
 }
 
 export const SignFixtureRequest: MessageFns<SignFixtureRequest> = {
-  encode(
-    message: SignFixtureRequest,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
+  encode(message: SignFixtureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.kid !== "") {
       writer.uint32(10).string(message.kid);
     }
@@ -64,12 +61,8 @@ export const SignFixtureRequest: MessageFns<SignFixtureRequest> = {
     return writer;
   },
 
-  decode(
-    input: BinaryReader | Uint8Array,
-    length?: number,
-  ): SignFixtureRequest {
-    const reader =
-      input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(input: BinaryReader | Uint8Array, length?: number): SignFixtureRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSignFixtureRequest();
     while (reader.pos < end) {
@@ -103,9 +96,7 @@ export const SignFixtureRequest: MessageFns<SignFixtureRequest> = {
   fromJSON(object: any): SignFixtureRequest {
     return {
       kid: isSet(object.kid) ? globalThis.String(object.kid) : "",
-      payload: isSet(object.payload)
-        ? bytesFromBase64(object.payload)
-        : new Uint8Array(0),
+      payload: isSet(object.payload) ? bytesFromBase64(object.payload) : new Uint8Array(0),
     };
   },
 
@@ -136,10 +127,7 @@ function createBaseSignFixtureResponse(): SignFixtureResponse {
 }
 
 export const SignFixtureResponse: MessageFns<SignFixtureResponse> = {
-  encode(
-    message: SignFixtureResponse,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
+  encode(message: SignFixtureResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
@@ -149,12 +137,8 @@ export const SignFixtureResponse: MessageFns<SignFixtureResponse> = {
     return writer;
   },
 
-  decode(
-    input: BinaryReader | Uint8Array,
-    length?: number,
-  ): SignFixtureResponse {
-    const reader =
-      input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(input: BinaryReader | Uint8Array, length?: number): SignFixtureResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSignFixtureResponse();
     while (reader.pos < end) {
@@ -187,12 +171,8 @@ export const SignFixtureResponse: MessageFns<SignFixtureResponse> = {
 
   fromJSON(object: any): SignFixtureResponse {
     return {
-      result: isSet(object.result)
-        ? D2ResultProto.fromJSON(object.result)
-        : undefined,
-      data: isSet(object.data)
-        ? SignFixtureOutput.fromJSON(object.data)
-        : undefined,
+      result: isSet(object.result) ? D2ResultProto.fromJSON(object.result) : undefined,
+      data: isSet(object.data) ? SignFixtureOutput.fromJSON(object.data) : undefined,
     };
   },
 
@@ -212,14 +192,12 @@ export const SignFixtureResponse: MessageFns<SignFixtureResponse> = {
   },
   fromPartial(object: DeepPartial<SignFixtureResponse>): SignFixtureResponse {
     const message = createBaseSignFixtureResponse();
-    message.result =
-      object.result !== undefined && object.result !== null
-        ? D2ResultProto.fromPartial(object.result)
-        : undefined;
-    message.data =
-      object.data !== undefined && object.data !== null
-        ? SignFixtureOutput.fromPartial(object.data)
-        : undefined;
+    message.result = (object.result !== undefined && object.result !== null)
+      ? D2ResultProto.fromPartial(object.result)
+      : undefined;
+    message.data = (object.data !== undefined && object.data !== null)
+      ? SignFixtureOutput.fromPartial(object.data)
+      : undefined;
     return message;
   },
 };
@@ -229,10 +207,7 @@ function createBaseSignFixtureOutput(): SignFixtureOutput {
 }
 
 export const SignFixtureOutput: MessageFns<SignFixtureOutput> = {
-  encode(
-    message: SignFixtureOutput,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
+  encode(message: SignFixtureOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.signature !== "") {
       writer.uint32(10).string(message.signature);
     }
@@ -240,8 +215,7 @@ export const SignFixtureOutput: MessageFns<SignFixtureOutput> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): SignFixtureOutput {
-    const reader =
-      input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSignFixtureOutput();
     while (reader.pos < end) {
@@ -265,11 +239,7 @@ export const SignFixtureOutput: MessageFns<SignFixtureOutput> = {
   },
 
   fromJSON(object: any): SignFixtureOutput {
-    return {
-      signature: isSet(object.signature)
-        ? globalThis.String(object.signature)
-        : "",
-    };
+    return { signature: isSet(object.signature) ? globalThis.String(object.signature) : "" };
   },
 
   toJSON(message: SignFixtureOutput): unknown {
@@ -296,14 +266,10 @@ export const SignFixtureSignerService = {
     path: "/d2.signfixtures.v2alpha.SignFixtureSigner/SignFixture",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: SignFixtureRequest): Buffer =>
-      Buffer.from(SignFixtureRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): SignFixtureRequest =>
-      SignFixtureRequest.decode(value),
-    responseSerialize: (value: SignFixtureResponse): Buffer =>
-      Buffer.from(SignFixtureResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): SignFixtureResponse =>
-      SignFixtureResponse.decode(value),
+    requestSerialize: (value: SignFixtureRequest): Buffer => Buffer.from(SignFixtureRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): SignFixtureRequest => SignFixtureRequest.decode(value),
+    responseSerialize: (value: SignFixtureResponse): Buffer => Buffer.from(SignFixtureResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SignFixtureResponse => SignFixtureResponse.decode(value),
   },
 } as const;
 
@@ -314,27 +280,18 @@ export interface SignFixtureSignerServer extends UntypedServiceImplementation {
 export interface SignFixtureSignerClient extends Client {
   signFixture(
     request: SignFixtureRequest,
-    callback: (
-      error: ServiceError | null,
-      response: SignFixtureResponse,
-    ) => void,
+    callback: (error: ServiceError | null, response: SignFixtureResponse) => void,
   ): ClientUnaryCall;
   signFixture(
     request: SignFixtureRequest,
     metadata: Metadata,
-    callback: (
-      error: ServiceError | null,
-      response: SignFixtureResponse,
-    ) => void,
+    callback: (error: ServiceError | null, response: SignFixtureResponse) => void,
   ): ClientUnaryCall;
   signFixture(
     request: SignFixtureRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (
-      error: ServiceError | null,
-      response: SignFixtureResponse,
-    ) => void,
+    callback: (error: ServiceError | null, response: SignFixtureResponse) => void,
   ): ClientUnaryCall;
 }
 
@@ -342,11 +299,7 @@ export const SignFixtureSignerClient = makeGenericClientConstructor(
   SignFixtureSignerService,
   "d2.signfixtures.v2alpha.SignFixtureSigner",
 ) as unknown as {
-  new (
-    address: string,
-    credentials: ChannelCredentials,
-    options?: Partial<ClientOptions>,
-  ): SignFixtureSignerClient;
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): SignFixtureSignerClient;
   service: typeof SignFixtureSignerService;
   serviceName: string;
 };
@@ -376,28 +329,14 @@ function base64FromBytes(arr: Uint8Array): string {
   }
 }
 
-type Builtin =
-  | Date
-  | Function
-  | Uint8Array
-  | string
-  | number
-  | boolean
-  | undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends { $case: string }
-        ? { [K in keyof Omit<T, "$case">]?: DeepPartial<T[K]> } & {
-            $case: T["$case"];
-          }
-        : T extends {}
-          ? { [K in keyof T]?: DeepPartial<T[K]> }
-          : Partial<T>;
+export type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends { $case: string } ? { [K in keyof Omit<T, "$case">]?: DeepPartial<T[K]> } & { $case: T["$case"] }
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

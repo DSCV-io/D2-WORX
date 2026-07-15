@@ -132,7 +132,7 @@ function buildSignFixtureOutputFields(): readonly FieldInfo[] {
   ];
 }
 
-const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
+const SOURCE = "public/contracts/typespec/fixtures/sign-shaped.tsp";
 
 // ---------------------------------------------------------------------------
 // byteParity_SignProto
@@ -476,7 +476,7 @@ describe("byteParity_SignFixtureClientKeys_CommittedFixtureIdentical", () => {
 // ---------------------------------------------------------------------------
 
 describe("byteParity_WireVersionConstant_CommittedFixtureIdentical", () => {
-  const WIRE_SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
+  const WIRE_SOURCE = "public/contracts/typespec/fixtures/sign-shaped.tsp";
   const WIRE_NS = "D2.Services.Protos.SignFixtures.V2Alpha";
   const channel = parseChannel("d2.signfixtures.v2alpha")!;
 
@@ -536,7 +536,7 @@ describe("byteParity_WireIdentityManifest_CommittedFixtureIdentical", () => {
 // needs the host composition + the clients project to become gRPC-aware).
 // ---------------------------------------------------------------------------
 
-const KC_SOURCE = "contracts/typespec/key-custodian/key-custodian.tsp";
+const KC_SOURCE = "private/contracts/typespec/key-custodian/key-custodian.tsp";
 const KC_PROTO_CS_NS = "D2.Services.Protos.KeyCustodian.V2Alpha";
 /** Production thin-service + mapper namespace (tspconfig grpc-service-namespace). */
 const KC_GRPC_NS = "DcsvIo.D2.Private.Edge.Api.Grpc.KeyCustodian";

@@ -70,11 +70,12 @@ const D2EmitterTestLibrary = createTestLibrary({
 const CLIENTS_NS =
   "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated";
 const PROTO_NS = "D2.Services.Protos.PredicateFixtures.V1";
-const SPEC = "contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
+const SPEC =
+  "public/contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
 
 const FIXTURE_DIR = join(
   findRepoRoot(import.meta.url),
-  "server",
+  "private",
   "services",
   "edge",
   "tests",
@@ -111,6 +112,7 @@ beforeAll(async () => {
   const tsp = readFileSync(
     join(
       findRepoRoot(import.meta.url),
+      "public",
       "contracts",
       "typespec",
       "fixtures",

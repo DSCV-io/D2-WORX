@@ -49,7 +49,7 @@ const D2EmitterTestLibrary = createTestLibrary({
 
 const NS = "D2.Test.Generated";
 const DTO_NS = "D2.Test.Generated";
-const SPEC = "contracts/typespec/fixtures/test.tsp";
+const SPEC = "public/contracts/typespec/fixtures/test.tsp";
 
 // ---------------------------------------------------------------------------
 // Helper: compile inline .tsp and return the program + the named output model.

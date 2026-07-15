@@ -38,7 +38,7 @@ import type { FieldInfo } from "../src/lib/model-walk.js";
 // ---------------------------------------------------------------------------
 
 const NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecSse.Generated";
-const SOURCE = "contracts/typespec/fixtures/server-push-shaped.tsp";
+const SOURCE = "public/contracts/typespec/fixtures/server-push-shaped.tsp";
 
 const genDir = join(
   findRepoRoot(import.meta.url),

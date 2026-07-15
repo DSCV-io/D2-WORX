@@ -3,11 +3,26 @@
 // Copyright (c) DCSV
 // -----------------------------------------------------------------------
 
-import { webcrypto } from "node:crypto";
-
+// Use globalThis.crypto (Web Crypto) so this package is safe in Node, Vite SSR,
+// and browser bundles. Avoid `node:crypto` imports — they break client bundles.
 const _HEX: readonly string[] = Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, "0"),
 );
+
+function getRandomValues(bytes: Uint8Array): Uint8Array {
+  const cryptoApi = globalThis.crypto;
+
+  if (
+    cryptoApi === undefined ||
+    typeof cryptoApi.getRandomValues !== "function"
+  ) {
+    throw new Error(
+      "uuidv7: Web Crypto API unavailable (globalThis.crypto.getRandomValues)",
+    );
+  }
+
+  return cryptoApi.getRandomValues(bytes);
+}
 
 /**
  * Mints a UUIDv7 (RFC 9562) — a 48-bit big-endian Unix-ms timestamp prefix +
@@ -20,7 +35,7 @@ const _HEX: readonly string[] = Array.from({ length: 256 }, (_v, i) =>
  * @returns A canonical `8-4-4-4-12` UUIDv7 string.
  */
 export function uuidv7(now: () => number = Date.now): string {
-  const bytes = webcrypto.getRandomValues(new Uint8Array(16));
+  const bytes = getRandomValues(new Uint8Array(16));
   const ms = now();
 
   bytes[0] = Math.floor(ms / 2 ** 40) & 0xff;

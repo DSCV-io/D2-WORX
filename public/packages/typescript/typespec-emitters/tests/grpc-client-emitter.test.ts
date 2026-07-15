@@ -28,7 +28,7 @@ import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 // Fixture builders
 // ---------------------------------------------------------------------------
 
-const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
+const SOURCE = "public/contracts/typespec/fixtures/sign-shaped.tsp";
 const CLIENTS_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.Client";
 const PROTO_NS = "D2.Services.Protos.Sample.V1";
 
@@ -482,7 +482,8 @@ describe("emitGrpcClient_DiExtensionFile", () => {
   it("contains namespace before using directives", () => {
     const content = getDi();
     const nsIdx = content.indexOf(`namespace ${CLIENTS_NS};`);
-    const usingIdx = content.indexOf("using D2");
+    // Usings may be DcsvIo.D2.* (identity rebrand) or other namespaces.
+    const usingIdx = content.search(/^using\s/m);
     expect(nsIdx).toBeGreaterThan(-1);
     expect(usingIdx).toBeGreaterThan(-1);
     expect(nsIdx).toBeLessThan(usingIdx);

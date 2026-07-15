@@ -52,22 +52,15 @@ function createBasePlaceOrderFixtureRequest(): PlaceOrderFixtureRequest {
 }
 
 export const PlaceOrderFixtureRequest: MessageFns<PlaceOrderFixtureRequest> = {
-  encode(
-    message: PlaceOrderFixtureRequest,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
+  encode(message: PlaceOrderFixtureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.customerId !== "") {
       writer.uint32(10).string(message.customerId);
     }
     return writer;
   },
 
-  decode(
-    input: BinaryReader | Uint8Array,
-    length?: number,
-  ): PlaceOrderFixtureRequest {
-    const reader =
-      input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(input: BinaryReader | Uint8Array, length?: number): PlaceOrderFixtureRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePlaceOrderFixtureRequest();
     while (reader.pos < end) {
@@ -95,8 +88,8 @@ export const PlaceOrderFixtureRequest: MessageFns<PlaceOrderFixtureRequest> = {
       customerId: isSet(object.customerId)
         ? globalThis.String(object.customerId)
         : isSet(object.customer_id)
-          ? globalThis.String(object.customer_id)
-          : "",
+        ? globalThis.String(object.customer_id)
+        : "",
     };
   },
 
@@ -108,14 +101,10 @@ export const PlaceOrderFixtureRequest: MessageFns<PlaceOrderFixtureRequest> = {
     return obj;
   },
 
-  create(
-    base?: DeepPartial<PlaceOrderFixtureRequest>,
-  ): PlaceOrderFixtureRequest {
+  create(base?: DeepPartial<PlaceOrderFixtureRequest>): PlaceOrderFixtureRequest {
     return PlaceOrderFixtureRequest.fromPartial(base ?? {});
   },
-  fromPartial(
-    object: DeepPartial<PlaceOrderFixtureRequest>,
-  ): PlaceOrderFixtureRequest {
+  fromPartial(object: DeepPartial<PlaceOrderFixtureRequest>): PlaceOrderFixtureRequest {
     const message = createBasePlaceOrderFixtureRequest();
     message.customerId = object.customerId ?? "";
     return message;
@@ -126,115 +115,88 @@ function createBasePlaceOrderFixtureResponse(): PlaceOrderFixtureResponse {
   return { result: undefined, data: undefined };
 }
 
-export const PlaceOrderFixtureResponse: MessageFns<PlaceOrderFixtureResponse> =
-  {
-    encode(
-      message: PlaceOrderFixtureResponse,
-      writer: BinaryWriter = new BinaryWriter(),
-    ): BinaryWriter {
-      if (message.result !== undefined) {
-        D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
-      }
-      if (message.data !== undefined) {
-        PlaceOrderFixtureOutput.encode(
-          message.data,
-          writer.uint32(18).fork(),
-        ).join();
-      }
-      return writer;
-    },
+export const PlaceOrderFixtureResponse: MessageFns<PlaceOrderFixtureResponse> = {
+  encode(message: PlaceOrderFixtureResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.result !== undefined) {
+      D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
+    }
+    if (message.data !== undefined) {
+      PlaceOrderFixtureOutput.encode(message.data, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
 
-    decode(
-      input: BinaryReader | Uint8Array,
-      length?: number,
-    ): PlaceOrderFixtureResponse {
-      const reader =
-        input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === undefined ? reader.len : reader.pos + length;
-      const message = createBasePlaceOrderFixtureResponse();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1: {
-            if (tag !== 10) {
-              break;
-            }
-
-            message.result = D2ResultProto.decode(reader, reader.uint32());
-            continue;
+  decode(input: BinaryReader | Uint8Array, length?: number): PlaceOrderFixtureResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePlaceOrderFixtureResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
           }
-          case 2: {
-            if (tag !== 18) {
-              break;
-            }
 
-            message.data = PlaceOrderFixtureOutput.decode(
-              reader,
-              reader.uint32(),
-            );
-            continue;
+          message.result = D2ResultProto.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
           }
+
+          message.data = PlaceOrderFixtureOutput.decode(reader, reader.uint32());
+          continue;
         }
-        if ((tag & 7) === 4 || tag === 0) {
-          break;
-        }
-        reader.skip(tag & 7);
       }
-      return message;
-    },
-
-    fromJSON(object: any): PlaceOrderFixtureResponse {
-      return {
-        result: isSet(object.result)
-          ? D2ResultProto.fromJSON(object.result)
-          : undefined,
-        data: isSet(object.data)
-          ? PlaceOrderFixtureOutput.fromJSON(object.data)
-          : undefined,
-      };
-    },
-
-    toJSON(message: PlaceOrderFixtureResponse): unknown {
-      const obj: any = {};
-      if (message.result !== undefined) {
-        obj.result = D2ResultProto.toJSON(message.result);
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
       }
-      if (message.data !== undefined) {
-        obj.data = PlaceOrderFixtureOutput.toJSON(message.data);
-      }
-      return obj;
-    },
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
 
-    create(
-      base?: DeepPartial<PlaceOrderFixtureResponse>,
-    ): PlaceOrderFixtureResponse {
-      return PlaceOrderFixtureResponse.fromPartial(base ?? {});
-    },
-    fromPartial(
-      object: DeepPartial<PlaceOrderFixtureResponse>,
-    ): PlaceOrderFixtureResponse {
-      const message = createBasePlaceOrderFixtureResponse();
-      message.result =
-        object.result !== undefined && object.result !== null
-          ? D2ResultProto.fromPartial(object.result)
-          : undefined;
-      message.data =
-        object.data !== undefined && object.data !== null
-          ? PlaceOrderFixtureOutput.fromPartial(object.data)
-          : undefined;
-      return message;
-    },
-  };
+  fromJSON(object: any): PlaceOrderFixtureResponse {
+    return {
+      result: isSet(object.result) ? D2ResultProto.fromJSON(object.result) : undefined,
+      data: isSet(object.data) ? PlaceOrderFixtureOutput.fromJSON(object.data) : undefined,
+    };
+  },
+
+  toJSON(message: PlaceOrderFixtureResponse): unknown {
+    const obj: any = {};
+    if (message.result !== undefined) {
+      obj.result = D2ResultProto.toJSON(message.result);
+    }
+    if (message.data !== undefined) {
+      obj.data = PlaceOrderFixtureOutput.toJSON(message.data);
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<PlaceOrderFixtureResponse>): PlaceOrderFixtureResponse {
+    return PlaceOrderFixtureResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<PlaceOrderFixtureResponse>): PlaceOrderFixtureResponse {
+    const message = createBasePlaceOrderFixtureResponse();
+    message.result = (object.result !== undefined && object.result !== null)
+      ? D2ResultProto.fromPartial(object.result)
+      : undefined;
+    message.data = (object.data !== undefined && object.data !== null)
+      ? PlaceOrderFixtureOutput.fromPartial(object.data)
+      : undefined;
+    return message;
+  },
+};
 
 function createBasePlaceOrderFixtureOutput(): PlaceOrderFixtureOutput {
   return { orderCode: "", itemStatuses: [], partial: false };
 }
 
 export const PlaceOrderFixtureOutput: MessageFns<PlaceOrderFixtureOutput> = {
-  encode(
-    message: PlaceOrderFixtureOutput,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
+  encode(message: PlaceOrderFixtureOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.orderCode !== "") {
       writer.uint32(10).string(message.orderCode);
     }
@@ -247,12 +209,8 @@ export const PlaceOrderFixtureOutput: MessageFns<PlaceOrderFixtureOutput> = {
     return writer;
   },
 
-  decode(
-    input: BinaryReader | Uint8Array,
-    length?: number,
-  ): PlaceOrderFixtureOutput {
-    const reader =
-      input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(input: BinaryReader | Uint8Array, length?: number): PlaceOrderFixtureOutput {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePlaceOrderFixtureOutput();
     while (reader.pos < end) {
@@ -296,16 +254,14 @@ export const PlaceOrderFixtureOutput: MessageFns<PlaceOrderFixtureOutput> = {
       orderCode: isSet(object.orderCode)
         ? globalThis.String(object.orderCode)
         : isSet(object.order_code)
-          ? globalThis.String(object.order_code)
-          : "",
+        ? globalThis.String(object.order_code)
+        : "",
       itemStatuses: globalThis.Array.isArray(object?.itemStatuses)
         ? object.itemStatuses.map((e: any) => globalThis.String(e))
         : globalThis.Array.isArray(object?.item_statuses)
-          ? object.item_statuses.map((e: any) => globalThis.String(e))
-          : [],
-      partial: isSet(object.partial)
-        ? globalThis.Boolean(object.partial)
-        : false,
+        ? object.item_statuses.map((e: any) => globalThis.String(e))
+        : [],
+      partial: isSet(object.partial) ? globalThis.Boolean(object.partial) : false,
     };
   },
 
@@ -326,9 +282,7 @@ export const PlaceOrderFixtureOutput: MessageFns<PlaceOrderFixtureOutput> = {
   create(base?: DeepPartial<PlaceOrderFixtureOutput>): PlaceOrderFixtureOutput {
     return PlaceOrderFixtureOutput.fromPartial(base ?? {});
   },
-  fromPartial(
-    object: DeepPartial<PlaceOrderFixtureOutput>,
-  ): PlaceOrderFixtureOutput {
+  fromPartial(object: DeepPartial<PlaceOrderFixtureOutput>): PlaceOrderFixtureOutput {
     const message = createBasePlaceOrderFixtureOutput();
     message.orderCode = object.orderCode ?? "";
     message.itemStatuses = object.itemStatuses?.map((e) => e) || [];
@@ -337,8 +291,7 @@ export const PlaceOrderFixtureOutput: MessageFns<PlaceOrderFixtureOutput> = {
   },
 };
 
-export type PredicateFixturesOrdersService =
-  typeof PredicateFixturesOrdersService;
+export type PredicateFixturesOrdersService = typeof PredicateFixturesOrdersService;
 export const PredicateFixturesOrdersService = {
   placeOrderFixture: {
     path: "/d2.predicatefixtures.v1.PredicateFixturesOrders/PlaceOrderFixture",
@@ -346,46 +299,32 @@ export const PredicateFixturesOrdersService = {
     responseStream: false,
     requestSerialize: (value: PlaceOrderFixtureRequest): Buffer =>
       Buffer.from(PlaceOrderFixtureRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): PlaceOrderFixtureRequest =>
-      PlaceOrderFixtureRequest.decode(value),
+    requestDeserialize: (value: Buffer): PlaceOrderFixtureRequest => PlaceOrderFixtureRequest.decode(value),
     responseSerialize: (value: PlaceOrderFixtureResponse): Buffer =>
       Buffer.from(PlaceOrderFixtureResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): PlaceOrderFixtureResponse =>
-      PlaceOrderFixtureResponse.decode(value),
+    responseDeserialize: (value: Buffer): PlaceOrderFixtureResponse => PlaceOrderFixtureResponse.decode(value),
   },
 } as const;
 
 export interface PredicateFixturesOrdersServer extends UntypedServiceImplementation {
-  placeOrderFixture: handleUnaryCall<
-    PlaceOrderFixtureRequest,
-    PlaceOrderFixtureResponse
-  >;
+  placeOrderFixture: handleUnaryCall<PlaceOrderFixtureRequest, PlaceOrderFixtureResponse>;
 }
 
 export interface PredicateFixturesOrdersClient extends Client {
   placeOrderFixture(
     request: PlaceOrderFixtureRequest,
-    callback: (
-      error: ServiceError | null,
-      response: PlaceOrderFixtureResponse,
-    ) => void,
+    callback: (error: ServiceError | null, response: PlaceOrderFixtureResponse) => void,
   ): ClientUnaryCall;
   placeOrderFixture(
     request: PlaceOrderFixtureRequest,
     metadata: Metadata,
-    callback: (
-      error: ServiceError | null,
-      response: PlaceOrderFixtureResponse,
-    ) => void,
+    callback: (error: ServiceError | null, response: PlaceOrderFixtureResponse) => void,
   ): ClientUnaryCall;
   placeOrderFixture(
     request: PlaceOrderFixtureRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (
-      error: ServiceError | null,
-      response: PlaceOrderFixtureResponse,
-    ) => void,
+    callback: (error: ServiceError | null, response: PlaceOrderFixtureResponse) => void,
   ): ClientUnaryCall;
 }
 
@@ -402,28 +341,14 @@ export const PredicateFixturesOrdersClient = makeGenericClientConstructor(
   serviceName: string;
 };
 
-type Builtin =
-  | Date
-  | Function
-  | Uint8Array
-  | string
-  | number
-  | boolean
-  | undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends { $case: string }
-        ? { [K in keyof Omit<T, "$case">]?: DeepPartial<T[K]> } & {
-            $case: T["$case"];
-          }
-        : T extends {}
-          ? { [K in keyof T]?: DeepPartial<T[K]> }
-          : Partial<T>;
+export type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends { $case: string } ? { [K in keyof Omit<T, "$case">]?: DeepPartial<T[K]> } & { $case: T["$case"] }
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

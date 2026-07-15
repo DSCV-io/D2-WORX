@@ -88,8 +88,9 @@ const _KC_PRED_GEN = join(
   _REPO,
   "private/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpcPredicate/Generated",
 );
-const PRED_SRC = "contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
-const ENUM_SRC = "contracts/typespec/fixtures/enum-shaped.tsp";
+const PRED_SRC =
+  "public/contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
+const ENUM_SRC = "public/contracts/typespec/fixtures/enum-shaped.tsp";
 
 // ---------------------------------------------------------------------------
 // Field + op fixtures (mirror the committed-fixture op shapes)
@@ -161,7 +162,7 @@ function signGrpcOp(): TsGrpcClientOp {
     opName: "signFixture",
     grpcService: "SignFixtureSigner",
     grpcMethod: "SignFixture",
-    sourceSpec: "contracts/typespec/fixtures/sign-shaped.tsp",
+    sourceSpec: "public/contracts/typespec/fixtures/sign-shaped.tsp",
     requestModelName: "SignFixtureInput",
     requestFields: [
       field("kid", "string", "string", "string"),
@@ -394,7 +395,15 @@ function runRealBufTsProto(): string {
   // The d2_result import from the real contracts/protos.
   const repoRoot = _REPO;
   cpSync(
-    join(repoRoot, "contracts", "protos", "common", "v1", "d2_result.proto"),
+    join(
+      repoRoot,
+      "public",
+      "contracts",
+      "protos",
+      "common",
+      "v1",
+      "d2_result.proto",
+    ),
     join(protoStage, "common", "v1", "d2_result.proto"),
   );
   cpSync(
@@ -419,7 +428,13 @@ function runRealBufTsProto(): string {
     ].join("\n"),
   );
   // Run buf from the @dcsv-io/d2-protos package dir so `pnpm exec protoc-gen-ts_proto` resolves.
-  const protosDir = join(repoRoot, "server", "shared", "typescript", "protos");
+  const protosDir = join(
+    repoRoot,
+    "public",
+    "packages",
+    "typescript",
+    "protos",
+  );
   execFileSync(
     "pnpm",
     ["exec", "buf", "generate", protoStage, "--template", genConfig],
@@ -469,7 +484,15 @@ function runRealBufTsProtoSign(): string {
   // The d2_result import from the real contracts/protos.
   const repoRoot = _REPO;
   cpSync(
-    join(repoRoot, "contracts", "protos", "common", "v1", "d2_result.proto"),
+    join(
+      repoRoot,
+      "public",
+      "contracts",
+      "protos",
+      "common",
+      "v1",
+      "d2_result.proto",
+    ),
     join(protoStage, "common", "v1", "d2_result.proto"),
   );
   cpSync(
@@ -494,7 +517,13 @@ function runRealBufTsProtoSign(): string {
     ].join("\n"),
   );
   // Run buf from the @dcsv-io/d2-protos package dir so `pnpm exec protoc-gen-ts_proto` resolves.
-  const protosDir = join(repoRoot, "server", "shared", "typescript", "protos");
+  const protosDir = join(
+    repoRoot,
+    "public",
+    "packages",
+    "typescript",
+    "protos",
+  );
   execFileSync(
     "pnpm",
     ["exec", "buf", "generate", protoStage, "--template", genConfig],
@@ -668,7 +697,7 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
       opName: "getJwks",
       grpcService: "SignFixtureSigner",
       grpcMethod: "GetJwks",
-      sourceSpec: "contracts/typespec/fixtures/sign-shaped.tsp",
+      sourceSpec: "public/contracts/typespec/fixtures/sign-shaped.tsp",
       requestModelName: "GetJwksInput",
       requestFields: [],
       responseModelName: "GetJwksOutput",
@@ -686,7 +715,7 @@ describe("emitTsGrpcClient_FileNameAndShape", () => {
       opName: "revoke",
       grpcService: "SignFixtureSigner",
       grpcMethod: "Revoke",
-      sourceSpec: "contracts/typespec/fixtures/sign-shaped.tsp",
+      sourceSpec: "public/contracts/typespec/fixtures/sign-shaped.tsp",
       requestModelName: "RevokeInput",
       requestFields: [field("kid", "string", "string", "string")],
       responseModelName: "RevokeOutput",
@@ -1138,7 +1167,7 @@ interface ParityCase {
 function loadParityFixture(): readonly ParityCase[] {
   const path = join(
     _REPO,
-    "contracts/resilience/predicate-parity.fixture.json",
+    "public/contracts/resilience/predicate-parity.fixture.json",
   );
   return (JSON.parse(readFileSync(path, "utf8")) as { cases: ParityCase[] })
     .cases;

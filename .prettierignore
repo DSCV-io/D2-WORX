@@ -11,6 +11,11 @@
 # Codegen-emitted source — formatting is the emitter's responsibility.
 **/*.g.ts
 **/*.g.json
+public/packages/typescript/protos/src/generated/**
+public/packages/typescript/protos/gen/**
+public/packages/typescript/typespec-emitters/tests/grpc-fixtures/generated/**
+private/services/web/src/lib/paraglide/**
+# Legacy pre-reorg paths (kept until fully scrubbed from tooling).
 server/shared/typescript/protos/src/generated/**
 server/shared/typescript/typespec-emitters/tests/grpc-fixtures/generated/**
 server/web/src/lib/paraglide/**
@@ -20,6 +25,7 @@ server/web/src/lib/paraglide/**
 # WriteIndented=true; the parity test reads the JSON regardless of layout, so
 # pretty-print equivalence with Prettier's print-width / array-collapse rules
 # is intentionally not enforced. Format is the .NET emitter's responsibility.
+public/packages/typescript/contract-tests/fixtures/**
 server/shared/typescript/contract-tests/fixtures/**
 
 # Frozen v1 snapshot.

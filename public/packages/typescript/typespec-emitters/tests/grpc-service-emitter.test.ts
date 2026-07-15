@@ -26,7 +26,7 @@ import type { GrpcDelegationTarget } from "../src/lib/grpc-service-emitter.js";
 const PROTO_NS = "D2.Services.Protos.Sample.V1";
 const IMPL_NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated";
 const DTO_NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated";
-const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
+const SOURCE = "public/contracts/typespec/fixtures/sign-shaped.tsp";
 
 function makeStringField(name: string): FieldInfo {
   return {

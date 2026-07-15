@@ -24,6 +24,9 @@ export interface D2EnvLoadOptions {
 }
 
 // @public
+export function loadEnv(opts?: D2EnvLoadOptions): Record<string, string>;
+
+// @public
 export interface ServiceDefaultsHandle {
     // (undocumented)
     readonly logger: ILogger;

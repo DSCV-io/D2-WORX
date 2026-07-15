@@ -17,7 +17,7 @@ import type {
 } from "../src/lib/model-walk.js";
 
 const TEST_NAMESPACE = "D2.Test.Application";
-const TEST_SPEC = "contracts/typespec/test.tsp";
+const TEST_SPEC = "public/contracts/typespec/test.tsp";
 
 // ---------------------------------------------------------------------------
 // Helpers

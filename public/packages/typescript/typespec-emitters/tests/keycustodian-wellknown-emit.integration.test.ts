@@ -108,6 +108,7 @@ describe("keyCustodianWellKnown_RealTspCompile", () => {
     const tsp = readFileSync(
       join(
         _REPO,
+        "private",
         "contracts",
         "typespec",
         "key-custodian",
@@ -196,6 +197,7 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
     const tsp = readFileSync(
       join(
         _REPO,
+        "private",
         "contracts",
         "typespec",
         "key-custodian",
@@ -218,7 +220,7 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
     {
       emitted: "GetOidcConfigurationOutput.g.cs",
       committed: [
-        "server",
+        "private",
         "services",
         "edge",
         "key-custodian",
@@ -230,7 +232,7 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
     {
       emitted: "GetOidcConfigurationInput.g.cs",
       committed: [
-        "server",
+        "private",
         "services",
         "edge",
         "key-custodian",
@@ -242,7 +244,7 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
     {
       emitted: "GetJwksRouteRegistration.g.cs",
       committed: [
-        "server",
+        "private",
         "services",
         "edge",
         "api",
@@ -254,7 +256,7 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
     {
       emitted: "GetOidcConfigurationRouteRegistration.g.cs",
       committed: [
-        "server",
+        "private",
         "services",
         "edge",
         "api",
@@ -266,7 +268,7 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
     {
       emitted: "IGetOidcConfigurationHandler.g.cs",
       committed: [
-        "server",
+        "private",
         "services",
         "edge",
         "key-custodian",
@@ -300,7 +302,7 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
     expect(emitted).toBeDefined();
     const committed = stripSpecBanner(
       readCommitted(
-        "server",
+        "private",
         "services",
         "edge",
         "api",
@@ -325,7 +327,7 @@ describe("keyCustodianWellKnown_ByteGate_CommittedArtifactsIdentical", () => {
     expect(emitted).toBeDefined();
     const committed = stripSpecBanner(
       readCommitted(
-        "server",
+        "private",
         "services",
         "edge",
         "api",

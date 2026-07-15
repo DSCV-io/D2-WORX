@@ -12,7 +12,7 @@ import {
 } from "../src/lib/bridge-emitter.js";
 import type { BridgeEmitInput } from "../src/lib/bridge-emitter.js";
 
-const SOURCE = "contracts/typespec/fixtures/bridge-shaped.tsp";
+const SOURCE = "public/contracts/typespec/fixtures/bridge-shaped.tsp";
 
 function makeBridgeInput(
   overrides: Partial<BridgeEmitInput> = {},
@@ -152,7 +152,7 @@ describe("emitBridgeRegistration — happy path", () => {
       scopePolicy: { kind: "any", scopes: ["self.read"] },
       registrationNamespace:
         "DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecBridge.Generated",
-      sourceSpec: "contracts/typespec/fixtures/bridge-shaped.tsp",
+      sourceSpec: "public/contracts/typespec/fixtures/bridge-shaped.tsp",
     });
     expect(file.fileName).toBe("PingBridgeFixtureBridgeRegistration.g.cs");
     expect(file.content).toContain("IBridgeFixtureGrpcClient");

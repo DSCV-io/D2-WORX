@@ -82,6 +82,14 @@ export const D2Env = {
   },
 };
 
+/**
+ * Boot-time env load (named export for `@dcsv-io/d2-service-defaults/config`
+ * consumers such as SvelteKit instrumentation).
+ */
+export function loadEnv(opts: D2EnvLoadOptions = {}): Record<string, string> {
+  return D2Env.load(opts);
+}
+
 function stripQuotes(s: string): string {
   if (s.length >= 2) {
     const first = s[0];

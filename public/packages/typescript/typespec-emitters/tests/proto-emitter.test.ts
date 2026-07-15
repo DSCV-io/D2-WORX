@@ -120,7 +120,7 @@ function nestedDescriptor(model: NestedModel): NestedMessageDescriptor {
   return { model };
 }
 
-const SIGN_SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
+const SIGN_SOURCE = "public/contracts/typespec/fixtures/sign-shaped.tsp";
 const SIGN_PKG = "d2.sample.v1";
 const SIGN_CS_NS = "D2.Services.Protos.Sample.V1";
 

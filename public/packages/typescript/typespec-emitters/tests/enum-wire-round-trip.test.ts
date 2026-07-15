@@ -87,6 +87,7 @@ function loadFixture(): FixtureFile {
   // Resolved via sentinel walk-up; tolerates any future folder-depth change.
   const path = join(
     findRepoRoot(import.meta.url),
+    "public",
     "contracts",
     "enum",
     "enum-parity.fixture.json",

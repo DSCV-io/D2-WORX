@@ -247,7 +247,7 @@ describe("byteParity_GetJwksInput_CommittedFixtureIdentical", () => {
     const [inputFile] = emitCsharpDtos(
       "getJwks",
       "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks",
-      "contracts/typespec/key-custodian/key-custodian.tsp",
+      "private/contracts/typespec/key-custodian/key-custodian.tsp",
       fields,
       [],
       nestedModels,
@@ -268,7 +268,7 @@ describe("byteParity_GetJwksInput_CommittedFixtureIdentical", () => {
     const [inputFile] = emitCsharpDtos(
       "getJwks",
       "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks",
-      "contracts/typespec/key-custodian/key-custodian.tsp",
+      "private/contracts/typespec/key-custodian/key-custodian.tsp",
       fields,
       [],
       nestedModels,
@@ -285,7 +285,7 @@ describe("byteParity_GetJwksOutput_CommittedFixtureIdentical", () => {
     const [, outputFile] = emitCsharpDtos(
       "getJwks",
       "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks",
-      "contracts/typespec/key-custodian/key-custodian.tsp",
+      "private/contracts/typespec/key-custodian/key-custodian.tsp",
       [],
       fields,
       nestedModels,
@@ -306,7 +306,7 @@ describe("byteParity_GetJwksOutput_CommittedFixtureIdentical", () => {
     const [, outputFile] = emitCsharpDtos(
       "getJwks",
       "DcsvIo.D2.Private.Edge.KeyCustodian.Client.Jwks",
-      "contracts/typespec/key-custodian/key-custodian.tsp",
+      "private/contracts/typespec/key-custodian/key-custodian.tsp",
       [],
       fields,
       nestedModels,
@@ -323,7 +323,7 @@ describe("byteParity_SignFixtureInput_CommittedFixtureIdentical", () => {
     const [inputFile] = emitCsharpDtos(
       "signFixture",
       "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
-      "contracts/typespec/fixtures/sign-shaped.tsp",
+      "public/contracts/typespec/fixtures/sign-shaped.tsp",
       walk.fields,
       [],
       [],
@@ -344,7 +344,7 @@ describe("byteParity_SignFixtureInput_CommittedFixtureIdentical", () => {
     const [inputFile] = emitCsharpDtos(
       "signFixture",
       "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
-      "contracts/typespec/fixtures/sign-shaped.tsp",
+      "public/contracts/typespec/fixtures/sign-shaped.tsp",
       walk.fields,
       [],
       [],
@@ -375,7 +375,7 @@ describe("byteParity_SignFixtureOutput_CommittedFixtureIdentical", () => {
     const [, outputFile] = emitCsharpDtos(
       "signFixture",
       "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
-      "contracts/typespec/fixtures/sign-shaped.tsp",
+      "public/contracts/typespec/fixtures/sign-shaped.tsp",
       [],
       outputWalk.fields,
       outputWalk.nestedModels,
@@ -394,7 +394,7 @@ describe("byteParity_SignFixtureOutput_CommittedFixtureIdentical", () => {
     const [, outputFile] = emitCsharpDtos(
       "signFixture",
       "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
-      "contracts/typespec/fixtures/sign-shaped.tsp",
+      "public/contracts/typespec/fixtures/sign-shaped.tsp",
       [],
       outputWalk.fields,
       outputWalk.nestedModels,
@@ -410,7 +410,7 @@ describe("byteParity_SignFixtureOutput_CommittedFixtureIdentical", () => {
 // — the nested-model redaction path this deliverable's emitter change enables.
 // ---------------------------------------------------------------------------
 
-const KC_SPEC = "contracts/typespec/key-custodian/key-custodian.tsp";
+const KC_SPEC = "private/contracts/typespec/key-custodian/key-custodian.tsp";
 
 function buildGetKeyringInputWalk() {
   const model: Model = {
@@ -526,7 +526,7 @@ describe("byteParity_TemporalFixtureInput_CommittedFixtureIdentical", () => {
     const [inputFile] = emitCsharpDtos(
       "temporalFixture",
       "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
-      "contracts/typespec/fixtures/temporal-shaped.tsp",
+      "public/contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
       output.nestedModels,
@@ -550,7 +550,7 @@ describe("byteParity_TemporalFixtureInput_CommittedFixtureIdentical", () => {
     const [inputFile] = emitCsharpDtos(
       "temporalFixture",
       "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
-      "contracts/typespec/fixtures/temporal-shaped.tsp",
+      "public/contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
       output.nestedModels,
@@ -566,7 +566,7 @@ describe("byteParity_TemporalFixtureOutput_CommittedFixtureIdentical", () => {
     const [, outputFile] = emitCsharpDtos(
       "temporalFixture",
       "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
-      "contracts/typespec/fixtures/temporal-shaped.tsp",
+      "public/contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
       output.nestedModels,
@@ -590,7 +590,7 @@ describe("byteParity_TemporalFixtureOutput_CommittedFixtureIdentical", () => {
     const [, outputFile] = emitCsharpDtos(
       "temporalFixture",
       "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated",
-      "contracts/typespec/fixtures/temporal-shaped.tsp",
+      "public/contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
       output.nestedModels,
@@ -605,7 +605,7 @@ describe("byteParity_TemporalDto_TsFile", () => {
     const { input, output } = buildTemporalWalks();
     const tsFile = emitTsDtos(
       "temporalFixture",
-      "contracts/typespec/fixtures/temporal-shaped.tsp",
+      "public/contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
       output.nestedModels,
@@ -632,7 +632,7 @@ describe("byteParity_TemporalDto_TsFile", () => {
     const { input, output } = buildTemporalWalks();
     const tsFile = emitTsDtos(
       "temporalFixture",
-      "contracts/typespec/fixtures/temporal-shaped.tsp",
+      "public/contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
       output.nestedModels,
@@ -653,7 +653,7 @@ describe("byteParity_TemporalDto_TsFile", () => {
     const { input, output } = buildTemporalWalks();
     const tsFile = emitTsDtos(
       "temporalFixture",
-      "contracts/typespec/fixtures/temporal-shaped.tsp",
+      "public/contracts/typespec/fixtures/temporal-shaped.tsp",
       input.fields,
       output.fields,
       output.nestedModels,
@@ -669,7 +669,7 @@ describe("byteParity_GetJwksDto_TsFile", () => {
     const outputWalk = buildGetJwksOutputWalk();
     const tsFile = emitTsDtos(
       "getJwks",
-      "contracts/typespec/key-custodian/key-custodian.tsp",
+      "private/contracts/typespec/key-custodian/key-custodian.tsp",
       inputWalk.fields,
       outputWalk.fields,
       outputWalk.nestedModels,
@@ -690,7 +690,7 @@ describe("byteParity_GetJwksDto_TsFile", () => {
 // Enum-shaped byte-gates (the enum-shaped.tsp committed fixtures)
 // ---------------------------------------------------------------------------
 
-const ENUM_SHAPED_SRC = "contracts/typespec/fixtures/enum-shaped.tsp";
+const ENUM_SHAPED_SRC = "public/contracts/typespec/fixtures/enum-shaped.tsp";
 const ENUM_DTO_NS = "DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated";
 
 // The enum-shaped `enums` op model (Input mirrors Output) — synthetic stubs that

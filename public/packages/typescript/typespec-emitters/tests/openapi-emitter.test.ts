@@ -50,7 +50,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 const REPO = findRepoRoot(import.meta.url);
 
 const FIXTURE_TSP = readFileSync(
-  join(REPO, "contracts/typespec/fixtures/openapi-shaped.tsp"),
+  join(REPO, "public/contracts/typespec/fixtures/openapi-shaped.tsp"),
   "utf8",
 );
 

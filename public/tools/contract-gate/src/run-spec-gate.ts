@@ -21,9 +21,12 @@
 //   - Pre-reorg baseline paths under monorepo-root `contracts/**` are remapped
 //     to `public/contracts/**` for identity join; content is read via modern
 //     then legacy git path candidates.
+//   - Dual-tree i18n: monorepo-combined mode unions public + private locale
+//     keys for the same basename when diffing against a pre-split baseline
+//     (keys moved to private/ must not look "removed" from public/).
 
 import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
 import type { BreakingFinding } from "./breaking-finding.js";
 import { diffCatalog } from "./spec-diff.js";
@@ -32,6 +35,8 @@ import { diffOpenApi } from "./openapi-diff.js";
 import { fileAtRef, listTrackedPathsAtRef } from "./git-show.js";
 import { getCatalogIdentity } from "./catalog-identity.js";
 import {
+  PRIVATE_CONTRACTS_ROOT,
+  PUBLIC_CONTRACTS_ROOT,
   SKIP_DIR_NAMES,
   baselineGitPathCandidates,
   collectOpenApiFiles,
@@ -98,6 +103,50 @@ function safeParseJson(content: string, label: string): unknown {
       `[run-spec-gate] failed to parse JSON for '${label}': content is not valid JSON`,
     );
   }
+}
+
+/**
+ * Load proposed i18n locale JSON, unioning private sibling keys in dual-root
+ * mode so a split of product keys out of public/ is not a false removal vs
+ * pre-reorg monorepo-root `contracts/messages/*` baselines.
+ */
+function loadProposedI18nLocale(
+  repoRoot: string,
+  relPath: string,
+  publicOnly: boolean,
+): unknown {
+  const absPath = join(repoRoot, relPath);
+  const proposed = safeParseJson(
+    readFileSync(absPath, "utf-8"),
+    relPath,
+  ) as Record<string, unknown>;
+
+  if (publicOnly) {
+    return proposed;
+  }
+
+  const normalized = relPath.replace(/\\/g, "/");
+  const publicPrefix = `${PUBLIC_CONTRACTS_ROOT}/messages/`;
+  const privatePrefix = `${PRIVATE_CONTRACTS_ROOT}/messages/`;
+
+  if (!normalized.startsWith(publicPrefix)) {
+    return proposed;
+  }
+
+  const localeFile = basename(normalized);
+  const privateRel = `${privatePrefix}${localeFile}`;
+  const privateAbs = join(repoRoot, privateRel);
+
+  if (!existsSync(privateAbs)) {
+    return proposed;
+  }
+
+  const privateDoc = safeParseJson(
+    readFileSync(privateAbs, "utf-8"),
+    privateRel,
+  ) as Record<string, unknown>;
+
+  return { ...proposed, ...privateDoc };
 }
 
 // ---------------------------------------------------------------------------
@@ -223,7 +272,11 @@ export async function runSpecGate(
       continue;
     }
 
-    const proposed = safeParseJson(readFileSync(absPath, "utf-8"), relPath);
+    const proposed = loadProposedI18nLocale(
+      repoRoot,
+      relPath,
+      opts.publicOnly === true,
+    );
     const fileFindings = diffMessageKeys(baseline, proposed, relPath);
     findings.push(...fileFindings);
   }

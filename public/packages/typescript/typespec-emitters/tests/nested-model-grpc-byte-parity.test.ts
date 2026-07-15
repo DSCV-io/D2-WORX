@@ -51,7 +51,8 @@ import { emitTsDtos } from "../src/lib/ts-dto-emitter.js";
 
 const CLIENTS_NS =
   "DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated";
-const SPEC = "contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
+const SPEC =
+  "public/contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
 
 const V2_PROTO_NS = "D2.Services.Protos.PredicateFixturesV2.V1";
 const V2_PKG = "d2.predicatefixturesv2.v1";
@@ -126,7 +127,7 @@ beforeAll(async () => {
   const tsp = readFileSync(
     join(
       findRepoRoot(import.meta.url),
-      "contracts/typespec/fixtures/resilience-predicate-shaped.tsp",
+      "public/contracts/typespec/fixtures/resilience-predicate-shaped.tsp",
     ),
     "utf8",
   );

@@ -11,15 +11,11 @@ import {
   EncryptionFrame,
 } from "../src/index.js";
 
-// The four closed domain identifiers — spec source of truth is
-// contracts/encryption-domains/encryption-domains.spec.json.
-// Mirrors .NET DcsvIo.D2.Encryption.EncryptionDomains wire values.
-const EXPECTED_DOMAINS = [
-  "audit",
-  "notifications",
-  "courier",
-  "plaintext",
-] as const;
+// Public open-catalog domains — spec source of truth is
+// public/contracts/encryption-domains/encryption-domains.spec.json.
+// Product sealed domains (audit / notifications / courier) live under
+// private/contracts and private Encryption.Extensions — not this package.
+const EXPECTED_DOMAINS = ["plaintext", "payload-fixture-sealed"] as const;
 
 // The five logical frame fields declared in the spec (variable-length fields
 // are represented by the field name only, without offset/length constants).
@@ -32,7 +28,7 @@ const EXPECTED_FRAME_FIELDS = [
 ] as const;
 
 describe("@dcsv-io/d2-encryption-abstractions — EncryptionDomains", () => {
-  it("ALL_ENCRYPTION_DOMAINS contains exactly the four spec-declared identifiers", () => {
+  it("ALL_ENCRYPTION_DOMAINS contains exactly the public open-catalog identifiers", () => {
     expect([...ALL_ENCRYPTION_DOMAINS].sort()).toEqual(
       [...EXPECTED_DOMAINS].sort(),
     );

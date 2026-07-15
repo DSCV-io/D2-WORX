@@ -94,7 +94,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "PingAuditInput.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "clients",
@@ -106,7 +106,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "PingAuditOutput.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "clients",
@@ -118,7 +118,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "IAuditGrpcClient.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "clients",
@@ -129,7 +129,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "AuditGrpcClient.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "clients",
@@ -140,7 +140,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "AuditGrpcClientsGenerated.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "clients",
@@ -151,7 +151,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "PingAuditClientKeys.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "clients",
@@ -162,7 +162,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "PingAuditClientMappers.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "clients",
@@ -173,7 +173,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "IPingAuditHandler.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "app",
@@ -187,7 +187,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "AuditPingService.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "api",
@@ -198,7 +198,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "PingAuditTransportMappers.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "api",
@@ -209,7 +209,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "audit_ping_ping_audit.g.proto",
     committed: [
-      "server",
+      "private",
       "services",
       "audit",
       "api",
@@ -220,7 +220,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "PingAuditBridgeRegistration.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "edge",
       "api",
@@ -232,7 +232,7 @@ const AUDIT_PRODUCTION_HOMES: ReadonlyArray<{
   {
     emitted: "AuditBridgeRegistrations.g.cs",
     committed: [
-      "server",
+      "private",
       "services",
       "edge",
       "api",
@@ -256,7 +256,7 @@ describe("auditProductionHomes_RealTspCompile", () => {
       ],
     });
     const tsp = readFileSync(
-      join(_REPO, "contracts", "typespec", "audit", "audit.tsp"),
+      join(_REPO, "private", "contracts", "typespec", "audit", "audit.tsp"),
       "utf8",
     );
     host.addTypeSpecFile("main.tsp", tsp);
@@ -297,7 +297,7 @@ describe("auditProductionHomes_ByteGate_CommittedArtifactsIdentical", () => {
       ],
     });
     const tsp = readFileSync(
-      join(_REPO, "contracts", "typespec", "audit", "audit.tsp"),
+      join(_REPO, "private", "contracts", "typespec", "audit", "audit.tsp"),
       "utf8",
     );
     host.addTypeSpecFile("main.tsp", tsp);
@@ -324,7 +324,7 @@ describe("auditProductionHomes_ByteGate_CommittedArtifactsIdentical", () => {
     expect(emitted).toBeDefined();
     const committed = stripSpecBanner(
       readCommitted(
-        "server",
+        "private",
         "services",
         "edge",
         "api",
@@ -346,7 +346,7 @@ describe("auditProductionHomes_ByteGate_CommittedArtifactsIdentical", () => {
     expect(emitted).toBeDefined();
     const committed = stripSpecBanner(
       readCommitted(
-        "server",
+        "private",
         "services",
         "audit",
         "clients",
@@ -367,7 +367,7 @@ describe("auditProductionHomes_ByteGate_CommittedArtifactsIdentical", () => {
     expect(emitted).toBeDefined();
     const committed = stripSpecBanner(
       readCommitted(
-        "server",
+        "private",
         "services",
         "audit",
         "app",

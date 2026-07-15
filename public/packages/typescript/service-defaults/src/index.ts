@@ -8,4 +8,4 @@ export {
   type ServiceDefaultsHandle,
   setupServiceDefaults,
 } from "./setup-service-defaults.js";
-export { D2Env, type D2EnvLoadOptions } from "./d2-env.js";
+export { D2Env, loadEnv, type D2EnvLoadOptions } from "./d2-env.js";

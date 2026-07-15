@@ -9,7 +9,7 @@
 // Usage (in a test file):
 //   import { findRepoRoot } from "./repo-root.js";
 //   const REPO = findRepoRoot(import.meta.url);
-//   const fixture = join(REPO, "contracts/resilience/some.fixture.json");
+//   const fixture = join(REPO, "public/contracts/resilience/some.fixture.json");
 //
 // This is more robust than a hardcoded `..`-count walk: it tolerates any
 // future folder-depth change between the tests directory and the repo root.

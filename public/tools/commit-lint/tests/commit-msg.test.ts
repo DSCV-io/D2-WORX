@@ -5,7 +5,7 @@
 
 // Tests for the .husky/commit-msg hook.
 //
-// Drives the REAL hook script (../../.husky/commit-msg) against temporary
+// Drives the REAL hook script (monorepo-root .husky/commit-msg) against temporary
 // commit-message files so the test cannot drift from the live check.
 //
 // LOCKSTEP: the allowed-type pattern below must be kept in sync with the
@@ -28,9 +28,11 @@ const execFileAsync = promisify(execFile);
 
 // __dirname is not available in ESM; use fileURLToPath + dirname instead of
 // url.pathname which produces a leading /C: double-drive-letter on Windows.
+// Package lives at public/tools/commit-lint/tests → monorepo root is 4 levels up
+// (tests → commit-lint → tools → public → root). Pre-reorg 3-up landed on public/.
 const HOOK_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../.husky/commit-msg",
+  "../../../../.husky/commit-msg",
 );
 
 let tmpDir: string;
@@ -47,6 +49,23 @@ afterAll(async () => {
 // Helper: write a temp file and invoke the hook; return exit code + output.
 // ---------------------------------------------------------------------------
 
+/** Resolve shells that can run the POSIX `.husky/commit-msg` script. */
+function resolveHookShells(): string[] {
+  if (process.platform !== "win32") {
+    // Linux CI / macOS: plain `sh` is enough.
+    return ["sh", "bash"];
+  }
+
+  // Windows: prefer Git-for-Windows bash over the WSL `bash.exe` stub (which
+  // fails with CreateProcessCommon when WSL has no default distro).
+  return [
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+    "bash",
+    "sh",
+  ];
+}
+
 async function runHook(
   message: string,
 ): Promise<{ code: number; output: string }> {
@@ -56,16 +75,41 @@ async function runHook(
   );
   await writeFile(msgFile, message, "utf8");
 
-  try {
-    await execFileAsync("sh", [HOOK_PATH, msgFile]);
-    return { code: 0, output: "" };
-  } catch (err: unknown) {
-    const e = err as { code?: number; stderr?: string; stdout?: string };
-    return {
-      code: e.code ?? 1,
-      output: `${e.stdout ?? ""}${e.stderr ?? ""}`,
-    };
+  for (const shell of resolveHookShells()) {
+    try {
+      await execFileAsync(shell, [HOOK_PATH, msgFile]);
+      return { code: 0, output: "" };
+    } catch (err: unknown) {
+      const e = err as {
+        code?: number | string;
+        stderr?: string;
+        stdout?: string;
+      };
+
+      // ENOENT = shell binary missing — try next shell.
+      if (e.code === "ENOENT") {
+        continue;
+      }
+
+      // WSL bash stub often exits non-zero with a CreateProcessCommon error
+      // when no distro is installed — treat as "try next shell".
+      const output = `${e.stdout ?? ""}${e.stderr ?? ""}`;
+
+      if (/WSL|CreateProcessCommon|execvpe/i.test(output)) {
+        continue;
+      }
+
+      return {
+        code: typeof e.code === "number" ? e.code : 1,
+        output,
+      };
+    }
   }
+
+  return {
+    code: 1,
+    output: "ENOENT: neither sh nor bash found to run .husky/commit-msg",
+  };
 }
 
 // ---------------------------------------------------------------------------

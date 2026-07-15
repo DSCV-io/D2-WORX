@@ -44,7 +44,7 @@ const D2DecoratorTestLibrary = createTestLibrary({
 const REPO = findRepoRoot(import.meta.url);
 const FIXTURE_SRC = join(
   REPO,
-  "contracts/typespec/fixtures/openapi-shaped.tsp",
+  "public/contracts/typespec/fixtures/openapi-shaped.tsp",
 );
 const OPENAPI_GEN = join(
   REPO,

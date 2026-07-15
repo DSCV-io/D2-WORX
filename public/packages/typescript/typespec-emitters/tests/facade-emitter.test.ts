@@ -66,7 +66,7 @@ function readFacadeFixture(absPath: string): string {
 
 const _KC_CLIENTS_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.Client";
 const _KC_APP_NS = "DcsvIo.D2.Private.Edge.KeyCustodian.App.Application";
-const _SPEC = "contracts/typespec/key-custodian/key-custodian.tsp";
+const _SPEC = "private/contracts/typespec/key-custodian/key-custodian.tsp";
 
 function makeOp(
   opName: string,

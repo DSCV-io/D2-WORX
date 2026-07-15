@@ -30,7 +30,7 @@ import {
 } from "../src/lib/ts-rest-client-emitter.js";
 import type { FieldInfo } from "../src/lib/model-walk.js";
 
-const SIGN_SRC = "contracts/typespec/fixtures/sign-shaped.tsp";
+const SIGN_SRC = "public/contracts/typespec/fixtures/sign-shaped.tsp";
 
 // ---------------------------------------------------------------------------
 // Op fixtures

@@ -41,9 +41,10 @@ const PRED_GEN = join(KC, "TypeSpecGrpcPredicate/Generated");
 const DTO_GEN = join(KC, "TypeSpecDto/Generated");
 const ENUM_GEN = join(KC, "TypeSpecGrpcEnum/Generated");
 
-const PRED_SRC = "contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
-const SIGN_SRC = "contracts/typespec/fixtures/sign-shaped.tsp";
-const ENUM_SRC = "contracts/typespec/fixtures/enum-shaped.tsp";
+const PRED_SRC =
+  "public/contracts/typespec/fixtures/resilience-predicate-shaped.tsp";
+const SIGN_SRC = "public/contracts/typespec/fixtures/sign-shaped.tsp";
+const ENUM_SRC = "public/contracts/typespec/fixtures/enum-shaped.tsp";
 
 function readFixture(absPath: string): string {
   // Committed generated files are LF; the emitter joins with "\n". Normalize the

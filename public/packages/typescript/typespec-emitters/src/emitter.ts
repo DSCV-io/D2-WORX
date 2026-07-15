@@ -1396,16 +1396,20 @@ function emitDtoPair(
  * Resolve the D2 monorepo root from a TypeSpec `program.projectRoot` (the
  * directory that contains the active tspconfig.yaml).
  *
- * Nested packages (`contracts/typespec/key-custodian`, `…/audit`) and the
- * historical root package (`contracts/typespec`) must resolve to the **same**
- * repo root so repo-root-relative options (`ts-client-output-dirs`, banner
- * source paths) land under `server/…`, never under `contracts/server/…`.
+ * Nested packages (`public|private/contracts/typespec/<module>`, historical
+ * `contracts/typespec/<module>`) and the historical root package must resolve
+ * to the **same** repo root so repo-root-relative options
+ * (`ts-client-output-dirs`, banner source paths) land under the dual-tree
+ * service homes, never under `contracts/server/…`.
  *
- * 1. Walk ancestors until a directory contains both `D2.slnx` and
- *    `contracts/typespec` (definitive on-disk markers).
+ * 1. Walk ancestors until a directory contains monorepo markers (`D2.slnx` or
+ *    legacy `server/D2.slnx`) plus a typespec contracts root
+ *    (`public/contracts/typespec`, `private/contracts/typespec`, or legacy
+ *    `contracts/typespec`).
  * 2. Path-shape fallback: walk until basename is `typespec` with parent
- *    `contracts`, then take that directory's grandparent (synthetic unit-test
- *    paths that never touch the real disk).
+ *    `contracts`, then take grandparent — or great-grandparent when the
+ *    contracts root is nested under `public/` or `private/` (synthetic
+ *    unit-test paths that never touch the real disk).
  * 3. Ultimate fallback: two levels up — historical layout where tspconfig
  *    always lived at `contracts/typespec`.
  */
@@ -1414,10 +1418,15 @@ export function resolveRepoRootFromProjectRoot(projectRoot: string): string {
   let dir = projectRoot;
 
   for (let i = 0; i < 20; i++) {
-    if (
-      existsSync(join(dir, "server", "D2.slnx")) &&
-      existsSync(join(dir, "contracts", "typespec"))
-    ) {
+    const hasSlnx =
+      existsSync(join(dir, "D2.slnx")) ||
+      existsSync(join(dir, "server", "D2.slnx"));
+    const hasTypespec =
+      existsSync(join(dir, "public", "contracts", "typespec")) ||
+      existsSync(join(dir, "private", "contracts", "typespec")) ||
+      existsSync(join(dir, "contracts", "typespec"));
+
+    if (hasSlnx && hasTypespec) {
       return dir;
     }
 
@@ -1436,7 +1445,16 @@ export function resolveRepoRootFromProjectRoot(projectRoot: string): string {
       basename(dir) === "typespec" &&
       basename(dirname(dir)) === "contracts"
     ) {
-      return dirname(dirname(dir));
+      const contractsParent = dirname(dirname(dir));
+      const treeSeg = basename(contractsParent);
+
+      // Dual-tree: public|private/contracts/typespec → monorepo root is one more up.
+      if (treeSeg === "public" || treeSeg === "private") {
+        return dirname(contractsParent);
+      }
+
+      // Historical: contracts/typespec → monorepo root is contracts' parent.
+      return contractsParent;
     }
 
     const parent = dirname(dir);

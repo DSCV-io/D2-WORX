@@ -91,7 +91,7 @@ const csTypeSpecDir = join(
   repoRoot,
   "private/services/edge/tests/Unit/KeyCustodian",
 );
-const contractsTypespecDir = join(repoRoot, "contracts/typespec");
+const contractsTypespecDir = join(repoRoot, "public/contracts/typespec");
 
 // ---------------------------------------------------------------------------
 // File collection helpers
