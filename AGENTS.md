@@ -134,7 +134,7 @@ _Canonical: [process.md §1](docs/dev/process.md#1-phase-lifecycle) (lifecycle) 
 **Most-cited** (full catalog — Compose lifecycle, single-project builds, test filters, lint, versioning — in [docs/COMMANDS.md](docs/COMMANDS.md)):
 
 - **Build .NET solution**: `dotnet build D2.slnx` — zero warnings (StyleCop / CS / null-ref).
-- **JetBrains inspections**: `jb inspectcode D2.slnx --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log` — zero warnings; catches what `dotnet build` does not (`[MustDisposeResource]`, captured-closure).
+- **JetBrains inspections**: `jb inspectcode D2.slnx --settings=D2.sln.DotSettings --severity=WARNING --format=Text --no-build --output=inspectcode.log` then `bash private/tools/scripts/count-inspectcode-findings.sh inspectcode.log` must print **0**. Requires **JetBrains.ReSharper.GlobalTools ≥ 2026.1.x** (2025.3.x false-positives on net10 BCL). Catches what `dotnet build` does not (`[MustDisposeResource]`, captured-closure).
 - **Run .NET tests**: `dotnet test D2.slnx` (full) or `... -- --filter-trait "Category=Unit"` (unit only).
 - **SvelteKit type check**: `cd private/services/web && pnpm exec svelte-check`.
 

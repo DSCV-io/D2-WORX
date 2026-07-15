@@ -83,7 +83,19 @@ jb inspectcode D2.slnx --settings=D2.sln.DotSettings --severity=WARNING --format
 jb inspectcode D2.slnx --settings=D2.sln.DotSettings --project="Edge.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
 ```
 
-These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. **Required locally** (zero warnings) via `gates.sh` / Implementer handoff — **not** a PR CI job (slow, low merge-signal). **Shared zero-warning parse** (do not re-inline): `public/tools/scripts/count-inspectcode-findings.sh` counts indented finding-lines in Text format (inspectcode exits 0 even when findings exist). The local gate at `.claude/skills/gate-suite/scripts/gates.sh` calls that script; identity pin: `node --test public/tools/scripts/tests/count-inspectcode-findings.test.mjs`.
+These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. **Required locally** (zero warnings) via `gates.sh` / Implementer handoff — **not** a PR CI job (slow, low merge-signal). **Shared zero-warning parse** (do not re-inline): `private/tools/scripts/count-inspectcode-findings.sh` counts indented finding-lines in Text format (inspectcode exits 0 even when findings exist). The local gate at `.claude/skills/gate-suite/scripts/gates.sh` calls that script; identity pin: `node --test private/tools/scripts/tests/count-inspectcode-findings.test.mjs`.
+
+**Tool version (load-bearing for net10):** install/update global tools to **JetBrains.ReSharper.GlobalTools ≥ 2026.1.x**:
+
+```bash
+dotnet tool update -g JetBrains.ReSharper.GlobalTools --version 2026.1.4
+```
+
+`2025.3.x` mis-resolves the .NET 10 BCL (`Cannot resolve Int128` / `Exception` / mass false positives). Always `dotnet build D2.slnx` first, then inspect with `--settings=D2.sln.DotSettings` + `--no-build`, then:
+
+```bash
+bash private/tools/scripts/count-inspectcode-findings.sh inspectcode.log   # must print 0
+```
 
 ## Test
 

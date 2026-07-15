@@ -163,7 +163,7 @@ public sealed class PublicPackageIdentityLawTests
                 Path.Combine(sr_repoRoot, "private", "services"),
                 "*.csproj",
                 SearchOption.AllDirectories)
-            .Select(static p => Path.GetFileNameWithoutExtension(p) ?? string.Empty)
+            .Select(static p => Path.GetFileNameWithoutExtension(p))
             .Where(static n =>
                 n.StartsWith("DcsvIo.D2.Edge.", StringComparison.Ordinal)
                 || (n.StartsWith("DcsvIo.D2.Audit.", StringComparison.Ordinal)

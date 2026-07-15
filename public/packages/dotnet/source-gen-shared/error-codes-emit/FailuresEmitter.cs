@@ -149,8 +149,11 @@ internal static class FailuresEmitter
         sb.AppendLine();
         sb.AppendLine("#nullable enable");
         sb.AppendLine();
+
+        // Namespace usings first, then alias last (SA1209 / SA1210). Never interleave.
         sb.AppendLine("using DcsvIo.D2.ErrorCodes.Category;");
         sb.AppendLine($"using {config.MessageKeyUsingNamespace};");
+        sb.AppendLine("using DcsvIo.D2.Result;");
 
         // TKMessage lives on the public Abstractions assembly; keep a type alias
         // when the message-key host namespace is the private ProductTK package.
@@ -162,7 +165,6 @@ internal static class FailuresEmitter
             sb.AppendLine("using TKMessage = DcsvIo.D2.I18n.TKMessage;");
         }
 
-        sb.AppendLine("using DcsvIo.D2.Result;");
         sb.AppendLine();
         sb.AppendLine($"namespace {config.RootNamespace};");
         sb.AppendLine();
