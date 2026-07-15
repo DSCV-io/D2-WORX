@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 // §26.5.1 standing byte-parity for every Audit + Edge Bridges/Audit production
-// COPY destination (AUDIT_COPY in tools/scripts/regen-typespec-emitters.mjs).
+// COPY destination (AUDIT_COPY in private/tools/scripts/regen-typespec-emitters.mjs).
 // Compiles the real contracts/typespec/audit/audit.tsp through the test-host
 // with production csharp namespaces and asserts regenerate ↔ committed identity
 // (modulo Source-spec banner path). Deliberate-drift negatives keep the gate

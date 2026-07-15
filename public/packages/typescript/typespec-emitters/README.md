@@ -995,7 +995,7 @@ pnpm --filter @dcsv-io/d2-typespec-emitters regen
 node private/tools/scripts/regen-typespec-emitters.mjs
 ```
 
-The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):
+The scatter script (`private/tools/scripts/regen-typespec-emitters.mjs`):
 
 1. Compiles `contracts/typespec/` via the emitter package's own `@typespec/compiler`
    (temporary NTFS junctions bridge the module resolver for the duration of the

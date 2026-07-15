@@ -9,14 +9,14 @@
 #   contracts/typespec/audit/tspconfig.yaml          — Audit standalone multiproc stub
 #
 # Regen runs N× (tsp compile packageᵢ + COPY_MANIFEST subset for packageᵢ)
-# via tools/scripts/regen-typespec-emitters.mjs — never use this root file as
+# via private/tools/scripts/regen-typespec-emitters.mjs — never use this root file as
 # the primary compile entry (would re-introduce dual-pattern root-KC + nested
 # Audit and wrong namespace stamps).
 #
 # This file remains only as a fail-loud pointer so accidental
 # `tsp compile contracts/typespec` is obvious. Prefer:
 #   pnpm --filter @dcsv-io/d2-typespec-emitters regen
-#   node tools/scripts/regen-typespec-emitters.mjs
+#   node private/tools/scripts/regen-typespec-emitters.mjs
 
 emit:
   - "@dcsv-io/d2-typespec-emitters"
