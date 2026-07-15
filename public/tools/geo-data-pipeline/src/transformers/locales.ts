@@ -15,7 +15,7 @@
  *     — date format pattern (DMY/MDY/YMD)
  *
  * Mirrors the Locale entity shape. `IsSelectable` is a Tier 2 field (derived from
- * contracts/messages/{tag}.json file presence) and not part of this pipeline-raw shape.
+ * public/contracts/messages/{tag}.json file presence) and not part of this pipeline-raw shape.
  * Region-derived fields (firstDayOfWeek / weekendStart / weekendEnd / measurementSystem)
  * live on Country in src-data and get DENORMALIZED onto Locale in the Tier 2 clean-pass —
  * they're not duplicated in src-data to avoid drift during per-catalog refreshes.

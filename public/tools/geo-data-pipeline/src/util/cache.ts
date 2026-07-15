@@ -4,13 +4,50 @@
 // -----------------------------------------------------------------------
 
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+/**
+ * Walk upward from `start` until a monorepo-root sentinel is found.
+ * Sentinels: `D2.slnx` or `pnpm-workspace.yaml` (not a fixed `..` count alone).
+ */
+function findMonorepoRoot(start: string): string {
+  let dir = start;
+
+  for (let i = 0; i < 24; i++) {
+    if (
+      existsSync(join(dir, "D2.slnx")) ||
+      existsSync(join(dir, "pnpm-workspace.yaml"))
+    ) {
+      return dir;
+    }
+
+    const parent = resolve(dir, "..");
+
+    if (parent === dir) {
+      break;
+    }
+
+    dir = parent;
+  }
+
+  throw new Error(
+    `geo-data-pipeline: could not locate monorepo root from ${start} ` +
+      `(expected D2.slnx or pnpm-workspace.yaml)`,
+  );
+}
+
 const thisDir = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(thisDir, "..", "..", "..", "..");
-const CACHE_DIR = resolve(REPO_ROOT, "tools", "geo-data-pipeline", ".cache");
+const REPO_ROOT = findMonorepoRoot(thisDir);
+const CACHE_DIR = resolve(
+  REPO_ROOT,
+  "public",
+  "tools",
+  "geo-data-pipeline",
+  ".cache",
+);
 
 export interface FetchProvenance {
   source: string;

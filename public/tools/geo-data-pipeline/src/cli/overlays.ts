@@ -5,7 +5,7 @@
 
 /**
  * `pnpm geo:overlays` — enumerates every overlay entry across all overlay files at
- * `contracts/geo/overlays/*.overlays.spec.json` so operators can audit active policy
+ * `public/contracts/geo/overlays/*.overlays.spec.json` so operators can audit active policy
  * decisions without grepping the files by hand.
  *
  * Output: per-catalog grouped listing with id + addedAt + reason + addedBy (when set)
@@ -154,12 +154,12 @@ if (wantsJson) {
 
 if (entries.length === 0) {
   console.log(
-    "No active overlays. (Looked at: contracts/geo/overlays/countries.overlays.spec.json, " +
-      "contracts/geo/overlays/subdivisions.overlays.spec.json, " +
-      "contracts/geo/overlays/locales.overlays.spec.json)",
+    "No active overlays. (Looked at: public/contracts/geo/overlays/countries.overlays.spec.json, " +
+      "public/contracts/geo/overlays/subdivisions.overlays.spec.json, " +
+      "public/contracts/geo/overlays/locales.overlays.spec.json)",
   );
   console.log(
-    "See contracts/geo/overlays/README.md for when to add an overlay vs fix upstream.",
+    "See public/contracts/geo/overlays/README.md for when to add an overlay vs fix upstream.",
   );
   process.exit(0);
 }
@@ -194,5 +194,5 @@ for (const [catalog, list] of byCatalog.entries()) {
 }
 
 console.log(
-  `Edit overlay files at contracts/geo/overlays/. Then run \`pnpm geo:refresh\` to apply.`,
+  `Edit overlay files at public/contracts/geo/overlays/. Then run \`pnpm geo:refresh\` to apply.`,
 );

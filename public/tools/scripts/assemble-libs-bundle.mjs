@@ -12,16 +12,16 @@
 //   2. Validates that every expected artifact is present.
 //   3. Writes manifest.json (with tag + generatedAt wrapper) into the bundle dir.
 //   4. Writes HOW-TO-USE.md into the bundle dir.
-//   5. Copies LICENSE.md from the repo root into the bundle dir.
+//   5. Copies public/LICENSE (Apache-2.0) into the bundle as LICENSE.
 //   6. Zips the bundle directory tree to d2-libs-<tag>.zip in the output dir.
 //
 // Usage (invoked by the release workflow — not intended for direct use):
 //
-//   node tools/scripts/assemble-libs-bundle.mjs \
+//   node public/tools/scripts/assemble-libs-bundle.mjs \
 //     --bundle-dir  <path>         # directory containing nuget/ and npm/ subdirs
 //     --list-json   <path>         # path to the --list JSON output from the runner
 //     --tag         <string>       # release tag, e.g. "libs-2026.06.24"
-//     --repo-root   <path>         # repo root (for LICENSE.md)
+//     --repo-root   <path>         # monorepo root (for public/LICENSE)
 //     --output-zip  <path>         # destination path for the final .zip
 //
 // Pure helpers (buildManifestJson, buildHowToUse) are exported for tests.
@@ -149,8 +149,8 @@ offline or air-gapped feed.
 
 ## License
 
-These libraries are released under the **PolyForm Strict License** — non-commercial
-use only. See \`LICENSE.md\` in this bundle.
+These libraries are released under the **Apache License 2.0**.
+See \`LICENSE\` in this bundle (Apache-2.0).
 `;
 }
 
@@ -244,16 +244,18 @@ async function main() {
   writeFileSync(howToUsePath, buildHowToUse(tag, packages), "utf-8");
   console.log("Wrote HOW-TO-USE.md");
 
-  // Copy LICENSE.md from the repo root.
-  const licenseSource = join(repoRoot, "LICENSE.md");
+  // Copy public/LICENSE (Apache-2.0) — never monorepo-root PolyForm LICENSE.md.
+  const licenseSource = join(repoRoot, "public", "LICENSE");
 
   if (!existsSync(licenseSource)) {
-    console.error(`error: LICENSE.md not found at repo root: ${licenseSource}`);
+    console.error(
+      `error: public/LICENSE not found (Apache-2.0 open pack license): ${licenseSource}`,
+    );
     process.exit(1);
   }
 
-  await copyFile(licenseSource, join(bundleDir, "LICENSE.md"));
-  console.log("Copied LICENSE.md");
+  await copyFile(licenseSource, join(bundleDir, "LICENSE"));
+  console.log("Copied public/LICENSE → LICENSE");
 
   // Zip the bundle directory.
   console.log(`Zipping ${bundleDir} → ${outputZip} …`);

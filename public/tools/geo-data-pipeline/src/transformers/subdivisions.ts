@@ -19,7 +19,7 @@ import { getEndonymLanguageList } from "../util/endonym-languages.js";
  * Final Subdivision spec entry shape.
  *
  * Source-priority hierarchy (post-2026-05-23 investigation; see
- * `contracts/geo/KNOWN_WARNINGS.md` for the full rationale):
+ * `public/contracts/geo/KNOWN_WARNINGS.md` for the full rationale):
  *
  *   1. **English displayName / officialName**: Wikidata.en (P300 SPARQL labels) is the
  *      authoritative source — matches Wikipedia 1:1, correctly aligned with the
@@ -38,7 +38,7 @@ import { getEndonymLanguageList } from "../util/endonym-languages.js";
  *      primary-language lookup, EXCEPT Norway (`NO`) where Wikidata has no
  *      unified `no` locale — the Norwegian cascade is `nb → nn → no → da → sv`.
  *
- * Hand-rolled overlays at `contracts/geo/overlays/subdivisions.overlays.spec.json`
+ * Hand-rolled overlays at `public/contracts/geo/overlays/subdivisions.overlays.spec.json`
  * apply LAST (Tier 2 build time) as explicit overrides, but are intended to stay
  * empty unless Wikidata.en is wrong AND the Debian fallback is also unacceptable.
  */
@@ -125,7 +125,7 @@ export interface CldrZombieWarning {
  * Diagnostic row for a Debian-present code that lacks a Wikidata `en` label.
  * Wikidata.en is the primary displayName source; when it's missing we fall back
  * to the Debian `name` field. Operator reviews these to decide if a
- * `contracts/geo/overlays/subdivisions.overlays.spec.json` override is warranted
+ * `public/contracts/geo/overlays/subdivisions.overlays.spec.json` override is warranted
  * for awkward Debian fallbacks.
  */
 export interface MissingWikidataEnRow {
@@ -424,7 +424,7 @@ export async function loadSubdivisions(
         debianFallbackName: entry.displayName,
         suggestedAction:
           "If the Debian fallback is awkward, consider adding an overlay entry " +
-          "at contracts/geo/overlays/subdivisions.overlays.spec.json.",
+          "at public/contracts/geo/overlays/subdivisions.overlays.spec.json.",
       });
     }
 

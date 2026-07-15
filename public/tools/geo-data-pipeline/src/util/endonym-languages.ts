@@ -9,6 +9,7 @@ import { REPO_ROOT_PATH } from "./cache.js";
 
 const COUNTRIES_SPEC_PATH = resolve(
   REPO_ROOT_PATH,
+  "public",
   "contracts",
   "geo",
   "src-data",

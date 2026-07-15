@@ -341,7 +341,7 @@ describe("applyCountriesOverlay", () => {
 
 describe("loadCountriesOverlay", () => {
   it("returns a parsed CountriesOverlayFile when the shipped overlay file exists", async () => {
-    // The pipeline ships contracts/geo/overlays/countries.overlays.spec.json with
+    // The pipeline ships public/contracts/geo/overlays/countries.overlays.spec.json with
     // the Kosovo (XK) addition. The loader reads from the fixed REPO_ROOT-relative
     // path; this asserts the parse round-trip against the committed file. If the
     // shipped file is ever removed, the null-path is also tested implicitly by the

@@ -213,11 +213,11 @@ const OPENAPI_FIXTURE_RENAMED = JSON.stringify(
 );
 
 const DEFAULT_BASELINE_FILES: Readonly<Record<string, string>> = {
-  "contracts/domain/error-codes.spec.json": ERROR_CODES_BASELINE,
-  "contracts/messages/en-US.json": LOCALE_BASELINE,
-  "server/svc/api/svc.openapi.g.json": OPENAPI_BASELINE,
-  "server/svc/tests/Unit/fix.openapi.g.json": OPENAPI_FIXTURE_RENAMED,
-  "contracts/domain/tests/fixture.spec.json": ERROR_CODES_BASELINE,
+  "public/contracts/domain/error-codes.spec.json": ERROR_CODES_BASELINE,
+  "public/contracts/messages/en-US.json": LOCALE_BASELINE,
+  "public/contracts/svc/api/svc.openapi.g.json": OPENAPI_BASELINE,
+  "public/contracts/svc/tests/Unit/fix.openapi.g.json": OPENAPI_FIXTURE_RENAMED,
+  "public/contracts/domain/tests/fixture.spec.json": ERROR_CODES_BASELINE,
 };
 
 // ---------------------------------------------------------------------------
@@ -238,10 +238,10 @@ describe("runSpecGate — e2e synthetic git", () => {
     expect(result.findings).toHaveLength(0);
     expect(result.scope.skipDirs).toEqual([...SKIP_DIR_NAMES]);
     expect(result.scope.excludedOpenApiTestFiles).toContain(
-      "server/svc/tests/Unit/fix.openapi.g.json",
+      "public/contracts/svc/tests/Unit/fix.openapi.g.json",
     );
     expect(result.scope.excludedSpecTestFiles).toContain(
-      "contracts/domain/tests/fixture.spec.json",
+      "public/contracts/domain/tests/fixture.spec.json",
     );
   });
 
@@ -249,7 +249,7 @@ describe("runSpecGate — e2e synthetic git", () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
     writeRel(
       repo.root,
-      "contracts/domain/error-codes.spec.json",
+      "public/contracts/domain/error-codes.spec.json",
       ERROR_CODES_ONE_REMOVED,
     );
 
@@ -264,7 +264,7 @@ describe("runSpecGate — e2e synthetic git", () => {
       result.findings.some(
         (f) =>
           f.arm === "spec" &&
-          f.file === "contracts/domain/error-codes.spec.json" &&
+          f.file === "public/contracts/domain/error-codes.spec.json" &&
           f.message.includes("BREAKING"),
       ),
     ).toBe(true);
@@ -272,7 +272,9 @@ describe("runSpecGate — e2e synthetic git", () => {
 
   it("committed spec file DELETED from the working tree is BREAKING", async () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
-    unlinkSync(join(repo.root, "contracts/domain/error-codes.spec.json"));
+    unlinkSync(
+      join(repo.root, "public/contracts/domain/error-codes.spec.json"),
+    );
 
     const result = await runSpecGate({
       repoRoot: repo.root,
@@ -285,7 +287,7 @@ describe("runSpecGate — e2e synthetic git", () => {
       result.findings.some(
         (f) =>
           f.arm === "spec" &&
-          f.file === "contracts/domain/error-codes.spec.json" &&
+          f.file === "public/contracts/domain/error-codes.spec.json" &&
           f.message.includes("File was deleted"),
       ),
     ).toBe(true);
@@ -296,7 +298,7 @@ describe("runSpecGate — e2e synthetic git", () => {
     // Registered basename under a new directory — fully additive (no baseline).
     writeRel(
       repo.root,
-      "contracts/new-domain/error-codes.spec.json",
+      "public/contracts/new-domain/error-codes.spec.json",
       ERROR_CODES_BASELINE,
     );
 
@@ -314,7 +316,7 @@ describe("runSpecGate — e2e synthetic git", () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
     writeRel(
       repo.root,
-      "contracts/domain/totally-unknown-catalog.spec.json",
+      "public/contracts/domain/totally-unknown-catalog.spec.json",
       JSON.stringify({ items: [{ id: "x" }] }),
     );
 
@@ -329,7 +331,8 @@ describe("runSpecGate — e2e synthetic git", () => {
       result.findings.some(
         (f) =>
           f.arm === "spec" &&
-          f.file === "contracts/domain/totally-unknown-catalog.spec.json" &&
+          f.file ===
+            "public/contracts/domain/totally-unknown-catalog.spec.json" &&
           f.message.includes("unregistered"),
       ),
     ).toBe(true);
@@ -337,7 +340,11 @@ describe("runSpecGate — e2e synthetic git", () => {
 
   it("key removed from a committed locale file produces an i18n BREAKING finding", async () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
-    writeRel(repo.root, "contracts/messages/en-US.json", LOCALE_KEY_REMOVED);
+    writeRel(
+      repo.root,
+      "public/contracts/messages/en-US.json",
+      LOCALE_KEY_REMOVED,
+    );
 
     const result = await runSpecGate({
       repoRoot: repo.root,
@@ -350,7 +357,7 @@ describe("runSpecGate — e2e synthetic git", () => {
       result.findings.some(
         (f) =>
           f.arm === "i18n" &&
-          f.file === "contracts/messages/en-US.json" &&
+          f.file === "public/contracts/messages/en-US.json" &&
           f.message.includes("BREAKING"),
       ),
     ).toBe(true);
@@ -358,7 +365,7 @@ describe("runSpecGate — e2e synthetic git", () => {
 
   it("committed locale file DELETED from the working tree is BREAKING", async () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
-    unlinkSync(join(repo.root, "contracts/messages/en-US.json"));
+    unlinkSync(join(repo.root, "public/contracts/messages/en-US.json"));
 
     const result = await runSpecGate({
       repoRoot: repo.root,
@@ -371,7 +378,7 @@ describe("runSpecGate — e2e synthetic git", () => {
       result.findings.some(
         (f) =>
           f.arm === "i18n" &&
-          f.file === "contracts/messages/en-US.json" &&
+          f.file === "public/contracts/messages/en-US.json" &&
           f.message.includes("Locale file deleted"),
       ),
     ).toBe(true);
@@ -381,7 +388,7 @@ describe("runSpecGate — e2e synthetic git", () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
     writeRel(
       repo.root,
-      "contracts/domain/error-codes.spec.json",
+      "public/contracts/domain/error-codes.spec.json",
       "{ not valid json",
     );
 
@@ -394,11 +401,11 @@ describe("runSpecGate — e2e synthetic git", () => {
     ).rejects.toThrow(/failed to parse JSON/);
   });
 
-  it("spec file under contracts/.../tests/ mutated produces NO findings", async () => {
+  it("spec file under public/contracts/.../tests/ mutated produces NO findings", async () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
     writeRel(
       repo.root,
-      "contracts/domain/tests/fixture.spec.json",
+      "public/contracts/domain/tests/fixture.spec.json",
       ERROR_CODES_ONE_REMOVED,
     );
 
@@ -417,7 +424,7 @@ describe("runSpecGate — e2e synthetic git", () => {
     // Mutate the fixture schema name (pure rename under tests — not contract surface).
     writeRel(
       repo.root,
-      "server/svc/tests/Unit/fix.openapi.g.json",
+      "public/contracts/svc/tests/Unit/fix.openapi.g.json",
       JSON.stringify(
         {
           openapi: "3.0.0",
@@ -443,7 +450,7 @@ describe("runSpecGate — e2e synthetic git", () => {
     expect(result.passed).toBe(true);
     expect(result.findings).toHaveLength(0);
     expect(result.scope.excludedOpenApiTestFiles).toContain(
-      "server/svc/tests/Unit/fix.openapi.g.json",
+      "public/contracts/svc/tests/Unit/fix.openapi.g.json",
     );
   });
 
@@ -451,7 +458,7 @@ describe("runSpecGate — e2e synthetic git", () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
     writeRel(
       repo.root,
-      "server/svc/api/svc.openapi.g.json",
+      "public/contracts/svc/api/svc.openapi.g.json",
       OPENAPI_PATH_REMOVED,
     );
 
@@ -466,7 +473,7 @@ describe("runSpecGate — e2e synthetic git", () => {
       result.findings.some(
         (f) =>
           f.arm === "openapi" &&
-          f.file === "server/svc/api/svc.openapi.g.json" &&
+          f.file === "public/contracts/svc/api/svc.openapi.g.json" &&
           f.message.includes("BREAKING"),
       ),
     ).toBe(true);
@@ -474,7 +481,7 @@ describe("runSpecGate — e2e synthetic git", () => {
 
   it("committed openapi doc at a production path DELETED is BREAKING", async () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
-    unlinkSync(join(repo.root, "server/svc/api/svc.openapi.g.json"));
+    unlinkSync(join(repo.root, "public/contracts/svc/api/svc.openapi.g.json"));
 
     const result = await runSpecGate({
       repoRoot: repo.root,
@@ -487,7 +494,7 @@ describe("runSpecGate — e2e synthetic git", () => {
       result.findings.some(
         (f) =>
           f.arm === "openapi" &&
-          f.file === "server/svc/api/svc.openapi.g.json" &&
+          f.file === "public/contracts/svc/api/svc.openapi.g.json" &&
           f.message.includes("OpenAPI document deleted"),
       ),
     ).toBe(true);
@@ -497,7 +504,7 @@ describe("runSpecGate — e2e synthetic git", () => {
     const repo = makeSyntheticRepo(DEFAULT_BASELINE_FILES);
     writeRel(
       repo.root,
-      "contracts/domain/error-codes.spec.json",
+      "public/contracts/domain/error-codes.spec.json",
       ERROR_CODES_ONE_REMOVED,
     );
 

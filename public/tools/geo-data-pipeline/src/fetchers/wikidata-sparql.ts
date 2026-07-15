@@ -17,6 +17,7 @@ const USER_AGENT =
 
 const CACHE_DIR = resolve(
   REPO_ROOT_PATH,
+  "public",
   "tools",
   "geo-data-pipeline",
   ".cache",

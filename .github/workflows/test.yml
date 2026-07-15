@@ -4,7 +4,26 @@
 
 name: PR
 
-# PR CI — parallel lanes.
+# PR CI — parallel lanes (dual suite).
+#
+# Public-parity jobs (copy shape/commands to d2-public at human H5):
+#   - Proto checks (buf lint + format)
+#   - Contract gate unit tests
+#   - Release runner unit tests
+#   - Commit lint unit tests
+#   - Repo script tests (node --test)
+#   - Geo Data Pipeline Tests
+#   - Versioning integration (artifact-diff engine)
+#   - Public build (D2.Public.slnx)
+#   - .NET Shared Unit Tests
+#   - .NET Shared Integration Tests
+#   - TS Shared Unit Tests
+#   - Contract fixture emission (.NET → fixtures)
+#   - TypeSpec emitter byte-gate
+#   - Pack smoke (.NET nupkg + TS tgz)
+#
+# Combined private monorepo also runs: Build (umbrella), Edge unit/integration,
+# TS services unit, TS integration, proto/contract breaking gates (dual roots).
 #
 # Active jobs run in parallel as services and workspace packages come online.
 # Jobs whose target path is not yet populated remain commented with a brief
@@ -29,11 +48,11 @@ jobs:
   # ==========================================================================
 
   # ---------------------------------------------------------------------------
-  # Proto checks (buf lint + format) — active: buf.yaml now committed.
+  # Proto checks (buf lint + format) — active: buf.yaml committed under public.
   # Enforces STANDARD lint rules and format consistency on hand-authored protos.
-  # Scoped to `contracts/protos/` (the shared stable protos); the emitted
-  # *.g.proto files in server/ are NOT reformatted here (§26.5 — fix the
-  # emitter, never hand-edit generated output).
+  # Scoped to `public/contracts/protos/` (shared stable protos); emitted
+  # *.g.proto files are NOT reformatted here (§26.5 — fix the emitter, never
+  # hand-edit generated output).
   # ---------------------------------------------------------------------------
   proto-checks:
     name: Proto checks (buf lint + format)
@@ -44,16 +63,17 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: buf lint (STANDARD rule set)
-        run: buf lint contracts/protos
+        run: buf lint public/contracts/protos
       - name: buf format (hand-authored protos only)
-        run: buf format --diff --exit-code contracts/protos
+        run: buf format --diff --exit-code public/contracts/protos
 
   # ---------------------------------------------------------------------------
   # Proto breaking-change gate — always on, PR-blocking.
-  # Runs `buf breaking` at FILE level over the shared `contracts/protos/` tree
-  # against the `nova` baseline. Pre-stable packages (vNalpha/vNbeta) are exempt
-  # via the `proto-arm` wrapper in `tools/contract-gate`. The shared `d2.common.v1`
-  # protos are stable and always enforced.
+  # Runs `buf breaking` at FILE level over `public/contracts/protos/` against
+  # the `nova` baseline (legacy baseline paths remapped by contract-gate).
+  # Pre-stable packages (vNalpha/vNbeta) are exempt via the `proto-arm` wrapper
+  # in `public/tools/contract-gate`. The shared `d2.common.v1` protos are stable
+  # and always enforced.
   # Needs full git history (`fetch-depth: 0`) so `nova` resolves as a ref.
   # ---------------------------------------------------------------------------
   proto-breaking:
@@ -72,16 +92,16 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (contract-gate + its workspace deps)
-        run: pnpm install --fail-if-no-match --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+        run: pnpm install --fail-if-no-match --filter "contract-gate..." --filter "@dcsv-io/d2-typespec-emitters..."
       - name: build contract-gate
         run: pnpm --fail-if-no-match --filter contract-gate build
       - name: Proto breaking-change gate (buf breaking at FILE level vs nova)
-        run: node tools/contract-gate/dist/cli.js --against nova --proto-only
+        run: node public/tools/contract-gate/dist/cli.js --against nova --proto-only
 
   # ---------------------------------------------------------------------------
   # Contract breaking-change gate (spec / i18n / OpenAPI) — always on, PR-blocking.
-  # Runs the JSON-diff gate over `contracts/**/*.spec.json`, `contracts/messages/*.json`,
-  # and committed `*.openapi.g.json` docs against the `nova` baseline.
+  # Runs the JSON-diff gate over dual roots `public/contracts/**` +
+  # `private/contracts/**` against the `nova` baseline (legacy path remap).
   # Needs full git history so `git show nova:<path>` resolves baseline file content.
   # ---------------------------------------------------------------------------
   contract-breaking:
@@ -100,15 +120,15 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (contract-gate + its workspace deps)
-        run: pnpm install --fail-if-no-match --filter "contract-gate..." --filter "@d2/typespec-emitters..."
+        run: pnpm install --fail-if-no-match --filter "contract-gate..." --filter "@dcsv-io/d2-typespec-emitters..."
       - name: build contract-gate
         run: pnpm --fail-if-no-match --filter contract-gate build
       - name: Spec / i18n / OpenAPI breaking-change gate (JSON-diff vs nova)
-        run: node tools/contract-gate/dist/cli.js --against nova --skip-proto
+        run: node public/tools/contract-gate/dist/cli.js --against nova --skip-proto
 
   # ---------------------------------------------------------------------------
   # Contract-gate unit tests — always on.
-  # Runs the owned-code test suite for `tools/contract-gate` (footer parser,
+  # Runs the owned-code test suite for `public/tools/contract-gate` (footer parser,
   # discovery, safe-args, cli-flags, baseline, catalog-identity, spec-diff,
   # i18n-diff, openapi-diff, proto-exemption, proto-arm integration, and the
   # run-spec-gate end-to-end harness). §26.15/§26.16 owned-tooling validation.
@@ -124,15 +144,15 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (contract-gate + its workspace deps)
-        run: pnpm install --fail-if-no-match --filter "contract-gate..." --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "contract-gate..." --filter "@dcsv-io/d2-typespec-emitters..." --filter "ts-codegen..."
       - name: build contract-gate dependencies
-        run: pnpm --fail-if-no-match --filter "@d2/typespec-emitters..." build
+        run: pnpm --fail-if-no-match --filter "@dcsv-io/d2-typespec-emitters..." build
       - name: Contract gate unit + integration tests
         run: pnpm --fail-if-no-match --filter contract-gate test
 
   # ---------------------------------------------------------------------------
   # Release-runner unit tests — always on.
-  # Runs the owned-code test suite for `tools/release-runner` (bump engine,
+  # Runs the owned-code test suite for `public/tools/release-runner` (bump engine,
   # manifest editor, changelog editor, semver, and runner integration tests).
   # §26.15/§26.16 owned-tooling validation — mirrors contract-gate-unit.
   # ---------------------------------------------------------------------------
@@ -178,10 +198,11 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # Repo script tests — always on.
-  # Runs the node built-in test runner over tools/scripts/tests/*.test.mjs
+  # Runs the node built-in test runner over public/tools/scripts/tests/*.test.mjs
   # (commit/destructive-git guard hook matrix + PublicAPI / api-extractor empty-
-  # surface guards). Node built-ins only — no pnpm install. The hook script under
-  # test is committed (.claude/hooks/git-guard.sh). §26.15/§26.16 owned-tooling.
+  # surface guards + CI surface / export / publish fence tests). Node built-ins
+  # only — no pnpm install. The hook script under test is committed
+  # (.claude/hooks/git-guard.sh). §26.15/§26.16 owned-tooling.
   # Explicit-file glob is required: directory form does not discover *.test.mjs
   # on Node 24.
   # ---------------------------------------------------------------------------
@@ -193,15 +214,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - name: tools/scripts guard suites (node built-in test runner)
-        run: node --test tools/scripts/tests/*.test.mjs
+      - name: public/tools/scripts guard suites (node built-in test runner)
+        run: node --test public/tools/scripts/tests/*.test.mjs
 
   # ---------------------------------------------------------------------------
   # Geo data pipeline tests — always on.
-  # Runs the tools/geo-data-pipeline vitest suite (unit + parity). Self-contained
-  # package (no workspace deps); vitest transforms TS sources directly. Parity
-  # tests read committed contracts/geo/* specs present via checkout.
-  # §26.15/§26.16 owned-tooling validation.
+  # Runs the public/tools/geo-data-pipeline vitest suite (unit + parity).
+  # Self-contained package (no workspace deps); vitest transforms TS sources
+  # directly. Parity tests read committed public/contracts/geo/* specs present
+  # via checkout. §26.15/§26.16 owned-tooling validation.
   # ---------------------------------------------------------------------------
   geo-data-pipeline-tests:
     name: Geo Data Pipeline Tests
@@ -245,7 +266,7 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       # Scoped install: release-runner pulls api-extractor (a devDep) + its deps;
-      # the shared-TS subtree pulls @d2/* build deps; ts-codegen for prebuilds.
+      # the shared-TS subtree pulls @dcsv-io/d2-* build deps; ts-codegen for prebuilds.
       - name: pnpm install (release-runner + shared-TS subtree + ts-codegen)
         run: >
           pnpm install --fail-if-no-match
@@ -266,7 +287,7 @@ jobs:
         run: pnpm --fail-if-no-match --filter release-runner exec tsx src/drift-check-cli.ts
 
   # lint-and-format (web half) — blocked: private/services/web/ SvelteKit workspace is not
-  # yet resolvable (missing @d2/auth-bff-client workspace package; tracked B18).
+  # yet resolvable (missing @dcsv-io/d2-auth-bff-client workspace package; tracked B18).
   # lint-and-format:
   #   name: Lint + format (web)
   #   runs-on: ubuntu-latest
@@ -299,6 +320,19 @@ jobs:
           dotnet-version: "10.0.x"
       - run: dotnet build D2.slnx --configuration Release
 
+  # Public-only solution build — dual-suite proof (zero private ProjectReference
+  # restore for the OSS surface). Monorepo root props are present here; export
+  # clone self-sufficiency is proven by export-dry-run stage-dir, not this job.
+  public-build:
+    name: Public build (D2.Public.slnx)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet build public/D2.Public.slnx --configuration Release
+
   dotnet-shared-unit-tests:
     name: .NET Shared Unit Tests
     runs-on: ubuntu-latest
@@ -308,7 +342,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test public/packages/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Unit*"
+      - run: dotnet test public/packages/dotnet/tests/DcsvIo.D2.Tests.csproj --configuration Release -- --filter-namespace "DcsvIo.D2.Tests.Unit*"
 
   dotnet-shared-integration-tests:
     name: .NET Shared Integration Tests
@@ -319,7 +353,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test public/packages/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-namespace "D2.Shared.Tests.Integration*"
+      - run: dotnet test public/packages/dotnet/tests/DcsvIo.D2.Tests.csproj --configuration Release -- --filter-namespace "DcsvIo.D2.Tests.Integration*"
 
   edge-unit-tests:
     name: Edge Unit Tests
@@ -330,16 +364,16 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test private/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Unit*"
+      - run: dotnet test private/services/edge/tests --configuration Release -- --filter-namespace "DcsvIo.D2.Private.Edge.Tests.Unit*"
 
   # ---------------------------------------------------------------------------
   # Edge integration tests — includes NodeLeafClient cross-runtime harness.
-  # Node on PATH + a built @d2/key-custodian-client dist are necessary so the
-  # Node↔Kestrel cases EXECUTE rather than skip-with-reason; a feasible
-  # loopback mTLS handshake on the runner is also required (live-handshake
-  # feasibility). The standing skip-reason assertion fails the lane if node,
-  # client-dist, OR live-handshake-infeasibility skip messages appear in the
-  # test output (execute-not-skip for all three gates).
+  # Node on PATH + a built @dcsv-io/d2-private-key-custodian-client dist are
+  # necessary so the Node↔Kestrel cases EXECUTE rather than skip-with-reason;
+  # a feasible loopback mTLS handshake on the runner is also required
+  # (live-handshake feasibility). The standing skip-reason assertion fails the
+  # lane if node, client-dist, OR live-handshake-infeasibility skip messages
+  # appear in the test output (execute-not-skip for all three gates).
   # ---------------------------------------------------------------------------
   edge-integration-tests:
     name: Edge Integration Tests
@@ -355,18 +389,18 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (key-custodian client + workspace deps + ts-codegen)
-        run: pnpm install --fail-if-no-match --filter "@d2/key-custodian-client..." --filter "ts-codegen..."
-      - name: build @d2/key-custodian-client dist (+ dep dists)
-        run: pnpm --fail-if-no-match --filter "@d2/key-custodian-client..." -r build
+        run: pnpm install --fail-if-no-match --filter "@dcsv-io/d2-private-key-custodian-client..." --filter "ts-codegen..."
+      - name: build @dcsv-io/d2-private-key-custodian-client dist (+ dep dists)
+        run: pnpm --fail-if-no-match --filter "@dcsv-io/d2-private-key-custodian-client..." -r build
       - name: Edge integration tests
         run: |
           set -o pipefail
           # NODE_PATH so the mtls-probe (cwd=client-ts/scripts) resolves workspace
-          # packages the same way pnpm links them for @d2/key-custodian-client.
+          # packages the same way pnpm links them for the private KC client.
           export NODE_PATH="${GITHUB_WORKSPACE}/private/services/edge/key-custodian/client-ts/node_modules${NODE_PATH:+:$NODE_PATH}"
           # Also ensure probe can resolve from package root when node walks parents.
           export NODE_OPTIONS="${NODE_OPTIONS:-}"
-          if ! dotnet test private/services/edge/tests --configuration Release -- --filter-namespace "D2.Edge.Tests.Integration*" 2>&1 | tee edge-integration.log; then
+          if ! dotnet test private/services/edge/tests --configuration Release -- --filter-namespace "DcsvIo.D2.Private.Edge.Tests.Integration*" 2>&1 | tee edge-integration.log; then
             echo "==== FAILED test names (MTP TestResults) ===="
             # Strip NULs so grep treats the MTP log as text (§24.33).
             # Prefer method/display-name lines; fall back to assert/exception stacks.
@@ -382,7 +416,7 @@ jobs:
         # Fails if node/dist OR live-handshake-infeasibility skip reasons appear —
         # all three gates named in the job comment must hold for execute-not-skip.
         run: |
-          skip_pat='node was not found on PATH|@d2/key-custodian-client dist is not built|did not complete the spike handshake|loopback mutual-TLS handshake could not be established|live-handshake spike could not run'
+          skip_pat='node was not found on PATH|@dcsv-io/d2-private-key-custodian-client dist is not built|did not complete the spike handshake|loopback mutual-TLS handshake could not be established|live-handshake spike could not run'
           if grep -qE "$skip_pat" edge-integration.log; then
             echo "NodeLeafClient cases still skipped (node, client dist, or live-handshake infeasibility)"
             grep -E "$skip_pat" edge-integration.log || true
@@ -407,10 +441,10 @@ jobs:
       - uses: pnpm/action-setup@v4
       # Scoped install: pulls the public/packages/typescript/** subtree and their
       # workspace deps only. The trailing `...` includes transitive workspace deps.
-      # `tools/ts-codegen` is also included because several shared-lib prebuild
+      # `public/tools/ts-codegen` is also included because several shared-lib prebuild
       # scripts invoke it via `pnpm --filter ts-codegen exec tsx ...`; without it
-      # those prebuilds would fail. `private/services/web` (B18 — missing @d2/auth-bff-client)
-      # is NOT in the closure, so the frozen-lockfile install remains clean.
+      # those prebuilds would fail. `private/services/web` (B18) is NOT in the
+      # closure, so the frozen-lockfile install remains clean.
       - name: pnpm install (shared-TS subtree + ts-codegen)
         run: pnpm install --fail-if-no-match --filter "./public/packages/typescript/**..." --filter "ts-codegen..."
       - name: build (shared-TS packages that need a dist/ before tests run)
@@ -427,7 +461,7 @@ jobs:
   # The pnpm workspace includes private/services/**; path filters auto-adopt a
   # future service client-ts package. ts-codegen is in the install because
   # shared-lib prebuild scripts invoke it. The build uses the dependency-
-  # closure filter (...) so @d2/* dep dists exist before vitest resolves them.
+  # closure filter (...) so @dcsv-io/d2-* dep dists exist before vitest resolves them.
   # ---------------------------------------------------------------------------
   ts-services-unit-tests:
     name: TS Services Unit Tests
@@ -439,14 +473,14 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       # Package-name `...` closure (not path `./private/services/**...`) — path
-      # filters under-install shared-TS deps and tsc -b fails resolving @d2/*.
+      # filters under-install shared-TS deps and tsc -b fails resolving deps.
       # Matches edge-integration-tests / known-good client build graph.
       - name: pnpm install (key-custodian client + workspace deps + ts-codegen)
-        run: pnpm install --fail-if-no-match --filter "@d2/key-custodian-client..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "@dcsv-io/d2-private-key-custodian-client..." --filter "ts-codegen..."
       - name: build (workspace dependency dists the client packages import)
-        run: pnpm --fail-if-no-match --filter "@d2/key-custodian-client..." -r build
+        run: pnpm --fail-if-no-match --filter "@dcsv-io/d2-private-key-custodian-client..." -r build
       - name: TS services unit tests
-        run: pnpm --fail-if-no-match --filter "@d2/key-custodian-client" test
+        run: pnpm --fail-if-no-match --filter "@dcsv-io/d2-private-key-custodian-client" test
 
   # ---------------------------------------------------------------------------
   # TS integration tests (Testcontainers) — packages defining test:integration.
@@ -545,7 +579,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - run: dotnet test public/packages/dotnet/tests/D2.Shared.Tests.csproj --configuration Release -- --filter-trait "Category=ContractFixtures"
+      - run: dotnet test public/packages/dotnet/tests/DcsvIo.D2.Tests.csproj --configuration Release -- --filter-trait "Category=ContractFixtures"
       - name: assert no fixture drift (tracked changes AND untracked new files)
         run: |
           fixtures_dir=public/packages/typescript/contract-tests/fixtures
@@ -572,20 +606,20 @@ jobs:
           node-version: "24"
       - uses: pnpm/action-setup@v4
       - name: pnpm install (emitter subtree + ts-codegen build tool)
-        run: pnpm install --fail-if-no-match --filter "@d2/typespec-emitters..." --filter "ts-codegen..."
+        run: pnpm install --fail-if-no-match --filter "@dcsv-io/d2-typespec-emitters..." --filter "ts-codegen..."
       - name: build (emitter + decorators dist/)
-        run: pnpm --fail-if-no-match --filter "@d2/typespec-emitters..." build
+        run: pnpm --fail-if-no-match --filter "@dcsv-io/d2-typespec-emitters..." build
       - name: TypeSpec emitter tests (byte-parity gate)
-        run: pnpm --fail-if-no-match --filter "@d2/typespec-emitters" test
+        run: pnpm --fail-if-no-match --filter "@dcsv-io/d2-typespec-emitters" test
 
   # ==========================================================================
   # Pack smoke — active now (no service dependencies).
   # Proves one representative consumable per ecosystem stays publish-ready.
   # Does NOT publish — no credentials required.
-  # .NET: packs D2.Shared.Result (exercises the full ProjectReference closure
+  # .NET: packs DcsvIo.D2.Result (exercises the full ProjectReference closure
   #       for NuGet dependency declaration) and asserts a .nupkg is produced.
-  # TS:   builds + packs @d2/result (exercises the `files: ["dist"]` allowlist
-  #       so the tarball contains dist/ and not src/) and asserts a .tgz.
+  # TS:   builds + packs @dcsv-io/d2-result (exercises the `files: ["dist"]`
+  #       allowlist so the tarball contains dist/ and not src/) and asserts a .tgz.
   # ==========================================================================
   pack-smoke:
     name: Pack smoke (.NET nupkg + TS tgz)
@@ -604,30 +638,30 @@ jobs:
       # `--no-build` relies on the Build job; in CI this job runs independently
       # so we let dotnet restore + build inline via the default (no --no-build).
       # Single-project pack — only the transitive ProjectReference closure of
-      # D2.Shared.Result is compiled (not the full solution).
-      - name: dotnet pack D2.Shared.Result
+      # DcsvIo.D2.Result is compiled (not the full solution).
+      - name: dotnet pack DcsvIo.D2.Result
         run: >
-          dotnet pack public/packages/dotnet/result/core/D2.Shared.Result.csproj
+          dotnet pack public/packages/dotnet/result/core/DcsvIo.D2.Result.csproj
           --configuration Release
           --output /tmp/pack-smoke
       - name: assert .nupkg produced
         run: |
-          ls /tmp/pack-smoke/D2.Shared.Result.*.nupkg
-          echo "D2.Shared.Result nupkg OK"
+          ls /tmp/pack-smoke/DcsvIo.D2.Result.*.nupkg
+          echo "DcsvIo.D2.Result nupkg OK"
 
       # ----- TS pack ---------------------------------------------------------
-      - name: pnpm install (@d2/result subtree + ts-codegen)
-        run: pnpm install --fail-if-no-match --filter "@d2/result..." --filter "ts-codegen..."
-      - name: build @d2/result workspace dependencies
-        run: pnpm --fail-if-no-match --filter "@d2/result^..." build
-      - name: build @d2/result
-        run: pnpm --fail-if-no-match --filter @d2/result build
-      - name: pnpm pack @d2/result
-        run: pnpm --fail-if-no-match --filter @d2/result pack --pack-destination /tmp/pack-smoke
+      - name: pnpm install (@dcsv-io/d2-result subtree + ts-codegen)
+        run: pnpm install --fail-if-no-match --filter "@dcsv-io/d2-result..." --filter "ts-codegen..."
+      - name: build @dcsv-io/d2-result workspace dependencies
+        run: pnpm --fail-if-no-match --filter "@dcsv-io/d2-result^..." build
+      - name: build @dcsv-io/d2-result
+        run: pnpm --fail-if-no-match --filter @dcsv-io/d2-result build
+      - name: pnpm pack @dcsv-io/d2-result
+        run: pnpm --fail-if-no-match --filter @dcsv-io/d2-result pack --pack-destination /tmp/pack-smoke
       - name: assert .tgz produced and contains dist/ not src/
         run: |
-          tgz=$(ls /tmp/pack-smoke/d2-result-*.tgz)
+          tgz=$(ls /tmp/pack-smoke/dcsv-io-d2-result-*.tgz)
           echo "Tarball: $tgz"
           if ! tar -tzf "$tgz" | grep -q "^package/dist/"; then echo "FAIL: dist/ missing from tarball"; exit 1; fi
           if tar -tzf "$tgz" | grep -q "^package/src/"; then echo "FAIL: src/ leaked into tarball"; exit 1; fi
-          echo "@d2/result tgz OK"
+          echo "@dcsv-io/d2-result tgz OK"

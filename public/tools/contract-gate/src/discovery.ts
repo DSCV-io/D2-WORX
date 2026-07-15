@@ -19,12 +19,38 @@
 //     published catalog / locale / OpenAPI doc therefore still enumerates and
 //     the orchestrator deletion branches fire BREAKING.
 //   - Paths are always repo-relative with forward slashes.
+//
+// Dual-root contract trees (post-reorg monorepo):
+//   - public/contracts  — open shared contracts (always walked)
+//   - private/contracts — product/private contracts (combined mode only)
+//
+// Baseline path continuity (X11): pre-reorg refs still track monorepo-root
+// `contracts/**` (and legacy `server/**` for OpenAPI). Discovery remaps
+// baseline `contracts/**` → `public/contracts/**` for identity join with the
+// working tree. Legacy `server/**` OpenAPI paths remain baseline candidates
+// only (WT no longer walks monorepo-root `server/`).
 
 import { readdirSync, existsSync } from "node:fs";
 import type { Dirent } from "node:fs";
 import { basename, join, relative } from "node:path";
 
 import { falsey } from "@dcsv-io/d2-utilities";
+
+// ---------------------------------------------------------------------------
+// Contract roots
+// ---------------------------------------------------------------------------
+
+/** Open shared contracts root (repo-relative, forward slashes). */
+export const PUBLIC_CONTRACTS_ROOT = "public/contracts";
+
+/** Product / private contracts root (repo-relative, forward slashes). */
+export const PRIVATE_CONTRACTS_ROOT = "private/contracts";
+
+/** Pre-reorg monorepo-root contracts prefix (baseline remap source). */
+export const LEGACY_CONTRACTS_PREFIX = "contracts/";
+
+/** Pre-reorg OpenAPI root (baseline-only; retired for WT walks). */
+export const LEGACY_SERVER_PREFIX = "server/";
 
 // ---------------------------------------------------------------------------
 // Skip set (canonical name list)
@@ -73,6 +99,15 @@ export interface GateScope {
   readonly excludedOpenApiTestFiles: readonly string[];
 }
 
+/** Options for dual-root collectors. */
+export interface DiscoveryOptions {
+  /**
+   * When true, walk only {@link PUBLIC_CONTRACTS_ROOT} (future d2-public /
+   * export clone). Default false = combined dual roots when present.
+   */
+  readonly publicOnly?: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // Path helpers
 // ---------------------------------------------------------------------------
@@ -96,6 +131,86 @@ export function pathHasSkippedSegment(
   const segments = normalized.split("/");
 
   return segments.some((segment) => skipDirs.has(segment));
+}
+
+/**
+ * Remap a baseline-tracked path for identity join with the working tree.
+ *
+ * Pre-reorg refs track monorepo-root `contracts/**`. Post-reorg WT lives under
+ * `public/contracts/**`. Mapping keeps moved catalogs joined (no false
+ * full-catalog break). Paths already under public/private roots pass through.
+ *
+ * @param relPath - Repo-relative path from `git ls-tree` (any slash style).
+ * @returns Normalized forward-slash path used as the candidate identity key.
+ */
+export function remapBaselineContractPath(relPath: string): string {
+  const normalized = relPath.replace(/\\/g, "/");
+
+  if (normalized.startsWith(LEGACY_CONTRACTS_PREFIX)) {
+    return `public/${normalized}`;
+  }
+
+  return normalized;
+}
+
+/**
+ * Resolve git-show path candidates for a working-tree (or remapped) path.
+ *
+ * Tries the modern path first, then the legacy monorepo-root form so
+ * `--against nova` (pre-reorg) still resolves content.
+ *
+ * @param relPath - Candidate path (typically remapped / WT path).
+ * @returns Ordered list of paths to try with `git show <ref>:<path>`.
+ */
+export function baselineGitPathCandidates(relPath: string): readonly string[] {
+  const normalized = relPath.replace(/\\/g, "/");
+  const candidates: string[] = [normalized];
+
+  if (normalized.startsWith(`${PUBLIC_CONTRACTS_ROOT}/`)) {
+    candidates.push(normalized.slice("public/".length));
+  }
+
+  return candidates;
+}
+
+/**
+ * Absolute walk roots for the working tree under dual (or public-only) mode.
+ *
+ * @param repoRoot - Absolute repository root.
+ * @param publicOnly - When true, only {@link PUBLIC_CONTRACTS_ROOT}.
+ * @returns Absolute directory paths that exist or may be walked (missing → empty).
+ */
+export function resolveContractWalkRoots(
+  repoRoot: string,
+  publicOnly = false,
+): readonly string[] {
+  const roots = [join(repoRoot, ...PUBLIC_CONTRACTS_ROOT.split("/"))];
+
+  if (!publicOnly) {
+    roots.push(join(repoRoot, ...PRIVATE_CONTRACTS_ROOT.split("/")));
+  }
+
+  return roots;
+}
+
+/** True when a (remapped) baseline path is under an accepted contract root. */
+function isUnderContractRoot(
+  relPath: string,
+  publicOnly: boolean,
+  allowLegacyServer: boolean,
+): boolean {
+  if (relPath.startsWith(`${PUBLIC_CONTRACTS_ROOT}/`)) return true;
+
+  if (!publicOnly && relPath.startsWith(`${PRIVATE_CONTRACTS_ROOT}/`)) {
+    return true;
+  }
+
+  // Baseline-only legacy OpenAPI root (WT no longer walks monorepo-root server/).
+  if (allowLegacyServer && relPath.startsWith(LEGACY_SERVER_PREFIX)) {
+    return true;
+  }
+
+  return false;
 }
 
 /** Safe Dirent readdir — missing/unreadable roots degrade to empty. */
@@ -204,12 +319,12 @@ function filterBaselinePaths(
   const results: string[] = [];
 
   for (const raw of baselineTrackedPaths) {
-    const relPath = raw.replace(/\\/g, "/");
+    const remapped = remapBaselineContractPath(raw);
 
-    if (pathHasSkippedSegment(relPath, skipDirs)) continue;
-    if (!matchPath(relPath)) continue;
+    if (pathHasSkippedSegment(remapped, skipDirs)) continue;
+    if (!matchPath(remapped)) continue;
 
-    results.push(relPath);
+    results.push(remapped);
   }
 
   return results;
@@ -236,18 +351,26 @@ function isI18nLocaleFileName(name: string): boolean {
 }
 
 /**
- * Collect `*.openapi.g.json` under `contracts/` + `server/` (baseline ∪ WT).
+ * Collect `*.openapi.g.json` under dual contract roots (baseline ∪ WT).
+ *
+ * Working tree walks `public/contracts` (+ `private/contracts` unless
+ * `publicOnly`). Baseline accepts remapped `contracts/**` → `public/contracts/**`
+ * and legacy `server/**` OpenAPI paths (WT no longer walks monorepo-root
+ * `server/`).
  *
  * @param repoRoot - Absolute path to the repository root.
  * @param baselineTrackedPaths - Optional `git ls-tree` path list at baseRef.
+ * @param options - Dual-root / public-only options.
  * @returns Sorted candidate paths (WT ∪ baseline) plus WT-only excluded-under-`tests` census.
  */
 export function collectOpenApiFiles(
   repoRoot: string,
   baselineTrackedPaths?: readonly string[],
+  options: DiscoveryOptions = {},
 ): DiscoveryResult {
+  const publicOnly = options.publicOnly === true;
   const wt = walkWorkingTree(
-    [join(repoRoot, "contracts"), join(repoRoot, "server")],
+    resolveContractWalkRoots(repoRoot, publicOnly),
     repoRoot,
     isOpenApiFileName,
     SKIP_DIRS,
@@ -256,8 +379,9 @@ export function collectOpenApiFiles(
   const baseline = filterBaselinePaths(
     baselineTrackedPaths,
     (relPath) => {
-      // Same walk roots as the WT pass: contracts/ + server/ only.
-      if (!relPath.startsWith("contracts/") && !relPath.startsWith("server/")) {
+      if (
+        !isUnderContractRoot(relPath, publicOnly, /* allowLegacyServer */ true)
+      ) {
         return false;
       }
 
@@ -273,18 +397,21 @@ export function collectOpenApiFiles(
 }
 
 /**
- * Collect `*.spec.json` under `contracts/` (baseline ∪ WT).
+ * Collect `*.spec.json` under dual contract roots (baseline ∪ WT).
  *
  * @param repoRoot - Absolute path to the repository root.
  * @param baselineTrackedPaths - Optional `git ls-tree` path list at baseRef.
+ * @param options - Dual-root / public-only options.
  * @returns Sorted candidate paths (WT ∪ baseline) plus WT-only excluded-under-`tests` census.
  */
 export function collectSpecFiles(
   repoRoot: string,
   baselineTrackedPaths?: readonly string[],
+  options: DiscoveryOptions = {},
 ): DiscoveryResult {
+  const publicOnly = options.publicOnly === true;
   const wt = walkWorkingTree(
-    [join(repoRoot, "contracts")],
+    resolveContractWalkRoots(repoRoot, publicOnly),
     repoRoot,
     isSpecFileName,
     SKIP_DIRS,
@@ -293,7 +420,11 @@ export function collectSpecFiles(
   const baseline = filterBaselinePaths(
     baselineTrackedPaths,
     (relPath) => {
-      if (!relPath.startsWith("contracts/")) return false;
+      if (
+        !isUnderContractRoot(relPath, publicOnly, /* allowLegacyServer */ false)
+      ) {
+        return false;
+      }
 
       return isSpecFileName(basename(relPath));
     },
@@ -307,7 +438,7 @@ export function collectSpecFiles(
 }
 
 /**
- * Collect i18n locale files under `contracts/messages/` (baseline ∪ WT).
+ * Collect i18n locale files under dual `…/contracts/messages/` roots.
  *
  * Locale rules match the shared collector contract: top-level `*.json` files
  * that do not start with `$` (schema files). The arm does not require the
@@ -316,32 +447,52 @@ export function collectSpecFiles(
  *
  * @param repoRoot - Absolute path to the repository root.
  * @param baselineTrackedPaths - Optional `git ls-tree` path list at baseRef.
+ * @param options - Dual-root / public-only options.
  * @returns Sorted candidate locale paths (WT ∪ baseline); `excludedTestFiles` is
  *   always empty (flat layout).
  */
 export function collectI18nFiles(
   repoRoot: string,
   baselineTrackedPaths?: readonly string[],
+  options: DiscoveryOptions = {},
 ): DiscoveryResult {
-  const messagesDir = join(repoRoot, "contracts", "messages");
+  const publicOnly = options.publicOnly === true;
+  const messageRoots = [`${PUBLIC_CONTRACTS_ROOT}/messages`];
+
+  if (!publicOnly) {
+    messageRoots.push(`${PRIVATE_CONTRACTS_ROOT}/messages`);
+  }
+
   const wtFiles: string[] = [];
 
-  if (existsSync(messagesDir)) {
-    // safeReaddirNames covers the unreadable-dir / file-as-dir case.
+  for (const relRoot of messageRoots) {
+    const messagesDir = join(repoRoot, ...relRoot.split("/"));
+
+    if (!existsSync(messagesDir)) continue;
+
     for (const name of safeReaddirNames(messagesDir)) {
       if (!isI18nLocaleFileName(name)) continue;
 
-      wtFiles.push(`contracts/messages/${name}`);
+      wtFiles.push(`${relRoot}/${name}`);
     }
   }
 
   const baseline = filterBaselinePaths(
     baselineTrackedPaths,
     (relPath) => {
-      if (!relPath.startsWith("contracts/messages/")) return false;
+      const isPublicMessages = relPath.startsWith(
+        `${PUBLIC_CONTRACTS_ROOT}/messages/`,
+      );
+      const isPrivateMessages =
+        !publicOnly &&
+        relPath.startsWith(`${PRIVATE_CONTRACTS_ROOT}/messages/`);
 
-      // Flat locale layout: exactly one segment under messages/.
-      const rest = relPath.slice("contracts/messages/".length);
+      if (!isPublicMessages && !isPrivateMessages) return false;
+
+      const prefix = isPublicMessages
+        ? `${PUBLIC_CONTRACTS_ROOT}/messages/`
+        : `${PRIVATE_CONTRACTS_ROOT}/messages/`;
+      const rest = relPath.slice(prefix.length);
 
       if (rest.includes("/")) return false;
 

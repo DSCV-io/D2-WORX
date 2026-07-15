@@ -2,47 +2,35 @@
 # Copyright (c) DCSV. All rights reserved.
 # -----------------------------------------------------------------------
 
-# Manual library-release workflow.
+# Manual library pack workflow (private monorepo).
 #
-# Packs all 83 consumable D2 libraries (.NET + TypeScript), assembles an
-# atomic bundle zip, and optionally creates a GitHub Release with the
-# bundle + loose artifacts attached.
+# Packs all consumable open libraries (.NET + TypeScript) under the public
+# inventory, assembles an atomic bundle zip, and uploads the zip + loose
+# artifacts as a workflow artifact for inspection.
+#
+# Private monorepo posture (publish fence):
+#   - Pack + upload-artifact ONLY on this monorepo.
+#   - Does NOT create a GitHub Release of public package IDs.
+#   - Does NOT publish to nuget.org or npmjs.
+#   Real GH Release + registry publish of open packages is owned by the
+#   public remote (d2-public), not this private monorepo.
 #
 # Trigger: manual workflow_dispatch ONLY.
-#   - dry_run=true (default): pack, assemble, upload as a workflow artifact
-#     for inspection. No Release is created. Use this to validate the bundle
-#     before cutting a real release.
-#   - dry_run=false: additionally runs `gh release create` with the bundle
-#     and all loose artifacts. This is the only step that creates a real
-#     GitHub Release — it is deliberately gated behind the manual input.
-#
-# No npm or NuGet registry credentials are used. This workflow creates a
-# GitHub Release only. Publishing to npm / NuGet is a separate, deliberate
-# step (not wired here).
+# No npm or NuGet registry credentials are used.
 
 name: Release libraries
 
 on:
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: "Dry run — pack and assemble only, skip gh release create"
-        type: boolean
-        default: true
-        required: true
       tag:
-        description: "Release tag override (default: libs-YYYY.MM.DD derived from run date)"
+        description: "Bundle tag override (default: libs-YYYY.MM.DD derived from run date)"
         type: string
         required: false
         default: ""
-      prerelease:
-        description: "Mark the GitHub Release as a pre-release"
-        type: boolean
-        default: true
-        required: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   release-libs:
@@ -66,7 +54,7 @@ jobs:
       - uses: pnpm/action-setup@v4
 
       # -----------------------------------------------------------------------
-      # Derive the release tag (override or date-stamp)
+      # Derive the bundle tag (override or date-stamp)
       # -----------------------------------------------------------------------
       - name: Derive release tag
         id: tag
@@ -210,13 +198,14 @@ jobs:
           PYEOF
 
       # -----------------------------------------------------------------------
-      # Assemble the bundle (manifest.json, HOW-TO-USE.md, LICENSE.md, zip)
+      # Assemble the bundle (manifest.json, HOW-TO-USE.md, LICENSE, zip)
+      # License source = public/LICENSE (Apache-2.0) — never root PolyForm.
       # -----------------------------------------------------------------------
       - name: Assemble bundle zip
         env:
           RELEASE_TAG: ${{ steps.tag.outputs.value }}
         run: |
-          node tools/scripts/assemble-libs-bundle.mjs \
+          node public/tools/scripts/assemble-libs-bundle.mjs \
             --bundle-dir  bundle \
             --list-json   bundle/list.json \
             --tag         "$RELEASE_TAG" \
@@ -224,9 +213,9 @@ jobs:
             --output-zip  "d2-libs-${RELEASE_TAG}.zip"
 
       # -----------------------------------------------------------------------
-      # Generate release notes (shipped inside the bundle + attached to Release)
+      # Generate pack notes (shipped inside the bundle artifact only)
       # -----------------------------------------------------------------------
-      - name: Generate release notes
+      - name: Generate pack notes
         env:
           RELEASE_TAG: ${{ steps.tag.outputs.value }}
         run: |
@@ -265,14 +254,19 @@ jobs:
               "",
               "## License",
               "",
-              "These libraries are under the **PolyForm Strict License** — non-commercial use only.",
-              "See `LICENSE.md` in the bundle.",
+              "These libraries are under the **Apache License 2.0**.",
+              "See `LICENSE` in the bundle (copied from `public/LICENSE`).",
+              "",
+              "## Publish ownership",
+              "",
+              "This private monorepo packs and uploads artifacts only.",
+              "GitHub Release of public package IDs and registry publish are owned by the public remote.",
           ]
 
           with open("bundle/RELEASE-NOTES.md", "w") as f:
               f.write("\n".join(lines) + "\n")
 
-          print("Release notes written.")
+          print("Pack notes written.")
           PYEOF
 
       # -----------------------------------------------------------------------
@@ -287,27 +281,3 @@ jobs:
             bundle/nuget/*.nupkg
             bundle/npm/*.tgz
           if-no-files-found: error
-
-      # -----------------------------------------------------------------------
-      # Create GitHub Release (only when dry_run == false)
-      # Uses the built-in gh CLI + GITHUB_TOKEN — no third-party action.
-      # -----------------------------------------------------------------------
-      - name: Create GitHub Release
-        if: ${{ inputs.dry_run == false }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ steps.tag.outputs.value }}
-          PRERELEASE_FLAG: ${{ inputs.prerelease == true && '--prerelease' || '' }}
-        run: |
-          # ${PRERELEASE_FLAG} is intentionally unquoted: it is either the literal
-          # string "--prerelease" or empty string, derived from a boolean workflow
-          # input (GitHub Actions validates the type before evaluation). Quoting it
-          # would pass an empty quoted string as a positional argument when prerelease
-          # is false. Shell word-splitting of a server-side-validated boolean is safe.
-          gh release create "$RELEASE_TAG" \
-            --title "D2 libraries ${RELEASE_TAG}" \
-            --notes-file bundle/RELEASE-NOTES.md \
-            ${PRERELEASE_FLAG} \
-            "d2-libs-${RELEASE_TAG}.zip" \
-            bundle/nuget/*.nupkg \
-            bundle/npm/*.tgz

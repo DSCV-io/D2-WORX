@@ -207,10 +207,12 @@ describe("buildHowToUse — content", () => {
     expect(output).toContain("air-gapped");
   });
 
-  it("includes the PolyForm Strict license note", () => {
+  it("includes the Apache-2.0 license note", () => {
     const output = buildHowToUse(SAMPLE_TAG, SAMPLE_PACKAGES) as string;
-    expect(output).toContain("PolyForm Strict");
-    expect(output).toContain("non-commercial");
+    expect(output).toContain("Apache License 2.0");
+    expect(output).toContain("Apache-2.0");
+    expect(output).not.toContain("PolyForm Strict");
+    expect(output).not.toContain("non-commercial");
   });
 
   it("includes both .NET and npm sections", () => {

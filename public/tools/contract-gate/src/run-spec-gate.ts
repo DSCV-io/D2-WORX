@@ -6,7 +6,7 @@
 // Spec/i18n/OpenAPI arm orchestrator.
 //
 // Resolves baseline content for each discovered `*.spec.json`,
-// `contracts/messages/*.json`, and `*.openapi.g.json` file via
+// `…/contracts/messages/*.json`, and `*.openapi.g.json` file via
 // `git show <baseRef>:<path>`, then diffs against the working-tree version
 // using the appropriate diff engine (spec-diff, i18n-diff, or openapi-diff).
 //
@@ -18,6 +18,9 @@
 //     removal — every entry in the baseline is flagged as removed (BREAKING).
 //   - Paths under excluded directory names (tests / package / build) never
 //     enter the candidate set on either side of the union.
+//   - Pre-reorg baseline paths under monorepo-root `contracts/**` are remapped
+//     to `public/contracts/**` for identity join; content is read via modern
+//     then legacy git path candidates.
 
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -30,6 +33,7 @@ import { fileAtRef, listTrackedPathsAtRef } from "./git-show.js";
 import { getCatalogIdentity } from "./catalog-identity.js";
 import {
   SKIP_DIR_NAMES,
+  baselineGitPathCandidates,
   collectOpenApiFiles,
   collectSpecFiles,
   collectI18nFiles,
@@ -48,6 +52,30 @@ export interface SpecGateOptions {
   readonly baseRef: string;
   /** True when the force valve has been pulled. */
   readonly valveOpen: boolean;
+  /**
+   * When true, discover only under `public/contracts` (export / d2-public mode).
+   * Default false = dual roots (`public/contracts` + `private/contracts`).
+   */
+  readonly publicOnly?: boolean;
+}
+
+/**
+ * Read baseline file content trying modern then legacy git paths (X11).
+ */
+function fileAtRefWithBaselineRemap(
+  baseRef: string,
+  relPath: string,
+  repoRoot: string,
+): string | undefined {
+  for (const candidate of baselineGitPathCandidates(relPath)) {
+    const content = fileAtRef(baseRef, candidate, repoRoot);
+
+    if (content !== undefined) {
+      return content;
+    }
+  }
+
+  return undefined;
 }
 
 /** Result of the spec gate. */
@@ -86,15 +114,20 @@ export async function runSpecGate(
   opts: SpecGateOptions,
 ): Promise<SpecGateResult> {
   const { repoRoot, baseRef, valveOpen } = opts;
+  const discoveryOpts = { publicOnly: opts.publicOnly === true };
 
   const findings: BreakingFinding[] = [];
 
   // One ls-tree serves all three pure collectors (baseline ∪ WT).
   const tracked = listTrackedPathsAtRef(baseRef, repoRoot);
 
-  const specDiscovery = collectSpecFiles(repoRoot, tracked);
-  const i18nDiscovery = collectI18nFiles(repoRoot, tracked);
-  const openApiDiscovery = collectOpenApiFiles(repoRoot, tracked);
+  const specDiscovery = collectSpecFiles(repoRoot, tracked, discoveryOpts);
+  const i18nDiscovery = collectI18nFiles(repoRoot, tracked, discoveryOpts);
+  const openApiDiscovery = collectOpenApiFiles(
+    repoRoot,
+    tracked,
+    discoveryOpts,
+  );
 
   const scope: GateScope = {
     skipDirs: SKIP_DIR_NAMES,
@@ -126,7 +159,11 @@ export async function runSpecGate(
 
     if (identity.kind === "exempt") continue;
 
-    const baselineContent = fileAtRef(baseRef, relPath, repoRoot);
+    const baselineContent = fileAtRefWithBaselineRemap(
+      baseRef,
+      relPath,
+      repoRoot,
+    );
     const baseline =
       baselineContent !== undefined
         ? safeParseJson(baselineContent, `${relPath}@${baseRef}`)
@@ -160,7 +197,11 @@ export async function runSpecGate(
   for (const relPath of i18nDiscovery.files) {
     const absPath = join(repoRoot, relPath);
 
-    const baselineContent = fileAtRef(baseRef, relPath, repoRoot);
+    const baselineContent = fileAtRefWithBaselineRemap(
+      baseRef,
+      relPath,
+      repoRoot,
+    );
     const baseline =
       baselineContent !== undefined
         ? safeParseJson(baselineContent, `${relPath}@${baseRef}`)
@@ -191,7 +232,11 @@ export async function runSpecGate(
   for (const relPath of openApiDiscovery.files) {
     const absPath = join(repoRoot, relPath);
 
-    const baselineContent = fileAtRef(baseRef, relPath, repoRoot);
+    const baselineContent = fileAtRefWithBaselineRemap(
+      baseRef,
+      relPath,
+      repoRoot,
+    );
     const baseline =
       baselineContent !== undefined
         ? safeParseJson(baselineContent, `${relPath}@${baseRef}`)

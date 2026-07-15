@@ -18,6 +18,7 @@ import { writeSpecJson } from "../util/json-encoding.js";
 
 const SPEC_OUTPUT_PATH = resolve(
   REPO_ROOT_PATH,
+  "public",
   "contracts",
   "geo",
   "src-data",
@@ -25,12 +26,19 @@ const SPEC_OUTPUT_PATH = resolve(
 );
 const COUNTRIES_SPEC_PATH = resolve(
   REPO_ROOT_PATH,
+  "public",
   "contracts",
   "geo",
   "src-data",
   "countries.spec.json",
 );
-const LOGS_DIR = resolve(REPO_ROOT_PATH, "tools", "geo-data-pipeline", "logs");
+const LOGS_DIR = resolve(
+  REPO_ROOT_PATH,
+  "public",
+  "tools",
+  "geo-data-pipeline",
+  "logs",
+);
 const MISSING_WIKIDATA_EN_LOG_PATH = resolve(
   LOGS_DIR,
   "missing-wikidata-en.json",
@@ -182,7 +190,7 @@ export async function buildSubdivisionsSpec(): Promise<BuildSubdivisionsResult> 
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
       "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
-      "contracts/geo/subdivisions.spec.json (one level up) is a separate step. Sources: " +
+      "public/contracts/geo/subdivisions.spec.json (one level up) is a separate step. Sources: " +
       "debian/iso-codes iso_3166-2.json (LGPL — authoritative ISO 3166-2 current-codes list + " +
       "hierarchy: code/type/parent/order) joined with Wikidata SPARQL (CC0 — " +
       "PRIMARY displayName/officialName authority via the .en label; tracks Wikipedia 1:1 + " +
@@ -250,8 +258,8 @@ async function writeMissingWikidataEnLog(
       "entry's `debianFallbackName` — if it's awkward " +
       "(non-canonical English / odd transliteration), " +
       "consider adding an overlay entry at " +
-      "contracts/geo/overlays/subdivisions.overlays.spec.json. See " +
-      "contracts/geo/KNOWN_WARNINGS.md for the source-priority rationale.",
+      "public/contracts/geo/overlays/subdivisions.overlays.spec.json. See " +
+      "public/contracts/geo/KNOWN_WARNINGS.md for the source-priority rationale.",
     generatedAt: new Date().toISOString(),
     rowCount: rows.length,
     rows,

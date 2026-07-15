@@ -17,9 +17,15 @@ import type { OverlaysApplied } from "./load-overlays.js";
 import type { GeopoliticalEntitySpec } from "./types.js";
 import { REPO_ROOT_PATH } from "../util/cache.js";
 
-const SRC_DATA_DIR = resolve(REPO_ROOT_PATH, "contracts", "geo", "src-data");
-const GEO_DIR = resolve(REPO_ROOT_PATH, "contracts", "geo");
-const MESSAGES_DIR = resolve(REPO_ROOT_PATH, "contracts", "messages");
+const SRC_DATA_DIR = resolve(
+  REPO_ROOT_PATH,
+  "public",
+  "contracts",
+  "geo",
+  "src-data",
+);
+const GEO_DIR = resolve(REPO_ROOT_PATH, "public", "contracts", "geo");
+const MESSAGES_DIR = resolve(REPO_ROOT_PATH, "public", "contracts", "messages");
 
 /** Subset of Tier 1 src-data shapes — only the fields Tier 2 consumes (deliberately narrow). */
 
@@ -49,7 +55,7 @@ export interface SrcDataCountry {
   /**
    * Currencies widely accepted at retail/tourism alongside legal tender (de-facto
    * secondary). Optional — Tier 1 upstream sources (CLDR / datasets-country-codes)
-   * do not populate this; the overlay layer at `contracts/geo/overlays/` adds it
+   * do not populate this; the overlay layer at `public/contracts/geo/overlays/` adds it
    * for countries with notable de-facto secondary currency acceptance.
    */
   widelyAcceptedCurrencies?: Array<{
@@ -138,7 +144,7 @@ export interface LoadedSrcData {
   timezones: SrcDataTimezone[];
   geopoliticalEntities: GeopoliticalEntitySpec[];
   /**
-   * BCP 47 tags for which a `contracts/messages/{tag}.json` file exists. Empty when the
+   * BCP 47 tags for which a `public/contracts/messages/{tag}.json` file exists. Empty when the
    * directory is absent.
    */
   selectableLocaleTags: Set<string>;
@@ -178,7 +184,7 @@ export async function loadSrcData(): Promise<LoadedSrcData> {
   ]);
 
   // Apply overlays (additions / overrides / removals) before cross-catalog merge.
-  // See contracts/geo/overlays/README.md for the pattern.
+  // See public/contracts/geo/overlays/README.md for the pattern.
   const { countries, applied: countriesApplied } = applyCountriesOverlay(
     tier1Countries,
     countriesOverlay,

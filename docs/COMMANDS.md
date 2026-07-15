@@ -26,10 +26,10 @@ Copyright (c) DCSV. All rights reserved.
   - [Product version](#product-version-the-deployable-d2-version)
   - [Per-package version](#per-package-version-consumable-libs-dcsviode2--dcsv-iod2-)
 - [Cutting a library release](#cutting-a-library-release)
-  - [Dry-run first (always)](#dry-run-first-always)
-  - [Cut a real release](#cut-a-real-release)
+  - [Private monorepo pack + upload-artifact only](#private-monorepo-pack--upload-artifact-only)
   - [Tag](#tag)
   - [List the consumable inventory locally](#list-the-consumable-inventory-locally)
+  - [Export dry-run (public OSS surface)](#export-dry-run-public-oss-surface)
 - [Per-package pack](#per-package-pack)
 - [Important](#important)
 
@@ -59,7 +59,12 @@ docker compose -f infra/compose/compose.yml \
 ## Build
 
 ```bash
+# Combined (private monorepo umbrella — public + private hosts)
 dotnet build D2.slnx                                                # Full .NET solution
+
+# Public-only dual suite (OSS surface; zero private ProjectReference restore)
+dotnet build public/D2.Public.slnx --configuration Release
+
 dotnet build private/services/{service}/api/{service}.API.csproj            # Single project
 cd private/services/web && pnpm install && pnpm exec svelte-check                    # SvelteKit type check
 pnpm --filter @dcsv-io/d2-private-key-custodian-client build                               # KeyCustodian Node client twin (dist for the mTLS harness)
@@ -86,9 +91,18 @@ These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource
 # .NET (xUnit v3 — Microsoft.Testing.Platform)
 # Trait filters go after `--` as `--filter-trait "name=value"`.
 # The VSTest-style `--filter` flag is silently ignored by MTP (warning MTP0001).
+
+# Combined suite (private monorepo CI truth)
 dotnet test D2.slnx                                                 # Full solution
 dotnet test D2.slnx -- --filter-trait "Category=Unit"              # Unit-tagged only
 dotnet test private/services/edge/tests                                      # Specific service
+dotnet test private/services/edge/tests -- --filter-namespace "DcsvIo.D2.Private.Edge.Tests.Unit*"
+
+# Public-only dual suite (shared libs — mirror of d2-public CI lanes)
+dotnet test public/packages/dotnet/tests/DcsvIo.D2.Tests.csproj --configuration Release -- --filter-namespace "DcsvIo.D2.Tests.Unit*"
+dotnet test public/packages/dotnet/tests/DcsvIo.D2.Tests.csproj --configuration Release -- --filter-namespace "DcsvIo.D2.Tests.Integration*"
+dotnet test public/packages/dotnet/tests/DcsvIo.D2.Tests.csproj --configuration Release -- --filter-trait "Category=ContractFixtures"
+pnpm --filter "./public/packages/typescript/**" -r test                      # TS shared unit
 
 # SvelteKit
 cd private/services/web && pnpm exec vitest run                                       # Unit tests (browser mode)
@@ -99,7 +113,7 @@ pnpm --filter @dcsv-io/d2-private-key-custodian-client test                     
 pnpm --filter @dcsv-io/d2-messaging-rabbitmq test                                    # consumer runtime unit suite (excludes integration/)
 pnpm --filter @dcsv-io/d2-messaging-rabbitmq test:integration                        # Testcontainers RabbitMQ integration suite
 pnpm --filter geo-data-pipeline test                                         # geo pipeline unit + parity suite
-node --test public/tools/scripts/tests/*.test.mjs                            # public repo script guards
+node --test public/tools/scripts/tests/*.test.mjs                            # public repo script guards (incl. export / publish fence)
 node --test private/tools/scripts/tests/*.test.mjs                           # private script guards (explicit files; Node 24)
 
 # public/tools/ts-codegen (local mirror of the ts-shared-unit-tests CI steps)
@@ -286,35 +300,22 @@ pnpm --filter release-runner exec tsx src/drift-check-cli.ts
 
 ## Cutting a library release
 
-Library snapshots are published to GitHub Releases via a manual workflow dispatch —
-never auto-triggered on push. Registry publishing (npm / NuGet) is a separate, deliberate step, not performed by this workflow.
+### Private monorepo pack + upload-artifact only
 
-### Dry-run first (always)
+On this private monorepo, library snapshots are **packed and uploaded as workflow
+artifacts only**. Navigate to **Actions > Release libraries > Run workflow**.
 
-Navigate to **Actions → Release libraries → Run workflow** in the GitHub UI and leave
-`dry_run` set to `true` (the default). The workflow will:
+The workflow will:
 
-1. Pack all 83 consumable libraries (54 .NET `.nupkg` + 29 TypeScript `.tgz`).
+1. Pack all consumable open libraries (`.nupkg` + `.tgz`) from the public inventory.
 2. Assemble `d2-libs-<tag>.zip` with `nuget/`, `npm/`, `manifest.json`,
-   `HOW-TO-USE.md`, and `LICENSE.md`.
+   `HOW-TO-USE.md`, and `LICENSE` (Apache-2.0 from `public/LICENSE`).
 3. Upload the zip + loose artifacts as a **workflow artifact** for inspection.
-4. **Stop — no GitHub Release is created.**
+4. **Stop - no GitHub Release is created; no nuget.org / npmjs publish.**
 
-Download and inspect the workflow artifact to verify the bundle is correct before
-cutting a real release.
-
-### Cut a real release
-
-Run the workflow again with `dry_run` set to `false`. This runs the same pack + assemble
-steps and then executes:
-
-```
-gh release create <tag> --title "D2 libraries <tag>" \
-  --notes-file bundle/RELEASE-NOTES.md --prerelease \
-  d2-libs-<tag>.zip bundle/nuget/*.nupkg bundle/npm/*.tgz
-```
-
-The release is marked as a pre-release (all packages are pre-stable `0.x`).
+**Publish ownership:** GitHub Release of public package IDs and registry publish are
+owned by the public remote (`d2-public`), not this private monorepo. Do not re-introduce
+`gh release create` (or soft-equivalents) on private monorepo workflows.
 
 ### Tag
 
@@ -324,9 +325,26 @@ optional `tag` workflow input.
 ### List the consumable inventory locally
 
 ```bash
-# Print the full 83-package inventory as JSON (read-only — writes nothing):
+# Print the public-lane inventory as JSON (read-only - writes nothing):
 pnpm --filter release-runner exec tsx src/cli.ts --list
 ```
+
+### Export dry-run (public OSS surface)
+
+Gated validation of the export allowlist (`public/**` + closed build extras) and hard
+denylist. Manual only - never silent on every push.
+
+```bash
+# Local validate (no stage, no push):
+node public/tools/scripts/export-dry-run.mjs
+
+# Stage isolated tree + build public/D2.Public.slnx (anti-walk-out props):
+STAGE_DIR=$(mktemp -d)
+node public/tools/scripts/export-dry-run.mjs --stage-dir "$STAGE_DIR" --build
+```
+
+CI: **Actions > Export dry-run > Run workflow** (`.github/workflows/export-dry-run.yml`,
+`workflow_dispatch`, `contents: read`).
 
 ## Per-package pack
 
@@ -342,12 +360,12 @@ dotnet pack public/packages/dotnet/result/core/DcsvIo.D2.Result.csproj \
 pnpm --filter @dcsv-io/d2-result build
 pnpm --filter @dcsv-io/d2-result pack --pack-destination /tmp/pack-smoke
 
-# Inspect the tarball contents:
-tar -tzf /tmp/pack-smoke/d2-result-*.tgz | head -20
+# Inspect the tarball contents (scoped npm pack name for @dcsv-io/d2-result):
+tar -tzf /tmp/pack-smoke/dcsv-io-d2-result-*.tgz | head -20
 ```
 
 CI runs a pack smoke on every PR (`pack-smoke` job in `.github/workflows/test.yml`) using
-the same commands above.
+the same commands above (nupkg `DcsvIo.D2.Result.*.nupkg`, tgz `dcsv-io-d2-result-*.tgz`).
 
 ## Important
 

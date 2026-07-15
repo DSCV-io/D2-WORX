@@ -5,7 +5,7 @@
 
 /**
  * `pnpm geo:diff` — entry-level structured diff of every committed
- * `contracts/geo/*.spec.json` against its current on-disk version.
+ * `public/contracts/geo/*.spec.json` against its current on-disk version.
  *
  * Identity per catalog (natural key):
  *   countries              -> iso31661Alpha2Code
@@ -52,7 +52,7 @@ const CATALOGS: readonly CatalogConfig[] = [
   { filename: "geopolitical-entities.spec.json", key: "shortCode" },
 ];
 
-const GEO_DIR_REL = "contracts/geo";
+const GEO_DIR_REL = "public/contracts/geo";
 const GEO_DIR_ABS = resolve(REPO_ROOT_PATH, GEO_DIR_REL);
 
 interface ModifiedEntry {

@@ -18,6 +18,7 @@ import { writeSpecJson } from "../util/json-encoding.js";
 
 const SPEC_OUTPUT_PATH = resolve(
   REPO_ROOT_PATH,
+  "public",
   "contracts",
   "geo",
   "src-data",
@@ -198,7 +199,7 @@ export async function buildLanguagesSpec(): Promise<LanguagesSpec> {
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
       "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
-      "contracts/geo/languages.spec.json (one level up) is a separate step. Sources: " +
+      "public/contracts/geo/languages.spec.json (one level up) is a separate step. Sources: " +
       "datasets/language-codes (PDDL — alpha2 + English name) + Wikidata SPARQL (CC0 — " +
       "endonyms via P218 in own language) + CLDR cldr-core scriptMetadata + languageData " +
       "(Unicode-3.0 — writing direction via lang→primary script→rtl chain) + CLDR " +

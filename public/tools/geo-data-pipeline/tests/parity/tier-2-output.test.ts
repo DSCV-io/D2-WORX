@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it, beforeAll } from "vitest";
 
 /**
- * Cross-catalog parity test suite for Tier 2 output (contracts/geo/*.spec.json).
+ * Cross-catalog parity test suite for Tier 2 output (public/contracts/geo/*.spec.json).
  *
  * Goals:
  *   1. Schema-shape sanity — every generated file has the expected wrapper + entries
@@ -31,21 +31,21 @@ import { describe, expect, it, beforeAll } from "vitest";
 function locateGeoDir(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
   for (let i = 0; i < 12; i++) {
-    const candidate = join(dir, "contracts", "geo");
+    const candidate = join(dir, "public", "contracts", "geo");
     if (existsSync(candidate)) return candidate;
     const parent = resolve(dir, "..");
     if (parent === dir) break;
     dir = parent;
   }
   throw new Error(
-    "could not locate contracts/geo from " +
+    "could not locate public/contracts/geo from " +
       dirname(fileURLToPath(import.meta.url)),
   );
 }
 
 const GEO_DIR = locateGeoDir();
-// REPO_ROOT is two levels up from contracts/geo
-const REPO_ROOT = resolve(GEO_DIR, "..", "..");
+// REPO_ROOT is three levels up from public/contracts/geo
+const REPO_ROOT = resolve(GEO_DIR, "..", "..", "..");
 
 interface SpecFile<T> {
   $generated: boolean;
@@ -430,7 +430,7 @@ describe("Locale denormalization integrity", () => {
 
 describe("Derived flag consistency", () => {
   it("Currency.isSupported iff a selectable Locale's country uses it as primary", async () => {
-    const messagesDir = resolve(REPO_ROOT, "contracts", "messages");
+    const messagesDir = resolve(REPO_ROOT, "public", "contracts", "messages");
     const dirExists = await stat(messagesDir).catch(() => null);
     if (!dirExists?.isDirectory()) return; // skip when contracts/messages doesn't exist
 

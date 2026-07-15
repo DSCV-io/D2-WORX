@@ -26,7 +26,7 @@ import type {
 import { REPO_ROOT_PATH } from "../util/cache.js";
 import { writeSpecJson } from "../util/json-encoding.js";
 
-const GEO_DIR = resolve(REPO_ROOT_PATH, "contracts", "geo");
+const GEO_DIR = resolve(REPO_ROOT_PATH, "public", "contracts", "geo");
 const CATALOG_VERSION = "0.1.0";
 
 const DAY_OF_WEEK_VALUES: readonly DayOfWeek[] = [
@@ -292,13 +292,13 @@ export function validateLocaleRefs(
     throw new Error(
       `validateLocaleRefs failed (${misses.length} orphan refs):\n  - ` +
         misses.join("\n  - ") +
-        `\n\nFix paths (per contracts/geo/overlays/README.md):\n` +
+        `\n\nFix paths (per public/contracts/geo/overlays/README.md):\n` +
         `  1. Country-side: adjust the derivation in ` +
         `tools/geo-data-pipeline/src/transformers/primary-locale-tag.ts (if the algorithm ` +
         `is wrong) OR add a country-side override in ` +
-        `contracts/geo/overlays/countries.overlays.spec.json.\n` +
+        `public/contracts/geo/overlays/countries.overlays.spec.json.\n` +
         `  2. Locale-side: add the missing tag via ` +
-        `contracts/geo/overlays/locales.overlays.spec.json additions[] ` +
+        `public/contracts/geo/overlays/locales.overlays.spec.json additions[] ` +
         `(e.g., fr-TF when CLDR doesn't ship the territory's primary locale).`,
     );
   }
@@ -414,7 +414,7 @@ function addToBag<K, V>(bag: Map<K, V[]>, key: K, value: V): void {
   else bag.set(key, [value]);
 }
 
-/** Wraps each catalog with the standard header and writes to contracts/geo/{name}.spec.json. */
+/** Wraps each catalog with the standard header and writes to public/contracts/geo/{name}.spec.json. */
 export async function writeAll(
   result: BuildResult,
   src: LoadedSrcData,
@@ -422,7 +422,7 @@ export async function writeAll(
   const generatedAt = new Date().toISOString();
   const baseNote = [
     "TIER 2 codegen-ready spec — produced by tools/geo-data-pipeline from",
-    "contracts/geo/src-data/*.spec.json (Tier 1). Matches the canonical entity",
+    "public/contracts/geo/src-data/*.spec.json (Tier 1). Matches the canonical entity",
     "record shape; consumed directly by codegen (.NET SourceGen + TS emitter — Tier 3)",
     "to produce concrete entity types. Do NOT hand-edit — re-run `pnpm geo:refresh`",
     "to regenerate.",
@@ -432,15 +432,15 @@ export async function writeAll(
     (c) => (c as { isSupported: boolean }).isSupported,
   ).length;
   const currenciesNote =
-    `${baseNote} IsSupported derived from contracts/messages/*.json file presence — ` +
+    `${baseNote} IsSupported derived from public/contracts/messages/*.json file presence — ` +
     `selectable locales' primary countries' primary currencies. Active set: ` +
     `${src.selectableLocaleTags.size} selectable locales -> derived ${supportedCurrencyCount} ` +
     `supported currencies.`;
   const languagesNote =
-    `${baseNote} IsSupported derived from contracts/messages/*.json file presence — ` +
+    `${baseNote} IsSupported derived from public/contracts/messages/*.json file presence — ` +
     `languages of selectable locales.`;
   const localesNote =
-    `${baseNote} IsSelectable derived from contracts/messages/{tag}.json file presence ` +
+    `${baseNote} IsSelectable derived from public/contracts/messages/{tag}.json file presence ` +
     `(currently ${src.selectableLocaleTags.size} selectable). FirstDayOfWeek denormalized ` +
     `from Country[locale.country]; matches via parity test.`;
 

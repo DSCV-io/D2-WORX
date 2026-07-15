@@ -251,7 +251,7 @@ describe("applySubdivisionsOverlay", () => {
 
 describe("loadSubdivisionsOverlay", () => {
   it("returns a parsed SubdivisionsOverlayFile when the shipped overlay file exists", async () => {
-    // The pipeline ships contracts/geo/overlays/subdivisions.overlays.spec.json as the
+    // The pipeline ships public/contracts/geo/overlays/subdivisions.overlays.spec.json as the
     // canonical placeholder for future patches. Post 2026-05-23 source-priority flip
     // (Wikidata.en primary), the file's overrides array is empty — the prior IR-22
     // override is no longer needed because Wikidata.en correctly returns "Hormozgan

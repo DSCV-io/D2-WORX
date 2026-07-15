@@ -6,7 +6,7 @@
 /**
  * `pnpm geo:approve` — interactive per-entry accept/reject of upstream changes detected
  * by `pnpm geo:diff` (working tree vs `git HEAD`). Operator decisions persist to
- * `contracts/geo/.upstream-rejections.json` so future refreshes auto-restore rejected
+ * `public/contracts/geo/.upstream-rejections.json` so future refreshes auto-restore rejected
  * entries from the committed version unless explicitly re-approved.
  *
  * Workflow (per ADDED or MODIFIED entry):
@@ -52,7 +52,7 @@ const CATALOGS: readonly CatalogConfig[] = [
   { filename: "geopolitical-entities.spec.json", key: "shortCode" },
 ];
 
-const GEO_DIR_REL = "contracts/geo";
+const GEO_DIR_REL = "public/contracts/geo";
 const GEO_DIR_ABS = resolve(REPO_ROOT_PATH, GEO_DIR_REL);
 const REJECTIONS_PATH = resolve(GEO_DIR_ABS, ".upstream-rejections.json");
 

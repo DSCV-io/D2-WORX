@@ -24,14 +24,14 @@ import { describe, expect, it } from "vitest";
 function locateGeoDir(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
   for (let i = 0; i < 12; i++) {
-    const candidate = join(dir, "contracts", "geo");
+    const candidate = join(dir, "public", "contracts", "geo");
     if (existsSync(candidate)) return candidate;
     const parent = resolve(dir, "..");
     if (parent === dir) break;
     dir = parent;
   }
   throw new Error(
-    "could not locate contracts/geo from " +
+    "could not locate public/contracts/geo from " +
       dirname(fileURLToPath(import.meta.url)),
   );
 }

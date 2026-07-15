@@ -10,7 +10,7 @@
  *   1. Per-catalog src-data writers (in dep order — countries first since others
  *      cross-reference it via in-process loads).
  *   2. Tier 2 builder (reads all Tier 1 src-data + hand-rolled GE → produces codegen-ready
- *      contracts/geo/*.spec.json).
+ *      public/contracts/geo/*.spec.json).
  *   3. Parity tests (verifies cross-catalog integrity + denormalization didn't drift).
  *
  * Idempotent. Cached upstream fetches (24h TTL) keep runs fast after the first pull.
@@ -24,7 +24,12 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { REPO_ROOT_PATH } from "../util/cache.js";
 
-const PIPELINE_ROOT = resolve(REPO_ROOT_PATH, "tools", "geo-data-pipeline");
+const PIPELINE_ROOT = resolve(
+  REPO_ROOT_PATH,
+  "public",
+  "tools",
+  "geo-data-pipeline",
+);
 
 const STEPS: Array<{ name: string; script: string }> = [
   {

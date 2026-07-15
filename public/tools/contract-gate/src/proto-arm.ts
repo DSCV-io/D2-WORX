@@ -24,8 +24,8 @@
 //   a Node.js script that internally resolves the native platform binary via
 //   `require.resolve`; invoking it as `node <shimPath>` works on every
 //   platform (Windows and POSIX) without needing `.CMD` wrappers.
-//   A `buf.yaml` at `contracts/protos/buf.yaml` defines the module for the
-//   shared protos.
+//   A `buf.yaml` at `public/contracts/protos/buf.yaml` defines the module for
+//   the shared protos. Pre-reorg baselines still use `contracts/protos`.
 //
 // Regex discipline (Bucket 2 per regex-redos-discipline):
 //   The proto-file scanner uses PACKAGE_LINE_RE from proto-exemption.ts —
@@ -40,8 +40,18 @@ import { join, resolve } from "node:path";
 import { truthy } from "@dcsv-io/d2-utilities";
 
 import type { BreakingFinding } from "./breaking-finding.js";
+import { fileAtRef } from "./git-show.js";
 import { extractProtoPackage, isProtoGateExempt } from "./proto-exemption.js";
 import { validateGitRef } from "./safe-args.js";
+
+/** Working-tree shared protos root (repo-relative segments). */
+const WT_PROTOS_SEGMENTS = ["public", "contracts", "protos"] as const;
+
+/** Modern baseline subdir for buf --against. */
+const MODERN_PROTOS_SUBDIR = "public/contracts/protos";
+
+/** Pre-reorg baseline subdir for buf --against. */
+const LEGACY_PROTOS_SUBDIR = "contracts/protos";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -170,11 +180,37 @@ function resolveBufInvocation(): {
 // ---------------------------------------------------------------------------
 
 /**
+ * Resolve the buf `--against` subdir for the baseline ref.
+ *
+ * Prefers the modern `public/contracts/protos` path when present at the
+ * baseline; falls back to pre-reorg `contracts/protos` (nova continuity).
+ */
+export function resolveBaselineProtoSubdir(
+  baseRef: string,
+  repoRoot: string,
+): string {
+  validateGitRef(baseRef);
+
+  const modernBuf = fileAtRef(
+    baseRef,
+    `${MODERN_PROTOS_SUBDIR}/buf.yaml`,
+    repoRoot,
+  );
+
+  if (modernBuf !== undefined) {
+    return MODERN_PROTOS_SUBDIR;
+  }
+
+  return LEGACY_PROTOS_SUBDIR;
+}
+
+/**
  * Run the proto breaking-change arm.
  *
- * Scans the `contracts/protos/` directory for stable proto packages and runs
- * `buf breaking --against` the baseline ref at FILE level. Pre-stable packages
- * are logged as exempt and skipped.
+ * Scans the `public/contracts/protos/` directory for stable proto packages and
+ * runs `buf breaking --against` the baseline ref at FILE level. Pre-stable
+ * packages are logged as exempt and skipped. Baseline subdir accepts legacy
+ * `contracts/protos` via {@link resolveBaselineProtoSubdir}.
  *
  * @param opts - Proto arm options.
  * @returns A {@link ProtoArmResult} describing the outcome.
@@ -188,9 +224,9 @@ export function runProtoArm(opts: ProtoArmOptions): ProtoArmResult {
   // is never constructed from an unvalidated ref.
   validateGitRef(baseRef);
 
-  const protosDir = resolve(repoRoot, "contracts", "protos");
+  const protosDir = resolve(repoRoot, ...WT_PROTOS_SEGMENTS);
 
-  // Discover packages present in the shared contracts/protos tree.
+  // Discover packages present in the shared public/contracts/protos tree.
   const packages = collectPackages(protosDir);
 
   const exemptPackages: string[] = [];
@@ -218,10 +254,11 @@ export function runProtoArm(opts: ProtoArmOptions): ProtoArmResult {
 
   const { cmd, prefix } = resolveBufInvocation();
   const bufConfigPath = join(protosDir, "buf.yaml");
+  const againstSubdir = resolveBaselineProtoSubdir(baseRef, repoRoot);
 
   // Run `buf breaking` against the integration baseline at FILE level.
-  // The `--against '.git#branch=<ref>,subdir=contracts/protos'` form points
-  // buf at the module inside the git baseline.
+  // The `--against '.git#branch=<ref>,subdir=…'` form points buf at the module
+  // inside the git baseline (modern or legacy path).
   const bufResult = spawnSync(
     cmd,
     [
@@ -231,7 +268,7 @@ export function runProtoArm(opts: ProtoArmOptions): ProtoArmResult {
       "--config",
       bufConfigPath,
       "--against",
-      `.git#branch=${baseRef},subdir=contracts/protos`,
+      `.git#branch=${baseRef},subdir=${againstSubdir}`,
     ],
     {
       cwd: repoRoot,

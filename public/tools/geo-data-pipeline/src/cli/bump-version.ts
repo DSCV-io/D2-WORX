@@ -5,7 +5,7 @@
 
 /**
  * `pnpm geo:bump-version <version>` — sets `catalogVersion` + `generatedAt` (UTC ISO)
- * across all codegen-consumed spec files in `contracts/geo/` (6 Tier 2 pipeline-derived
+ * across all codegen-consumed spec files in `public/contracts/geo/` (6 Tier 2 pipeline-derived
  * + 1 Tier 2 hand-rolled GeopoliticalEntity peer).
  *
  * The hand-rolled `geopolitical-entities.spec.json` uses `lastEditedAt` (date-only)
@@ -28,7 +28,7 @@ import { resolve } from "node:path";
 import { REPO_ROOT_PATH } from "../util/cache.js";
 import { writeSpecJson } from "../util/json-encoding.js";
 
-const GEO_DIR = resolve(REPO_ROOT_PATH, "contracts", "geo");
+const GEO_DIR = resolve(REPO_ROOT_PATH, "public", "contracts", "geo");
 
 // Pipeline-derived Tier 2 catalogs — use `catalogVersion` + `generatedAt` (full ISO timestamp).
 const PIPELINE_DERIVED_FILES: readonly string[] = [
@@ -113,7 +113,7 @@ async function main(): Promise<void> {
   }
 
   console.error(
-    `\n=== Bumping catalogVersion -> ${newVersion} across contracts/geo/ ===\n`,
+    `\n=== Bumping catalogVersion -> ${newVersion} across public/contracts/geo/ ===\n`,
   );
 
   try {

@@ -22,6 +22,7 @@
 //                        with --proto-only)
 //   --skip-proto         Skip the proto arm (run json arms only)
 //   --skip-json          Skip the json arms (run proto arm only)
+//   --public-only        Discover only public/contracts (export / d2-public mode)
 //   --help, -h           Print this help message and exit.
 //
 // Exit codes:
@@ -52,6 +53,7 @@ interface CliArgs {
   readonly jsonOnly: boolean;
   readonly skipProto: boolean;
   readonly skipJson: boolean;
+  readonly publicOnly: boolean;
   readonly help: boolean;
 }
 
@@ -62,6 +64,7 @@ function parseArgs(argv: string[]): CliArgs {
   let jsonOnly = false;
   let skipProto = false;
   let skipJson = false;
+  let publicOnly = false;
   let help = false;
 
   for (let i = 0; i < argv.length; i++) {
@@ -99,6 +102,8 @@ function parseArgs(argv: string[]): CliArgs {
       skipProto = true;
     } else if (arg === "--skip-json") {
       skipJson = true;
+    } else if (arg === "--public-only") {
+      publicOnly = true;
     } else if (arg === "--help" || arg === "-h") {
       help = true;
     } else if (arg.startsWith("-")) {
@@ -111,7 +116,16 @@ function parseArgs(argv: string[]): CliArgs {
     }
   }
 
-  return { baseRef, repoRoot, protoOnly, jsonOnly, skipProto, skipJson, help };
+  return {
+    baseRef,
+    repoRoot,
+    protoOnly,
+    jsonOnly,
+    skipProto,
+    skipJson,
+    publicOnly,
+    help,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -132,6 +146,7 @@ Options:
                      --proto-only)
   --skip-proto       Skip the proto arm
   --skip-json        Skip the json arms
+  --public-only      Discover only public/contracts (ignore private/contracts)
   --help, -h         Print this help message and exit
 
 Exit codes:
@@ -341,6 +356,7 @@ async function main(): Promise<void> {
       repoRoot,
       baseRef,
       valveOpen,
+      publicOnly: args.publicOnly,
     });
 
     process.stdout.write(`${formatScopeAnnouncement(specResult.scope)}\n`);

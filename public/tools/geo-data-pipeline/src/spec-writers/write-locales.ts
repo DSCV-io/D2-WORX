@@ -26,6 +26,7 @@ import { writeSpecJson } from "../util/json-encoding.js";
 
 const SPEC_OUTPUT_PATH = resolve(
   REPO_ROOT_PATH,
+  "public",
   "contracts",
   "geo",
   "src-data",
@@ -304,7 +305,7 @@ export async function buildLocalesSpec(): Promise<LocalesSpec> {
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
       "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
-      "contracts/geo/locales.spec.json (one level up) is a separate step. Sources: " +
+      "public/contracts/geo/locales.spec.json (one level up) is a separate step. Sources: " +
       "CLDR cldr-core/availableLocales.json (Unicode-3.0 — `full` set) + CLDR " +
       "supplemental/likelySubtags.json (Unicode-3.0 — used to derive default-region tags " +
       "like 'en-US' / 'pt-BR' / 'zh-Hans-CN' / 'ja-JP' that availableLocales.json " +

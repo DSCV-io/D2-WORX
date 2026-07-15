@@ -16,6 +16,7 @@ import { writeSpecJson } from "../util/json-encoding.js";
 
 const SPEC_OUTPUT_PATH = resolve(
   REPO_ROOT_PATH,
+  "public",
   "contracts",
   "geo",
   "src-data",
@@ -23,6 +24,7 @@ const SPEC_OUTPUT_PATH = resolve(
 );
 const CACHE_DIR = resolve(
   REPO_ROOT_PATH,
+  "public",
   "tools",
   "geo-data-pipeline",
   ".cache",
@@ -151,7 +153,7 @@ export async function buildTimezonesSpec(): Promise<TimezonesSpec> {
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
       "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
-      "contracts/geo/timezones.spec.json (one level up) is a separate step. Sources: " +
+      "public/contracts/geo/timezones.spec.json (one level up) is a separate step. Sources: " +
       "IANA zone1970.tab + backward (public domain — canonical zones, primary/co-applicable " +
       "country FKs, aliases, ISO 6709 coordinates) + Node's built-in ICU Intl.DateTimeFormat " +
       "(current STD/DST offsets + abbreviations sampled at 2026-01-15 and 2026-07-15). " +

@@ -6,7 +6,7 @@
 /**
  * Tier 2 codegen-ready output shapes — the canonical record shapes the platform
  * consumes for Country / Locale / Currency / Language / Subdivision / Timezone /
- * GeopoliticalEntity. These JSON files at contracts/geo/*.spec.json are consumed
+ * GeopoliticalEntity. These JSON files at public/contracts/geo/*.spec.json are consumed
  * directly by codegen (.NET SourceGen + TS emitter — Tier 3) and translated into
  * concrete entity types. No transformation between this JSON and the concrete
  * types beyond the codegen's serialization step.
@@ -132,7 +132,7 @@ export interface TimezoneSpec {
 }
 
 /**
- * GeopoliticalEntity — hand-rolled at contracts/geo/geopolitical-entities.spec.json
+ * GeopoliticalEntity — hand-rolled at public/contracts/geo/geopolitical-entities.spec.json
  * and lives as a Tier 2 PEER to the pipeline-generated Tier 2 specs (codegen treats
  * it identically; only $generated / $source distinguish provenance). Tier 2 builder
  * just validates + passes through; no upstream source for supranational groupings.

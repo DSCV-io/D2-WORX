@@ -10,7 +10,7 @@ import { REPO_ROOT_PATH } from "../../src/util/cache.js";
 
 /**
  * Pinned canonical truths — invariants the post-refresh
- * `contracts/geo/src-data/subdivisions.spec.json` MUST satisfy regardless of
+ * `public/contracts/geo/src-data/subdivisions.spec.json` MUST satisfy regardless of
  * upstream version drift. Each assertion uses `substring contains` so that
  * minor format variations ("Tehran" → "Tehran Province") still pass while
  * wholesale drift (CLDR shifting "Markazi" to IR-22 instead of IR-00 — the
@@ -24,7 +24,7 @@ import { REPO_ROOT_PATH } from "../../src/util/cache.js";
  *      a. Refresh upstream caches (delete relevant `.cache/wikidata/` files
  *         + re-run `pnpm geo:refresh`), OR
  *      b. Add an overlay entry at
- *         `contracts/geo/overlays/subdivisions.overlays.spec.json` if upstream
+ *         `public/contracts/geo/overlays/subdivisions.overlays.spec.json` if upstream
  *         is genuinely wrong and Debian fallback isn't acceptable.
  *
  * Failure here is a process signal, not a code bug — the pipeline correctly
@@ -33,6 +33,7 @@ import { REPO_ROOT_PATH } from "../../src/util/cache.js";
 
 const SUBDIVISIONS_SRC_DATA_PATH = resolve(
   REPO_ROOT_PATH,
+  "public",
   "contracts",
   "geo",
   "src-data",

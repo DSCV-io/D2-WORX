@@ -49,6 +49,7 @@ import { writeSpecJson } from "../util/json-encoding.js";
 
 const SPEC_OUTPUT_PATH = resolve(
   REPO_ROOT_PATH,
+  "public",
   "contracts",
   "geo",
   "src-data",
@@ -549,7 +550,7 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
       "codegen / DcsvIo.D2.Geo.Default. A clean/transform pass to the sibling " +
-      "contracts/geo/*.spec.json (one level up) is a separate step that strips per-entry " +
+      "public/contracts/geo/*.spec.json (one level up) is a separate step that strips per-entry " +
       "_provenance / build metadata + applies any final hand-curation. Sources: " +
       "datasets/country-codes (PDDL) + CLDR cldr-localenames-full (Unicode-3.0; 11 supported " +
       "langs for displayName authority) + CLDR cldr-core/supplemental (week/measurement/" +

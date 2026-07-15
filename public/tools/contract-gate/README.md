@@ -17,20 +17,24 @@ Three diff arms inspect every pull request against the integration baseline bran
    Stable packages (`vN`, no alpha/beta) are enforced; pre-stable packages (`vNalpha`,
    `vNbeta`) break freely (exempt). The shared `d2.common.v1` protos are always enforced.
 
-2. **Spec/i18n arm** (custom JSON-diff) — guards `public/contracts/**/*.spec.json` catalogs and
-   `public/contracts/messages/*.json` i18n locale files. A removed catalog entry, a removed
+2. **Spec/i18n arm** (custom JSON-diff) — guards dual contract roots:
+   `public/contracts/**/*.spec.json` + `private/contracts/**/*.spec.json` catalogs and
+   matching `…/messages/*.json` i18n locale files. A removed catalog entry, a removed
    translation key, or whole-file deletion of a published catalog/locale is a breaking
    change. Discovery unions working-tree files with baseline-tracked paths and never
    treats test trees or package/build directories as contract surface (canonical skip-set
-   name list lives in `src/discovery.ts`). Geo Tier-2 `$generated` specs are exempt.
+   name list lives in `src/discovery.ts`). Pre-reorg baseline paths under monorepo-root
+   `contracts/**` are remapped to `public/contracts/**` for identity join. Geo Tier-2
+   `$generated` specs are exempt. Use `--public-only` to walk only `public/contracts`
+   (export / public-remote mode).
 
 3. **OpenAPI arm** (hand-rolled JSON-diff) — guards committed `*.openapi.g.json` documents
-   outside test trees and package/build directories (same discovery contract as the
-   spec arm — see `src/discovery.ts`). Detects: removed path, removed operation,
-   response-required field removed, request-required field added, type narrowed, enum
-   value dropped, component schema removed, and whole-file deletion of a published doc.
-   Discovery unions baseline-tracked paths with the working tree so deletion is BREAKING.
-   Currently dormant (no stable REST surface) but proven non-vacuous on fixture docs.
+   under dual contract roots (same discovery contract as the spec arm — see
+   `src/discovery.ts`). Detects: removed path, removed operation, response-required field
+   removed, request-required field added, type narrowed, enum value dropped, component
+   schema removed, and whole-file deletion of a published doc. Discovery unions
+   baseline-tracked paths with the working tree so deletion is BREAKING. Currently
+   dormant (no stable REST surface) but proven non-vacuous on fixture docs.
 
 ## Force valve
 
@@ -60,14 +64,17 @@ git fetch origin <baseline>
 ```
 
 ```bash
-# All arms (proto + spec/i18n/OpenAPI):
-node tools/contract-gate/dist/cli.js --against <baseline>
+# All arms (proto + spec/i18n/OpenAPI) — dual roots (public + private contracts):
+node public/tools/contract-gate/dist/cli.js --against <baseline>
 
 # JSON arms only (spec / i18n / OpenAPI — no buf required):
-node tools/contract-gate/dist/cli.js --against <baseline> --skip-proto
+node public/tools/contract-gate/dist/cli.js --against <baseline> --skip-proto
 
-# Proto arm only:
-node tools/contract-gate/dist/cli.js --against <baseline> --proto-only
+# Proto arm only (WT public/contracts/protos; baseline accepts legacy contracts/protos):
+node public/tools/contract-gate/dist/cli.js --against <baseline> --proto-only
+
+# Public-only mode (ignore private/contracts — export / public remote):
+node public/tools/contract-gate/dist/cli.js --against <baseline> --public-only
 
 # Or run buf directly over the shared protos:
 pnpm --filter @dcsv-io/d2-typespec-emitters exec buf breaking public/contracts/protos \
@@ -80,12 +87,14 @@ pnpm --filter contract-gate test
 pnpm --filter contract-gate build
 ```
 
+
 ### CLI flags
 
 | Flag | Description |
 |---|---|
 | `--against <ref>` | Integration baseline branch or commit ref. Required unless `D2_GATE_BASELINE` is set. |
 | `--repo-root <path>` | Repo root directory (default: process cwd). |
+| `--public-only` | Discover only `public/contracts/**`; ignore `private/contracts/**` (export / public-remote mode). |
 | `--skip-proto` | Skip the proto arm; run only the JSON (spec/i18n/OpenAPI) arms. Mutually exclusive with `--skip-json` and `--proto-only`. |
 | `--proto-only` | Run only the proto arm; skip the JSON arms. Mutually exclusive with `--json-only` and `--skip-proto`. |
 | `--json-only` | Skip the proto arm; run only the JSON arms. Mutually exclusive with `--proto-only` and `--skip-json`. |

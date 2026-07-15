@@ -12,11 +12,17 @@ import type {
   SrcDataSubdivision,
 } from "./load-src-data.js";
 
-const OVERLAYS_DIR = resolve(REPO_ROOT_PATH, "contracts", "geo", "overlays");
+const OVERLAYS_DIR = resolve(
+  REPO_ROOT_PATH,
+  "public",
+  "contracts",
+  "geo",
+  "overlays",
+);
 
 /**
  * Trackable manual patches applied at Tier 2 build time on top of Tier 1 src-data.
- * See `contracts/geo/overlays/README.md` for the pattern + when to overlay vs fix
+ * See `public/contracts/geo/overlays/README.md` for the pattern + when to overlay vs fix
  * upstream vs hand-roll.
  *
  * Each entry MUST carry `id` + `addedAt` + `reason` so the policy decision is
