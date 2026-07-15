@@ -11,12 +11,12 @@ namespace DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpc.Generated;
 
 using SignFixtureInput = global::DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureInput;
 using SignFixtureOutput = global::DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
-using D2.Services.Protos.Common.V1;
 using DcsvIo.D2.Resilience.Pipeline;
 using DcsvIo.D2.Resilience.Retry;
 using DcsvIo.D2.Result.Grpc;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
+using global::D2.Services.Protos.Common.V1;
 
 /// <summary>
 /// Generated sealed cross-process gRPC client for the SignFixture module.

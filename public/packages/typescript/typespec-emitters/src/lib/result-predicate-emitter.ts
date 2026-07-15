@@ -112,7 +112,8 @@ export function emitBusinessRetrySignal(
   lines.push("");
   lines.push(`namespace ${clientsNs};`);
   lines.push("");
-  lines.push("using D2.Services.Protos.Common.V1;");
+  // global:: required under namespace DcsvIo.D2.* (CS0234 on bare D2.*).
+  lines.push("using global::D2.Services.Protos.Common.V1;");
   lines.push("");
   lines.push("/// <summary>");
   lines.push(

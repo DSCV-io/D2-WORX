@@ -209,7 +209,7 @@ describe("emitGrpcClient_ImplFile", () => {
   it("contains namespace before using directives", () => {
     const content = getImpl();
     const nsIdx = content.indexOf(`namespace ${CLIENTS_NS};`);
-    const firstUsing = content.indexOf("using D2");
+    const firstUsing = content.search(/^using\s/m);
     expect(nsIdx).toBeGreaterThan(-1);
     expect(firstUsing).toBeGreaterThan(-1);
     expect(nsIdx).toBeLessThan(firstUsing);
@@ -217,7 +217,8 @@ describe("emitGrpcClient_ImplFile", () => {
 
   it("includes D2.Services.Protos.Common.V1 for D2ResultProto", () => {
     const content = getImpl();
-    expect(content).toContain("using D2.Services.Protos.Common.V1;");
+    // global:: required under namespace DcsvIo.D2.* (CS0234 on bare D2.*).
+    expect(content).toContain("using global::D2.Services.Protos.Common.V1;");
   });
 
   it("includes DcsvIo.D2.Resilience.Pipeline (not just DcsvIo.D2.Resilience)", () => {
@@ -346,7 +347,7 @@ describe("emitGrpcClient_MapperFile", () => {
   it("contains namespace before using directives", () => {
     const content = getMapper();
     const nsIdx = content.indexOf(`namespace ${CLIENTS_NS};`);
-    const usingIdx = content.indexOf("using D2");
+    const usingIdx = content.search(/^using\s/m);
     expect(nsIdx).toBeGreaterThan(-1);
     expect(usingIdx).toBeGreaterThan(-1);
     expect(nsIdx).toBeLessThan(usingIdx);

@@ -9,9 +9,9 @@
 
 namespace DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Clients;
 
-using D2.Services.Protos.EnumFixtures.V1;
 using DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Generated;
 using Google.Protobuf;
+using global::D2.Services.Protos.EnumFixtures.V1;
 using FixtureKeyKind = global::DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Generated.FixtureKeyKind;
 using DcsvIo.D2.I18n;
 using DcsvIo.D2.Result;

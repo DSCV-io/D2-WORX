@@ -11,12 +11,12 @@ namespace DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Clients;
 
 using SignWithKindFixtureInput = global::DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureInput;
 using SignWithKindFixtureOutput = global::DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcEnum.Generated.SignWithKindFixtureOutput;
-using D2.Services.Protos.Common.V1;
 using DcsvIo.D2.Resilience.Pipeline;
 using DcsvIo.D2.Resilience.Retry;
 using DcsvIo.D2.Result.Grpc;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
+using global::D2.Services.Protos.Common.V1;
 
 /// <summary>
 /// Generated sealed cross-process gRPC client for the EnumFixtures module.

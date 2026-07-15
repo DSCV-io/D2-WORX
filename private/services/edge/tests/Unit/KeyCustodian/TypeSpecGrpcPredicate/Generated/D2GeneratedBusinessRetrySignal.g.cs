@@ -9,7 +9,7 @@
 
 namespace DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated;
 
-using D2.Services.Protos.Common.V1;
+using global::D2.Services.Protos.Common.V1;
 
 /// <summary>
 /// Generated retry sentinel for @d2Resilience <c>retryWhen</c>. The gRPC client throws

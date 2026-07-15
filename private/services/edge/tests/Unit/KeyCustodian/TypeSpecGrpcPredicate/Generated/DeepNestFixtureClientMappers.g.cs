@@ -9,8 +9,8 @@
 
 namespace DcsvIo.D2.Private.Edge.Tests.TypeSpecGrpcPredicate.Generated;
 
-using D2.Services.Protos.PredicateFixturesDeep.V1;
 using Google.Protobuf;
+using global::D2.Services.Protos.PredicateFixturesDeep.V1;
 using System.Linq;
 
 /// <summary>Generated client-side mappers: DTO ↔ proto for the <c>DeepNestFixture</c> operation (inverse of server transport mappers).</summary>

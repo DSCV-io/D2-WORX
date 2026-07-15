@@ -9,9 +9,9 @@
 
 namespace DcsvIo.D2.Private.Audit.Client;
 
-using D2.Services.Protos.Audit.V2Alpha;
 using DcsvIo.D2.Private.Audit.Client.Ping;
 using Google.Protobuf;
+using global::D2.Services.Protos.Audit.V2Alpha;
 
 /// <summary>Generated client-side mappers: DTO ↔ proto for the <c>PingAudit</c> operation (inverse of server transport mappers).</summary>
 internal static class PingAuditClientMappers

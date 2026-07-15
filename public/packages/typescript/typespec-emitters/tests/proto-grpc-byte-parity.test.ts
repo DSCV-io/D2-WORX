@@ -379,7 +379,7 @@ describe("byteParity_SignFixtureGrpcClient_CommittedFixtureIdentical", () => {
   it("deliberate-drift detection: removing D2Services.Protos.Common.V1 does NOT match", () => {
     const drifted = readFixture(
       join(GRPC_HOME, "SignFixtureGrpcClient.g.cs"),
-    ).replace("using D2.Services.Protos.Common.V1;\n", "");
+    ).replace("using global::D2.Services.Protos.Common.V1;\n", "");
     const [, impl] = emitGrpcClient(
       "SignFixture",
       [buildClientSignOp()],

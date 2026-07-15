@@ -52,8 +52,8 @@ function contractsPath(...segments: string[]): string {
 
 /**
  * Union names from a public contracts JSON file with an optional private
- * sibling (same relative path under private/contracts). Private is additive —
- * public remains the baseline open catalog.
+ * sibling (same relative path under private/contracts). Public is required
+ * (always read — shape failures throw). Private is additive and optional.
  */
 function loadUnionNamedSet(
   relDir: string,
@@ -64,13 +64,20 @@ function loadUnionNamedSet(
 ): ReadonlySet<string> {
   const names = new Set<string>();
 
-  const loadOne = (absPath: string, label: string): void => {
-    if (!existsSync(absPath)) return;
+  const loadOne = (absPath: string, label: string, required: boolean): void => {
+    // Optional private tree: skip when absent. Public is always read so
+    // missing/wrong-shape public specs fail loud (and shape-guard tests can
+    // intercept the first readFileSync without mocking existsSync).
+    if (!required && !existsSync(absPath)) return;
+
     const raw = readFileSync(absPath, "utf8");
     const spec = JSON.parse(raw) as Record<string, unknown>;
     const arr = spec[arrayKey];
-    if (!Array.isArray(arr))
+
+    if (!Array.isArray(arr)) {
       throw new Error(`${label} has unexpected shape — expected ${shapeHint}`);
+    }
+
     for (const entry of arr) {
       if (entry === null || typeof entry !== "object") continue;
       const value = (entry as Record<string, unknown>)[nameField];
@@ -78,20 +85,18 @@ function loadUnionNamedSet(
     }
   };
 
+  // Public label keeps the historical `contracts/...` phrasing so shape-guard
+  // tests and operator diagnostics stay stable; path is dual-tree public/.
   loadOne(
     publicContractsPath(relDir, fileName),
-    `public/contracts/${relDir}/${fileName}`,
+    `contracts/${relDir}/${fileName}`,
+    true,
   );
   loadOne(
     privateContractsPath(relDir, fileName),
     `private/contracts/${relDir}/${fileName}`,
+    false,
   );
-
-  if (names.size === 0) {
-    throw new Error(
-      `no entries loaded for ${relDir}/${fileName} under public|private contracts`,
-    );
-  }
 
   return names;
 }
@@ -193,8 +198,18 @@ export function loadErrorCodeNames(): ReadonlySet<string> {
     resolve(REPO_ROOT, "private", "contracts"),
   ];
 
+  // Public contracts root is always scanned (required). Private is optional
+  // and skipped when the directory does not exist (export / public-only trees).
+  // Shape-guard unit tests mock readdirSync ×2 + readFileSync without
+  // existsSync — so the public root must not gate on existsSync.
+  let firstRoot = true;
+
   for (const contractsRoot of roots) {
-    if (!existsSync(contractsRoot)) continue;
+    if (!firstRoot && !existsSync(contractsRoot)) {
+      continue;
+    }
+
+    firstRoot = false;
 
     const dirs = readdirSync(contractsRoot, { withFileTypes: true })
       .filter((e) => e.isDirectory() && e.name.endsWith("error-codes"))
@@ -207,7 +222,13 @@ export function loadErrorCodeNames(): ReadonlySet<string> {
       );
 
       for (const file of files) {
-        const label = `${contractsRoot.includes("private") ? "private" : "public"}/contracts/${dir}/${file}`;
+        // Historical label (no public/ prefix) for public-tree diagnostics.
+        const isPrivate = contractsRoot
+          .replace(/\\/g, "/")
+          .includes("/private/contracts");
+        const label = isPrivate
+          ? `private/contracts/${dir}/${file}`
+          : `contracts/${dir}/${file}`;
         const raw = readFileSync(resolve(dirPath, file), "utf8");
         const spec = JSON.parse(raw) as ErrorCodesSpec;
 

@@ -76,6 +76,17 @@ import {
 } from "./nested-model-mapper.js";
 import type { PredicateNode } from "@dcsv-io/d2-typespec-decorators";
 
+/**
+ * Emit a namespace using directive. Bare `D2.*` imports get a `global::` root
+ * so they do not resolve relative to an enclosing `DcsvIo.D2.*` namespace
+ * (CS0234 on `D2.Services.Protos…`). Other namespaces stay unprefixed so
+ * existing fixtures / assertions keep matching.
+ */
+function formatNamespaceUsing(ns: string): string {
+  if (ns === "D2" || ns.startsWith("D2.")) return `using global::${ns};`;
+  return `using ${ns};`;
+}
+
 // ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
@@ -278,8 +289,10 @@ function emitImpl(
   // method signatures + pipeline generic args resolve unambiguously, and never collide
   // with the same-named proto data message. Omitted when the DTO lives in this namespace.
   for (const alias of collectDtoAliasUsings(ops, clientsNs)) lines.push(alias);
-  const sortedUsings = [...usingSet].sort();
-  for (const ns of sortedUsings) lines.push(`using ${ns};`);
+  // Sort final using lines (after optional global:: prefix) so SA1210 holds when
+  // `D2.*` is rewritten to `global::D2.*` (which sorts after bare `DcsvIo…`).
+  const sortedUsingLines = [...usingSet].map(formatNamespaceUsing).sort();
+  for (const line of sortedUsingLines) lines.push(line);
   lines.push("");
 
   // Build the primary constructor parameter list:
@@ -640,15 +653,15 @@ function emitClientMappers(
     ])
     .some((f) => f.nested !== undefined && f.repeated);
 
-  const sortedUsings = [...usingSet].sort();
-  for (const ns of sortedUsings) lines.push(`using ${ns};`);
+  const sortedUsingLines = [...usingSet].map(formatNamespaceUsing).sort();
+  for (const line of sortedUsingLines) lines.push(line);
   for (const alias of enumAliasLines.sort()) lines.push(alias);
   if (allClientEnums.length > 0) {
-    lines.push("using DcsvIo.D2.I18n;");
-    lines.push("using DcsvIo.D2.Result;");
+    lines.push(formatNamespaceUsing("DcsvIo.D2.I18n"));
+    lines.push(formatNamespaceUsing("DcsvIo.D2.Result"));
   }
 
-  if (clientHasArrayOfModel) lines.push("using System.Linq;");
+  if (clientHasArrayOfModel) lines.push(formatNamespaceUsing("System.Linq"));
   lines.push("");
 
   // Per-op mapper class.
@@ -816,12 +829,12 @@ function emitGrpcClientsDiExtension(
   for (const alias of collectDtoAliasUsings(ops, clientsNs)) lines.push(alias);
   // DcsvIo.D2.Auth.Outbound.Grpc supplies the per-channel .AddD2ForwardedJwt() /
   // .AddD2WorkloadCertificate() extensions auto-chained onto each registered client.
-  lines.push("using DcsvIo.D2.Auth.Outbound.Grpc;");
-  lines.push("using DcsvIo.D2.Resilience.Pipeline;");
-  lines.push("using DcsvIo.D2.Resilience.Retry;");
-  lines.push("using DcsvIo.D2.Result.Grpc;");
-  lines.push("using Grpc.Core;");
-  lines.push("using Microsoft.Extensions.DependencyInjection;");
+  lines.push(formatNamespaceUsing("DcsvIo.D2.Auth.Outbound.Grpc"));
+  lines.push(formatNamespaceUsing("DcsvIo.D2.Resilience.Pipeline"));
+  lines.push(formatNamespaceUsing("DcsvIo.D2.Resilience.Retry"));
+  lines.push(formatNamespaceUsing("DcsvIo.D2.Result.Grpc"));
+  lines.push(formatNamespaceUsing("Grpc.Core"));
+  lines.push(formatNamespaceUsing("Microsoft.Extensions.DependencyInjection"));
   lines.push("");
 
   // Options record (host-supplied channel address — never a literal in generated code).

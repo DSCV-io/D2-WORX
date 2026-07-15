@@ -11,12 +11,12 @@ namespace DcsvIo.D2.Private.Audit.Client;
 
 using PingAuditInput = global::DcsvIo.D2.Private.Audit.Client.Ping.PingAuditInput;
 using PingAuditOutput = global::DcsvIo.D2.Private.Audit.Client.Ping.PingAuditOutput;
-using D2.Services.Protos.Common.V1;
 using DcsvIo.D2.Resilience.Pipeline;
 using DcsvIo.D2.Resilience.Retry;
 using DcsvIo.D2.Result.Grpc;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
+using global::D2.Services.Protos.Common.V1;
 
 /// <summary>
 /// Generated sealed cross-process gRPC client for the Audit module.
