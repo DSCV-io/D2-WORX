@@ -320,9 +320,11 @@ function buildBridgeUsings(
     "Microsoft.AspNetCore.Routing",
   ]);
 
-  // Scope fluent uses Scopes.* constants (free-string ban on Edge.Api Map).
+  // Scope fluent uses ProductScopes.* (public∪private union from private Auth
+  // Extensions) — free-string ban on Edge.Api Map. Public-only Scopes lacks
+  // product rows like internal.audit.ping (CS0117).
   if (scopePolicy.kind === "any" || scopePolicy.kind === "all")
-    set.add("DcsvIo.D2.Auth.Abstractions");
+    set.add("DcsvIo.D2.Private.Auth");
 
   if (grpcClientNamespace !== registrationNamespace)
     set.add(grpcClientNamespace);
@@ -338,9 +340,11 @@ function buildBridgeUsings(
 }
 
 /**
- * Map a wire scope (`internal.audit.ping`) to the generated Scopes constant
- * path (`Scopes.Internal.Audit.Ping`) — same PascalCase rule as the C#
- * scopes source generator (first char upper, rest unchanged).
+ * Map a wire scope (`internal.audit.ping`) to the private-tree catalog constant
+ * path (`ProductScopes.Internal.Audit.Ping`) — same PascalCase rule as the C#
+ * scopes source generator (first char upper, rest unchanged). Bridges are Edge
+ * private surface and must resolve product scopes that live only under
+ * private/contracts (not public Scopes).
  */
 export function wireScopeToScopesConstant(scope: string): string {
   const parts = scope
@@ -348,7 +352,7 @@ export function wireScopeToScopesConstant(scope: string): string {
     .map((seg) =>
       seg.length === 0 ? seg : seg[0]!.toUpperCase() + seg.slice(1),
     );
-  return `Scopes.${parts.join(".")}`;
+  return `ProductScopes.${parts.join(".")}`;
 }
 
 function buildAuthLines(policy: ScopePolicy): string[] {

@@ -10,9 +10,11 @@ import { describe, it, expect } from "vitest";
 import { TK } from "@dcsv-io/d2-i18n-keys";
 
 const here = dirname(fileURLToPath(import.meta.url));
+// Dual-tree: public open catalog is the public package SoT for TK emission.
+// (Package lives at public/packages/typescript/i18n/tests → repo root is 5 up.)
 const EN_US_PATH = resolve(
   here,
-  "../../../../../contracts/messages/en-US.json",
+  "../../../../../public/contracts/messages/en-US.json",
 );
 
 /** Decompose a flat i18n key — mirrors the emitter's decomposeKey logic. */

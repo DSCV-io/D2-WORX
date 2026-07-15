@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "node scripts/merge-i18n-messages.mjs && vite dev",
+    "prebuild": "node scripts/merge-i18n-messages.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",

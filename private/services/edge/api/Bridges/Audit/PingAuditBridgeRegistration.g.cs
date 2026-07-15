@@ -9,11 +9,11 @@
 
 namespace DcsvIo.D2.Private.Edge.Api.Bridges.Audit;
 
-using DcsvIo.D2.Auth.Abstractions;
 using DcsvIo.D2.Auth.Http.Endpoints;
 using DcsvIo.D2.Auth.Http.ProblemDetails;
 using DcsvIo.D2.Private.Audit.Client;
 using DcsvIo.D2.Private.Audit.Client.Ping;
+using DcsvIo.D2.Private.Auth;
 using DcsvIo.D2.Result;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -40,7 +40,7 @@ public static class PingAuditBridgeRegistration
                     return Results.Json(pd, statusCode: pd.Status ?? 500, contentType: "application/problem+json");
                 });
 
-            builder.RequireAnyScope(Scopes.Internal.Audit.Ping);
+            builder.RequireAnyScope(ProductScopes.Internal.Audit.Ping);
             return builder;
         }
     }

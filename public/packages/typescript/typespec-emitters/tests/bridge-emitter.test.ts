@@ -50,8 +50,8 @@ describe("emitBridgeRegistration — happy path", () => {
     expect(file.content).toContain("AuditGrpcClientOptions");
     expect(file.content).toContain("RequireAnyScope");
     // Free-string ban: Scopes.* constant, never wire literal at Map sites.
-    expect(file.content).toContain("Scopes.Internal.Audit.Ping");
-    expect(file.content).toContain("using DcsvIo.D2.Auth.Abstractions;");
+    expect(file.content).toContain("ProductScopes.Internal.Audit.Ping");
+    expect(file.content).toContain("using DcsvIo.D2.Private.Auth;");
     expect(file.content).not.toContain('RequireAnyScope("');
     // MAP-ii
     expect(file.content).toContain("var status = (int)result.StatusCode;");

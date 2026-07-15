@@ -274,11 +274,13 @@ describe("auditProductionHomes_RealTspCompile", () => {
     expect(errors).toHaveLength(0);
   });
 
-  it("PingAudit bridge emits RequireAnyScope(Scopes.Internal.Audit.Ping) — not Harmless", () => {
+  it("PingAudit bridge emits RequireAnyScope(ProductScopes.Internal.Audit.Ping) — not Harmless", () => {
     const bridge = getEmittedFile(host, "PingAuditBridgeRegistration.g.cs");
     expect(bridge).toBeDefined();
-    expect(bridge).toContain("RequireAnyScope(Scopes.Internal.Audit.Ping)");
-    expect(bridge).toContain("using DcsvIo.D2.Auth.Abstractions;");
+    expect(bridge).toContain(
+      "RequireAnyScope(ProductScopes.Internal.Audit.Ping)",
+    );
+    expect(bridge).toContain("using DcsvIo.D2.Private.Auth;");
     expect(bridge).not.toContain("MarkAsD2HarmlessEndpoint");
     expect(bridge).not.toContain('RequireAnyScope("');
   });
