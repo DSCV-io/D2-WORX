@@ -6,15 +6,15 @@
 // Seed↔provider fingerprint BYTE-IDENTITY (real pin, both ecosystems).
 //
 // The release baselines are seeded by two .mjs scripts
-// (tools/scripts/seed-publicapi-baselines.mjs for .NET,
-//  tools/scripts/seed-apiextractor-baselines.mjs for npm) whose SHA-256
+// (public/tools/scripts/seed-publicapi-baselines.mjs for .NET,
+//  public/tools/scripts/seed-apiextractor-baselines.mjs for npm) whose SHA-256
 // composition MUST match the release-runner provider's composeSourceFingerprint
 // byte-for-byte — otherwise a freshly-seeded baseline and the runner's no-op
 // drift recompute would disagree, and the currency gate would false-alarm (or,
 // worse, a real drift would hide behind a matching-by-luck digest).
 //
 // Both seed scripts delegate their final composition to the shared primitive
-// composeSourceFingerprintFromParts (tools/scripts/lib/source-fingerprint-compose.mjs),
+// composeSourceFingerprintFromParts (public/tools/scripts/lib/source-fingerprint-compose.mjs),
 // a SEPARATE implementation from the runner's composeSourceFingerprint. These
 // tests feed identical synthetic inputs (a small fixed source dump + API report
 // + resolved deps + toolchain pin, shaped per ecosystem) to BOTH implementations

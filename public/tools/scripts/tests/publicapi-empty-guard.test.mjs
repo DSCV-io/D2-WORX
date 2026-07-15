@@ -127,3 +127,19 @@ test("countPublicApiLines ignores header and blanks only", () => {
   assert.equal(countPublicApiLines(`${NULLABLE_HEADER}\n`), 0);
   assert.equal(countPublicApiLines(formatPublicApiFile(["P:Foo", "P:Bar"])), 2);
 });
+
+test("remediation strings cite public/tools/scripts/seed-publicapi-baselines.mjs", () => {
+  try {
+    assertExtractionNotWrongfullyEmpty({
+      packageId: "DcsvIo.D2.Time",
+      priorSurfaceCount: 1,
+      extractedSurfaceCount: 0,
+      allowEmpty: false,
+    });
+    assert.fail("expected throw");
+  } catch (e) {
+    const msg = String(/** @type {Error} */ (e).message);
+    assert.match(msg, /public\/tools\/scripts\/seed-publicapi-baselines\.mjs/);
+    assert.doesNotMatch(msg, /(?<!public\/)tools\/scripts\/seed-publicapi/);
+  }
+});

@@ -78,6 +78,7 @@ Every cross-language constant catalog lives in a JSON spec file under `public/co
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `docs/SRC_GEN.md` — canonical codegen how-to (why; .NET mechanics; TypeScript mechanics; multi-target dispatch; checklist for adding a new catalog).
 - `docs/PATTERNS.md` (spec-driven codegen section) — philosophy summary; migration rule (delete the hand-written file, do not parallel-emit).
 - `docs/dev/rules.md §26` — codegen discipline predicates walked at every audit round.

@@ -17,7 +17,13 @@
 //   4. Each emitted artifact is byte-identical to its committed home (so a future
 //      emitter or .tsp drift fails loudly here).
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe as vitestDescribe, it, expect, beforeAll } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
+
+/** Product-home parity — skipped under PUBLIC_ONLY or without private/** tree. */
+const describe = shouldRunPrivateProductParity(import.meta.url)
+  ? vitestDescribe
+  : vitestDescribe.skip;
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {

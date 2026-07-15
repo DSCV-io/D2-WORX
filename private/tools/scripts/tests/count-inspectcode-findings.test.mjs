@@ -1,10 +1,11 @@
 // Copyright (c) DCSV. All rights reserved.
 //
 // Identity + behavior pin for the shared inspectcode Text-format finding-line
-// counter (tools/scripts/count-inspectcode-findings.sh). §26.24: the local
-// gate (gates.sh) and COMMANDS.md must not re-inline divergent parse logic —
-// they call / cite this script. PR CI does not run inspectcode. Runnable with:
-//   node --test tools/scripts/tests/count-inspectcode-findings.test.mjs
+// counter (private/tools/scripts/count-inspectcode-findings.sh). §26.24: the
+// local gate (gates.sh) and COMMANDS.md must not re-inline divergent parse
+// logic — they call / cite this script. PR CI does not run inspectcode.
+// Runnable with:
+//   node --test private/tools/scripts/tests/count-inspectcode-findings.test.mjs
 //
 // On Windows the system `bash` is often the WSL launcher (broken without a
 // distro). Prefer Git for Windows bash when present so the behavioral suite
@@ -40,7 +41,8 @@ function findRepoRoot(startDir) {
   while (true) {
     if (
       existsSync(join(current, ".git")) ||
-      existsSync(join(current, "server", "D2.slnx"))
+      existsSync(join(current, "D2.slnx")) ||
+      existsSync(join(current, "pnpm-workspace.yaml"))
     ) {
       return current;
     }
@@ -49,7 +51,7 @@ function findRepoRoot(startDir) {
 
     if (parent === current) {
       throw new Error(
-        `repo-root sentinel: no .git or D2.slnx found walking up from ${startDir}`,
+        `repo-root sentinel: no .git / D2.slnx / pnpm-workspace.yaml from ${startDir}`,
       );
     }
 
@@ -58,7 +60,7 @@ function findRepoRoot(startDir) {
 }
 
 const REPO_ROOT = findRepoRoot(__dirname);
-const SCRIPT_REL = "tools/scripts/count-inspectcode-findings.sh";
+const SCRIPT_REL = "private/tools/scripts/count-inspectcode-findings.sh";
 const SCRIPT_ABS = join(REPO_ROOT, SCRIPT_REL);
 
 /**
@@ -103,8 +105,9 @@ test("findRepoRoot is depth-invariant (sentinel, not fixed ../../..)", () => {
   const fromNested = findRepoRoot(__dirname);
   assert.equal(fromNested, REPO_ROOT);
   assert.ok(
-    existsSync(join(fromNested, "server", "D2.slnx")),
-    "sentinel walk must land on a directory that owns D2.slnx",
+    existsSync(join(fromNested, "D2.slnx")) ||
+      existsSync(join(fromNested, "pnpm-workspace.yaml")),
+    "sentinel walk must land on monorepo root (D2.slnx / pnpm-workspace.yaml)",
   );
   assert.ok(
     existsSync(join(fromNested, SCRIPT_REL)),
@@ -271,8 +274,8 @@ test("gates.sh invokes the shared script (no inline inspect parse)", () => {
 
   assert.match(
     gates,
-    /count-inspectcode-findings\.sh/,
-    "gates.sh must call tools/scripts/count-inspectcode-findings.sh",
+    /private\/tools\/scripts\/count-inspectcode-findings\.sh/,
+    "gates.sh must call private/tools/scripts/count-inspectcode-findings.sh",
   );
   assert.doesNotMatch(
     gates,

@@ -92,7 +92,7 @@ True watch law: Compose Watch sync + ignore bin/obj + rebuild on csproj. See `in
 
 ```bash
 pnpm --filter @dcsv-io/d2-typespec-emitters regen
-# = node tools/scripts/regen-typespec-emitters.mjs
+# = node private/tools/scripts/regen-typespec-emitters.mjs
 # N× (compile package + COPY subset): key-custodian then audit
 ```
 

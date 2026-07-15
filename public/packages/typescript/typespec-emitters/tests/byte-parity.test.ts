@@ -11,7 +11,13 @@
 // there is actual divergence. This prevents the byte-gate becoming a tautology
 // (comparing a buffer to itself, never catching real drift).
 
-import { describe, it, expect } from "vitest";
+import { describe as vitestDescribe, it, expect } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
+
+/** Product-home parity — skipped under PUBLIC_ONLY or without private/** tree. */
+const describe = shouldRunPrivateProductParity(import.meta.url)
+  ? vitestDescribe
+  : vitestDescribe.skip;
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepoRoot } from "./repo-root.js";

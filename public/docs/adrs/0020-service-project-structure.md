@@ -231,8 +231,8 @@ The client's internal layout mirrors the app-layer concern convention: **the pac
 - [ADR-0017](0017-ef-as-ddd-persistence.md) — EF-as-DDD persistence: the `DbContext` contract + flat record + pure mapper this ADR physically places (`app/Infrastructure/Persistence/`), and the "App speaks the query language, Infra owns the database" framing behind the persistence-mapper-in-app rule.
 - [ADR-0016](0016-keycustodian-lifecycle-store.md) — the KeyCustodian sum-type lifecycle whose layout is the first realization of this standard.
 - [ADR-0018](0018-spec-driven-error-codes.md) / [ADR-0019](0019-wrapped-result-wire-model.md) — the spec-driven error codes + wrapped-result wire model the generated `Errors/` namespace and the api transport surface carry.
-- [`docs/PATTERNS.md`](../PATTERNS.md) — the daily-reference operational form of this standard (the folder shapes, `Commands`/`Queries`, the five-surface mapper rule, the keyed-resolver recipe).
-- [`docs/dev/rules.md`](../dev/rules.md) §5 / §7 / §9 — the auditable predicates derived from this decision.
+- `docs/PATTERNS.md` — monorepo-private daily-reference operational form of this standard (folder shapes, `Commands`/`Queries`, five-surface mapper rule, keyed-resolver recipe). **Not required for a public clone** of this ADR tree.
+- `docs/dev/rules.md` §5 / §7 / §9 — monorepo-private auditable predicates derived from this decision. **Not required for a public clone**.
 
 ## Future direction (not part of this decision)
 

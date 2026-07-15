@@ -58,6 +58,7 @@ The codebase spans multiple shared libraries (`Handler`, `Auth`, `Auth.Outbound`
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/packages/dotnet/telemetry/core/` — `TelemetryServiceCollectionExtensions.cs` (`AddD2Telemetry`, OTLP wiring, self-referential HttpClient filter), `Internal/AggregatedTelemetrySources.cs` (4 `ActivitySource` + 6 `Meter` via symbol refs), `Internal/OtelSdkDisabledGate.cs`, `Internal/InternalIpFilter.cs`, `WebApplicationTelemetryExtensions.cs` (`MapD2PrometheusEndpoint`), `D2TelemetryOptions.cs`.
 - `public/packages/dotnet/telemetry/tags-source-gen/` — `TelemetryTagsGenerator.cs`, `TelemetryTagsEmitter.cs`, `CrossSpecResolver.cs`.
 - `public/packages/dotnet/handler/core/BaseHandler.cs` + `HandlerTelemetry.cs` — dual enrichment (`SetTag` + `BeginScope`) and the four handler instruments.

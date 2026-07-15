@@ -992,7 +992,7 @@ the fixtures in one command:
 pnpm --filter @dcsv-io/d2-typespec-emitters regen
 
 # Or equivalently:
-node tools/scripts/regen-typespec-emitters.mjs
+node private/tools/scripts/regen-typespec-emitters.mjs
 ```
 
 The scatter script (`tools/scripts/regen-typespec-emitters.mjs`):

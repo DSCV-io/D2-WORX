@@ -184,8 +184,8 @@ export function formatDriftReport(result: DriftCheckResult): string {
   lines.push(
     "A drifted baseline means a package's committed PublicAPI / .api.md / " +
       "fingerprint no longer matches its source. Re-seed the baselines " +
-      "(node tools/scripts/seed-publicapi-baselines.mjs / " +
-      "node tools/scripts/seed-apiextractor-baselines.mjs) and bump the package " +
+      "(node public/tools/scripts/seed-publicapi-baselines.mjs / " +
+      "node public/tools/scripts/seed-apiextractor-baselines.mjs) and bump the package " +
       "version in the same PR.",
   );
 

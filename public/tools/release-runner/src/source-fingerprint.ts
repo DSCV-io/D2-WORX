@@ -31,7 +31,7 @@
 // Single-source rule: the seed scripts (seed-publicapi-baselines.mjs /
 // seed-apiextractor-baselines.mjs) delegate their final composition to the
 // shared composeSourceFingerprintFromParts primitive
-// (tools/scripts/lib/source-fingerprint-compose.mjs), a byte-for-byte
+// (public/tools/scripts/lib/source-fingerprint-compose.mjs), a byte-for-byte
 // re-implementation of composeSourceFingerprint below, so a no-op drift
 // recompute matches the committed baseline. The seed↔provider byte-identity of
 // that primitive vs composeSourceFingerprint is pinned by

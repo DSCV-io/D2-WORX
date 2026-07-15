@@ -108,7 +108,7 @@ if (envAllowEmpty.length > 0) {
 
 // ---------------------------------------------------------------------------
 // Inventory discovery — the 53 shared-tree consumables + the KC client.
-// Mirrors tools/scripts/seed-package-metadata.mjs: a consumable is a .csproj
+// Mirrors public/tools/scripts/seed-package-metadata.mjs: a consumable is a .csproj
 // that is NOT a *SourceGen shell and NOT the test project. The KC client is
 // added explicitly (it lives outside public/packages/dotnet).
 // ---------------------------------------------------------------------------

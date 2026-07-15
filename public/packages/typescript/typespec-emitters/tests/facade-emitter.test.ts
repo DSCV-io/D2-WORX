@@ -22,7 +22,13 @@
 //   Byte-gates for the three committed .g.cs files + drift negatives.
 //   Integration test confirming the fa√ßade-emitter integration path in emitter.ts.
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe as vitestDescribe, it, expect, beforeAll } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
+
+/** Product-home parity ó skipped under PUBLIC_ONLY or without private/** tree. */
+const describe = shouldRunPrivateProductParity(import.meta.url)
+  ? vitestDescribe
+  : vitestDescribe.skip;
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepoRoot } from "./repo-root.js";

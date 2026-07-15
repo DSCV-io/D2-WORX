@@ -51,7 +51,7 @@ Each run pulls from upstream (with 24h cache TTL — see `.cache/` for cached up
 
 ## License attribution
 
-Sources are mixed-license but all PolyForm-Strict-compatible:
+Sources are mixed-license but all Apache-2.0-compatible (this open tree's license posture):
 
 - **CLDR**: Unicode-3.0 (no share-alike)
 - **IANA tzdb**: Public domain

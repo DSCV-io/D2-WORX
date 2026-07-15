@@ -13,7 +13,13 @@
 // output â€” proving the gate FAILS on real divergence (never a buffer-vs-itself
 // tautology).
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe as vitestDescribe, it, expect, beforeAll } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
+
+/** Product-home parity — skipped under PUBLIC_ONLY or without private/** tree. */
+const describe = shouldRunPrivateProductParity(import.meta.url)
+  ? vitestDescribe
+  : vitestDescribe.skip;
 import {
   createTestLibrary,
   createTestHost,

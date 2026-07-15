@@ -2,7 +2,7 @@
 //
 // Regression test: git-guard.sh block/allow matrix. Runnable with the
 // built-in node test runner (zero config, portable):
-//   node --test tools/scripts/tests/git-guard.test.mjs
+//   node --test private/tools/scripts/tests/git-guard.test.mjs
 //
 // The guard is the structural backstop for §13.1 (commit) / §13.3
 // (destructive git). It reads a JSON envelope on stdin (PreToolUse shape),
@@ -16,23 +16,89 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 // ---------------------------------------------------------------------------
-// Locate the hook script.
+// Locate the hook script (depth-invariant monorepo root).
 // ---------------------------------------------------------------------------
 
-const REPO_ROOT = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-);
+/**
+ * Walk up until monorepo root sentinel (`.git` / `D2.slnx` / `pnpm-workspace.yaml`).
+ * @param {string} startDir
+ * @returns {string}
+ */
+function findRepoRoot(startDir) {
+  let current = resolve(startDir);
+
+  while (true) {
+    if (
+      existsSync(join(current, ".git")) ||
+      existsSync(join(current, "D2.slnx")) ||
+      existsSync(join(current, "pnpm-workspace.yaml"))
+    ) {
+      return current;
+    }
+
+    const parent = dirname(current);
+
+    if (parent === current) {
+      throw new Error(
+        `repo-root sentinel: no .git / D2.slnx / pnpm-workspace.yaml from ${startDir}`,
+      );
+    }
+
+    current = parent;
+  }
+}
+
+const REPO_ROOT = findRepoRoot(dirname(fileURLToPath(import.meta.url)));
 const HOOK = join(REPO_ROOT, ".claude", "hooks", "git-guard.sh");
+
+/**
+ * Resolve a real POSIX shell. Prefer Git for Windows bash over the Windows
+ * WSL shim at System32/bash.exe when that shim cannot exec a distro. CI
+ * (ubuntu) has plain `sh` on PATH.
+ * @returns {string}
+ */
+function resolveShell() {
+  const candidates = [
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+    process.env.GIT_BASH,
+    "sh",
+    "bash",
+  ].filter((p) => typeof p === "string" && p.length > 0);
+
+  for (const candidate of candidates) {
+    if (candidate.includes("\\") || candidate.includes("/")) {
+      if (!existsSync(candidate)) continue;
+    }
+
+    const probe = spawnSync(candidate, ["-c", "echo ok"], {
+      encoding: "utf-8",
+    });
+
+    if (probe.status === 0 && String(probe.stdout).includes("ok")) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    "git-guard tests require a working sh/bash (Git for Windows bash recommended on Windows)",
+  );
+}
+
+const SHELL = resolveShell();
 
 // ---------------------------------------------------------------------------
 // Temp project dir — isolated from the real repo's marker state.
@@ -70,7 +136,7 @@ function runHook(cmd, { withMarker = false } = {}) {
 
   const input = JSON.stringify({ tool_input: { command: cmd } });
 
-  return spawnSync("sh", [HOOK], {
+  return spawnSync(SHELL, [HOOK], {
     input,
     encoding: "utf-8",
     env: { ...process.env, CLAUDE_PROJECT_DIR: TMP_PROJECT },

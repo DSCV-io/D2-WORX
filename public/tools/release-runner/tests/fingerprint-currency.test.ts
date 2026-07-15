@@ -714,6 +714,12 @@ describe("formatCurrencyReport", () => {
     expect(report).toContain("STALE BASELINES detected in 1 package(s)");
     expect(report).toContain("DcsvIo.D2.Result | nuget | fingerprint mismatch");
     expect(report).toContain("seed-publicapi-baselines.mjs");
+    expect(report).toContain(
+      "public/tools/scripts/seed-publicapi-baselines.mjs",
+    );
+    expect(report).toContain(
+      "public/tools/scripts/seed-apiextractor-baselines.mjs",
+    );
     expect(report).toContain("seed-apiextractor-baselines.mjs");
     expect(report).toContain("Re-stage");
   });

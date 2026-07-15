@@ -36,7 +36,7 @@ contracts/typespec/
 ```text
 pnpm --filter @dcsv-io/d2-typespec-emitters regen
 # or
-node tools/scripts/regen-typespec-emitters.mjs
+node private/tools/scripts/regen-typespec-emitters.mjs
 ```
 
 The runner executes **N× (tsp compile packageᵢ + COPY_MANIFEST subset for packageᵢ)** in order (KeyCustodian package, then Audit). It never batch-compiles into the shared `dist/generated` then runs one COPY (second compile would clobber the first). Nested `emitter-output-dir` values resolve to the **same** shared `public/packages/typescript/typespec-emitters/dist/generated` (extra `../` from module folders).

@@ -27,7 +27,13 @@
 //   pattern) with the real seam + real proto + real predicate twin in scope â€”
 //   driving the ACTUAL committed bytes (the byte-gate pins them) NON-VACUOUSLY.
 
-import { describe, it, expect } from "vitest";
+import { describe as vitestDescribe, it, expect } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
+
+/** Product-home parity — skipped under PUBLIC_ONLY or without private/** tree. */
+const describe = shouldRunPrivateProductParity(import.meta.url)
+  ? vitestDescribe
+  : vitestDescribe.skip;
 import { execFileSync } from "node:child_process";
 import {
   mkdtempSync,

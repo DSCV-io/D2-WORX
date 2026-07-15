@@ -17,7 +17,13 @@
 // are NOT re-emitted here (the separate V2/Deep modules keep V1 a clean regression
 // guard); their byte-gates live in predicate-byte-parity.test.ts.
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe as vitestDescribe, it, expect, beforeAll } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
+
+/** Product-home parity — skipped under PUBLIC_ONLY or without private/** tree. */
+const describe = shouldRunPrivateProductParity(import.meta.url)
+  ? vitestDescribe
+  : vitestDescribe.skip;
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepoRoot } from "./repo-root.js";

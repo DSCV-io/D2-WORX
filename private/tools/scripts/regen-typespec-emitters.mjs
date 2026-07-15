@@ -9,29 +9,31 @@
  * contracts/typespec/ and copies each emitted file from dist/generated/ to its
  * committed home.
  *
- * Usage (from the repo root):
- *   node tools/scripts/regen-typespec-emitters.mjs
+ * Usage (from the monorepo root):
+ *   node private/tools/scripts/regen-typespec-emitters.mjs
  *
  * Or via the package alias:
  *   pnpm --filter @dcsv-io/d2-typespec-emitters regen
  *
  * The script:
  *   1. Creates temporary NTFS junctions so the TypeSpec compiler can resolve
- *      @dcsv-io/d2-* and @typespec/* packages from contracts/typespec/ (which has no
- *      node_modules of its own). Junctions do not require admin on Windows.
+ *      @dcsv-io/d2-* and @typespec/* packages from private/contracts/typespec/
+ *      (which has no node_modules of its own). Junctions do not require admin
+ *      on Windows. Also junctions public fixtures into the private contracts
+ *      tree when product packages co-import shared fixture .tsp files.
  *   2. For EACH module package (KeyCustodian, Audit, …):
  *        a. Writes a temporary main.tsp matching that package's imports
  *        b. Runs `tsp compile --config <module>/tspconfig.yaml`
- *           (emitter-output-dir → shared dist/generated; nested configs use
- *           an extra ../ so the resolve target stays identical)
+ *           (emitter-output-dir → public emitters dist/generated; nested
+ *           configs use an extra ../ so the resolve target stays identical)
  *        c. COPY_MANIFEST subset for that package only (fail-loud missing)
  *      NEVER "compile all packages then one COPY" — shared dist/generated is
  *      clobbered by each compile; COPY must run between packages.
  *   3. Cleans up junctions and temp files unconditionally (via try/finally).
  *   4. Prints source → dest for every copy and a final summary.
  *
- * Root contracts/typespec/tspconfig.yaml is RETIRED (pointer only) — do not
- * use it as the primary compile entry.
+ * Root public/contracts/typespec/tspconfig.yaml is RETIRED (pointer only) —
+ * do not use it as the primary compile entry for product modules.
  *
  * Idempotent: re-running after a clean compile overwrites the committed files
  * with identical content (a no-op from git's perspective).
@@ -51,21 +53,58 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // ---------------------------------------------------------------------------
-// Repo-root resolution (this script lives at tools/scripts/ — two levels up)
+// Repo-root resolution (this script lives at private/tools/scripts/ —
+// monorepo root = walk-up to pnpm-workspace.yaml / D2.slnx / .git).
 // ---------------------------------------------------------------------------
 
 const _SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(_SCRIPT_DIR, "../..");
+
+/**
+ * @param {string} startDir
+ * @returns {string}
+ */
+function findRepoRoot(startDir) {
+  let current = resolve(startDir);
+
+  while (true) {
+    if (
+      existsSync(join(current, "pnpm-workspace.yaml")) ||
+      existsSync(join(current, "D2.slnx")) ||
+      existsSync(join(current, ".git"))
+    ) {
+      return current;
+    }
+
+    const parent = dirname(current);
+
+    if (parent === current) {
+      throw new Error(
+        `repo-root sentinel: no pnpm-workspace.yaml / D2.slnx / .git walking up from ${startDir}`,
+      );
+    }
+
+    current = parent;
+  }
+}
+
+const REPO_ROOT = findRepoRoot(_SCRIPT_DIR);
 
 // ---------------------------------------------------------------------------
-// Key directory paths
+// Key directory paths (dual-tree: product contracts private, emitters public)
 // ---------------------------------------------------------------------------
 
-const CONTRACTS_DIR = join(REPO_ROOT, "contracts", "typespec");
+const CONTRACTS_DIR = join(REPO_ROOT, "private", "contracts", "typespec");
+const PUBLIC_FIXTURES_DIR = join(
+  REPO_ROOT,
+  "public",
+  "contracts",
+  "typespec",
+  "fixtures",
+);
 const EMITTERS_DIR = join(
   REPO_ROOT,
-  "server",
-  "shared",
+  "public",
+  "packages",
   "typescript",
   "typespec-emitters",
 );
@@ -78,8 +117,21 @@ const DIST_GENERATED = join(EMITTERS_DIR, "dist", "generated");
 const TSP_JS = join(EMITTERS_NM, "@typespec", "compiler", "cmd", "tsp.js");
 
 // Temporary junction paths created before compile and removed after.
+const PUBLIC_CONTRACTS_TYPESPEC = join(
+  REPO_ROOT,
+  "public",
+  "contracts",
+  "typespec",
+);
 const JUNCTION_CONTRACTS_NM = join(CONTRACTS_DIR, "node_modules");
-const JUNCTION_SELF_REF = join(EMITTERS_NM, "@d2", "typespec-emitters");
+const JUNCTION_PUBLIC_CONTRACTS_NM = join(
+  PUBLIC_CONTRACTS_TYPESPEC,
+  "node_modules",
+);
+const JUNCTION_SELF_REF = join(EMITTERS_NM, "@dcsv-io", "d2-typespec-emitters");
+// Product tspconfigs still import `../fixtures/*.tsp` relative to the private
+// contracts tree; shared fixture .tsp files live under public/contracts.
+const JUNCTION_PRIVATE_FIXTURES = join(CONTRACTS_DIR, "fixtures");
 
 // ---------------------------------------------------------------------------
 // Per-module packages: each owns tspconfig + COPY subset.
@@ -693,18 +745,30 @@ if (!existsSync(TSP_JS)) {
 
 // Create temp junctions — removed in the finally block.
 let junctionContractsNmCreated = false;
+let junctionPublicContractsNmCreated = false;
 let junctionSelfRefCreated = false;
+let junctionFixturesCreated = false;
 let totalCopied = 0;
 
 try {
-  // ---- 1. Junction: contracts/typespec/node_modules → emitters/node_modules ----
+  // ---- 1. Junction: private/contracts/typespec/node_modules → emitters/node_modules ----
   //
   // TypeSpec's module resolver walks up from the imported .tsp file to find
-  // node_modules. contracts/typespec/ has none, so we bridge it to the emitter
-  // package's node_modules. NTFS junctions do not require admin on Windows.
+  // node_modules. private/contracts/typespec/ has none, so we bridge it to the
+  // emitter package's node_modules. NTFS junctions do not require admin on Windows.
   removeSafe(JUNCTION_CONTRACTS_NM);
   symlinkSync(EMITTERS_NM, JUNCTION_CONTRACTS_NM, "junction");
   junctionContractsNmCreated = true;
+
+  // ---- 1b. Same bridge for public/contracts/typespec (shared fixtures + common/) ----
+  //
+  // Product packages co-import public fixture .tsp files; resolution walks from
+  // the fixture path under public/, which also needs node_modules.
+  if (existsSync(PUBLIC_CONTRACTS_TYPESPEC)) {
+    removeSafe(JUNCTION_PUBLIC_CONTRACTS_NM);
+    symlinkSync(EMITTERS_NM, JUNCTION_PUBLIC_CONTRACTS_NM, "junction");
+    junctionPublicContractsNmCreated = true;
+  }
 
   // ---- 2. Junction: emitters/node_modules/@dcsv-io/d2-typespec-emitters → emitters/ ----
   //
@@ -712,13 +776,25 @@ try {
   // node_modules/@dcsv-io/d2-typespec-emitters/. tsp compile resolves the emitter
   // declared in tspconfig.yaml's `emit:` array via normal module resolution, so
   // a self-referencing junction is required.
-  const d2NmDir = join(EMITTERS_NM, "@d2");
+  const dcsvIoNmDir = join(EMITTERS_NM, "@dcsv-io");
 
-  if (!existsSync(d2NmDir)) mkdirSync(d2NmDir, { recursive: true });
+  if (!existsSync(dcsvIoNmDir)) mkdirSync(dcsvIoNmDir, { recursive: true });
 
   removeSafe(JUNCTION_SELF_REF);
   symlinkSync(EMITTERS_DIR, JUNCTION_SELF_REF, "junction");
   junctionSelfRefCreated = true;
+
+  // ---- 2b. Junction: private/.../fixtures → public/.../fixtures (co-compile) ----
+  //
+  // KC tspconfig still imports `../fixtures/*.tsp` under the private contracts
+  // tree; shared fixture specs live under public/contracts/typespec/fixtures.
+  if (
+    existsSync(PUBLIC_FIXTURES_DIR) &&
+    !existsSync(JUNCTION_PRIVATE_FIXTURES)
+  ) {
+    symlinkSync(PUBLIC_FIXTURES_DIR, JUNCTION_PRIVATE_FIXTURES, "junction");
+    junctionFixturesCreated = true;
+  }
 
   // ---- 3. Per-package: compile → COPY subset (never multi-compile then one COPY) ----
   for (const pkg of PACKAGES) {
@@ -726,11 +802,31 @@ try {
   }
 } finally {
   // ---- 4. Unconditional cleanup ----
+  if (junctionFixturesCreated) {
+    try {
+      removeSafe(JUNCTION_PRIVATE_FIXTURES);
+    } catch {
+      console.warn(
+        `WARN: could not remove junction ${JUNCTION_PRIVATE_FIXTURES}`,
+      );
+    }
+  }
+
   if (junctionSelfRefCreated) {
     try {
       removeSafe(JUNCTION_SELF_REF);
     } catch {
       console.warn(`WARN: could not remove junction ${JUNCTION_SELF_REF}`);
+    }
+  }
+
+  if (junctionPublicContractsNmCreated) {
+    try {
+      removeSafe(JUNCTION_PUBLIC_CONTRACTS_NM);
+    } catch {
+      console.warn(
+        `WARN: could not remove junction ${JUNCTION_PUBLIC_CONTRACTS_NM}`,
+      );
     }
   }
 

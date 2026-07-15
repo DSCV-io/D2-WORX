@@ -60,6 +60,7 @@ Two fail-closed behaviors are baked in at host build, not deferred to request ti
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/packages/dotnet/service-defaults/` — `ServiceDefaultsServiceCollectionExtensions.cs` (`AddD2ServiceDefaults`), `WebApplicationServiceDefaultsExtensions.cs` (`UseD2DefaultPipeline`/`MapD2DefaultEndpoints`/`RunD2ServiceAsync`), `D2ServiceDefaultsOptions.cs` (pass-through delegates + opt-out flags), `D2ServiceDefaultsConstants.cs` (intentionally empty), README.
 - `public/packages/dotnet/aspnetcore/` — `SecurityHeadersApplicationBuilderExtensions.cs`, `CorsServiceCollectionExtensions.cs` (fail-closed `ValidateOnStart`), `InfrastructureBypassApplicationBuilderExtensions.cs`, `InfrastructurePathMatcher.cs`, `RunD2ServiceWebApplicationExtensions.cs` (PII-safe `Log.Fatal`).
 - `docs/PATTERNS.md` (Composition root section).

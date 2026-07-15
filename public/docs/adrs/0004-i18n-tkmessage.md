@@ -65,6 +65,7 @@ On the TypeScript side, `public/contracts/messages/en-US.json` drives a second g
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/packages/dotnet/i18n/abstractions/` — `TKMessage.cs` (internal ctor + immutable `With()` parameter binding), `ITranslator.cs`, `TKMessageJsonConverter.cs`, the zero-non-BCL-deps csproj, and the committed `Generated/.../TK.g.cs` + `TkMessageWireShape.g.cs`.
 - `public/packages/dotnet/i18n/source-gen/` — `TKGenerator.cs`, `TKEmitter.cs`; en-US as source of truth; per-locale coverage diagnostics.
 - `public/packages/dotnet/i18n/core/` — `Translator.cs` (locale fallback + raw-key fallback; outbound-notification only) + `AddD2I18n` registration.

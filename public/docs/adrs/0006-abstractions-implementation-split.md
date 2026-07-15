@@ -84,6 +84,7 @@ Domain and application code takes `ProjectReference` only on `*/abstractions` pa
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/packages/dotnet/README.md` — library table (Purpose column) + dependency graph; the structural evidence base for this ADR.
 - `public/packages/dotnet/i18n/abstractions/README.md` — "Why split" section; the canonical articulation ("matches `Microsoft.Extensions.Logging.Abstractions` vs `Microsoft.Extensions.Logging` exactly").
 - `public/packages/dotnet/handler/repo-abstractions/README.md`, `handler/repo/README.md` — "Pure abstractions: no EF Core, no Npgsql, no provider deps"; "Provider-specific knowledge lives in sibling packages" — the most explicit provider-pluggability example.

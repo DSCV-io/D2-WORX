@@ -159,9 +159,9 @@ process.stderr.write(
   "\n  Failure wipe → restore:\n" +
     "    git checkout HEAD -- <path>/PublicAPI.Shipped.txt\n" +
     "  Re-seed only if source changed:\n" +
-    "    node tools/scripts/seed-publicapi-baselines.mjs --package <PackageId>\n\n" +
+    "    node public/tools/scripts/seed-publicapi-baselines.mjs --package <PackageId>\n\n" +
     "  Intentional full-surface removal (first empty commit only):\n" +
-    "    node tools/scripts/seed-publicapi-baselines.mjs --package <Id> --allow-empty <Id>\n" +
+    "    node public/tools/scripts/seed-publicapi-baselines.mjs --package <Id> --allow-empty <Id>\n" +
     "    SEED_ALLOW_EMPTY=<Id> git commit ...\n" +
     "  (After that commit HEAD is empty; later commits need no allow.)\n\n" +
     "  Entire package deletion: remove .csproj + PublicAPI.* + fingerprint together.\n" +

@@ -67,6 +67,7 @@ A bespoke library, `DcsvIo.D2.Resilience`, is the thin set of in-process primiti
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/packages/dotnet/resilience/` — `Retry/RetryHelper.cs` + `RetryOptions.cs` + `RetryDefaults.cs`; `CircuitBreaker/CircuitBreaker.cs` + `CircuitBreakerOptions.cs`; `Singleflight/Singleflight.cs`; `Timeout/TimeoutOptions.cs`; `RateLimiting/RateLimiter.cs` + `RateLimiterOptions.cs` + `RateLimitRejectedException.cs`; `Pipeline/ResilientPipeline.cs` + `IResilientLayer.cs` + `Pipeline/{Singleflight,CircuitBreaker,Retry,Timeout,RateLimiter}Layer.cs` + `ResilientPipelineBuilder.cs` + `ResilientPipelineServiceCollectionExtensions.cs`; the csproj (sole external dep: DI abstractions) + README (Polly rejection rationale, layer-order semantics, caller-opt-in convention, telemetry-is-consumer-owned).
 - `public/packages/typescript/resilience/src/` — `retry/retry-helper.ts`, `singleflight/singleflight.ts`, `pipeline/abort.ts`, `pipeline/i-resilient-layer.ts`, `pipeline/resilient-pipeline.ts`, `pipeline/timeout-layer.ts`, `pipeline/rate-limiter-layer.ts`, `pipeline/singleflight-layer.ts`, `pipeline/retry-layer.ts`, `pipeline/circuit-breaker-layer.ts`.
 - `docs/PATTERNS.md` (Resilience section).

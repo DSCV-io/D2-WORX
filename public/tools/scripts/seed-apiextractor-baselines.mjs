@@ -17,7 +17,7 @@
 // EXCLUDES tooling-only packages: typespec-decorators, typespec-emitters,
 // contract-tests (these are dev fixtures, not consumable libraries).
 //
-// Run from repo root: `node tools/scripts/seed-apiextractor-baselines.mjs`
+// Run from repo root: `node public/tools/scripts/seed-apiextractor-baselines.mjs`
 // Idempotent: safe to re-run; regenerates baselines byte-for-byte if source
 // is unchanged (fingerprint and api.md are deterministic outputs).
 //

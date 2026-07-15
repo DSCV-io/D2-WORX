@@ -67,6 +67,7 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { findRepoRoot } from "./repo-root.js";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
 
 // ---------------------------------------------------------------------------
 // Directory resolution
@@ -449,28 +450,31 @@ describe("decorator_source_contains_no_sequencing_labels", () => {
 // C# TypeSpec test tree scan
 // ---------------------------------------------------------------------------
 
-describe("csharp_typespec_tests_contain_no_sequencing_labels", () => {
-  const csFiles = collectCsTypeSpec(csTypeSpecDir);
+describe.skipIf(!shouldRunPrivateProductParity(import.meta.url))(
+  "csharp_typespec_tests_contain_no_sequencing_labels",
+  () => {
+    const csFiles = collectCsTypeSpec(csTypeSpecDir);
 
-  it("C# TypeSpec test tree contains at least one .cs file (sanity check)", () => {
-    expect(csFiles.length).toBeGreaterThan(0);
-  });
+    it("C# TypeSpec test tree contains at least one .cs file (sanity check)", () => {
+      expect(csFiles.length).toBeGreaterThan(0);
+    });
 
-  it("no C# TypeSpec test file contains any sequencing label or conversation/decision ID", () => {
-    const v = scanFiles(csFiles, "");
+    it("no C# TypeSpec test file contains any sequencing label or conversation/decision ID", () => {
+      const v = scanFiles(csFiles, "");
 
-    if (v.length > 0)
-      expect.fail(
-        `Found ${v.length} leaked ID(s) in C# TypeSpec tests:\n` +
-          v
-            .map(
-              (vv) =>
-                `  ${relative(csTypeSpecDir, vv.path).replaceAll("\\", "/")}:${vv.lineNo}: ${vv.text}`,
-            )
-            .join("\n"),
-      );
-  });
-});
+      if (v.length > 0)
+        expect.fail(
+          `Found ${v.length} leaked ID(s) in C# TypeSpec tests:\n` +
+            v
+              .map(
+                (vv) =>
+                  `  ${relative(csTypeSpecDir, vv.path).replaceAll("\\", "/")}:${vv.lineNo}: ${vv.text}`,
+              )
+              .join("\n"),
+        );
+    });
+  },
+);
 
 // ---------------------------------------------------------------------------
 // contracts/typespec/ scan

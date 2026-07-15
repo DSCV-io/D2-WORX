@@ -412,11 +412,15 @@ export function formatCurrencyReport(
   lines.push(
     "Baselines are stale — the source changed without re-seeding. Remediation:",
   );
-  lines.push("  .NET :  node tools/scripts/seed-publicapi-baselines.mjs");
+  lines.push(
+    "  .NET :  node public/tools/scripts/seed-publicapi-baselines.mjs",
+  );
   lines.push(
     "  npm  :  pnpm --filter './public/packages/typescript/**' -r build",
   );
-  lines.push("          node tools/scripts/seed-apiextractor-baselines.mjs");
+  lines.push(
+    "          node public/tools/scripts/seed-apiextractor-baselines.mjs",
+  );
   lines.push("Re-stage the updated baseline files and commit again.");
 
   return lines.join("\n") + "\n";

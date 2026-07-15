@@ -115,6 +115,7 @@ Handler structure follows [ADR-0020](0020-service-project-structure.md): operati
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/packages/dotnet/handler/abstractions/` — `IHandler.cs`, `IHandlerContext.cs`, `HandlerOptions.cs`, `ScopeRequirement.cs`, `HandlerScopeMatch.cs`.
 - `public/packages/dotnet/handler/core/` — `BaseHandler.cs` (sealed `RunCorePipelineAsync`), `BaseHandler.Logging.cs` (exception-type-name-only contract), `HandlerTelemetry.cs` (static `ActivitySource` + `Meter`), `HandlerContext.cs`, `HandlerServiceCollectionExtensions.cs` (`AddD2Handler`).
 - `public/packages/dotnet/handler/repo/BaseRepoHandler.cs` — EF/DB exception remapping; `MapDbException` hook; exhaustive dispatch.

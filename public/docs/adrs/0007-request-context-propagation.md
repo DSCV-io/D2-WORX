@@ -80,6 +80,7 @@ Full design, the five establishment boundaries (one per transport plus outbound 
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/contracts/auth-context/IAuthContext.spec.json`, `public/contracts/request-context/IRequestContext.spec.json` — the source-of-truth specs (incl. `propagate`/`maxLength`/`redact`).
 - `public/packages/dotnet/context/source-gen/ContextGenerator.cs` — the Roslyn generator (assembly dispatch, spec loading, emitter orchestration).
 - `public/packages/dotnet/context/abstractions/Generated/` — emitted `IRequestContext`, `MutableRequestContext` (`FromClaims` / `FromJwtPayloadNoValidation`), `PropagatedContext`, `PropagatedContextExtensions`, `PropagatedContextSerializer` (global + per-field length caps).

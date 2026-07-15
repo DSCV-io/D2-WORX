@@ -19,6 +19,7 @@
 
 import { join } from "node:path";
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
 import type {
   EmitContext,
   Model,
@@ -1759,17 +1760,23 @@ describe("resolveRepoRootFromProjectRoot_NestedAndHistorical", () => {
     expect(audit).toBe(historical);
   });
 
-  it("on-disk nested projectRoot finds monorepo via D2.slnx + contracts/typespec", async () => {
-    const { findRepoRoot } = await import("./repo-root.js");
-    const realRepo = findRepoRoot(import.meta.url);
-    const nestedKc = join(realRepo, "private/contracts/typespec/key-custodian");
-    const nestedAudit = join(realRepo, "private/contracts/typespec/audit");
-    const historical = join(realRepo, "public/contracts/typespec");
+  it.skipIf(!shouldRunPrivateProductParity(import.meta.url))(
+    "on-disk nested projectRoot finds monorepo via D2.slnx + private/public contracts",
+    async () => {
+      const { findRepoRoot } = await import("./repo-root.js");
+      const realRepo = findRepoRoot(import.meta.url);
+      const nestedKc = join(
+        realRepo,
+        "private/contracts/typespec/key-custodian",
+      );
+      const nestedAudit = join(realRepo, "private/contracts/typespec/audit");
+      const historical = join(realRepo, "public/contracts/typespec");
 
-    expect(resolveRepoRootFromProjectRoot(nestedKc)).toBe(realRepo);
-    expect(resolveRepoRootFromProjectRoot(nestedAudit)).toBe(realRepo);
-    expect(resolveRepoRootFromProjectRoot(historical)).toBe(realRepo);
-  });
+      expect(resolveRepoRootFromProjectRoot(nestedKc)).toBe(realRepo);
+      expect(resolveRepoRootFromProjectRoot(nestedAudit)).toBe(realRepo);
+      expect(resolveRepoRootFromProjectRoot(historical)).toBe(realRepo);
+    },
+  );
 });
 
 // ---------------------------------------------------------------------------

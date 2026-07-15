@@ -11,7 +11,13 @@
 // one token of the committed fixture) is asserted to NOT match the regenerated
 // output â€” proving the gate FAILS on real divergence (never a tautology).
 
-import { describe, it, expect } from "vitest";
+import { describe as vitestDescribe, it, expect } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
+
+/** Product-home parity — skipped under PUBLIC_ONLY or without private/** tree. */
+const describe = shouldRunPrivateProductParity(import.meta.url)
+  ? vitestDescribe
+  : vitestDescribe.skip;
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepoRoot } from "./repo-root.js";

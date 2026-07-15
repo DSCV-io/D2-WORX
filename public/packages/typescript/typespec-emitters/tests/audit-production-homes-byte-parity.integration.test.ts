@@ -10,7 +10,13 @@
 // (modulo Source-spec banner path). Deliberate-drift negatives keep the gate
 // non-vacuous.
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe as vitestDescribe, it, expect, beforeAll } from "vitest";
+import { shouldRunPrivateProductParity } from "./private-tree.js";
+
+/** Product-home parity — skipped under PUBLIC_ONLY or without private/** tree. */
+const describe = shouldRunPrivateProductParity(import.meta.url)
+  ? vitestDescribe
+  : vitestDescribe.skip;
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {

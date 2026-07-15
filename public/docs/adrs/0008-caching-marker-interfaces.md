@@ -75,6 +75,7 @@ TTL-only invalidation would require implausibly short TTLs (defeating L1) or acc
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/packages/dotnet/caching/abstractions/` — `ILocalCache.cs`, `IDistributedCache.cs`, `ITieredCache.cs`, the four building-block interfaces, `ICacheInvalidationBackplane.cs`, `InputFailures.cs`, `LocalCacheOptions.cs`, and the README (result-mapping table + "everyone acts" rationale).
 - `public/packages/dotnet/caching/local-default/DefaultLocalCache.cs` — `IMemoryCache` + `ConcurrentDictionary`; `Size=1`; direct dispatch.
 - `public/packages/dotnet/caching/distributed-redis/` — `RedisDistributedCache.cs`, `RedisLuaScripts.cs`, `RedisCacheInvalidationBackplane.cs`.

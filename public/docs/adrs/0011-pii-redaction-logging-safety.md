@@ -61,6 +61,7 @@ The codebase spans two runtimes; a redaction decision expressed only in .NET lea
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/packages/dotnet/utilities/Attributes/RedactDataAttribute.cs`; `public/packages/dotnet/utilities/Diagnostics/SanitizedExceptionRender.cs`.
 - `public/packages/dotnet/logging/Destructuring/RedactDataDestructuringPolicy.cs` + `TypeRedactionInfo.cs`; `public/packages/dotnet/logging/Internal/D2RequestContextEnricher.cs`; `public/packages/dotnet/logging/README.md` (LOG-OK / NOT-LOGGED tables).
 - `public/packages/dotnet/handler/core/BaseHandler.Logging.cs` (no-`Exception` delegates); `public/packages/dotnet/tests/Unit/Handler/HandlerLogDelegateContractTests.cs`; `public/packages/dotnet/tests/Integration/Logging/RequestContextEnricherIntegrationTests.cs`.

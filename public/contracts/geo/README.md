@@ -119,7 +119,7 @@ pnpm test             # parity tests
 
 ## License attribution
 
-All sources are PolyForm-Strict-compatible:
+All sources are Apache-2.0-compatible (this open tree's license posture):
 
 - **CLDR**: Unicode-3.0 (no share-alike)
 - **IANA tzdb**: Public domain

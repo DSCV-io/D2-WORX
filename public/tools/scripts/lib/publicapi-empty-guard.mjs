@@ -79,7 +79,7 @@ export function assertExtractionNotWrongfullyEmpty({
         `A successful build that drops a whole surface to zero is the ` +
         `analyzer-didn't-run signature, not a real removal.\n` +
         `  Intentional full-surface removal: re-run with\n` +
-        `    node tools/scripts/seed-publicapi-baselines.mjs --package ${packageId} --allow-empty ${packageId}\n` +
+        `    node public/tools/scripts/seed-publicapi-baselines.mjs --package ${packageId} --allow-empty ${packageId}\n` +
         `  then commit once with the same allow:\n` +
         `    SEED_ALLOW_EMPTY=${packageId} git commit ...\n` +
         `  (After HEAD is empty, later commits need no allow.)`,
@@ -116,9 +116,9 @@ export function assertShippedContentNotWrongfullyEmpty({
         `or a bad empty reseed. Do not commit this.\n` +
         `  Restore:  git checkout HEAD -- <path>/PublicAPI.Shipped.txt\n` +
         `  Re-seed only if source changed:\n` +
-        `    node tools/scripts/seed-publicapi-baselines.mjs --package ${packageId}\n` +
+        `    node public/tools/scripts/seed-publicapi-baselines.mjs --package ${packageId}\n` +
         `  Intentional full-surface removal (first empty commit only):\n` +
-        `    node tools/scripts/seed-publicapi-baselines.mjs --package ${packageId} --allow-empty ${packageId}\n` +
+        `    node public/tools/scripts/seed-publicapi-baselines.mjs --package ${packageId} --allow-empty ${packageId}\n` +
         `    SEED_ALLOW_EMPTY=${packageId} git commit ...\n` +
         `  Entire package deletion: remove the .csproj and baselines together — ` +
         `not an empty-Shipped case.`,

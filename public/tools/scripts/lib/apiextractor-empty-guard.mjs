@@ -2,7 +2,7 @@
 // Copyright (c) DCSV
 //
 // Fail-loud guard for the api-extractor baseline seeder
-// (tools/scripts/seed-apiextractor-baselines.mjs). The npm twin of the .NET
+// (public/tools/scripts/seed-apiextractor-baselines.mjs). The npm twin of the .NET
 // seeder's publicapi-empty-guard.mjs.
 //
 // The seeder generates each package's etc/<pkg>.api.md by running api-extractor

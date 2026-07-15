@@ -129,4 +129,4 @@ isolation.
   reference
 - [`tiered/README.md`](../tiered/README.md) — composes Local + this lib for L1+L2
   cascades
-- Edge rate-limit middleware (not yet shipped) is the primary consumer of `ICacheSet` for FP-too-common detection. Reference will migrate to the Edge lib README when rate-limiting ships.
+- Product Edge rate-limit middleware is the primary consumer of `ICacheSet` for FP-too-common detection (product surface; out of scope for this library README).

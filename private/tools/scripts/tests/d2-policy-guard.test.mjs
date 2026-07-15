@@ -2,27 +2,57 @@
 //
 // Regression test: d2-policy-guard.mjs block/allow matrix. Runnable with the
 // built-in node test runner (zero config, portable):
-//   node --test tools/scripts/tests/d2-policy-guard.test.mjs
+//   node --test private/tools/scripts/tests/d2-policy-guard.test.mjs
 //
-// Mirrors tools/scripts/tests/git-guard.test.mjs for the Codex PreToolUse
-// structural backstop (§13.1 / §13.1a / §13.3 + secret-path deny). Invokes the
-// hook via spawnSync, feeds a PreToolUse JSON envelope on stdin, and asserts
-// exit codes against an isolated temp repo (.git + optional marker).
+// Mirrors private/tools/scripts/tests/git-guard.test.mjs for the Codex
+// PreToolUse structural backstop (§13.1 / §13.1a / §13.3 + secret-path deny).
+// Invokes the hook via spawnSync, feeds a PreToolUse JSON envelope on stdin,
+// and asserts exit codes against an isolated temp repo (.git + optional marker).
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-const REPO_ROOT = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-);
+/**
+ * Walk up until monorepo root sentinel (`.git` / `D2.slnx` / `pnpm-workspace.yaml`).
+ * @param {string} startDir
+ * @returns {string}
+ */
+function findRepoRoot(startDir) {
+  let current = resolve(startDir);
+
+  while (true) {
+    if (
+      existsSync(join(current, ".git")) ||
+      existsSync(join(current, "D2.slnx")) ||
+      existsSync(join(current, "pnpm-workspace.yaml"))
+    ) {
+      return current;
+    }
+
+    const parent = dirname(current);
+
+    if (parent === current) {
+      throw new Error(
+        `repo-root sentinel: no .git / D2.slnx / pnpm-workspace.yaml from ${startDir}`,
+      );
+    }
+
+    current = parent;
+  }
+}
+
+const REPO_ROOT = findRepoRoot(dirname(fileURLToPath(import.meta.url)));
 const HOOK = join(REPO_ROOT, ".codex", "hooks", "d2-policy-guard.mjs");
 
 const TMP_PROJECT = mkdtempSync(join(tmpdir(), "d2-policy-guard-test-"));

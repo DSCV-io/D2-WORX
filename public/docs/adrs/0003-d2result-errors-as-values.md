@@ -70,6 +70,7 @@ All expected operation outcomes are modeled as `D2Result` / `D2Result<TData>` va
 
 ## References
 
+> **Monorepo-private process paths** (`docs/PATTERNS.md`, `docs/dev/rules.md`, and similar) are illustration only in the product monorepo that embeds this open tree — **not required for a public clone** of this ADR (see [ADR-0026](0026-public-private-monorepo-layout.md) Notes).
 - `public/packages/dotnet/result/core/` — `D2Result.cs` + partials (`*.Factories.cs`, `*.Generic.Factories.cs`, `*.Generic.Monadic.cs`, `*.Booleans.cs`, `*.Combine.cs`, `D2ResultGuardExtensions.cs`, `InputError.cs`), and the committed `Generated/` `ErrorCodes.g.cs` + `D2ResultEnvelopeFieldNames.g.cs`.
 - `public/packages/dotnet/result/core/README.md` — full factory table, bubble propagation, partial-success ladder, monadic API.
 - `public/contracts/error-codes/error-codes.spec.json`, `public/contracts/d2result-envelope/d2result-envelope.spec.json` — the source-of-truth specs.

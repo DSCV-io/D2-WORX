@@ -79,7 +79,7 @@ _Not alternatives (recorded to pre-empt the question):_ the v1 **central Geo-ser
 
 - [`V2.md §5.6`](../v2/V2.md) — superseded planning design (struck through, preserved) + §5.6 (Revised 2026-05-30, built-note 2026-06-04).
 - Per-lib READMEs for the shipped surface: [`contacts/core/`](../../public/packages/dotnet/contacts/core/README.md) · [`contacts/entity-framework-core/`](../../public/packages/dotnet/contacts/entity-framework-core/README.md) · [`location/entity-framework-core/`](../../public/packages/dotnet/location/entity-framework-core/README.md) · [`entity-framework-core/`](../../public/packages/dotnet/entity-framework-core/README.md).
-- [PATTERNS.md](../PATTERNS.md) — contact-VO pattern, EF VO-mapping pattern, `CreateD2Index` callout, field-constraints catalog pattern.
+- `docs/PATTERNS.md` — monorepo-private contact-VO / EF VO-mapping / `CreateD2Index` / field-constraints patterns. **Not required for a public clone** of this ADR tree.
 - ADR-0015 ([`0015-anonymization-data-governance.md`](0015-anonymization-data-governance.md)) — the standalone anonymization engine this library consumes.
 - v1 snapshot: `/old/v1/D2-WORX/backends/dotnet/services/Geo/` (`Geo.Domain/Entities/Contact.cs`, `Geo.Infra/Repository/Entities/ContactConfig.cs`, the `*Contact*` migrations, `ContactEvictionPublisher.cs`); `/old/v1/D2-WORX/backends/node/services/{auth,comms}/` (the `org_contact` junction; Comms delivery + `channel_preference`).
 - EF Core 10 complex types + value converters + reusable mapping; DDD snapshot-vs-reference; GDPR data-minimization + right-to-erasure — research captured in the 2026-05-30 and 2026-06-03 PLAN discussions.

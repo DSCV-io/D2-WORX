@@ -9,7 +9,6 @@ Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
 
 - **Status**: Accepted
 - **Date**: 2026-07-15
-- **Deliverable**: 0032-oss-public-private
 
 ## Context
 
