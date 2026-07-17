@@ -1,0 +1,74 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Contacts</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Pure-domain composable PII value objects (Personal, NameAffixes, Demographics,
+    Professional, EmailAddress, PhoneNumber). Each exposes a static
+    Create(...) -> D2Result<T> smart constructor that validates a dumb structural
+    floor (FieldConstraints caps + shape) before constructing; Email/Phone accept
+    an optional caller-injected smart validator. NO EF — the reusable
+    EntityTypeBuilder extensions live in the sibling
+    DcsvIo.D2.Contacts.EntityFrameworkCore project.
+
+    net10.0 / Central Package Management / Nullable / ImplicitUsings / StyleCop /
+    TreatWarningsAsErrors / GenerateDocumentationFile are all inherited from
+    Directory.Build.props — this csproj declares none of them inline.
+  -->
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.Result — D2Result<T> semantic factories (Ok, ValidationFailed,
+      BubbleFail) returned by every VO smart constructor. Carries
+      DcsvIo.D2.I18n.Abstractions transitively, so the TK.* validation-message
+      constants resolve without an explicit reference (mirrors Location).
+    -->
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <!--
+      DcsvIo.D2.Time — IClock / SystemClock / TestClock injection seam + NodaTime
+      types. Demographics.DateOfBirth uses NodaTime.LocalDate (→ DATE column via
+      UseNodaTime()) and IClock for deterministic-boundary clock injection.
+      No cycle: DcsvIo.D2.Time depends on Result / I18n.Abstractions / Utilities,
+      not on Contacts.
+    -->
+    <ProjectReference Include="..\..\time\DcsvIo.D2.Time.csproj" />
+    <!--
+      DcsvIo.D2.Validation.Abstractions — FieldConstraints length/digit caps,
+      the NamePrefix / NameSuffix / BiologicalSex taxonomy enums, and the
+      IEmailValidator / IPhoneValidator smart-validator contracts.
+    -->
+    <ProjectReference Include="..\..\validation\abstractions\DcsvIo.D2.Validation.Abstractions.csproj" />
+    <!--
+      DcsvIo.D2.Utilities — Falsey()/Truthy()/CleanStr()/ToNullIfEmpty() boundary
+      helpers, NormalizeForHash() (the Personal HashId canonicalizer),
+      TryParseEmail()/TryParsePhoneNumber() (the Email/Phone structural floor),
+      and the [RedactData] attribute + RedactReason enum.
+    -->
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+    <!--
+      DcsvIo.D2.Geo.Abstractions — typed CountryCode enum used as the optional
+      defaultRegion argument forwarded to the injected phone validator.
+    -->
+    <ProjectReference Include="..\..\geo\abstractions\DcsvIo.D2.Geo.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Contacts</PackageId>
+    <Description>Composable, self-redacting PII value objects for D2 — immutable Create-constructed building blocks (name, demographics, professional, email, phone) that fold into host entities.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

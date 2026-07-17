@@ -1,0 +1,65 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.I18n.SourceGen</RootNamespace>
+
+    <!--
+      Roslyn analyzers / source generators MUST target netstandard2.0
+      because Roslyn itself runs on the host's .NET Framework / Core
+      compilation environment. Override Directory.Build.props's net10.0.
+    -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <!-- Mark this as a Roslyn analyzer/generator component for tooling. -->
+    <IsRoslynComponent>true</IsRoslynComponent>
+
+    <!-- Opt into the modern analyzer rule set. -->
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+
+    <!-- Don't ship this as a library to consumers — it's only an analyzer. -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+
+    <!-- The XML doc requirement from Directory.Build.props is overkill for
+         a generator's internal helpers; relax CS1591 here only. Public types
+         that ARE part of the (analyzer-loaded) generator surface still get
+         docs by convention.
+         RS2008: analyzer release tracking — only matters for shipped NuGet
+         analyzer packages; this analyzer ships only via project reference. -->
+    <NoWarn>$(NoWarn);CS1591;RS2008</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Pull in the shared source-gen scaffolding (polyfills + EmitDiagnostic
+      record + LoadResult<TSpec> + SpecFile). The Link metadata groups the
+      included files under a virtual "Shared" folder in IDE views.
+    -->
+    <Compile Include="$(D2SourceGenSharedRoot)**\*.cs">
+      <Link>Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      PrivateAssets="all" so the analyzer dll travels with this project but
+      does NOT propagate to projects that reference it.
+    -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+    <!-- System.Text.Json bundled into the analyzer dll via GeneratePathProperty. -->
+    <PackageReference Include="System.Text.Json" PrivateAssets="all" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <!-- Bundle System.Text.Json into the analyzer output so Roslyn's host can load it. -->
+  <Target Name="GetDependencyTargetPaths">
+    <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker Include="$(PkgSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" IncludeRuntimeDependency="false" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+</Project>

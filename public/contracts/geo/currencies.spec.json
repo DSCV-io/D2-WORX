@@ -1,0 +1,2944 @@
+{
+  "$generated": true,
+  "$source": "pipeline-derived",
+  "$schema": "./currencies.schema.json",
+  "$note": "TIER 2 codegen-ready spec — produced by tools/geo-data-pipeline from contracts/geo/src-data/*.spec.json (Tier 1). Matches the canonical entity record shape; consumed directly by codegen (.NET SourceGen + TS emitter — Tier 3) to produce concrete entity types. Do NOT hand-edit — re-run `pnpm geo:refresh` to regenerate. IsSupported derived from contracts/messages/*.json file presence — selectable locales' primary countries' primary currencies. Active set: 10 selectable locales -> derived 6 supported currencies.",
+  "catalogVersion": "0.1.0",
+  "generatedAt": "2026-05-26T13:25:26.656Z",
+  "entries": [
+    {
+      "iso4217AlphaCode": "ADP",
+      "iso4217NumericCode": "020",
+      "displayName": "Andorran Peseta",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AED",
+      "iso4217NumericCode": "784",
+      "displayName": "United Arab Emirates Dirham",
+      "decimalPlaces": 2,
+      "symbol": "AED",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AFA",
+      "iso4217NumericCode": "004",
+      "displayName": "Afghan Afghani (1927–2002)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AFN",
+      "iso4217NumericCode": "971",
+      "displayName": "Afghan Afghani",
+      "decimalPlaces": 0,
+      "symbol": "؋",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ALK",
+      "iso4217NumericCode": "008",
+      "displayName": "Albanian Lek (1946–1965)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ALL",
+      "iso4217NumericCode": "008",
+      "displayName": "Albanian Lek",
+      "decimalPlaces": 0,
+      "symbol": "ALL",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AMD",
+      "iso4217NumericCode": "051",
+      "displayName": "Armenian Dram",
+      "decimalPlaces": 2,
+      "symbol": "֏",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ANG",
+      "iso4217NumericCode": "532",
+      "displayName": "Netherlands Antillean Guilder",
+      "decimalPlaces": 2,
+      "symbol": "ANG",
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AOA",
+      "iso4217NumericCode": "973",
+      "displayName": "Angolan Kwanza",
+      "decimalPlaces": 2,
+      "symbol": "Kz",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AOK",
+      "iso4217NumericCode": "024",
+      "displayName": "Angolan Kwanza (1977–1991)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AON",
+      "iso4217NumericCode": "024",
+      "displayName": "Angolan New Kwanza (1990–2000)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AOR",
+      "iso4217NumericCode": "982",
+      "displayName": "Angolan Readjusted Kwanza (1995–1999)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ARA",
+      "iso4217NumericCode": "032",
+      "displayName": "Argentine Austral",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ARL",
+      "iso4217NumericCode": null,
+      "displayName": "Argentine Peso Ley (1970–1983)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ARM",
+      "iso4217NumericCode": null,
+      "displayName": "Argentine Peso (1881–1970)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ARP",
+      "iso4217NumericCode": "032",
+      "displayName": "Argentine Peso (1983–1985)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ARS",
+      "iso4217NumericCode": "032",
+      "displayName": "Argentine Peso",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ARY",
+      "iso4217NumericCode": "032",
+      "displayName": "Peso",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ATS",
+      "iso4217NumericCode": "040",
+      "displayName": "Austrian Schilling",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AUD",
+      "iso4217NumericCode": "036",
+      "displayName": "Australian Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AWG",
+      "iso4217NumericCode": "533",
+      "displayName": "Aruban Florin",
+      "decimalPlaces": 2,
+      "symbol": "AWG",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AYM",
+      "iso4217NumericCode": "945",
+      "displayName": "Azerbaijan Manat",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AZM",
+      "iso4217NumericCode": "031",
+      "displayName": "Azerbaijani Manat (1993–2006)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "AZN",
+      "iso4217NumericCode": "944",
+      "displayName": "Azerbaijani Manat",
+      "decimalPlaces": 2,
+      "symbol": "₼",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BAD",
+      "iso4217NumericCode": "070",
+      "displayName": "Bosnia-Herzegovina Dinar (1992–1994)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BAM",
+      "iso4217NumericCode": "977",
+      "displayName": "Bosnia-Herzegovina Convertible Mark",
+      "decimalPlaces": 2,
+      "symbol": "KM",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BAN",
+      "iso4217NumericCode": null,
+      "displayName": "Bosnia-Herzegovina New Dinar (1994–1997)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BBD",
+      "iso4217NumericCode": "052",
+      "displayName": "Barbadian Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BDT",
+      "iso4217NumericCode": "050",
+      "displayName": "Bangladeshi Taka",
+      "decimalPlaces": 2,
+      "symbol": "৳",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BEC",
+      "iso4217NumericCode": "993",
+      "displayName": "Belgian Franc (convertible)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BEF",
+      "iso4217NumericCode": "056",
+      "displayName": "Belgian Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BEL",
+      "iso4217NumericCode": "992",
+      "displayName": "Belgian Franc (financial)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BGJ",
+      "iso4217NumericCode": "100",
+      "displayName": "Lev A/52",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BGK",
+      "iso4217NumericCode": "100",
+      "displayName": "Lev A/62",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BGL",
+      "iso4217NumericCode": "100",
+      "displayName": "Bulgarian Hard Lev",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BGM",
+      "iso4217NumericCode": null,
+      "displayName": "Bulgarian Socialist Lev",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BGN",
+      "iso4217NumericCode": "975",
+      "displayName": "Bulgarian Lev",
+      "decimalPlaces": 2,
+      "symbol": "BGN",
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BGO",
+      "iso4217NumericCode": null,
+      "displayName": "Bulgarian Lev (1879–1952)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BHD",
+      "iso4217NumericCode": "048",
+      "displayName": "Bahraini Dinar",
+      "decimalPlaces": 3,
+      "symbol": "BHD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BIF",
+      "iso4217NumericCode": "108",
+      "displayName": "Burundian Franc",
+      "decimalPlaces": 0,
+      "symbol": "BIF",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BMD",
+      "iso4217NumericCode": "060",
+      "displayName": "Bermudan Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BND",
+      "iso4217NumericCode": "096",
+      "displayName": "Brunei Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BOB",
+      "iso4217NumericCode": "068",
+      "displayName": "Bolivian Boliviano",
+      "decimalPlaces": 2,
+      "symbol": "Bs",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BOL",
+      "iso4217NumericCode": null,
+      "displayName": "Bolivian Boliviano (1863–1963)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BOP",
+      "iso4217NumericCode": "068",
+      "displayName": "Bolivian Peso",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BOV",
+      "iso4217NumericCode": "984",
+      "displayName": "Bolivian Mvdol",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BRB",
+      "iso4217NumericCode": "076",
+      "displayName": "Brazilian New Cruzeiro (1967–1986)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BRC",
+      "iso4217NumericCode": "076",
+      "displayName": "Brazilian Cruzado (1986–1989)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BRE",
+      "iso4217NumericCode": "076",
+      "displayName": "Brazilian Cruzeiro (1990–1993)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BRL",
+      "iso4217NumericCode": "986",
+      "displayName": "Brazilian Real",
+      "decimalPlaces": 2,
+      "symbol": "R$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BRN",
+      "iso4217NumericCode": "076",
+      "displayName": "Brazilian New Cruzado (1989–1990)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BRR",
+      "iso4217NumericCode": "987",
+      "displayName": "Brazilian Cruzeiro (1993–1994)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BRZ",
+      "iso4217NumericCode": null,
+      "displayName": "Brazilian Cruzeiro (1942–1967)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BSD",
+      "iso4217NumericCode": "044",
+      "displayName": "Bahamian Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BTN",
+      "iso4217NumericCode": "064",
+      "displayName": "Bhutanese Ngultrum",
+      "decimalPlaces": 2,
+      "symbol": "BTN",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BUK",
+      "iso4217NumericCode": "104",
+      "displayName": "Burmese Kyat",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BWP",
+      "iso4217NumericCode": "072",
+      "displayName": "Botswanan Pula",
+      "decimalPlaces": 2,
+      "symbol": "P",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BYB",
+      "iso4217NumericCode": "112",
+      "displayName": "Belarusian Ruble (1994–1999)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BYN",
+      "iso4217NumericCode": "933",
+      "displayName": "Belarusian Ruble",
+      "decimalPlaces": 2,
+      "symbol": "BYN",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BYR",
+      "iso4217NumericCode": "974",
+      "displayName": "Belarusian Ruble (2000–2016)",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "BZD",
+      "iso4217NumericCode": "084",
+      "displayName": "Belize Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CAD",
+      "iso4217NumericCode": "124",
+      "displayName": "Canadian Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": true
+    },
+    {
+      "iso4217AlphaCode": "CDF",
+      "iso4217NumericCode": "976",
+      "displayName": "Congolese Franc",
+      "decimalPlaces": 2,
+      "symbol": "CDF",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CHC",
+      "iso4217NumericCode": "948",
+      "displayName": "WIR Franc (for electronic)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CHE",
+      "iso4217NumericCode": "947",
+      "displayName": "WIR Euro",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CHF",
+      "iso4217NumericCode": "756",
+      "displayName": "Swiss Franc",
+      "decimalPlaces": 2,
+      "symbol": "CHF",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CHW",
+      "iso4217NumericCode": "948",
+      "displayName": "WIR Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CLE",
+      "iso4217NumericCode": null,
+      "displayName": "Chilean Escudo",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CLF",
+      "iso4217NumericCode": "990",
+      "displayName": "Chilean Unit of Account (UF)",
+      "decimalPlaces": 4,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CLP",
+      "iso4217NumericCode": "152",
+      "displayName": "Chilean Peso",
+      "decimalPlaces": 0,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CNH",
+      "iso4217NumericCode": null,
+      "displayName": "Chinese Yuan (offshore)",
+      "decimalPlaces": 2,
+      "symbol": "CNH",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CNX",
+      "iso4217NumericCode": null,
+      "displayName": "Chinese People’s Bank Dollar",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CNY",
+      "iso4217NumericCode": "156",
+      "displayName": "Chinese Yuan",
+      "decimalPlaces": 2,
+      "symbol": "¥",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "COP",
+      "iso4217NumericCode": "170",
+      "displayName": "Colombian Peso",
+      "decimalPlaces": 0,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "COU",
+      "iso4217NumericCode": "970",
+      "displayName": "Colombian Real Value Unit",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CRC",
+      "iso4217NumericCode": "188",
+      "displayName": "Costa Rican Colón",
+      "decimalPlaces": 2,
+      "symbol": "₡",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CSD",
+      "iso4217NumericCode": "891",
+      "displayName": "Serbian Dinar (2002–2006)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CSJ",
+      "iso4217NumericCode": "203",
+      "displayName": "Krona A/53",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CSK",
+      "iso4217NumericCode": "200",
+      "displayName": "Czechoslovak Hard Koruna",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CUC",
+      "iso4217NumericCode": "931",
+      "displayName": "Cuban Convertible Peso",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CUP",
+      "iso4217NumericCode": "192",
+      "displayName": "Cuban Peso",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CVE",
+      "iso4217NumericCode": "132",
+      "displayName": "Cape Verdean Escudo",
+      "decimalPlaces": 2,
+      "symbol": "CVE",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CYP",
+      "iso4217NumericCode": "196",
+      "displayName": "Cypriot Pound",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "CZK",
+      "iso4217NumericCode": "203",
+      "displayName": "Czech Koruna",
+      "decimalPlaces": 2,
+      "symbol": "Kč",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "DDM",
+      "iso4217NumericCode": "278",
+      "displayName": "East German Mark",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "DEM",
+      "iso4217NumericCode": "276",
+      "displayName": "German Mark",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "DJF",
+      "iso4217NumericCode": "262",
+      "displayName": "Djiboutian Franc",
+      "decimalPlaces": 0,
+      "symbol": "DJF",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "DKK",
+      "iso4217NumericCode": "208",
+      "displayName": "Danish Krone",
+      "decimalPlaces": 2,
+      "symbol": "kr",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "DOP",
+      "iso4217NumericCode": "214",
+      "displayName": "Dominican Peso",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "DZD",
+      "iso4217NumericCode": "012",
+      "displayName": "Algerian Dinar",
+      "decimalPlaces": 2,
+      "symbol": "DZD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ECS",
+      "iso4217NumericCode": "218",
+      "displayName": "Ecuadorian Sucre",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ECV",
+      "iso4217NumericCode": "983",
+      "displayName": "Ecuadorian Unit of Constant Value",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "EEK",
+      "iso4217NumericCode": "233",
+      "displayName": "Estonian Kroon",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "EGP",
+      "iso4217NumericCode": "818",
+      "displayName": "Egyptian Pound",
+      "decimalPlaces": 2,
+      "symbol": "E£",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ERN",
+      "iso4217NumericCode": "232",
+      "displayName": "Eritrean Nakfa",
+      "decimalPlaces": 2,
+      "symbol": "ERN",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ESA",
+      "iso4217NumericCode": "996",
+      "displayName": "Spanish Peseta (A account)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ESB",
+      "iso4217NumericCode": "995",
+      "displayName": "Spanish Peseta (convertible account)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ESP",
+      "iso4217NumericCode": "724",
+      "displayName": "Spanish Peseta",
+      "decimalPlaces": 0,
+      "symbol": "₧",
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ETB",
+      "iso4217NumericCode": "230",
+      "displayName": "Ethiopian Birr",
+      "decimalPlaces": 2,
+      "symbol": "ETB",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "EUR",
+      "iso4217NumericCode": "978",
+      "displayName": "Euro",
+      "decimalPlaces": 2,
+      "symbol": "€",
+      "isActive": true,
+      "isSupported": true
+    },
+    {
+      "iso4217AlphaCode": "FIM",
+      "iso4217NumericCode": "246",
+      "displayName": "Finnish Markka",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "FJD",
+      "iso4217NumericCode": "242",
+      "displayName": "Fijian Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "FKP",
+      "iso4217NumericCode": "238",
+      "displayName": "Falkland Islands Pound",
+      "decimalPlaces": 2,
+      "symbol": "£",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "FRF",
+      "iso4217NumericCode": "250",
+      "displayName": "French Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GBP",
+      "iso4217NumericCode": "826",
+      "displayName": "British Pound",
+      "decimalPlaces": 2,
+      "symbol": "£",
+      "isActive": true,
+      "isSupported": true
+    },
+    {
+      "iso4217AlphaCode": "GEK",
+      "iso4217NumericCode": "268",
+      "displayName": "Georgian Kupon Larit",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GEL",
+      "iso4217NumericCode": "981",
+      "displayName": "Georgian Lari",
+      "decimalPlaces": 2,
+      "symbol": "₾",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GHC",
+      "iso4217NumericCode": "288",
+      "displayName": "Ghanaian Cedi (1979–2007)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GHP",
+      "iso4217NumericCode": "939",
+      "displayName": "Ghana Cedi",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GHS",
+      "iso4217NumericCode": "936",
+      "displayName": "Ghanaian Cedi",
+      "decimalPlaces": 2,
+      "symbol": "GH₵",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GIP",
+      "iso4217NumericCode": "292",
+      "displayName": "Gibraltar Pound",
+      "decimalPlaces": 2,
+      "symbol": "£",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GMD",
+      "iso4217NumericCode": "270",
+      "displayName": "Gambian Dalasi",
+      "decimalPlaces": 2,
+      "symbol": "GMD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GNE",
+      "iso4217NumericCode": "324",
+      "displayName": "Syli",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GNF",
+      "iso4217NumericCode": "324",
+      "displayName": "Guinean Franc",
+      "decimalPlaces": 0,
+      "symbol": "FG",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GNS",
+      "iso4217NumericCode": "324",
+      "displayName": "Guinean Syli",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GQE",
+      "iso4217NumericCode": "226",
+      "displayName": "Equatorial Guinean Ekwele",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GRD",
+      "iso4217NumericCode": "300",
+      "displayName": "Greek Drachma",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GTQ",
+      "iso4217NumericCode": "320",
+      "displayName": "Guatemalan Quetzal",
+      "decimalPlaces": 2,
+      "symbol": "Q",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GWE",
+      "iso4217NumericCode": "624",
+      "displayName": "Portuguese Guinea Escudo",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GWP",
+      "iso4217NumericCode": "624",
+      "displayName": "Guinea-Bissau Peso",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "GYD",
+      "iso4217NumericCode": "328",
+      "displayName": "Guyanaese Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "HKD",
+      "iso4217NumericCode": "344",
+      "displayName": "Hong Kong Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "HNL",
+      "iso4217NumericCode": "340",
+      "displayName": "Honduran Lempira",
+      "decimalPlaces": 2,
+      "symbol": "L",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "HRD",
+      "iso4217NumericCode": "191",
+      "displayName": "Croatian Dinar",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "HRK",
+      "iso4217NumericCode": "191",
+      "displayName": "Croatian Kuna",
+      "decimalPlaces": 2,
+      "symbol": "kn",
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "HTG",
+      "iso4217NumericCode": "332",
+      "displayName": "Haitian Gourde",
+      "decimalPlaces": 2,
+      "symbol": "HTG",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "HUF",
+      "iso4217NumericCode": "348",
+      "displayName": "Hungarian Forint",
+      "decimalPlaces": 0,
+      "symbol": "Ft",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "IDR",
+      "iso4217NumericCode": "360",
+      "displayName": "Indonesian Rupiah",
+      "decimalPlaces": 0,
+      "symbol": "Rp",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "IEP",
+      "iso4217NumericCode": "372",
+      "displayName": "Irish Pound",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ILP",
+      "iso4217NumericCode": "376",
+      "displayName": "Israeli Pound",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ILR",
+      "iso4217NumericCode": "376",
+      "displayName": "Israeli Shekel (1980–1985)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ILS",
+      "iso4217NumericCode": "376",
+      "displayName": "Israeli New Shekel",
+      "decimalPlaces": 2,
+      "symbol": "₪",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "INR",
+      "iso4217NumericCode": "356",
+      "displayName": "Indian Rupee",
+      "decimalPlaces": 2,
+      "symbol": "₹",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "IQD",
+      "iso4217NumericCode": "368",
+      "displayName": "Iraqi Dinar",
+      "decimalPlaces": 0,
+      "symbol": "IQD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "IRR",
+      "iso4217NumericCode": "364",
+      "displayName": "Iranian Rial",
+      "decimalPlaces": 0,
+      "symbol": "IRR",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ISJ",
+      "iso4217NumericCode": "352",
+      "displayName": "Icelandic Króna (1918–1981)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ISK",
+      "iso4217NumericCode": "352",
+      "displayName": "Icelandic Króna",
+      "decimalPlaces": 0,
+      "symbol": "kr",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ITL",
+      "iso4217NumericCode": "380",
+      "displayName": "Italian Lira",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "JMD",
+      "iso4217NumericCode": "388",
+      "displayName": "Jamaican Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "JOD",
+      "iso4217NumericCode": "400",
+      "displayName": "Jordanian Dinar",
+      "decimalPlaces": 3,
+      "symbol": "JOD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "JPY",
+      "iso4217NumericCode": "392",
+      "displayName": "Japanese Yen",
+      "decimalPlaces": 0,
+      "symbol": "¥",
+      "isActive": true,
+      "isSupported": true
+    },
+    {
+      "iso4217AlphaCode": "KES",
+      "iso4217NumericCode": "404",
+      "displayName": "Kenyan Shilling",
+      "decimalPlaces": 2,
+      "symbol": "KES",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KGS",
+      "iso4217NumericCode": "417",
+      "displayName": "Kyrgyz Som",
+      "decimalPlaces": 2,
+      "symbol": "⃀",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KHR",
+      "iso4217NumericCode": "116",
+      "displayName": "Cambodian Riel",
+      "decimalPlaces": 2,
+      "symbol": "៛",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KMF",
+      "iso4217NumericCode": "174",
+      "displayName": "Comorian Franc",
+      "decimalPlaces": 0,
+      "symbol": "CF",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KPW",
+      "iso4217NumericCode": "408",
+      "displayName": "North Korean Won",
+      "decimalPlaces": 0,
+      "symbol": "₩",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KRH",
+      "iso4217NumericCode": null,
+      "displayName": "South Korean Hwan (1953–1962)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KRO",
+      "iso4217NumericCode": null,
+      "displayName": "South Korean Won (1945–1953)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KRW",
+      "iso4217NumericCode": "410",
+      "displayName": "South Korean Won",
+      "decimalPlaces": 0,
+      "symbol": "₩",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KWD",
+      "iso4217NumericCode": "414",
+      "displayName": "Kuwaiti Dinar",
+      "decimalPlaces": 3,
+      "symbol": "KWD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KYD",
+      "iso4217NumericCode": "136",
+      "displayName": "Cayman Islands Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "KZT",
+      "iso4217NumericCode": "398",
+      "displayName": "Kazakhstani Tenge",
+      "decimalPlaces": 2,
+      "symbol": "₸",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LAJ",
+      "iso4217NumericCode": "418",
+      "displayName": "Pathet Lao Kip",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LAK",
+      "iso4217NumericCode": "418",
+      "displayName": "Laotian Kip",
+      "decimalPlaces": 0,
+      "symbol": "₭",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LBP",
+      "iso4217NumericCode": "422",
+      "displayName": "Lebanese Pound",
+      "decimalPlaces": 0,
+      "symbol": "L£",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LKR",
+      "iso4217NumericCode": "144",
+      "displayName": "Sri Lankan Rupee",
+      "decimalPlaces": 2,
+      "symbol": "Rs",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LRD",
+      "iso4217NumericCode": "430",
+      "displayName": "Liberian Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LSL",
+      "iso4217NumericCode": "426",
+      "displayName": "Lesotho Loti",
+      "decimalPlaces": 2,
+      "symbol": "LSL",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LSM",
+      "iso4217NumericCode": "426",
+      "displayName": "Loti",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LTL",
+      "iso4217NumericCode": "440",
+      "displayName": "Lithuanian Litas",
+      "decimalPlaces": 2,
+      "symbol": "Lt",
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LTT",
+      "iso4217NumericCode": "440",
+      "displayName": "Lithuanian Talonas",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LUC",
+      "iso4217NumericCode": "989",
+      "displayName": "Luxembourgian Convertible Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LUF",
+      "iso4217NumericCode": "442",
+      "displayName": "Luxembourgian Franc",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LUL",
+      "iso4217NumericCode": "988",
+      "displayName": "Luxembourg Financial Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LVL",
+      "iso4217NumericCode": "428",
+      "displayName": "Latvian Lats",
+      "decimalPlaces": 2,
+      "symbol": "Ls",
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LVR",
+      "iso4217NumericCode": "428",
+      "displayName": "Latvian Ruble",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "LYD",
+      "iso4217NumericCode": "434",
+      "displayName": "Libyan Dinar",
+      "decimalPlaces": 3,
+      "symbol": "LYD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MAD",
+      "iso4217NumericCode": "504",
+      "displayName": "Moroccan Dirham",
+      "decimalPlaces": 2,
+      "symbol": "MAD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MAF",
+      "iso4217NumericCode": null,
+      "displayName": "Moroccan Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MCF",
+      "iso4217NumericCode": null,
+      "displayName": "Monegasque Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MDC",
+      "iso4217NumericCode": null,
+      "displayName": "Moldovan Cupon",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MDL",
+      "iso4217NumericCode": "498",
+      "displayName": "Moldovan Leu",
+      "decimalPlaces": 2,
+      "symbol": "MDL",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MGA",
+      "iso4217NumericCode": "969",
+      "displayName": "Malagasy Ariary",
+      "decimalPlaces": 0,
+      "symbol": "Ar",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MGF",
+      "iso4217NumericCode": "450",
+      "displayName": "Malagasy Franc",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MKD",
+      "iso4217NumericCode": "807",
+      "displayName": "Macedonian Denar",
+      "decimalPlaces": 2,
+      "symbol": "MKD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MKN",
+      "iso4217NumericCode": null,
+      "displayName": "Macedonian Denar (1992–1993)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MLF",
+      "iso4217NumericCode": "466",
+      "displayName": "Malian Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MMK",
+      "iso4217NumericCode": "104",
+      "displayName": "Myanmar Kyat",
+      "decimalPlaces": 0,
+      "symbol": "K",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MNT",
+      "iso4217NumericCode": "496",
+      "displayName": "Mongolian Tugrik",
+      "decimalPlaces": 2,
+      "symbol": "₮",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MOP",
+      "iso4217NumericCode": "446",
+      "displayName": "Macanese Pataca",
+      "decimalPlaces": 2,
+      "symbol": "MOP",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MRO",
+      "iso4217NumericCode": "478",
+      "displayName": "Mauritanian Ouguiya (1973–2017)",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MRU",
+      "iso4217NumericCode": "929",
+      "displayName": "Mauritanian Ouguiya",
+      "decimalPlaces": 2,
+      "symbol": "MRU",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MTL",
+      "iso4217NumericCode": "470",
+      "displayName": "Maltese Lira",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MTP",
+      "iso4217NumericCode": "470",
+      "displayName": "Maltese Pound",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MUR",
+      "iso4217NumericCode": "480",
+      "displayName": "Mauritian Rupee",
+      "decimalPlaces": 2,
+      "symbol": "Rs",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MVP",
+      "iso4217NumericCode": null,
+      "displayName": "Maldivian Rupee (1947–1981)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MVQ",
+      "iso4217NumericCode": "462",
+      "displayName": "Maldive Rupee",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MVR",
+      "iso4217NumericCode": "462",
+      "displayName": "Maldivian Rufiyaa",
+      "decimalPlaces": 2,
+      "symbol": "MVR",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MWK",
+      "iso4217NumericCode": "454",
+      "displayName": "Malawian Kwacha",
+      "decimalPlaces": 2,
+      "symbol": "MWK",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MXN",
+      "iso4217NumericCode": "484",
+      "displayName": "Mexican Peso",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": true
+    },
+    {
+      "iso4217AlphaCode": "MXP",
+      "iso4217NumericCode": "484",
+      "displayName": "Mexican Silver Peso (1861–1992)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MXV",
+      "iso4217NumericCode": "979",
+      "displayName": "Mexican Investment Unit",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MYR",
+      "iso4217NumericCode": "458",
+      "displayName": "Malaysian Ringgit",
+      "decimalPlaces": 2,
+      "symbol": "RM",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MZE",
+      "iso4217NumericCode": "508",
+      "displayName": "Mozambican Escudo",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MZM",
+      "iso4217NumericCode": "508",
+      "displayName": "Mozambican Metical (1980–2006)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "MZN",
+      "iso4217NumericCode": "943",
+      "displayName": "Mozambican Metical",
+      "decimalPlaces": 2,
+      "symbol": "MZN",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "NAD",
+      "iso4217NumericCode": "516",
+      "displayName": "Namibian Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "NGN",
+      "iso4217NumericCode": "566",
+      "displayName": "Nigerian Naira",
+      "decimalPlaces": 2,
+      "symbol": "₦",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "NIC",
+      "iso4217NumericCode": "558",
+      "displayName": "Nicaraguan Córdoba (1988–1991)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "NIO",
+      "iso4217NumericCode": "558",
+      "displayName": "Nicaraguan Córdoba",
+      "decimalPlaces": 2,
+      "symbol": "C$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "NLG",
+      "iso4217NumericCode": "528",
+      "displayName": "Dutch Guilder",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "NOK",
+      "iso4217NumericCode": "578",
+      "displayName": "Norwegian Krone",
+      "decimalPlaces": 2,
+      "symbol": "kr",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "NPR",
+      "iso4217NumericCode": "524",
+      "displayName": "Nepalese Rupee",
+      "decimalPlaces": 2,
+      "symbol": "Rs",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "NZD",
+      "iso4217NumericCode": "554",
+      "displayName": "New Zealand Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "OMR",
+      "iso4217NumericCode": "512",
+      "displayName": "Omani Rial",
+      "decimalPlaces": 3,
+      "symbol": "OMR",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PAB",
+      "iso4217NumericCode": "590",
+      "displayName": "Panamanian Balboa",
+      "decimalPlaces": 2,
+      "symbol": "PAB",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PEH",
+      "iso4217NumericCode": "604",
+      "displayName": "Sol",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PEI",
+      "iso4217NumericCode": "604",
+      "displayName": "Peruvian Inti",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PEN",
+      "iso4217NumericCode": "604",
+      "displayName": "Peruvian Sol",
+      "decimalPlaces": 2,
+      "symbol": "PEN",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PES",
+      "iso4217NumericCode": "604",
+      "displayName": "Peruvian Sol (1863–1965)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PGK",
+      "iso4217NumericCode": "598",
+      "displayName": "Papua New Guinean Kina",
+      "decimalPlaces": 2,
+      "symbol": "PGK",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PHP",
+      "iso4217NumericCode": "608",
+      "displayName": "Philippine Peso",
+      "decimalPlaces": 2,
+      "symbol": "₱",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PKR",
+      "iso4217NumericCode": "586",
+      "displayName": "Pakistani Rupee",
+      "decimalPlaces": 0,
+      "symbol": "Rs",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PLN",
+      "iso4217NumericCode": "985",
+      "displayName": "Polish Zloty",
+      "decimalPlaces": 2,
+      "symbol": "zł",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PLZ",
+      "iso4217NumericCode": "616",
+      "displayName": "Polish Zloty (1950–1995)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PTE",
+      "iso4217NumericCode": "620",
+      "displayName": "Portuguese Escudo",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "PYG",
+      "iso4217NumericCode": "600",
+      "displayName": "Paraguayan Guarani",
+      "decimalPlaces": 0,
+      "symbol": "₲",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "QAR",
+      "iso4217NumericCode": "634",
+      "displayName": "Qatari Riyal",
+      "decimalPlaces": 2,
+      "symbol": "QAR",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "RHD",
+      "iso4217NumericCode": "716",
+      "displayName": "Rhodesian Dollar",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ROK",
+      "iso4217NumericCode": "642",
+      "displayName": "Leu A/52",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ROL",
+      "iso4217NumericCode": "642",
+      "displayName": "Romanian Leu (1952–2006)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "RON",
+      "iso4217NumericCode": "946",
+      "displayName": "Romanian Leu",
+      "decimalPlaces": 2,
+      "symbol": "lei",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "RSD",
+      "iso4217NumericCode": "941",
+      "displayName": "Serbian Dinar",
+      "decimalPlaces": 2,
+      "symbol": "RSD",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "RUB",
+      "iso4217NumericCode": "643",
+      "displayName": "Russian Ruble",
+      "decimalPlaces": 2,
+      "symbol": "₽",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "RUR",
+      "iso4217NumericCode": "810",
+      "displayName": "Russian Ruble (1991–1998)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "RWF",
+      "iso4217NumericCode": "646",
+      "displayName": "Rwandan Franc",
+      "decimalPlaces": 0,
+      "symbol": "RF",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SAR",
+      "iso4217NumericCode": "682",
+      "displayName": "Saudi Riyal",
+      "decimalPlaces": 2,
+      "symbol": "SAR",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SBD",
+      "iso4217NumericCode": "090",
+      "displayName": "Solomon Islands Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SCR",
+      "iso4217NumericCode": "690",
+      "displayName": "Seychellois Rupee",
+      "decimalPlaces": 2,
+      "symbol": "SCR",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SDD",
+      "iso4217NumericCode": "736",
+      "displayName": "Sudanese Dinar (1992–2007)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SDG",
+      "iso4217NumericCode": "938",
+      "displayName": "Sudanese Pound",
+      "decimalPlaces": 2,
+      "symbol": "SDG",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SDP",
+      "iso4217NumericCode": "736",
+      "displayName": "Sudanese Pound (1957–1998)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SEK",
+      "iso4217NumericCode": "752",
+      "displayName": "Swedish Krona",
+      "decimalPlaces": 2,
+      "symbol": "kr",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SGD",
+      "iso4217NumericCode": "702",
+      "displayName": "Singapore Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SHP",
+      "iso4217NumericCode": "654",
+      "displayName": "St. Helena Pound",
+      "decimalPlaces": 2,
+      "symbol": "£",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SIT",
+      "iso4217NumericCode": "705",
+      "displayName": "Slovenian Tolar",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SKK",
+      "iso4217NumericCode": "703",
+      "displayName": "Slovak Koruna",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SLE",
+      "iso4217NumericCode": "925",
+      "displayName": "Sierra Leonean Leone",
+      "decimalPlaces": 2,
+      "symbol": "SLE",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SLL",
+      "iso4217NumericCode": "694",
+      "displayName": "Sierra Leonean Leone (1964—2022)",
+      "decimalPlaces": 0,
+      "symbol": "SLL",
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SOS",
+      "iso4217NumericCode": "706",
+      "displayName": "Somali Shilling",
+      "decimalPlaces": 0,
+      "symbol": "SOS",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SRD",
+      "iso4217NumericCode": "968",
+      "displayName": "Surinamese Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SRG",
+      "iso4217NumericCode": "740",
+      "displayName": "Surinamese Guilder",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SSP",
+      "iso4217NumericCode": "728",
+      "displayName": "South Sudanese Pound",
+      "decimalPlaces": 2,
+      "symbol": "£",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "STD",
+      "iso4217NumericCode": "678",
+      "displayName": "São Tomé & Príncipe Dobra (1977–2017)",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "STN",
+      "iso4217NumericCode": "930",
+      "displayName": "São Tomé & Príncipe Dobra",
+      "decimalPlaces": 2,
+      "symbol": "Db",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SUR",
+      "iso4217NumericCode": "810",
+      "displayName": "Soviet Rouble",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SVC",
+      "iso4217NumericCode": "222",
+      "displayName": "Salvadoran Colón",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SYP",
+      "iso4217NumericCode": "760",
+      "displayName": "Syrian Pound",
+      "decimalPlaces": 0,
+      "symbol": "£",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "SZL",
+      "iso4217NumericCode": "748",
+      "displayName": "Swazi Lilangeni",
+      "decimalPlaces": 2,
+      "symbol": "SZL",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "THB",
+      "iso4217NumericCode": "764",
+      "displayName": "Thai Baht",
+      "decimalPlaces": 2,
+      "symbol": "฿",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TJR",
+      "iso4217NumericCode": "762",
+      "displayName": "Tajikistani Ruble",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TJS",
+      "iso4217NumericCode": "972",
+      "displayName": "Tajikistani Somoni",
+      "decimalPlaces": 2,
+      "symbol": "TJS",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TMM",
+      "iso4217NumericCode": "795",
+      "displayName": "Turkmenistani Manat (1993–2009)",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TMT",
+      "iso4217NumericCode": "934",
+      "displayName": "Turkmenistani Manat",
+      "decimalPlaces": 2,
+      "symbol": "TMT",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TND",
+      "iso4217NumericCode": "788",
+      "displayName": "Tunisian Dinar",
+      "decimalPlaces": 3,
+      "symbol": "TND",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TOP",
+      "iso4217NumericCode": "776",
+      "displayName": "Tongan Paʻanga",
+      "decimalPlaces": 2,
+      "symbol": "T$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TPE",
+      "iso4217NumericCode": "626",
+      "displayName": "Timorese Escudo",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TRL",
+      "iso4217NumericCode": "792",
+      "displayName": "Turkish Lira (1922–2005)",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TRY",
+      "iso4217NumericCode": "949",
+      "displayName": "Turkish Lira",
+      "decimalPlaces": 2,
+      "symbol": "₺",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TTD",
+      "iso4217NumericCode": "780",
+      "displayName": "Trinidad & Tobago Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TWD",
+      "iso4217NumericCode": "901",
+      "displayName": "New Taiwan Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "TZS",
+      "iso4217NumericCode": "834",
+      "displayName": "Tanzanian Shilling",
+      "decimalPlaces": 2,
+      "symbol": "TZS",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UAH",
+      "iso4217NumericCode": "980",
+      "displayName": "Ukrainian Hryvnia",
+      "decimalPlaces": 2,
+      "symbol": "₴",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UAK",
+      "iso4217NumericCode": "804",
+      "displayName": "Ukrainian Karbovanets",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UGS",
+      "iso4217NumericCode": "800",
+      "displayName": "Ugandan Shilling (1966–1987)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UGW",
+      "iso4217NumericCode": "800",
+      "displayName": "Old Shilling",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UGX",
+      "iso4217NumericCode": "800",
+      "displayName": "Ugandan Shilling",
+      "decimalPlaces": 0,
+      "symbol": "UGX",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "USD",
+      "iso4217NumericCode": "840",
+      "displayName": "US Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": true
+    },
+    {
+      "iso4217AlphaCode": "USN",
+      "iso4217NumericCode": "997",
+      "displayName": "US Dollar (Next day)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "USS",
+      "iso4217NumericCode": "998",
+      "displayName": "US Dollar (Same day)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UYI",
+      "iso4217NumericCode": "940",
+      "displayName": "Uruguayan Peso (Indexed Units)",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UYN",
+      "iso4217NumericCode": "858",
+      "displayName": "Old Uruguay Peso",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UYP",
+      "iso4217NumericCode": "858",
+      "displayName": "Uruguayan Peso (1975–1993)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UYU",
+      "iso4217NumericCode": "858",
+      "displayName": "Uruguayan Peso",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UYW",
+      "iso4217NumericCode": "927",
+      "displayName": "Uruguayan Nominal Wage Index Unit",
+      "decimalPlaces": 4,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "UZS",
+      "iso4217NumericCode": "860",
+      "displayName": "Uzbekistani Som",
+      "decimalPlaces": 2,
+      "symbol": "UZS",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "VEB",
+      "iso4217NumericCode": "862",
+      "displayName": "Venezuelan Bolívar (1871–2008)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "VED",
+      "iso4217NumericCode": "926",
+      "displayName": "Bolívar Soberano",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "VEF",
+      "iso4217NumericCode": "937",
+      "displayName": "Venezuelan Bolívar (2008–2018)",
+      "decimalPlaces": 2,
+      "symbol": "Bs",
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "VES",
+      "iso4217NumericCode": "928",
+      "displayName": "Venezuelan Bolívar",
+      "decimalPlaces": 2,
+      "symbol": "VES",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "VNC",
+      "iso4217NumericCode": "704",
+      "displayName": "Old Dong",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "VND",
+      "iso4217NumericCode": "704",
+      "displayName": "Vietnamese Dong",
+      "decimalPlaces": 0,
+      "symbol": "₫",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "VNN",
+      "iso4217NumericCode": null,
+      "displayName": "Vietnamese Dong (1978–1985)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "VUV",
+      "iso4217NumericCode": "548",
+      "displayName": "Vanuatu Vatu",
+      "decimalPlaces": 0,
+      "symbol": "VUV",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "WST",
+      "iso4217NumericCode": "882",
+      "displayName": "Samoan Tala",
+      "decimalPlaces": 2,
+      "symbol": "WST",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XAD",
+      "iso4217NumericCode": "396",
+      "displayName": "Arab Accounting Dinar",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XAF",
+      "iso4217NumericCode": "950",
+      "displayName": "Central African CFA Franc",
+      "decimalPlaces": 0,
+      "symbol": "FCFA",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XAG",
+      "iso4217NumericCode": "961",
+      "displayName": "Silver",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XAU",
+      "iso4217NumericCode": "959",
+      "displayName": "Gold",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XBA",
+      "iso4217NumericCode": "955",
+      "displayName": "European Composite Unit",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XBB",
+      "iso4217NumericCode": "956",
+      "displayName": "European Monetary Unit",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XBC",
+      "iso4217NumericCode": "957",
+      "displayName": "European Unit of Account (XBC)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XBD",
+      "iso4217NumericCode": "958",
+      "displayName": "European Unit of Account (XBD)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XCD",
+      "iso4217NumericCode": "951",
+      "displayName": "East Caribbean Dollar",
+      "decimalPlaces": 2,
+      "symbol": "$",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XCG",
+      "iso4217NumericCode": "532",
+      "displayName": "Caribbean guilder",
+      "decimalPlaces": 2,
+      "symbol": "Cg.",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XDR",
+      "iso4217NumericCode": "960",
+      "displayName": "Special Drawing Rights",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XEU",
+      "iso4217NumericCode": "954",
+      "displayName": "European Currency Unit",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XFO",
+      "iso4217NumericCode": null,
+      "displayName": "French Gold Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XFU",
+      "iso4217NumericCode": null,
+      "displayName": "French UIC-Franc",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XOF",
+      "iso4217NumericCode": "952",
+      "displayName": "West African CFA Franc",
+      "decimalPlaces": 0,
+      "symbol": "F\u202fCFA",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XPD",
+      "iso4217NumericCode": "964",
+      "displayName": "Palladium",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XPF",
+      "iso4217NumericCode": "953",
+      "displayName": "CFP Franc",
+      "decimalPlaces": 0,
+      "symbol": "CFPF",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XPT",
+      "iso4217NumericCode": "962",
+      "displayName": "Platinum",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XRE",
+      "iso4217NumericCode": null,
+      "displayName": "RINET Funds",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XSU",
+      "iso4217NumericCode": "994",
+      "displayName": "Sucre",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XTS",
+      "iso4217NumericCode": "963",
+      "displayName": "Testing Currency Code",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XUA",
+      "iso4217NumericCode": "965",
+      "displayName": "ADB Unit of Account",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "XXX",
+      "iso4217NumericCode": "999",
+      "displayName": "Unknown Currency",
+      "decimalPlaces": 2,
+      "symbol": "¤",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "YDD",
+      "iso4217NumericCode": "720",
+      "displayName": "Yemeni Dinar",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "YER",
+      "iso4217NumericCode": "886",
+      "displayName": "Yemeni Rial",
+      "decimalPlaces": 0,
+      "symbol": "YER",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "YUD",
+      "iso4217NumericCode": "890",
+      "displayName": "Yugoslavian Hard Dinar (1966–1990)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "YUM",
+      "iso4217NumericCode": "891",
+      "displayName": "Yugoslavian New Dinar (1994–2002)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "YUN",
+      "iso4217NumericCode": "890",
+      "displayName": "Yugoslavian Convertible Dinar (1990–1992)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "YUR",
+      "iso4217NumericCode": null,
+      "displayName": "Yugoslavian Reformed Dinar (1992–1993)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZAL",
+      "iso4217NumericCode": "991",
+      "displayName": "South African Rand (financial)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZAR",
+      "iso4217NumericCode": "710",
+      "displayName": "South African Rand",
+      "decimalPlaces": 2,
+      "symbol": "R",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZMK",
+      "iso4217NumericCode": "894",
+      "displayName": "Zambian Kwacha (1968–2012)",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZMW",
+      "iso4217NumericCode": "967",
+      "displayName": "Zambian Kwacha",
+      "decimalPlaces": 2,
+      "symbol": "ZK",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZRN",
+      "iso4217NumericCode": "180",
+      "displayName": "Zairean New Zaire (1993–1998)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZRZ",
+      "iso4217NumericCode": "180",
+      "displayName": "Zairean Zaire (1971–1993)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZWC",
+      "iso4217NumericCode": "716",
+      "displayName": "Zimbabwe Rhodesian Dollar",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZWD",
+      "iso4217NumericCode": "716",
+      "displayName": "Zimbabwean Dollar (1980–2008)",
+      "decimalPlaces": 0,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZWG",
+      "iso4217NumericCode": "924",
+      "displayName": "Zimbabwean Gold",
+      "decimalPlaces": 2,
+      "symbol": "ZWG",
+      "isActive": true,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZWL",
+      "iso4217NumericCode": "932",
+      "displayName": "Zimbabwean Dollar (2009–2024)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZWN",
+      "iso4217NumericCode": "942",
+      "displayName": "Zimbabwe Dollar (new)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    },
+    {
+      "iso4217AlphaCode": "ZWR",
+      "iso4217NumericCode": "935",
+      "displayName": "Zimbabwean Dollar (2008)",
+      "decimalPlaces": 2,
+      "symbol": null,
+      "isActive": false,
+      "isSupported": false
+    }
+  ]
+}

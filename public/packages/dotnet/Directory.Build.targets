@@ -1,0 +1,90 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project>
+  <!--
+    Universal AFTER-build targets applied to every .csproj under
+    public/packages/dotnet/. Properties from Directory.Build.props apply
+    to this scope automatically; this file adds post-Compile splitter wiring.
+
+    SplitLoggerMessageGcs â€” see ../../tools/loggermessage-splitter/README.md
+    for the full rationale. Background in brief: the
+    Microsoft.Extensions.Logging.Generators emitter writes ALL [LoggerMessage]
+    partial-class blocks into a single LoggerMessage.g.cs file with
+    non-deterministic cross-class ordering. Because EmitCompilerGeneratedFiles
+    is true on consumers and the Generated/ tree is tracked in git for
+    PR-review visibility, every clean build produces a different blob hash â€”
+    constant churn for zero source change.
+
+    The splitter tool parses the combined file into one deterministic file
+    per (namespace, class) tuple. The combined file is gitignored; only the
+    per-class split files are committed. Result: PR reviewers still see codegen
+    diffs (when there's a real source change), but no spurious churn.
+
+    Gated on Condition="Exists(...)" so projects that don't consume
+    Microsoft.Extensions.Logging.Generators get a no-op.
+  -->
+
+  <PropertyGroup>
+    <!--
+      Single canonical path to the LoggerMessage.g.cs file the framework's
+      source generator emits. The CompilerGeneratedFilesOutputPath = "Generated"
+      convention is set per-consumer in their .csproj; if a consumer chooses a
+      different output path, the splitter target's Exists() guard simply won't
+      fire (and we'd need to revisit this).
+    -->
+    <_LoggerMessageGcsPath>$(MSBuildProjectDirectory)\Generated\Microsoft.Extensions.Logging.Generators\Microsoft.Extensions.Logging.Generators.LoggerMessageGenerator\LoggerMessage.g.cs</_LoggerMessageGcsPath>
+    <_LoggerMessageSplitterCsproj>$(D2PublicToolsRoot)loggermessage-splitter\D2.Tools.LoggerMessageSplitter.csproj</_LoggerMessageSplitterCsproj>
+    <_LoggerMessageSplitterDll>$(D2PublicToolsRoot)loggermessage-splitter\bin\Debug\net10.0\D2.Tools.LoggerMessageSplitter.dll</_LoggerMessageSplitterDll>
+  </PropertyGroup>
+
+  <!--
+    Build the splitter tool on demand. The <MSBuild> task caches by
+    (Project, Targets, Properties) within a single MSBuild session so
+    multiple consumer csprojs share a single build of the tool.
+
+    We skip splitter rebuild when the DLL is already up-to-date relative to
+    its sources â€” this is a fast no-op via incremental MSBuild.
+  -->
+  <Target Name="EnsureLoggerMessageSplitterBuilt"
+          Condition="Exists('$(_LoggerMessageGcsPath)')">
+    <!--
+      Restore THEN build the splitter csproj, as two separate <MSBuild> calls.
+      Restore must be its own invocation â€” combining it with other targets in
+      one call is unsupported (the build targets evaluate against the
+      pre-restore import state). Restoring here makes a clean checkout
+      self-sufficient: CI and fresh clones have no prior project.assets.json for
+      the tool, and the solution restore does not cover it (the tool lives in
+      tools/, outside D2.slnx). Both invocations are incremental fast
+      no-ops once current, and the <MSBuild> task caches by
+      (Project, Targets, Properties) within a session so the consumer csprojs
+      share one restore + one build of the tool.
+    -->
+    <MSBuild Projects="$(_LoggerMessageSplitterCsproj)"
+             Targets="Restore"
+             Properties="Configuration=Debug" />
+    <MSBuild Projects="$(_LoggerMessageSplitterCsproj)"
+             Targets="Build"
+             Properties="Configuration=Debug" />
+  </Target>
+
+  <!--
+    AfterTargets="Compile" runs once the source generator has emitted
+    LoggerMessage.g.cs to disk. The splitter parses + writes per-class split
+    files + cleans up stale per-class files in the same directory. Inside the
+    same compile, generated files would already be loaded into the in-memory
+    compilation (via <Compile Remove="Generated\**\*.cs" /> in each consumer);
+    the splitter's job is purely to make the on-disk artifacts deterministic
+    for git.
+
+    Exec output streams to MSBuild's normal stdout/stderr so failures are
+    visible in `dotnet build` output.
+  -->
+  <Target Name="SplitLoggerMessageGcs"
+          AfterTargets="Compile"
+          DependsOnTargets="EnsureLoggerMessageSplitterBuilt"
+          Condition="Exists('$(_LoggerMessageGcsPath)')">
+    <Exec Command="dotnet exec &quot;$(_LoggerMessageSplitterDll)&quot; --input &quot;$(_LoggerMessageGcsPath)&quot; --output-dir &quot;$([System.IO.Path]::GetDirectoryName('$(_LoggerMessageGcsPath)'))&quot;"
+          ConsoleToMSBuild="true" />
+  </Target>
+</Project>

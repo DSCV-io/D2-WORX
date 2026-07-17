@@ -1,0 +1,151 @@
+{
+  "$schema": "./schema.json",
+  "constraints": [
+    {
+      "name": "FIRST_NAME_MAX",
+      "value": 255,
+      "doc": "Maximum length of a person's first (given) name."
+    },
+    {
+      "name": "MIDDLE_NAME_MAX",
+      "value": 255,
+      "doc": "Maximum length of a person's middle name."
+    },
+    {
+      "name": "LAST_NAME_MAX",
+      "value": 255,
+      "doc": "Maximum length of a person's last (family) name."
+    },
+    {
+      "name": "PREFERRED_NAME_MAX",
+      "value": 255,
+      "doc": "Maximum length of a person's preferred (display) name."
+    },
+    {
+      "name": "COMPANY_NAME_MAX",
+      "value": 255,
+      "doc": "Maximum length of a company / organization name."
+    },
+    {
+      "name": "JOB_TITLE_MAX",
+      "value": 255,
+      "doc": "Maximum length of a professional job title."
+    },
+    {
+      "name": "DEPARTMENT_MAX",
+      "value": 255,
+      "doc": "Maximum length of a department / organizational-unit name."
+    },
+    {
+      "name": "STREET_LINE_MAX",
+      "value": 255,
+      "doc": "Maximum length of a single street-address line."
+    },
+    {
+      "name": "CITY_MAX",
+      "value": 255,
+      "doc": "Maximum length of a city / locality name."
+    },
+    {
+      "name": "COMPANY_WEBSITE_MAX",
+      "value": 2048,
+      "doc": "Maximum length of a raw company-website URL (before validation)."
+    },
+    {
+      "name": "AFFIX_CUSTOM_MAX",
+      "value": 64,
+      "doc": "Maximum length of a custom name affix (custom prefix or suffix)."
+    },
+    {
+      "name": "POSTAL_CODE_MAX",
+      "value": 16,
+      "doc": "Maximum length of a postal / ZIP code."
+    },
+    {
+      "name": "EMAIL_MAX",
+      "value": 254,
+      "doc": "Maximum length of an email address (RFC 5321 addr-spec limit)."
+    },
+    {
+      "name": "PHONE_E164_MAX",
+      "value": 32,
+      "doc": "Maximum length of a raw phone-number string (generous E.164 ceiling)."
+    },
+    {
+      "name": "PHONE_MIN_DIGITS",
+      "value": 7,
+      "doc": "Minimum number of digits in a valid phone number."
+    },
+    {
+      "name": "PHONE_MAX_DIGITS",
+      "value": 15,
+      "doc": "Maximum number of digits in a valid phone number (E.164 limit)."
+    }
+  ],
+  "enums": [
+    {
+      "name": "NamePrefix",
+      "backing": "byte",
+      "doc": "Closed list of personal-name prefixes (honorifics / titles). The Other member is the escape hatch backed by a custom free-text value.",
+      "members": [
+        { "name": "Mr", "doc": "Mister." },
+        { "name": "Ms", "doc": "Ms (marital-status-neutral)." },
+        { "name": "Miss", "doc": "Miss." },
+        { "name": "Mrs", "doc": "Missus (married)." },
+        { "name": "Mx", "doc": "Mx (gender-neutral)." },
+        { "name": "Dr", "doc": "Doctor." },
+        { "name": "Prof", "doc": "Professor." },
+        { "name": "Sir", "doc": "Sir (knighthood / formal address)." },
+        { "name": "Lady", "doc": "Lady." },
+        { "name": "Lord", "doc": "Lord." },
+        { "name": "RtHon", "doc": "The Right Honourable." },
+        { "name": "Rev", "doc": "Reverend." },
+        { "name": "Fr", "doc": "Father (clergy)." },
+        { "name": "Pr", "doc": "Pastor." },
+        { "name": "Sr", "doc": "Sister (clergy)." },
+        { "name": "Elder", "doc": "Elder." },
+        {
+          "name": "Other",
+          "doc": "Other prefix not in the closed list; carries a custom free-text value."
+        }
+      ]
+    },
+    {
+      "name": "NameSuffix",
+      "backing": "byte",
+      "doc": "Closed list of personal-name suffixes (generational and ordinal). The Other member is the escape hatch backed by a custom free-text value.",
+      "members": [
+        { "name": "Jr", "doc": "Junior." },
+        { "name": "Sr", "doc": "Senior." },
+        { "name": "I", "doc": "The first (I)." },
+        { "name": "II", "doc": "The second (II)." },
+        { "name": "III", "doc": "The third (III)." },
+        { "name": "IV", "doc": "The fourth (IV)." },
+        { "name": "V", "doc": "The fifth (V)." },
+        { "name": "VI", "doc": "The sixth (VI)." },
+        { "name": "VII", "doc": "The seventh (VII)." },
+        { "name": "VIII", "doc": "The eighth (VIII)." },
+        { "name": "IX", "doc": "The ninth (IX)." },
+        { "name": "X", "doc": "The tenth (X)." },
+        {
+          "name": "Other",
+          "doc": "Other suffix not in the closed list; carries a custom free-text value."
+        }
+      ]
+    },
+    {
+      "name": "BiologicalSex",
+      "backing": "byte",
+      "doc": "Closed list of biological-sex classifications. Unspecified is the absence sentinel; there is no Other member.",
+      "members": [
+        { "name": "Male", "doc": "Male." },
+        { "name": "Female", "doc": "Female." },
+        { "name": "Intersex", "doc": "Intersex." },
+        {
+          "name": "Unspecified",
+          "doc": "Not specified / unknown (absence sentinel)."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 telemetry spec",
+  "description": "Schema for contracts/telemetry/telemetry.spec.json — the source-of-truth catalog of meters / instruments / closed-enum tag values that DcsvIo.D2.Telemetry.Tags.SourceGen reads to emit *TelemetryTags.g.cs typed-constants files into the meters' consuming assemblies.",
+  "type": "object",
+  "required": ["meters"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "meters": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/meter" }
+    }
+  },
+  "definitions": {
+    "meter": {
+      "type": "object",
+      "required": ["meter", "consumingAssembly", "instruments"],
+      "additionalProperties": false,
+      "properties": {
+        "meter": {
+          "type": "string",
+          "description": "OTel meter name (matches the runtime Meter ctor + the METER_NAME const). Must be unique across the spec."
+        },
+        "consumingAssembly": {
+          "type": "string",
+          "description": "The .NET assembly name whose *TelemetryTags.g.cs file is emitted to. Single-target dispatch by the SrcGen - only the named assembly receives this meter's emission. Meters with no closed-enum tags receive no emitted file (spec entry is documentation-only)."
+        },
+        "tagsNamespace": {
+          "type": "string",
+          "description": "Optional override for the namespace of the emitted *TelemetryTags class. Defaults to the consumingAssembly + .Telemetry."
+        },
+        "tagsClassName": {
+          "type": "string",
+          "description": "Optional override for the emitted typed-constants class name. Defaults to a derived name (meter's last segment + 'TelemetryTags', e.g. AuthTelemetryTags)."
+        },
+        "instruments": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/instrument" }
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    },
+    "instrument": {
+      "type": "object",
+      "required": ["name", "kind", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Wire-format instrument name (dot-separated). Must be unique within the meter."
+        },
+        "constName": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "Optional PascalCase override for the typed-constants nested-class name (e.g. JwtValidations). Defaults to the last dot-segment of name PascalCased."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["counter", "histogram", "gauge"],
+          "description": "Instrument kind. Drives factory selection in code (CreateCounter / CreateHistogram / CreateGauge)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description string passed to the Meter.CreateXxx call."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Optional unit string (e.g. ms, {calls}, {retry})."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/tag" },
+          "description": "Optional tag specifications. Untagged instruments omit this field. An instrument with closed-enum tags drives codegen of a typed-constants nested class; instruments without tags are documentation-only."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    },
+    "tag": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Wire-format tag name (snake_case). Emitted as the TAG_<UPPER> constant on the typed-constants class."
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "minItems": 1,
+          "description": "Closed-enum tag value set (snake_case). Mutually exclusive with valuesFromSpec."
+        },
+        "valuesFromSpec": {
+          "type": "string",
+          "enum": ["auth-error-codes"],
+          "description": "Cross-spec reference. When set, the tag's value set is resolved at codegen time from another spec (currently only 'auth-error-codes' is supported - resolves to the AuthErrorCodes spec's code field). Mutually exclusive with values."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    }
+  }
+}

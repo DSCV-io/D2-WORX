@@ -1,3 +1,7 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
 # Normalize all text files to LF in the repo, check out as LF everywhere.
 * text=auto eol=lf
 
@@ -13,3 +17,12 @@
 *.ttf binary
 *.eot binary
 *.pdf binary
+
+# Codegen-emitted files are committed for inspection / IDE navigation /
+# PR review (see docs/PATTERNS.md "spec-driven catalog migration & codegen
+# output"). Mark them so GitHub PR UI collapses generated-file diffs by
+# default; reviewers can expand for spot-checks. Spec changes are the
+# source of truth — drift in *.g.cs / *.g.ts contents must trace to a spec
+# edit upstream.
+*.g.cs linguist-generated=true
+*.g.ts linguist-generated=true

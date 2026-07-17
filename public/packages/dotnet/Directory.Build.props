@@ -1,0 +1,47 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project>
+  <!--
+    Public package tree packaging properties. Applies to every .csproj under
+    public/packages/dotnet/. Imports monorepo-root Directory.Build.props for
+    dual roots / TFM / StyleCop default, then overrides StyleCop to Apache stamp.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <Authors>DCSV</Authors>
+    <Company>DCSV</Company>
+    <Product>D2</Product>
+    <RepositoryUrl>https://github.com/dcsv-io/d2-public</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/dcsv-io/d2-public</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <None Include="$(D2PublicRoot)LICENSE" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <!-- Dual StyleCop: strip monorepo-root ARR settings; StyleCop discovers by physical
+       path ending in stylecop.json (Link alone is not enough). Public tree uses the
+       Apache stamp at public/packages/dotnet/stylecop.json (mirrored from
+       public/stylecop.public.json for export clarity). -->
+  <ItemGroup>
+    <AdditionalFiles Remove="$(D2RepoRoot)stylecop.json" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <AdditionalFiles Include="$(MSBuildProjectDirectory)\PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="$(MSBuildProjectDirectory)\PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

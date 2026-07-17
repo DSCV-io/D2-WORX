@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 auth error codes spec",
+  "description": "Domain-specialized copy of contracts/error-codes/error-codes.canonical.schema.json, narrowed to the auth catalog: the AUTH_* code-prefix regex, the [401, 503] httpStatus subset, and the 3 auth categories. Conforms to the canonical 7-field set (including factoryShape) but tightens the value constraints so editors catch a non-AUTH_ code, a non-401/503 status, or a non-auth category at edit time. This is the source-of-truth catalog that DcsvIo.D2.Auth.ErrorCodes.SourceGen reads to emit AuthErrorCodes.g.cs + AuthFailures.g.cs into DcsvIo.D2.Auth. A drift-guard test asserts this copy stays field-aligned with the canonical schema.",
+  "type": "object",
+  "required": ["errorCodes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "errorCodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/errorCode" }
+    }
+  },
+  "definitions": {
+    "errorCode": {
+      "type": "object",
+      "required": [
+        "code",
+        "httpStatus",
+        "category",
+        "userMessageKey",
+        "factoryName",
+        "factoryShape",
+        "doc"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^AUTH_[A-Z][A-Z0-9_]*$",
+          "description": "Wire-format error code (SCREAMING_SNAKE, AUTH_*-prefixed). Must be unique across the spec."
+        },
+        "httpStatus": {
+          "type": "integer",
+          "enum": [401, 503],
+          "description": "HTTP status mapping. Drives both transport-side response shape AND gRPC StatusCode mapping at the auth-grpc transport binding (401 -> Unauthenticated; 503 -> Unavailable). In the unified generator it selects the base D2Result delegation factory (401 -> Unauthorized; 503 -> ServiceUnavailable). Expanding the matrix requires updating the codegen mapping (D2AEC005 fires on unknown values)."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "validation_failure",
+            "infrastructure_unavailable",
+            "policy_denied"
+          ],
+          "description": "Closed semantic/telemetry classification. NOT the factory selector — httpStatus drives factory selection. Added to the wire (gRPC trailers + JSON envelope) so consumers can do generic class-based handling without importing the producer's catalog."
+        },
+        "userMessageKey": {
+          "type": "string",
+          "pattern": "^TK(\\.[A-Za-z][A-Za-z0-9]*){2}\\.[A-Z][A-Z0-9_]*$",
+          "description": "Translation key reference rendered as the messages argument on the emitted D2Result factory (e.g. TK.Auth.Errors.UNAUTHORIZED). The generator enforces existence by inverse-transforming the symbol path to the snake_case key (TK.Auth.Errors.UNAUTHORIZED -> auth_errors_UNAUTHORIZED) and asserting membership in contracts/messages/en-US.json (D2ERC002). Coarse on purpose - one key per status bucket so the user-facing surface does not leak which validation step failed."
+        },
+        "factoryName": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase symbol for the emitted factory method (e.g. BearerMissing, JwksUnavailable). Must be unique across the spec."
+        },
+        "factoryShape": {
+          "type": "string",
+          "enum": ["standard", "none"],
+          "description": "Closed enum that drives the generated factory's signature variant. standard: the one universal error-factory shape (messages?, inputErrors?, errorCode?, category?, traceId?) — ALL optional; the errorCode / category overrides are how a delegating domain factory stamps a specific code + category on its base status. none: no factory generated for this code. Every auth entry is standard (both 401 Unauthorized and 503 ServiceUnavailable delegate through it); the typed <T> overload on the 503 factories is an httpStatus-driven emitter rule, not a factoryShape value."
+        },
+        "doc": {
+          "type": "string",
+          "minLength": 1,
+          "description": "XML <summary> text rendered on the emitted constant + factory."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    }
+  }
+}

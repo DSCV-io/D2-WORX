@@ -1,12 +1,16 @@
+﻿# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
 packages:
-  - "backends/node/shared/*"
-  - "backends/node/shared/implementations/**"
-  - "backends/node/services/**"
-  - "clients/web"
+  - "public/packages/typescript/**"
+  - "private/packages/typescript/**"
+  - "private/services/**"
+  - "public/tools/ts-codegen"
+  - "public/tools/geo-data-pipeline"
+  - "public/tools/contract-gate"
+  - "public/tools/release-runner"
+  - "public/tools/commit-lint"
 
 onlyBuiltDependencies:
   - "@bufbuild/buf"
-  - "@tailwindcss/oxide"
-  - esbuild
-  - protobufjs
-  - sharp

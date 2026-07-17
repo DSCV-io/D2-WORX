@@ -1,0 +1,62 @@
+{
+  "$schema": "./schema.json",
+  "fields": [
+    {
+      "constName": "CAUSE",
+      "value": "cause",
+      "doc": "JSON property carrying the closed-enum cause string (see DlqFailureCauses). Identifies what category of failure triggered the dead-letter route."
+    },
+    {
+      "constName": "ERROR_CODE",
+      "value": "errorCode",
+      "doc": "JSON property carrying either the exception type's FullName (HANDLER_EXCEPTION / DECRYPT_FAILURE / DESERIALIZE_FAILURE) or the D2Result error code (HANDLER_RESULT_FAILURE). Free-form string."
+    },
+    {
+      "constName": "DETAIL",
+      "value": "detail",
+      "doc": "JSON property carrying the truncated diagnostic detail (≤256 chars). NEVER built from exception.Message — for result-failure cases this is the join of result.messages.Select(m => m.Key); for exception cases it stays null."
+    },
+    {
+      "constName": "ATTEMPT_COUNT",
+      "value": "attemptCount",
+      "doc": "JSON property carrying the number of redelivery attempts observed before final NACK. Parsed from the AMQP x-death header when available; 0 when not."
+    },
+    {
+      "constName": "TRACE_ID",
+      "value": "traceId",
+      "doc": "JSON property carrying the W3C trace id (lower-hex, 32 chars) copied from the producer-side headers so the DLQ entry stays correlatable across services."
+    },
+    {
+      "constName": "NACKED_BY",
+      "value": "nackedBy",
+      "doc": "JSON property carrying the consumer service name (which replica nacked the message). Optional."
+    }
+  ],
+  "causes": [
+    {
+      "constName": "HANDLER_RESULT_FAILURE",
+      "value": "HANDLER_RESULT_FAILURE",
+      "doc": "Handler returned a non-Ok D2Result. The errorCode field carries result.ErrorCode."
+    },
+    {
+      "constName": "HANDLER_EXCEPTION",
+      "value": "HANDLER_EXCEPTION",
+      "doc": "Handler threw an unhandled exception. The errorCode field carries the exception type's FullName (NEVER ex.Message — PII guard)."
+    },
+    {
+      "constName": "DECRYPT_FAILURE",
+      "value": "DECRYPT_FAILURE",
+      "doc": "AEAD decrypt failed (kid missing from keyring, tag mismatch, etc.). Surfaces before the handler is ever invoked."
+    },
+    {
+      "constName": "DESERIALIZE_FAILURE",
+      "value": "DESERIALIZE_FAILURE",
+      "doc": "JSON deserialization of the message body failed. Surfaces before the handler is ever invoked."
+    },
+    {
+      "constName": "RETRIES_EXHAUSTED",
+      "value": "RETRIES_EXHAUSTED",
+      "doc": "Tiered-retry attempt counter hit MaxAttempts; message routed direct to DLQ without invoking the handler this time. The errorCode field also carries RETRIES_EXHAUSTED."
+    }
+  ]
+}

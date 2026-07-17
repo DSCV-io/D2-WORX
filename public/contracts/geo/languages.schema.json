@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/languages.schema.json",
+  "title": "Language catalog (codegen-ready)",
+  "description": "Tier 2 codegen-ready Language catalog. Matches the LanguageSpec record shape consumed by .NET SourceGen + TS emitter.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "entries"
+  ],
+  "properties": {
+    "$generated": { "const": true },
+    "$source": { "const": "pipeline-derived" },
+    "$schema": { "type": "string" },
+    "$note": { "type": "string" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Language" }
+    }
+  },
+  "$defs": {
+    "WritingDirection": {
+      "type": "string",
+      "enum": ["LTR", "RTL"]
+    },
+    "Language": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "iso6391Code",
+        "name",
+        "endonym",
+        "writingDirection",
+        "isSupported",
+        "spokenInCountryISO31661Alpha2Codes"
+      ],
+      "properties": {
+        "iso6391Code": { "type": "string", "pattern": "^[a-z]{2}$" },
+        "name": { "type": "string", "minLength": 1 },
+        "endonym": { "type": ["string", "null"] },
+        "writingDirection": { "$ref": "#/$defs/WritingDirection" },
+        "isSupported": { "type": "boolean" },
+        "spokenInCountryISO31661Alpha2Codes": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[A-Z]{2}$" }
+        }
+      }
+    }
+  }
+}

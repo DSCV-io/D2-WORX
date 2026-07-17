@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "edge": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "KEYCUSTODIAN_APP__ISSUERBASEURL": "https://localhost:8443"
+      },
+      "applicationUrl": ""
+    }
+  }
+}

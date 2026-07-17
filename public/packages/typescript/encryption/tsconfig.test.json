@@ -1,0 +1,14 @@
+{
+  "$comment": "Type-check config covering src/ AND tests/ AND scripts/ together. The main tsconfig.json restricts rootDir to src/; this config relaxes rootDir to the package root so tests/ and scripts/ are in-tree. noEmit (composite is disabled — composite forbids noEmit). Run via `pnpm run type-check:test` to enforce type safety on test code without producing build artifacts. The main tsconfig.json remains the build config (composite: true, emit on).",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "rootDir": ".",
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "tests/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

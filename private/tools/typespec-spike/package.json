@@ -1,0 +1,14 @@
+{
+  "name": "d2-typespec-spike",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Isolated TypeSpec spike - NOT part of the pnpm workspace",
+  "type": "module",
+  "devDependencies": {
+    "@dcsv-io/d2-spike-emitter": "file:d2-spike-emitter",
+    "@dcsv-io/d2-typespec-decorators": "file:d2-decorators",
+    "@typespec/compiler": "^1.13.0",
+    "@typespec/http": "^1.13.0",
+    "@typespec/openapi3": "^1.13.0"
+  }
+}

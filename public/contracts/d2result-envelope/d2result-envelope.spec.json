@@ -1,0 +1,45 @@
+{
+  "$schema": "./schema.json",
+  "fields": [
+    {
+      "constName": "SUCCESS",
+      "value": "success",
+      "doc": "JSON property carrying the boolean success flag for the operation. True when the operation completed successfully; false for any failure mode (including partial-success SOME_FOUND, which is a success-with-caveats but ships as success=false per the existing factory semantics)."
+    },
+    {
+      "constName": "DATA",
+      "value": "data",
+      "doc": "JSON property carrying the result payload (generic over TData on D2Result<TData>). Absent (or null) on non-typed D2Result; present on D2Result<TData> when the operation produced a payload. Partial-success SOME_FOUND may carry data even when success=false."
+    },
+    {
+      "constName": "MESSAGES",
+      "value": "messages",
+      "doc": "JSON property carrying the translation messages associated with the operation. Always an array of TKMessage objects ({key, params?}) per contracts/tk-message — empty array when no messages, not omitted. Both the .NET serializer and the TS parser treat the wire shape as TKMessage[] (a translatable-message envelope), not a plain string[]."
+    },
+    {
+      "constName": "INPUT_ERRORS",
+      "value": "inputErrors",
+      "doc": "JSON property carrying per-field validation errors. Always an array of InputError objects ({field, errors: TKMessage[]}) per contracts/input-error — empty array when no input errors, not omitted. Carries the structured validation surface for forms / inputs."
+    },
+    {
+      "constName": "ERROR_CODE",
+      "value": "errorCode",
+      "doc": "JSON property carrying the standardized error code string when the operation fails with a known failure mode (per contracts/error-codes catalog: NOT_FOUND, UNAUTHORIZED, VALIDATION_FAILED, etc.). Absent or null on success; absent or null on free-form failures with no catalog entry."
+    },
+    {
+      "constName": "TRACE_ID",
+      "value": "traceId",
+      "doc": "JSON property carrying the W3C trace id (32-char lower-hex) for correlating the operation across logs / spans / DLQ entries. Absent or null when no active trace; auto-injected on every result that crosses a handler boundary via BaseHandler.RunCorePipelineAsync."
+    },
+    {
+      "constName": "STATUS_CODE",
+      "value": "statusCode",
+      "doc": "JSON property carrying the HTTP status code as an integer (e.g. 200, 404, 206). Always emitted by the .NET serializer; the TS-side parser TREATS THIS AS INFORMATIONAL ONLY — the authoritative status comes from the HTTP response.status header. Carrying it in the body preserves diagnostic value when wire bytes are inspected (test fixtures, dev tools, DLQ entries with cached responses)."
+    },
+    {
+      "constName": "CATEGORY",
+      "value": "category",
+      "doc": "JSON property carrying the closed semantic/telemetry classification of a failure as its snake_case wire string (per contracts/error-category: not_found, validation_failure, policy_denied, etc.). Producer-set from each error code's category at factory-generation time (no runtime registry lookup). Absent (omitted) on success and on free-form failures with no category; never serialized as empty string. Lets consumers branch on the broad failure class without resolving the specific error code against the catalog."
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+#nullable enable
+DcsvIo.D2.Encryption.EncryptionDomainMode
+DcsvIo.D2.Encryption.EncryptionDomainMode.Sealed = 1 -> DcsvIo.D2.Encryption.EncryptionDomainMode
+DcsvIo.D2.Encryption.EncryptionDomainMode.Symmetric = 0 -> DcsvIo.D2.Encryption.EncryptionDomainMode
+DcsvIo.D2.Encryption.EncryptionDomainModeCatalog
+DcsvIo.D2.Encryption.EncryptionDomainModes
+DcsvIo.D2.Encryption.EncryptionDomains
+DcsvIo.D2.Encryption.EncryptionException
+DcsvIo.D2.Encryption.EncryptionException.EncryptionException(string! message) -> void
+DcsvIo.D2.Encryption.EncryptionException.EncryptionException(string! message, System.Exception! inner) -> void
+DcsvIo.D2.Encryption.EncryptionFrameLayout
+DcsvIo.D2.Encryption.EncryptionKeyringSource
+DcsvIo.D2.Encryption.EncryptionKeyringSource.KeyCustodian = 1 -> DcsvIo.D2.Encryption.EncryptionKeyringSource
+DcsvIo.D2.Encryption.EncryptionKeyringSource.StaticFactory = 0 -> DcsvIo.D2.Encryption.EncryptionKeyringSource
+DcsvIo.D2.Encryption.EncryptionRegistration
+DcsvIo.D2.Encryption.EncryptionRegistration.EncryptionRegistration(string! serviceKey) -> void
+DcsvIo.D2.Encryption.EncryptionRegistration.ServiceKey.get -> string!
+DcsvIo.D2.Encryption.EncryptionRegistry
+DcsvIo.D2.Encryption.EncryptionRegistry.EncryptionRegistry(System.Collections.Generic.IEnumerable<DcsvIo.D2.Encryption.EncryptionRegistration!>! registrations) -> void
+DcsvIo.D2.Encryption.EncryptionRegistry.ServiceKeys.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.Encryption.EncryptionServiceCollectionExtensions
+DcsvIo.D2.Encryption.EncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Encryption.EncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2EncryptionFor(string! serviceKey, System.Func<System.IServiceProvider!, DcsvIo.D2.Encryption.PayloadCryptoKeyring!>! keyringFactory) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Encryption.EncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2EncryptionStartupCheck() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Encryption.EncryptionSourceMarker
+DcsvIo.D2.Encryption.EncryptionSourceMarker.EncryptionSourceMarker(string! serviceKey, DcsvIo.D2.Encryption.EncryptionKeyringSource source) -> void
+DcsvIo.D2.Encryption.EncryptionSourceMarker.ServiceKey.get -> string!
+DcsvIo.D2.Encryption.EncryptionSourceMarker.Source.get -> DcsvIo.D2.Encryption.EncryptionKeyringSource
+DcsvIo.D2.Encryption.EncryptionSourceServiceCollectionExtensions
+DcsvIo.D2.Encryption.EncryptionSourceServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Encryption.EncryptionSourceServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2EncryptionSourceCheck() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Encryption.EncryptionSourceServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).MarkD2EncryptionSource(string! serviceKey, DcsvIo.D2.Encryption.EncryptionKeyringSource source) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Encryption.EncryptionSourceStartupCheck
+DcsvIo.D2.Encryption.EncryptionSourceStartupCheck.EncryptionSourceStartupCheck(System.IServiceProvider! services, DcsvIo.D2.Encryption.EncryptionRegistry! registry, Microsoft.Extensions.Logging.ILogger<DcsvIo.D2.Encryption.EncryptionSourceStartupCheck!>! logger) -> void
+DcsvIo.D2.Encryption.EncryptionSourceStartupCheck.StartAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+DcsvIo.D2.Encryption.EncryptionSourceStartupCheck.StopAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+DcsvIo.D2.Encryption.EncryptionStartupCheck
+DcsvIo.D2.Encryption.EncryptionStartupCheck.EncryptionStartupCheck(System.IServiceProvider! services, DcsvIo.D2.Encryption.EncryptionRegistry! registry, Microsoft.Extensions.Logging.ILogger<DcsvIo.D2.Encryption.EncryptionStartupCheck!>! logger) -> void
+DcsvIo.D2.Encryption.EncryptionStartupCheck.StartAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+DcsvIo.D2.Encryption.EncryptionStartupCheck.StopAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+DcsvIo.D2.Encryption.FrameMalformedException
+DcsvIo.D2.Encryption.FrameMalformedException.FrameMalformedException(string! message) -> void
+DcsvIo.D2.Encryption.FrameMalformedException.FrameMalformedException(string! message, System.Exception! inner) -> void
+DcsvIo.D2.Encryption.FrameVersionMismatchException
+DcsvIo.D2.Encryption.FrameVersionMismatchException.FrameVersionMismatchException(byte version) -> void
+DcsvIo.D2.Encryption.FrameVersionMismatchException.Version.get -> byte
+DcsvIo.D2.Encryption.IPayloadCrypto
+DcsvIo.D2.Encryption.IPayloadCrypto.Decrypt(System.ReadOnlySpan<byte> framed) -> byte[]!
+DcsvIo.D2.Encryption.IPayloadCrypto.Encrypt(System.ReadOnlySpan<byte> plaintext) -> byte[]!
+DcsvIo.D2.Encryption.IPayloadOpener
+DcsvIo.D2.Encryption.IPayloadOpener.Open(System.ReadOnlySpan<byte> framed) -> byte[]!
+DcsvIo.D2.Encryption.IPayloadSealer
+DcsvIo.D2.Encryption.IPayloadSealer.Seal(System.ReadOnlySpan<byte> plaintext) -> byte[]!
+DcsvIo.D2.Encryption.KidNotInKeyringException
+DcsvIo.D2.Encryption.KidNotInKeyringException.Kid.get -> string!
+DcsvIo.D2.Encryption.KidNotInKeyringException.KidNotInKeyringException(string! kid) -> void
+DcsvIo.D2.Encryption.PayloadCrypto
+DcsvIo.D2.Encryption.PayloadCrypto.Decrypt(System.ReadOnlySpan<byte> framed) -> byte[]!
+DcsvIo.D2.Encryption.PayloadCrypto.Encrypt(System.ReadOnlySpan<byte> plaintext) -> byte[]!
+DcsvIo.D2.Encryption.PayloadCrypto.PayloadCrypto(DcsvIo.D2.Encryption.PayloadCryptoKeyring! keyring) -> void
+DcsvIo.D2.Encryption.PayloadCryptoKeyring
+DcsvIo.D2.Encryption.PayloadCryptoKeyring.AadContext.get -> System.ReadOnlyMemory<byte>
+DcsvIo.D2.Encryption.PayloadCryptoKeyring.ActiveKid.get -> string!
+DcsvIo.D2.Encryption.PayloadCryptoKeyring.AllKids.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+DcsvIo.D2.Encryption.PayloadCryptoKeyring.Dispose() -> void
+DcsvIo.D2.Encryption.PayloadCryptoKeyring.PayloadCryptoKeyring(string! activeKid, System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>! keys, System.ReadOnlyMemory<byte> aadContext) -> void
+DcsvIo.D2.Encryption.PayloadCryptoKeyring.TryGetKey(string? kid, out System.ReadOnlyMemory<byte> key) -> bool
+DcsvIo.D2.Encryption.PayloadOpener
+DcsvIo.D2.Encryption.PayloadOpener.Open(System.ReadOnlySpan<byte> framed) -> byte[]!
+DcsvIo.D2.Encryption.PayloadOpener.PayloadOpener(DcsvIo.D2.Encryption.RecipientPrivateKeyring! keyring) -> void
+DcsvIo.D2.Encryption.PayloadSealer
+DcsvIo.D2.Encryption.PayloadSealer.PayloadSealer(DcsvIo.D2.Encryption.RecipientPublicKeyring! keyring) -> void
+DcsvIo.D2.Encryption.PayloadSealer.Seal(System.ReadOnlySpan<byte> plaintext) -> byte[]!
+DcsvIo.D2.Encryption.RecipientPrivateKeyring
+DcsvIo.D2.Encryption.RecipientPrivateKeyring.Dispose() -> void
+DcsvIo.D2.Encryption.RecipientPrivateKeyring.RecipientPrivateKeyring(string! recipientServiceId, System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>! privateKeysByKid) -> void
+DcsvIo.D2.Encryption.RecipientPrivateKeyring.RecipientServiceId.get -> string!
+DcsvIo.D2.Encryption.RecipientPublicKeyring
+DcsvIo.D2.Encryption.RecipientPublicKeyring.ActiveKid.get -> string!
+DcsvIo.D2.Encryption.RecipientPublicKeyring.RecipientPublicKeyring(string! recipientServiceId, string! activeKid, System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>! publicKeysByKid) -> void
+DcsvIo.D2.Encryption.RecipientPublicKeyring.RecipientServiceId.get -> string!
+DcsvIo.D2.Encryption.SealedEncryptionServiceCollectionExtensions
+DcsvIo.D2.Encryption.SealedEncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Encryption.SealedEncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SealedEncryptionRecipient(string! recipientServiceId) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Encryption.SealedEncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SealedEncryptionSourceCheck() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Encryption.SealedEncryptionServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2SealedEncryptionStartupCheck() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Encryption.SealedFrameLayout
+const DcsvIo.D2.Encryption.EncryptionDomains.FIXTURE_SEALED = "payload-fixture-sealed" -> string!
+const DcsvIo.D2.Encryption.EncryptionDomains.PLAINTEXT = "plaintext" -> string!
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.CIPHERTEXT_WITH_TAG_LENGTH = -1 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.CIPHERTEXT_WITH_TAG_OFFSET = -1 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.CONSTRAINT_MAX_KID_LENGTH = 64 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.CONSTRAINT_MIN_FRAME_SIZE = 30 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.CONSTRAINT_MIN_KID_LENGTH = 1 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.CONSTRAINT_NONCE_LENGTH = 12 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.CONSTRAINT_TAG_LENGTH = 16 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.CURRENT_VERSION = 1 -> byte
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.KID_LENGTH = -1 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.KID_LENGTH_LENGTH = 1 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.KID_LENGTH_OFFSET = 1 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.KID_OFFSET = 2 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.NONCE_LENGTH = 12 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.NONCE_OFFSET = -1 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.VERSION_LENGTH = 1 -> int
+const DcsvIo.D2.Encryption.EncryptionFrameLayout.VERSION_OFFSET = 0 -> int
+const DcsvIo.D2.Encryption.PayloadCryptoKeyring.KEY_SIZE_BYTES = 32 -> int
+const DcsvIo.D2.Encryption.PayloadCryptoKeyring.MAX_KID_LENGTH = 64 -> int
+const DcsvIo.D2.Encryption.PayloadCryptoKeyring.MIN_KID_LENGTH = 1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CIPHERTEXT_WITH_TAG_LENGTH = -1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CIPHERTEXT_WITH_TAG_OFFSET = -1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CONSTRAINT_EPH_PUB_LENGTH_PREFIX_SIZE = 2 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CONSTRAINT_MAX_EPH_PUB_LENGTH = 256 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CONSTRAINT_MAX_KID_LENGTH = 64 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CONSTRAINT_MIN_FRAME_SIZE = 34 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CONSTRAINT_MIN_KID_LENGTH = 1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CONSTRAINT_NONCE_LENGTH = 12 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CONSTRAINT_TAG_LENGTH = 16 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.CURRENT_VERSION = 2 -> byte
+const DcsvIo.D2.Encryption.SealedFrameLayout.EPH_PUB_LENGTH = -1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.EPH_PUB_LENGTH_LENGTH = 2 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.EPH_PUB_LENGTH_OFFSET = -1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.EPH_PUB_OFFSET = -1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.NONCE_LENGTH = 12 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.NONCE_OFFSET = -1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.RECIPIENT_KID_LENGTH = -1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.RECIPIENT_KID_LENGTH_LENGTH = 1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.RECIPIENT_KID_LENGTH_OFFSET = 1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.RECIPIENT_KID_OFFSET = 2 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.VERSION_LENGTH = 1 -> int
+const DcsvIo.D2.Encryption.SealedFrameLayout.VERSION_OFFSET = 0 -> int
+override DcsvIo.D2.Encryption.PayloadCrypto.ToString() -> string!
+override DcsvIo.D2.Encryption.PayloadCryptoKeyring.ToString() -> string!
+override DcsvIo.D2.Encryption.PayloadOpener.ToString() -> string!
+override DcsvIo.D2.Encryption.PayloadSealer.ToString() -> string!
+override DcsvIo.D2.Encryption.RecipientPrivateKeyring.ToString() -> string!
+override DcsvIo.D2.Encryption.RecipientPublicKeyring.ToString() -> string!
+static DcsvIo.D2.Encryption.EncryptionDomainModeCatalog.ModeFor(string! domain) -> DcsvIo.D2.Encryption.EncryptionDomainMode
+static DcsvIo.D2.Encryption.EncryptionDomainModeCatalog.RegisterSealedDomain(string! domain, string! consumerServiceId) -> void
+static DcsvIo.D2.Encryption.EncryptionDomainModeCatalog.TryGetConsumerService(string! domain, out string? consumerService) -> bool
+static DcsvIo.D2.Encryption.EncryptionDomainModes.ConsumerServiceByDomain.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static DcsvIo.D2.Encryption.EncryptionDomainModes.ModeFor(string! domain) -> DcsvIo.D2.Encryption.EncryptionDomainMode
+static DcsvIo.D2.Encryption.EncryptionDomainModes.TryGetConsumerService(string! domain, out string! consumerService) -> bool
+static DcsvIo.D2.Encryption.EncryptionDomains.AllDomains.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static DcsvIo.D2.Encryption.EncryptionServiceCollectionExtensions.AddD2EncryptionFor(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! serviceKey, System.Func<System.IServiceProvider!, DcsvIo.D2.Encryption.PayloadCryptoKeyring!>! keyringFactory) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Encryption.EncryptionServiceCollectionExtensions.AddD2EncryptionStartupCheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Encryption.EncryptionSourceServiceCollectionExtensions.AddD2EncryptionSourceCheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Encryption.EncryptionSourceServiceCollectionExtensions.MarkD2EncryptionSource(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! serviceKey, DcsvIo.D2.Encryption.EncryptionKeyringSource source) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Encryption.SealedEncryptionServiceCollectionExtensions.AddD2SealedEncryptionRecipient(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! recipientServiceId) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Encryption.SealedEncryptionServiceCollectionExtensions.AddD2SealedEncryptionSourceCheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Encryption.SealedEncryptionServiceCollectionExtensions.AddD2SealedEncryptionStartupCheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

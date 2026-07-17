@@ -1,0 +1,120 @@
+{
+  "$generated": false,
+  "$source": "manual-overlay",
+  "$schema": "./countries.overlays.schema.json",
+  "$note": "Trackable manual patches to the Tier 1 countries catalog. Applied at Tier 2 build time AFTER loading Tier 1 src-data and BEFORE cross-catalog M:M backfill. Each entry carries a `reason` + `addedAt` so the policy decision is audit-trail visible without git-archaeology. Use `pnpm geo:overlays` to list active patches with their reasons. See ./README.md for the pattern + when to add an overlay vs fix upstream.",
+  "catalogVersion": "0.1.0",
+  "lastEditedAt": "2026-05-23",
+  "additions": [
+    {
+      "id": "XK",
+      "addedAt": "2026-05-19",
+      "reason": "Kosovo declared independence 2008; recognized by ~100 UN members but blocked from full UN membership by Russia/China veto. ISO 3166-1 has not officially assigned a code; XK is the user-assigned code adopted by EU institutions, IMF, SWIFT, IBAN registry, Visa/Mastercard, and most commercial systems. Datasets/country-codes (our Tier 1 upstream) conservatively excludes XK because there's no official ISO assignment. Adding here because (a) the hand-rolled GeopoliticalEntity catalog references XK as a member of `EU` (Europe continent) + `BALK` (Balkans region) so the GE→Country FK would be orphan without this addition, and (b) downstream consumers using the geo catalogs for address forms / locale resolution / etc. realistically need Kosovo. Alpha-3 + numeric codes are user-assigned per ISO 3166-1 rules (XKK / 983 are the most widely-used unofficial assignments — EU and IBAN registries use these).",
+      "data": {
+        "iso31661Alpha2Code": "XK",
+        "iso31661Alpha3Code": "XKK",
+        "iso31661NumericCode": "983",
+        "displayName": "Kosovo",
+        "officialName": "Republic of Kosovo",
+        "endonymDisplayName": "Kosovë",
+        "sovereignCountryISO31661Alpha2Code": null,
+        "phoneNumberPrefix": "383",
+        "phoneNumberNationalFormat": null,
+        "phoneNumberMinDigits": 8,
+        "phoneNumberMaxDigits": 9,
+        "phoneNumberInternationalPrefix": "00",
+        "phoneNumberNationalPrefix": "0",
+        "primaryCurrencyISO4217AlphaCode": "EUR",
+        "primaryLanguageISO6391Code": "sq",
+        "primaryLocaleIETFBCP47Tag": "sq-XK",
+        "firstDayOfWeek": "Monday",
+        "weekendStart": "Saturday",
+        "weekendEnd": "Sunday",
+        "measurementSystem": "Metric",
+        "activeLegalTenderCurrencies": [
+          { "isoAlphaCode": "EUR", "fromDate": "2002-01-01" }
+        ],
+        "territoryISO31661Alpha2Codes": [],
+        "spokenLanguages": [
+          {
+            "languageCode": "sq",
+            "populationPercent": 92.0,
+            "officialStatus": "official",
+            "writingPercent": null
+          },
+          {
+            "languageCode": "sr",
+            "populationPercent": 5.0,
+            "officialStatus": "official",
+            "writingPercent": null
+          },
+          {
+            "languageCode": "bs",
+            "populationPercent": 1.7,
+            "officialStatus": "official_minority",
+            "writingPercent": null
+          },
+          {
+            "languageCode": "tr",
+            "populationPercent": 1.0,
+            "officialStatus": "official_minority",
+            "writingPercent": null
+          }
+        ]
+      }
+    }
+  ],
+  "overrides": [
+    {
+      "id": "AR",
+      "addedAt": "2026-05-23",
+      "reason": "Argentina uses USD as de-facto secondary currency widely accepted at retail; CLDR's activeLegalTenderCurrencies (ARS only) is upstream-correct since USD is not legal tender, but downstream consumers need USD acceptance flagged for FX / checkout / payment-method-selection flows.",
+      "fields": {
+        "widelyAcceptedCurrencies": [
+          { "isoAlphaCode": "USD", "fromDate": null }
+        ]
+      }
+    },
+    {
+      "id": "CH",
+      "addedAt": "2026-05-23",
+      "reason": "Switzerland accepts EUR widely at retail and tourism venues alongside CHF; CHF remains sole legal tender so upstream Tier 1 is correct, but cross-border commerce and tourism justify flagging EUR acceptance for downstream consumers.",
+      "fields": {
+        "widelyAcceptedCurrencies": [
+          { "isoAlphaCode": "EUR", "fromDate": null }
+        ]
+      }
+    },
+    {
+      "id": "LB",
+      "addedAt": "2026-05-23",
+      "reason": "Lebanon is de-facto dual-currency (LBP + USD) due to the ongoing currency crisis since 2019; USD is widely accepted at retail and increasingly required for many transactions, despite LBP being sole legal tender per upstream Tier 1.",
+      "fields": {
+        "widelyAcceptedCurrencies": [
+          { "isoAlphaCode": "USD", "fromDate": null }
+        ]
+      }
+    },
+    {
+      "id": "HK",
+      "addedAt": "2026-05-23",
+      "reason": "Hong Kong widely accepts CNY alongside HKD due to mainland China cross-border commerce and tourism volumes; CNY is not legal tender (HKD is sole legal tender) so flagging via WidelyAccepted is the correct modeling.",
+      "fields": {
+        "widelyAcceptedCurrencies": [
+          { "isoAlphaCode": "CNY", "fromDate": null }
+        ]
+      }
+    },
+    {
+      "id": "KH",
+      "addedAt": "2026-05-23",
+      "reason": "Cambodia is de-facto dual-currency (KHR + USD) with USD widely accepted at retail and frequently the preferred currency for larger transactions, despite KHR being sole legal tender per upstream Tier 1.",
+      "fields": {
+        "widelyAcceptedCurrencies": [
+          { "isoAlphaCode": "USD", "fromDate": null }
+        ]
+      }
+    }
+  ],
+  "removals": []
+}

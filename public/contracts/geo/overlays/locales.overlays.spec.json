@@ -1,0 +1,28 @@
+{
+  "$generated": false,
+  "$source": "manual-overlay",
+  "$schema": "./locales.overlays.schema.json",
+  "$note": "Trackable manual patches to the Tier 1 locales catalog. Applied at Tier 2 build time AFTER loading Tier 1 src-data and BEFORE cross-catalog M:M backfill. Each entry carries a `reason` + `addedAt` so the policy decision is audit-trail visible without git-archaeology. Use `pnpm geo:overlays` to list active patches with their reasons. See ./README.md for the pattern + when to add an overlay vs fix upstream.",
+  "catalogVersion": "0.1.0",
+  "lastEditedAt": "2026-05-26",
+  "additions": [
+    {
+      "id": "fr-TF",
+      "addedAt": "2026-05-26",
+      "addedBy": "orchestrator",
+      "reason": "CLDR availableLocales does not ship fr-TF; French Southern Territories has French as administrative primary locale; added via overlay to support country.primaryLocaleIETFBCP47Tag = 'fr-TF' resolution. Mirrors fr-WF / fr-PM (other French minor-territory locale entries CLDR DOES ship). Field values derived from fr-WF (closest peer): same separators + DMY date pattern that French-region locales canonically share.",
+      "data": {
+        "ietfBcp47Tag": "fr-TF",
+        "languageSubtag": "fr",
+        "regionSubtag": "TF",
+        "displayName": "French (French Southern Territories)",
+        "endonymDisplayName": "français (Terres australes françaises)",
+        "decimalSeparator": ",",
+        "thousandsSeparator": " ",
+        "dateFormatPattern": "DMY"
+      }
+    }
+  ],
+  "overrides": [],
+  "removals": []
+}

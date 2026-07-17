@@ -1,0 +1,174 @@
+#nullable enable
+DcsvIo.D2.Auth.Abstractions.ActionSensitivity
+DcsvIo.D2.Auth.Abstractions.ActionSensitivity.Critical = 2 -> DcsvIo.D2.Auth.Abstractions.ActionSensitivity
+DcsvIo.D2.Auth.Abstractions.ActionSensitivity.Routine = 0 -> DcsvIo.D2.Auth.Abstractions.ActionSensitivity
+DcsvIo.D2.Auth.Abstractions.ActionSensitivity.Sensitive = 1 -> DcsvIo.D2.Auth.Abstractions.ActionSensitivity
+DcsvIo.D2.Auth.Abstractions.ActorEntry
+DcsvIo.D2.Auth.Abstractions.ActorEntry.<Clone>$() -> DcsvIo.D2.Auth.Abstractions.ActorEntry!
+DcsvIo.D2.Auth.Abstractions.ActorEntry.Act.get -> DcsvIo.D2.Auth.Abstractions.ActorEntry?
+DcsvIo.D2.Auth.Abstractions.ActorEntry.Act.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.ActorEntry(DcsvIo.D2.Auth.Abstractions.ActorKind Kind, string! Subject, string? ClientId = null, DcsvIo.D2.Auth.Abstractions.ImpersonationKind? ImpersonationKind = null, System.Guid? SessionId = null, System.Guid? OrgId = null, string? OrgName = null, DcsvIo.D2.Auth.Abstractions.OrgType? OrgType = null, DcsvIo.D2.Auth.Abstractions.Role? OrgRole = null, DcsvIo.D2.Auth.Abstractions.ActorEntry? Act = null) -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.ClientId.get -> string?
+DcsvIo.D2.Auth.Abstractions.ActorEntry.ClientId.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.Deconstruct(out DcsvIo.D2.Auth.Abstractions.ActorKind Kind, out string! Subject, out string? ClientId, out DcsvIo.D2.Auth.Abstractions.ImpersonationKind? ImpersonationKind, out System.Guid? SessionId, out System.Guid? OrgId, out string? OrgName, out DcsvIo.D2.Auth.Abstractions.OrgType? OrgType, out DcsvIo.D2.Auth.Abstractions.Role? OrgRole, out DcsvIo.D2.Auth.Abstractions.ActorEntry? Act) -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.Equals(DcsvIo.D2.Auth.Abstractions.ActorEntry? other) -> bool
+DcsvIo.D2.Auth.Abstractions.ActorEntry.ImpersonationKind.get -> DcsvIo.D2.Auth.Abstractions.ImpersonationKind?
+DcsvIo.D2.Auth.Abstractions.ActorEntry.ImpersonationKind.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.Kind.get -> DcsvIo.D2.Auth.Abstractions.ActorKind
+DcsvIo.D2.Auth.Abstractions.ActorEntry.Kind.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.OrgId.get -> System.Guid?
+DcsvIo.D2.Auth.Abstractions.ActorEntry.OrgId.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.OrgName.get -> string?
+DcsvIo.D2.Auth.Abstractions.ActorEntry.OrgName.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.OrgRole.get -> DcsvIo.D2.Auth.Abstractions.Role?
+DcsvIo.D2.Auth.Abstractions.ActorEntry.OrgRole.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.OrgType.get -> DcsvIo.D2.Auth.Abstractions.OrgType?
+DcsvIo.D2.Auth.Abstractions.ActorEntry.OrgType.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.SessionId.get -> System.Guid?
+DcsvIo.D2.Auth.Abstractions.ActorEntry.SessionId.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorEntry.Subject.get -> string!
+DcsvIo.D2.Auth.Abstractions.ActorEntry.Subject.init -> void
+DcsvIo.D2.Auth.Abstractions.ActorKind
+DcsvIo.D2.Auth.Abstractions.ActorKind.Impersonation = 1 -> DcsvIo.D2.Auth.Abstractions.ActorKind
+DcsvIo.D2.Auth.Abstractions.ActorKind.Service = 0 -> DcsvIo.D2.Auth.Abstractions.ActorKind
+DcsvIo.D2.Auth.Abstractions.Audiences
+DcsvIo.D2.Auth.Abstractions.CallPathEntry
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.<Clone>$() -> DcsvIo.D2.Auth.Abstractions.CallPathEntry!
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.CallPathEntry(string! Id, DcsvIo.D2.Auth.Abstractions.CallPathKind Kind, System.DateTimeOffset Timestamp) -> void
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.Deconstruct(out string! Id, out DcsvIo.D2.Auth.Abstractions.CallPathKind Kind, out System.DateTimeOffset Timestamp) -> void
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.Equals(DcsvIo.D2.Auth.Abstractions.CallPathEntry? other) -> bool
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.Id.get -> string!
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.Id.init -> void
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.Kind.get -> DcsvIo.D2.Auth.Abstractions.CallPathKind
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.Kind.init -> void
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.Timestamp.get -> System.DateTimeOffset
+DcsvIo.D2.Auth.Abstractions.CallPathEntry.Timestamp.init -> void
+DcsvIo.D2.Auth.Abstractions.CallPathKind
+DcsvIo.D2.Auth.Abstractions.CallPathKind.Edge = 0 -> DcsvIo.D2.Auth.Abstractions.CallPathKind
+DcsvIo.D2.Auth.Abstractions.CallPathKind.ModuleHop = 2 -> DcsvIo.D2.Auth.Abstractions.CallPathKind
+DcsvIo.D2.Auth.Abstractions.CallPathKind.System = 3 -> DcsvIo.D2.Auth.Abstractions.CallPathKind
+DcsvIo.D2.Auth.Abstractions.CallPathKind.WorkloadHop = 1 -> DcsvIo.D2.Auth.Abstractions.CallPathKind
+DcsvIo.D2.Auth.Abstractions.D2WorkloadIdentityOptions
+DcsvIo.D2.Auth.Abstractions.D2WorkloadIdentityOptions.D2WorkloadIdentityOptions() -> void
+DcsvIo.D2.Auth.Abstractions.D2WorkloadIdentityOptions.ServiceId.get -> string!
+DcsvIo.D2.Auth.Abstractions.D2WorkloadIdentityOptions.ServiceId.set -> void
+DcsvIo.D2.Auth.Abstractions.ForwardedJwt
+DcsvIo.D2.Auth.Abstractions.ForwardedJwt.Equals(DcsvIo.D2.Auth.Abstractions.ForwardedJwt other) -> bool
+DcsvIo.D2.Auth.Abstractions.ForwardedJwt.ForwardedJwt() -> void
+DcsvIo.D2.Auth.Abstractions.ForwardedJwt.HasValue.get -> bool
+DcsvIo.D2.Auth.Abstractions.ForwardedJwt.RevealForForwarding() -> string!
+DcsvIo.D2.Auth.Abstractions.Http.D2HttpContextItems
+DcsvIo.D2.Auth.Abstractions.IAmbientRequestScopeAccessor
+DcsvIo.D2.Auth.Abstractions.IAmbientRequestScopeAccessor.Current.get -> System.IServiceProvider?
+DcsvIo.D2.Auth.Abstractions.IForwardedJwtAccessor
+DcsvIo.D2.Auth.Abstractions.IForwardedJwtAccessor.Capture(string! rawBearer) -> void
+DcsvIo.D2.Auth.Abstractions.IForwardedJwtAccessor.Current.get -> DcsvIo.D2.Auth.Abstractions.ForwardedJwt?
+DcsvIo.D2.Auth.Abstractions.ImpersonationKind
+DcsvIo.D2.Auth.Abstractions.ImpersonationKind.Consent = 0 -> DcsvIo.D2.Auth.Abstractions.ImpersonationKind
+DcsvIo.D2.Auth.Abstractions.ImpersonationKind.Force = 1 -> DcsvIo.D2.Auth.Abstractions.ImpersonationKind
+DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider
+DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider.GetKeysAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot!>!>
+DcsvIo.D2.Auth.Abstractions.Jwks.IJwksProvider.RefreshAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.<Clone>$() -> DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot!
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.Equals(DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot? other) -> bool
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.FetchedAt.get -> System.DateTimeOffset
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.FetchedAt.init -> void
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.JwksKeySetSnapshot() -> void
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.Keys.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Microsoft.IdentityModel.Tokens.SecurityKey!>!
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.Keys.init -> void
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.SourceUri.get -> System.Uri!
+DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.SourceUri.init -> void
+DcsvIo.D2.Auth.Abstractions.JwtClaimTypes
+DcsvIo.D2.Auth.Abstractions.MutableForwardedJwtAccessor
+DcsvIo.D2.Auth.Abstractions.MutableForwardedJwtAccessor.Capture(string! rawBearer) -> void
+DcsvIo.D2.Auth.Abstractions.MutableForwardedJwtAccessor.Current.get -> DcsvIo.D2.Auth.Abstractions.ForwardedJwt?
+DcsvIo.D2.Auth.Abstractions.MutableForwardedJwtAccessor.MutableForwardedJwtAccessor() -> void
+DcsvIo.D2.Auth.Abstractions.OrgType
+DcsvIo.D2.Auth.Abstractions.OrgType.Admin = 0 -> DcsvIo.D2.Auth.Abstractions.OrgType
+DcsvIo.D2.Auth.Abstractions.OrgType.Affiliate = 4 -> DcsvIo.D2.Auth.Abstractions.OrgType
+DcsvIo.D2.Auth.Abstractions.OrgType.Customer = 2 -> DcsvIo.D2.Auth.Abstractions.OrgType
+DcsvIo.D2.Auth.Abstractions.OrgType.Support = 1 -> DcsvIo.D2.Auth.Abstractions.OrgType
+DcsvIo.D2.Auth.Abstractions.OrgType.ThirdParty = 3 -> DcsvIo.D2.Auth.Abstractions.OrgType
+DcsvIo.D2.Auth.Abstractions.RequestOrigin
+DcsvIo.D2.Auth.Abstractions.RequestOrigin.CrossProcessHop = 2 -> DcsvIo.D2.Auth.Abstractions.RequestOrigin
+DcsvIo.D2.Auth.Abstractions.RequestOrigin.EdgeInbound = 1 -> DcsvIo.D2.Auth.Abstractions.RequestOrigin
+DcsvIo.D2.Auth.Abstractions.RequestOrigin.InProcessModule = 3 -> DcsvIo.D2.Auth.Abstractions.RequestOrigin
+DcsvIo.D2.Auth.Abstractions.RequestOrigin.System = 4 -> DcsvIo.D2.Auth.Abstractions.RequestOrigin
+DcsvIo.D2.Auth.Abstractions.RequestOrigin.Unestablished = 0 -> DcsvIo.D2.Auth.Abstractions.RequestOrigin
+DcsvIo.D2.Auth.Abstractions.Role
+DcsvIo.D2.Auth.Abstractions.Role.Agent = 1 -> DcsvIo.D2.Auth.Abstractions.Role
+DcsvIo.D2.Auth.Abstractions.Role.Auditor = 0 -> DcsvIo.D2.Auth.Abstractions.Role
+DcsvIo.D2.Auth.Abstractions.Role.Officer = 2 -> DcsvIo.D2.Auth.Abstractions.Role
+DcsvIo.D2.Auth.Abstractions.Role.Owner = 3 -> DcsvIo.D2.Auth.Abstractions.Role
+DcsvIo.D2.Auth.Abstractions.ScopeMatch
+DcsvIo.D2.Auth.Abstractions.ScopeMatch.All = 1 -> DcsvIo.D2.Auth.Abstractions.ScopeMatch
+DcsvIo.D2.Auth.Abstractions.ScopeMatch.Any = 0 -> DcsvIo.D2.Auth.Abstractions.ScopeMatch
+DcsvIo.D2.Auth.Abstractions.Scopes
+DcsvIo.D2.Auth.Abstractions.Scopes.Anon
+DcsvIo.D2.Auth.Abstractions.Scopes.Anon.Public
+DcsvIo.D2.Auth.Abstractions.Scopes.Self
+DcsvIo.D2.Auth.Abstractions.Sessions.ISessionLivenessTracker
+DcsvIo.D2.Auth.Abstractions.Sessions.ISessionLivenessTracker.IsAliveAsync(System.Guid sessionId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Auth.Abstractions.WellKnownAudiences
+const DcsvIo.D2.Auth.Abstractions.ForwardedJwt.REDACTION_PLACEHOLDER = "[REDACTED: ForwardedJwt]" -> string!
+const DcsvIo.D2.Auth.Abstractions.Http.D2HttpContextItems.REQUEST_CONTEXT = "D2.RequestContext" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.ACT = "act" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.ACT_KIND = "d2_kind" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.ACT_SESSION_ID = "d2_session_id" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.AMR = "amr" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.AUD = "aud" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.AZP = "azp" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.CLIENT_ID = "client_id" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.EXP = "exp" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.FINGERPRINT = "d2_fp" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.IAT = "iat" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.ORG_ID = "d2_org_id" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.ORG_NAME = "d2_org_name" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.ORG_ROLE = "d2_org_role" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.ORG_TYPE = "d2_org_type" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.SCOPE = "scope" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.SESSION_ID = "d2_session_id" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.STEP_UP_AT = "d2_step_up_at" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.SUB = "sub" -> string!
+const DcsvIo.D2.Auth.Abstractions.JwtClaimTypes.USERNAME = "d2_username" -> string!
+const DcsvIo.D2.Auth.Abstractions.Scopes.Anon.Public.Health = "anon.public.health" -> string!
+const DcsvIo.D2.Auth.Abstractions.Scopes.Self.Read = "self.read" -> string!
+const DcsvIo.D2.Auth.Abstractions.Scopes.Self.Write = "self.write" -> string!
+const DcsvIo.D2.Auth.Abstractions.WellKnownAudiences.D2_EDGE_SELF_AUDIENCE = "d2-edge" -> string!
+const DcsvIo.D2.Auth.Abstractions.WellKnownAudiences.D2_INTERNAL_AUDIENCE = "d2.internal" -> string!
+override DcsvIo.D2.Auth.Abstractions.ActorEntry.Equals(object? obj) -> bool
+override DcsvIo.D2.Auth.Abstractions.ActorEntry.GetHashCode() -> int
+override DcsvIo.D2.Auth.Abstractions.ActorEntry.ToString() -> string!
+override DcsvIo.D2.Auth.Abstractions.CallPathEntry.Equals(object? obj) -> bool
+override DcsvIo.D2.Auth.Abstractions.CallPathEntry.GetHashCode() -> int
+override DcsvIo.D2.Auth.Abstractions.CallPathEntry.ToString() -> string!
+override DcsvIo.D2.Auth.Abstractions.ForwardedJwt.Equals(object? obj) -> bool
+override DcsvIo.D2.Auth.Abstractions.ForwardedJwt.GetHashCode() -> int
+override DcsvIo.D2.Auth.Abstractions.ForwardedJwt.ToString() -> string!
+override DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.Equals(object? obj) -> bool
+override DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.GetHashCode() -> int
+override DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.ToString() -> string!
+static DcsvIo.D2.Auth.Abstractions.ActorEntry.operator !=(DcsvIo.D2.Auth.Abstractions.ActorEntry? left, DcsvIo.D2.Auth.Abstractions.ActorEntry? right) -> bool
+static DcsvIo.D2.Auth.Abstractions.ActorEntry.operator ==(DcsvIo.D2.Auth.Abstractions.ActorEntry? left, DcsvIo.D2.Auth.Abstractions.ActorEntry? right) -> bool
+static DcsvIo.D2.Auth.Abstractions.Audiences.AllUrls.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static DcsvIo.D2.Auth.Abstractions.Audiences.ByName.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static DcsvIo.D2.Auth.Abstractions.Audiences.IsKnown(string! audience) -> bool
+static DcsvIo.D2.Auth.Abstractions.Audiences.Resolve(string! name) -> string?
+static DcsvIo.D2.Auth.Abstractions.Audiences.ResolveByUrl(string! url) -> string?
+static DcsvIo.D2.Auth.Abstractions.CallPathEntry.operator !=(DcsvIo.D2.Auth.Abstractions.CallPathEntry? left, DcsvIo.D2.Auth.Abstractions.CallPathEntry? right) -> bool
+static DcsvIo.D2.Auth.Abstractions.CallPathEntry.operator ==(DcsvIo.D2.Auth.Abstractions.CallPathEntry? left, DcsvIo.D2.Auth.Abstractions.CallPathEntry? right) -> bool
+static DcsvIo.D2.Auth.Abstractions.ForwardedJwt.Create(string? rawBearer) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Auth.Abstractions.ForwardedJwt>!
+static DcsvIo.D2.Auth.Abstractions.ForwardedJwt.operator !=(DcsvIo.D2.Auth.Abstractions.ForwardedJwt left, DcsvIo.D2.Auth.Abstractions.ForwardedJwt right) -> bool
+static DcsvIo.D2.Auth.Abstractions.ForwardedJwt.operator ==(DcsvIo.D2.Auth.Abstractions.ForwardedJwt left, DcsvIo.D2.Auth.Abstractions.ForwardedJwt right) -> bool
+static DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.operator !=(DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot? left, DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot? right) -> bool
+static DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot.operator ==(DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot? left, DcsvIo.D2.Auth.Abstractions.Jwks.JwksKeySetSnapshot? right) -> bool
+static DcsvIo.D2.Auth.Abstractions.Scopes.AllAnonymousScopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static DcsvIo.D2.Auth.Abstractions.Scopes.AllImpersonationBlockedScopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static DcsvIo.D2.Auth.Abstractions.Scopes.AllScopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static DcsvIo.D2.Auth.Abstractions.Scopes.GetActionSensitivity(string! scope) -> DcsvIo.D2.Auth.Abstractions.ActionSensitivity
+static DcsvIo.D2.Auth.Abstractions.Scopes.GrantedScopes.get -> System.Collections.Generic.IReadOnlyDictionary<(DcsvIo.D2.Auth.Abstractions.OrgType, DcsvIo.D2.Auth.Abstractions.Role), System.Collections.Generic.IReadOnlySet<string!>!>!
+static DcsvIo.D2.Auth.Abstractions.Scopes.IsAnonymous(string! scope) -> bool
+static DcsvIo.D2.Auth.Abstractions.Scopes.IsGrantedTo(string! scope, DcsvIo.D2.Auth.Abstractions.OrgType orgType, DcsvIo.D2.Auth.Abstractions.Role role) -> bool
+static DcsvIo.D2.Auth.Abstractions.Scopes.IsImpersonationBlocked(string! scope) -> bool
+static DcsvIo.D2.Auth.Abstractions.Scopes.IsKnown(string! scope) -> bool

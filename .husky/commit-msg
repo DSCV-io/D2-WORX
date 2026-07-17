@@ -1,17 +1,100 @@
 #!/usr/bin/env sh
-# Reject commits whose message contains an AI-tool Co-Authored-By trailer.
-# See CLAUDE.md §6 (Git): "No `Co-Authored-By` lines in commit messages".
-# Pattern matches Claude / Anthropic / GPT / Copilot / Cursor / Codeium.
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
+# Validates commit messages against two rules, in order:
+#
+#   1. AI-tool Co-Authored-By trailer block.
+#      Pattern matches Claude / Anthropic / GPT / Copilot / Cursor / Codeium.
+#
+#   2. Conventional-commit type-allowlist enforcement.
+#      Allowed types: feat | fix | perf | chore | refactor | docs |
+#                     test | ci | build | style
+#      Expected format: type(scope)?!?: subject
+#      The "!" shorthand and WIRE-BREAKING/BREAKING CHANGE footers are both
+#      supported (the hook validates the subject format only; footers are
+#      parsed by the release runner).
+#
+# LOCKSTEP: the allowed-type regex below is mirrored in
+#   public/tools/commit-lint/tests/commit-msg.test.ts
+# Both must be updated together when the type set changes.
+#
+# Skip cases (not subject to type enforcement):
+#   - Merge commits   : subject starts with "Merge "
+#   - Revert commits  : subject starts with 'Revert "'
+#   - Fixup/squash    : subject starts with "fixup! " / "squash! " / "amend! "
 
 msg_file="$1"
+
+# ---------------------------------------------------------------------------
+# Rule 1 â€” AI-tool Co-Authored-By trailer
+# ---------------------------------------------------------------------------
 
 # grep -E returns 0 (success) when ANY matching line is found.
 if grep -qiE '^Co-Authored-By:.*(claude|anthropic|gpt|openai|copilot|cursor|codeium|aider)' "$msg_file"; then
   echo ""
-  echo "  ✖  Commit rejected: AI-tool Co-Authored-By trailer detected."
+  echo "  âœ–  Commit rejected: AI-tool Co-Authored-By trailer detected."
   echo ""
-  echo "     CLAUDE.md §6 forbids \`Co-Authored-By\` lines in commit messages."
+  echo "     This project prohibits AI-tool Co-Authored-By trailers in commit messages."
   echo "     Edit the message and remove the trailer (and the blank line above it)."
+  echo ""
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Rule 2 â€” Conventional-commit type enforcement
+# ---------------------------------------------------------------------------
+
+# Read the subject line (first non-empty, non-comment line).
+subject=$(grep -m1 -v '^#' "$msg_file" | head -1)
+
+# Skip merge / revert / fixup / squash / amend auto-generated subjects.
+case "$subject" in
+  Merge\ *|Revert\ \"*|fixup\!\ *|squash\!\ *|amend\!\ *)
+    exit 0
+    ;;
+esac
+
+# Validate against the conventional-commit format with the allowed type set.
+# The description after ': ' must begin with a non-whitespace character.
+# LOCKSTEP with public/tools/commit-lint/tests/commit-msg.test.ts (see header comment).
+_CC_PATTERN='^(feat|fix|perf|chore|refactor|docs|test|ci|build|style)(\([^)]+\))?!?: [^ ].*'
+
+if ! echo "$subject" | grep -qE "$_CC_PATTERN"; then
+  echo ""
+  echo "  âœ–  Commit rejected: subject does not follow the Conventional Commits format."
+  echo ""
+  echo "     Expected:  type(scope)?!?: subject"
+  echo "     Example:   feat(geo): add country resolver"
+  echo "     Example:   fix!: correct null-ref in auth handler"
+  echo ""
+  echo "     Allowed types:"
+  echo "       feat      new feature           â†’ MINOR bump"
+  echo "       fix       bug fix               â†’ PATCH bump"
+  echo "       perf      performance change    â†’ PATCH bump"
+  echo "       chore     maintenance / tooling â†’ no bump"
+  echo "       refactor  code restructure      â†’ no bump"
+  echo "       docs      documentation         â†’ no bump"
+  echo "       test      test-only change      â†’ no bump"
+  echo "       ci        CI / pipeline change  â†’ no bump"
+  echo "       build     build system change   â†’ no bump"
+  echo "       style     formatting / style    â†’ no bump"
+  echo ""
+  echo "     For breaking changes, add '!' after the type/scope OR include a footer:"
+  echo "       WIRE-BREAKING: <description>"
+  echo "       BREAKING CHANGE: <description>"
+  echo ""
+  exit 1
+fi
+
+# Optional subject-length guardrail (generous â€” catches runaway one-liners only).
+_SUBJ_LEN=$(echo "$subject" | wc -c)
+if [ "$_SUBJ_LEN" -gt 101 ]; then
+  echo ""
+  echo "  âœ–  Commit rejected: subject line exceeds 100 characters ($_SUBJ_LEN chars)."
+  echo ""
+  echo "     Keep the subject concise; move detail into the body."
   echo ""
   exit 1
 fi

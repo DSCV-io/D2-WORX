@@ -1,0 +1,161 @@
+// -----------------------------------------------------------------------
+// <copyright file="ProtoRoundTripTests.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
+
+using DcsvIo.D2.Result;
+using DcsvIo.D2.Result.Grpc;
+using global::D2.Services.Protos.Common.V1;
+using global::D2.Services.Protos.SignFixtures.V2Alpha;
+using Google.Protobuf;
+using DtoSignFixtureOutput = DcsvIo.D2.Private.Edge.Tests.TypeSpecDto.Generated.SignFixtureOutput;
+
+/// <summary>
+/// Validates that the committed proto fixture compiles correctly and the
+/// Grpc.Tools-generated types satisfy the expected structural contract:
+/// the envelope shape (<see cref="SignFixtureResponse"/> carries
+/// <see cref="D2ResultProto"/> + <see cref="SignFixtureOutput"/> data), bytes
+/// round-trip fidelity, and the fidelity proof that a
+/// <c>D2Result.ValidationFailed</c> survives the envelope mapper intact.
+/// </summary>
+public sealed class ProtoRoundTripTests
+{
+    [Fact]
+    public void SignFixtureRequest_HasKidAndPayloadFields_RoundTrips()
+    {
+        // Grpc.Tools generates a C# class for each proto message.
+        // Verify that SignFixtureRequest carries the kid (string) and payload (ByteString) fields.
+        var kid = "test-kid-2026";
+        var payload = new byte[] { 1, 2, 3, 4 };
+
+        var proto = new SignFixtureRequest
+        {
+            Kid = kid,
+            Payload = ByteString.CopyFrom(payload),
+        };
+
+        proto.Kid.Should().Be(kid);
+        proto.Payload.ToByteArray().Should().Equal(payload);
+    }
+
+    [Fact]
+    public void SignFixtureResponse_HasResultAndDataFields()
+    {
+        // Verify that SignFixtureResponse carries the D2ResultProto envelope (field 1)
+        // and the SignFixtureOutput data message (field 2) — the new envelope shape.
+        const string sig = "base64sig==";
+
+        var response = new SignFixtureResponse
+        {
+            Result = new D2ResultProto { Success = true, StatusCode = 200 },
+            Data = new SignFixtureOutput { Signature = sig },
+        };
+
+        response.Result.Success.Should().BeTrue();
+        response.Result.StatusCode.Should().Be(200);
+        response.Data.Signature.Should().Be(sig);
+    }
+
+    [Fact]
+    public void SignFixtureRequest_EmptyPayload_RoundTrips()
+    {
+        var proto = new SignFixtureRequest
+        {
+            Kid = "k",
+            Payload = ByteString.Empty,
+        };
+
+        proto.Payload.IsEmpty.Should().BeTrue();
+        proto.Payload.ToByteArray().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SignFixtureRequest_DefaultKid_IsEmptyString()
+    {
+        // proto3 scalars default to zero-value: string = "".
+        var proto = new SignFixtureRequest();
+
+        proto.Kid.Should().Be(string.Empty);
+    }
+
+    [Fact]
+    public void SignFixtureRequest_Serialize_Deserialize_IsIdentity()
+    {
+        // Proto serialization round-trip: confirm Grpc.Tools types support it.
+        var original = new SignFixtureRequest
+        {
+            Kid = "round-trip-kid",
+            Payload = ByteString.CopyFrom(0xDE, 0xAD, 0xBE, 0xEF),
+        };
+
+        var bytes = original.ToByteArray();
+        var restored = SignFixtureRequest.Parser.ParseFrom(bytes);
+
+        restored.Kid.Should().Be(original.Kid);
+        restored.Payload.Should().Equal(original.Payload);
+    }
+
+    /// <summary>
+    /// Fidelity round-trip: a <c>D2Result.ValidationFailed()</c> survives
+    /// <see cref="ProtoExtensions.ToProto"/> → proto bytes → parse →
+    /// <see cref="ProtoExtensions.ToD2Result{TData}"/> intact.
+    /// Proves the envelope mapper preserves all fields (Success/StatusCode)
+    /// — the cornerstone of the §0.5 invariant for the gRPC transport.
+    /// </summary>
+    [Fact]
+    public void ValidationFailed_D2Result_ToProtoAndBack_PreservesAllFields()
+    {
+        // Arrange: a ValidationFailed D2Result (no data on failure).
+        var original = D2Result<DtoSignFixtureOutput?>.ValidationFailed();
+
+        // Act: D2Result → D2ResultProto → embed in SignFixtureResponse → serialize → parse.
+        var resultProto = original.ToProto();
+        var response = new SignFixtureResponse { Result = resultProto };
+        var bytes = response.ToByteArray();
+        var parsed = SignFixtureResponse.Parser.ParseFrom(bytes);
+
+        // Re-materialize: D2ResultProto → D2Result<DtoSignFixtureOutput?> (no data on failure).
+        var reconstructed = parsed.Result.ToD2Result<DtoSignFixtureOutput?>(data: null);
+
+        // Assert: all fields round-tripped faithfully.
+        reconstructed.Success.Should().BeFalse();
+        reconstructed.StatusCode.Should().Be(original.StatusCode);
+
+        // The data field is absent on failure — reconstructed.Data remains null.
+        reconstructed.Data.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Fidelity round-trip: a successful <c>D2Result.Ok</c> with payload survives
+    /// the envelope mapper intact — Success, StatusCode, and data all preserved.
+    /// </summary>
+    [Fact]
+    public void Ok_D2Result_ToProtoAndBack_PreservesSuccessAndData()
+    {
+        // Arrange: Ok D2Result with a DtoSignFixtureOutput payload.
+        const string sig = "round-trip-sig==";
+        var original = D2Result<DtoSignFixtureOutput?>.Ok(new DtoSignFixtureOutput(sig));
+
+        // Act: the D2Result → D2ResultProto round-trip for the envelope portion.
+        var resultProto = original.ToProto();
+        var response = new SignFixtureResponse
+        {
+            Result = resultProto,
+            Data = new SignFixtureOutput { Signature = sig }, // as the mapper would populate
+        };
+        var bytes = response.ToByteArray();
+        var parsed = SignFixtureResponse.Parser.ParseFrom(bytes);
+
+        // Re-materialize envelope.
+        var dtoData = new DtoSignFixtureOutput(parsed.Data.Signature);
+        var reconstructed = parsed.Result.ToD2Result(dtoData);
+
+        // Assert: success + status + payload preserved.
+        reconstructed.Success.Should().BeTrue();
+        reconstructed.StatusCode.Should().Be(original.StatusCode);
+        reconstructed.Data!.Signature.Should().Be(sig);
+    }
+}

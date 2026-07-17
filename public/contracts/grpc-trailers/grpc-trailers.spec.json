@@ -1,0 +1,20 @@
+{
+  "$schema": "./schema.json",
+  "trailers": [
+    {
+      "constName": "ERROR_CODE",
+      "value": "d2_error_code",
+      "doc": "Trailer key carrying the machine-readable d2_error_code constant. Same wire value as the HTTP ProblemDetails extension key, so operators correlating a gRPC failure with an HTTP failure see one identifier across both transports."
+    },
+    {
+      "constName": "MESSAGES",
+      "value": "d2_messages",
+      "doc": "Trailer key carrying the JSON-serialized D2Result.Messages array (TKMessage objects: {key, params?}). Wire-format-compatible with the HTTP ProblemDetails d2_messages extension."
+    },
+    {
+      "constName": "TRACE_ID",
+      "value": "traceId",
+      "doc": "Trailer key carrying the W3C trace id (lower-hex, 32 chars) when an Activity is current. OMITTED when no Activity is present, mirroring the HTTP middleware's omission policy. NOTE: camelCase 'traceId' value matches the HTTP ProblemDetails extension key 'traceId' — single mental model across transports. gRPC HTTP/2 trailer names are case-insensitive per the HTTP/2 spec; senders may pick any casing, and the spec pins camelCase so consumers comparing trailer values against the HTTP ProblemDetails extension key share one string literal across transports."
+    }
+  ]
+}

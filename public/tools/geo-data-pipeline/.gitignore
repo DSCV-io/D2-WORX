@@ -1,0 +1,15 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+# -----------------------------------------------------------------------
+
+node_modules/
+dist/
+.cache/
+logs/
+*.log
+
+# Operator-local upstream-rejection memory written by `pnpm geo:approve`.
+# Canonical path `contracts/geo/.upstream-rejections.json` is ignored at the
+# repo-root .gitignore. This entry is a defensive sibling in case the file
+# is ever generated relative to this tool's cwd.
+.upstream-rejections.json

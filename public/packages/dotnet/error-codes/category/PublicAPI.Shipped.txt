@@ -1,0 +1,18 @@
+#nullable enable
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory.Conflict = 0 -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory.InfrastructureUnavailable = 1 -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory.InternalError = 2 -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory.NotFound = 3 -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory.PartialSuccess = 4 -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory.PayloadTooLarge = 5 -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory.PolicyDenied = 6 -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory.RateLimited = 7 -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategory.ValidationFailure = 8 -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+DcsvIo.D2.ErrorCodes.Category.ErrorCategoryJsonConverter
+DcsvIo.D2.ErrorCodes.Category.ErrorCategoryJsonConverter.ErrorCategoryJsonConverter() -> void
+DcsvIo.D2.ErrorCodes.Category.ErrorCategoryWire
+override DcsvIo.D2.ErrorCodes.Category.ErrorCategoryJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory
+override DcsvIo.D2.ErrorCodes.Category.ErrorCategoryJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, DcsvIo.D2.ErrorCodes.Category.ErrorCategory value, System.Text.Json.JsonSerializerOptions! options) -> void
+static DcsvIo.D2.ErrorCodes.Category.ErrorCategoryWire.ToWire(this DcsvIo.D2.ErrorCodes.Category.ErrorCategory category) -> string!
+static DcsvIo.D2.ErrorCodes.Category.ErrorCategoryWire.TryFromWire(string! wire, out DcsvIo.D2.ErrorCodes.Category.ErrorCategory category) -> bool

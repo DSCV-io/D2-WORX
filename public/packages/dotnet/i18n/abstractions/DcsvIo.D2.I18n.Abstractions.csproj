@@ -1,0 +1,94 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.I18n</RootNamespace>
+
+    <!-- Emit the generator's output (TkMessageWireShape.g.cs) to <project-dir>/Generated/.
+         The directory is tracked in git so PR reviewers see codegen diffs
+         without a local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <!--
+    Zero non-BCL deps by design. This project is the domain-safe slice
+    that domain layers can reference without dragging in DI / Configuration / IO.
+
+    The runtime DcsvIo.D2.I18n (Translator + SupportedLocales + AddD2I18n)
+    is a separate sibling project that consumes this and adds the infra.
+
+    The TK constants live in the sibling DcsvIo.D2.I18n.Keys project
+    (../keys/), which hosts the TK source generator and references this
+    assembly for the TKMessage type each constant is an instance of.
+  -->
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.WireShapes.SourceGen reads tk-message.spec.json via
+      AdditionalFiles below and emits TkMessageWireShape.g.cs into this
+      assembly (per-assembly dispatch table in WireShapesGenerator.cs).
+      The emitted KEY / PARAMS constants replace inline string literals
+      in TKMessageJsonConverter so the .NET serializer and the TS-side
+      parser reference byte-equal property names.
+    -->
+    <ProjectReference Include="..\..\source-gen-shared\wire-shapes-source-gen\DcsvIo.D2.WireShapes.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Surface tk-message.spec.json to DcsvIo.D2.WireShapes.SourceGen. The
+      generator dispatches on assembly name (DcsvIo.D2.I18n.Abstractions
+      → TkMessageWireShape.g.cs) and emits a static class carrying the
+      KEY / PARAMS property-name constants.
+    -->
+    <AdditionalFiles Include="$(D2PublicContractsRoot)tk-message\tk-message.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.I18n" />
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+    <!--
+      The TK constants in the sibling DcsvIo.D2.I18n.Keys assembly are
+      TKMessage instances (new("<key>")). TKMessage's constructor is internal,
+      so the generated TK.g.cs reaches it across the assembly boundary only
+      via this grant.
+    -->
+    <InternalsVisibleTo Include="DcsvIo.D2.I18n.Keys" />
+    <InternalsVisibleTo Include="DcsvIo.D2.Private.I18n.Keys.Extensions" />
+    <!--
+      DcsvIo.D2.Result.Grpc reconstructs TKMessage instances from the
+      TKMessageProto wire type (proto deserialization partner). The
+      internal constructor is the correct path — no public Reconstruct
+      shim needed.
+    -->
+    <InternalsVisibleTo Include="DcsvIo.D2.Result.Grpc" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.I18n.Abstractions</PackageId>
+    <Description>Domain-safe i18n slice for D2 — the TKMessage primitive and the ITranslator interface, with zero external dependencies.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

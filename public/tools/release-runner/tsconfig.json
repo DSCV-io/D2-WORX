@@ -1,0 +1,14 @@
+{
+  "extends": "../../packages/typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "tests"],
+  "references": [
+    { "path": "../../packages/typescript/utilities" },
+    { "path": "../contract-gate" }
+  ]
+}

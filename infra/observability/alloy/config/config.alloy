@@ -1,0 +1,435 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
+// Grafana Alloy Configuration for D²-WORX
+// Handles metrics scraping, log collection, and trace forwarding
+//
+// All container names and endpoints are injected as env vars by docker-compose.yml.
+// Use env("VAR") to reference them — values come from .env.local.
+
+logging {
+  level  = "info"
+  format = "json"
+}
+
+livedebugging {
+  enabled = true
+}
+
+/******************************************************************************
+ * METRICS COLLECTION
+ ******************************************************************************/
+
+prometheus.scrape "infrastructure" {
+  targets = [
+    // Docker monitoring (container)
+    {
+      __address__ = env("CADVISOR_NAME") + ":8080",
+      job         = "cadvisor",
+      service     = "cadvisor",
+    },
+
+    // Application services (running in Docker Compose).
+    // All v2 services are .NET — expose /metrics for Prometheus scrape.
+    // SvelteKit BFF (d2-web) uses Pino → stdout, no /metrics endpoint.
+    // Add scrape blocks for d2-edge / d2-files / d2-courier / d2-notifications / d2-audit as each service comes online.
+    {
+      __address__      = env("EDGE_METRICS_ENDPOINT"),
+      job              = "edge",
+      service          = "Edge",
+      __metrics_path__ = "/metrics",
+    },
+
+    // Infrastructure exporters (containers)
+    {
+      __address__ = env("PG_EXPORTER_NAME") + ":9187",
+      job         = "postgresql-exporter",
+      service     = "postgresql",
+    },
+    {
+      __address__ = env("REDIS_EXPORTER_NAME") + ":9121",
+      job         = "redis-exporter",
+      service     = "redis",
+    },
+    {
+      __address__ = env("RABBITMQ_NAME") + ":15692",
+      job         = "rabbitmq",
+      service     = "rabbitmq",
+    },
+
+    // Alloy self-scrape (exposes Faro Web Vitals histograms + internal health).
+    {
+      __address__ = "localhost:12345",
+      job         = "alloy",
+      service     = "alloy",
+    },
+
+    // LGTM stack (containers)
+    {
+      __address__ = env("MIMIR_NAME") + ":9009",
+      job         = "mimir",
+      service     = "mimir",
+    },
+    {
+      __address__ = env("LOKI_NAME") + ":3100",
+      job         = "loki",
+      service     = "loki",
+    },
+    {
+      __address__ = env("TEMPO_NAME") + ":3200",
+      job         = "tempo",
+      service     = "tempo",
+    },
+  ]
+
+  forward_to = [prometheus.relabel.drop_excessive_labels.receiver]
+}
+
+prometheus.relabel "drop_excessive_labels" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+
+  // Drop excessive container metadata labels (only affects labels, not metrics)
+  rule {
+    regex  = "container_label_(architecture|build_date|cpe|vendor|version|com_microsoft_.*|com_docker_.*|desktop_docker_.*|org_opencontainers_.*)"
+    action = "labeldrop"
+  }
+}
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://" + env("MIMIR_NAME") + ":9009/api/v1/push"
+  }
+
+  external_labels = {
+    cluster     = env("OTEL_CLUSTER_NAME"),
+    environment = env("OTEL_ENVIRONMENT"),
+  }
+}
+
+// Read the full YAML config
+local.file "minio_config" {
+  filename = "/minio-token/prometheus-config.yaml"
+}
+
+// Extract just the bearer token using string manipulation
+prometheus.scrape "minio" {
+  targets = [
+    {
+      __address__ = env("MINIO_NAME") + ":9000",
+      job         = "minio",
+      service     = "minio",
+    },
+  ]
+
+  // Split on "bearer_token: ", take second part, then take first line
+  bearer_token = split(split(local.file.minio_config.content, "bearer_token: ")[1], "\n")[0]
+
+  metrics_path = "/minio/v2/metrics/cluster"
+
+  forward_to = [prometheus.relabel.drop_excessive_labels.receiver]
+}
+
+/******************************************************************************
+ * LOG COLLECTION
+ ******************************************************************************/
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  // Extract container name
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  // Use the full container name (d2-geo, d2-postgres, etc.) as the service label.
+  // This keeps Docker-scraped logs aligned with OTel-pushed logs (which use
+  // OTEL_SERVICE_NAME = d2-geo, d2-auth, etc.), so both streams appear under
+  // the same service name in Grafana. App services will have entries from both
+  // Docker stdout scraping AND OTel SDK push — useful for crash/startup logs
+  // that happen before OTel initializes.
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "service"
+  }
+
+  // Add log stream type
+  rule {
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label  = "stream"
+  }
+
+  // Drop .NET services that export logs via OTLP Serilog sink — they would be
+  // ingested twice (Docker scrape + OTLP push) with inconsistent level labels.
+  // SvelteKit BFF (d2-web) uses Pino → stdout only (no OTLP log export), so keep it.
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(d2-edge|d2-files|d2-courier|d2-notifications|d2-audit)"
+    action        = "drop"
+  }
+
+  // Set log file path
+  rule {
+    source_labels = ["__meta_docker_container_id"]
+    target_label  = "__path__"
+    replacement   = "/var/lib/docker/containers/$1/$1-json.log"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.containers.output
+  forward_to    = [loki.process.docker_levels.receiver]
+  relabel_rules = discovery.relabel.containers.rules
+}
+
+// Parse Pino JSON numeric levels from Docker-scraped SvelteKit BFF logs.
+// Only applies to d2-web (the only Node service in v2). All .NET services drop
+// to OTLP and are filtered out above.
+// Infrastructure containers (postgres, redis, etc.) pass through untouched.
+loki.process "docker_levels" {
+  // Only process Pino JSON for the SvelteKit BFF.
+  stage.match {
+    selector = "{container=~\"d2-web\"}"
+
+    // Extract Pino numeric level from JSON log line.
+    stage.json {
+      expressions = { pino_level = "level" }
+    }
+
+    // Map numeric Pino levels to lowercase strings.
+    stage.template {
+      source   = "level"
+      template = "{{ if eq .pino_level \"10\" }}trace{{ else if eq .pino_level \"20\" }}debug{{ else if eq .pino_level \"30\" }}info{{ else if eq .pino_level \"40\" }}warn{{ else if eq .pino_level \"50\" }}error{{ else if eq .pino_level \"60\" }}fatal{{ else if eq .pino_level \"\" }}debug{{ else }}debug{{ end }}"
+    }
+
+    // Set the level label from the mapped value.
+    stage.labels {
+      values = { level = "" }
+    }
+
+    // Clean up extracted field.
+    stage.label_drop {
+      values = ["pino_level"]
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://" + env("LOKI_NAME") + ":3100/loki/api/v1/push"
+  }
+
+  external_labels = {
+    cluster     = env("OTEL_CLUSTER_NAME"),
+    environment = env("OTEL_ENVIRONMENT"),
+  }
+}
+
+/******************************************************************************
+ * TRACE COLLECTION
+ ******************************************************************************/
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.exporter.prometheus.default.input]
+    logs    = [otelcol.exporter.loki.default.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+otelcol.exporter.loki "default" {
+  forward_to = [loki.process.normalize_levels.receiver]
+}
+
+// Normalize OTel log level labels to lowercase for consistent Grafana queries.
+// otelcol.exporter.loki maps OTel severity to ALL-CAPS: INFO, WARN, ERROR, DEBUG, FATAL.
+// Standardize to lowercase so Grafana queries use a single case convention.
+loki.process "normalize_levels" {
+  stage.match {
+    selector = "{level=\"INFO\"}"
+    stage.static_labels { values = { level = "info" } }
+  }
+  stage.match {
+    selector = "{level=\"WARN\"}"
+    stage.static_labels { values = { level = "warn" } }
+  }
+  stage.match {
+    selector = "{level=\"ERROR\"}"
+    stage.static_labels { values = { level = "error" } }
+  }
+  stage.match {
+    selector = "{level=\"DEBUG\"}"
+    stage.static_labels { values = { level = "debug" } }
+  }
+  stage.match {
+    selector = "{level=\"FATAL\"}"
+    stage.static_labels { values = { level = "fatal" } }
+  }
+  stage.match {
+    selector = "{level=\"unknown\"}"
+    stage.static_labels { values = { level = "debug" } }
+  }
+  forward_to = [loki.write.local.receiver]
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = env("TEMPO_NAME") + ":4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+/******************************************************************************
+ * CLIENT TELEMETRY (Grafana Faro)
+ ******************************************************************************/
+
+faro.receiver "frontend" {
+  server {
+    listen_address = "0.0.0.0"
+    listen_port    = 12347
+
+    cors_allowed_origins = split(env("FARO_CORS_ORIGINS"), ",")
+
+    rate_limiting {
+      rate       = 100
+      burst_size = 200
+    }
+
+    max_allowed_payload_size = "64KiB"
+  }
+
+  output {
+    logs   = [loki.process.faro.receiver]
+    traces = [otelcol.processor.transform.faro.input]
+  }
+}
+
+// Process Faro logs — set service name and map unknown levels to debug.
+loki.process "faro" {
+  // Set service name for all Faro logs.
+  stage.static_labels {
+    values = {
+      service_name = "d2-sveltekit-frontend",
+    }
+  }
+
+  // Faro measurements/events/session keepalives arrive with level="unknown".
+  // Map to debug so they don't pollute info/warn/error streams.
+  stage.match {
+    selector = "{level=\"unknown\"}"
+    stage.static_labels {
+      values = {
+        level = "debug",
+      }
+    }
+  }
+
+  // Empty level (no level label set) also maps to debug.
+  stage.match {
+    selector = "{level=\"\"}"
+    stage.static_labels {
+      values = {
+        level = "debug",
+      }
+    }
+  }
+
+  // Extract Web Vitals as Prometheus histograms for Mimir.
+  // The faro.receiver produces entries with only 2 real labels
+  // (service_name, level — set by our static_labels above).
+  // ALL other fields (kind, type, value_*) are in the logfmt log line.
+  // Parse with stage.logfmt, then filter on kind+type via extracted data.
+  stage.logfmt {
+    mapping = {
+      kind       = "",
+      type       = "",
+      value_ttfb = "",
+      value_fcp  = "",
+      value_lcp  = "",
+      value_inp  = "",
+      value_cls  = "",
+    }
+  }
+
+  // Only create metrics for web-vitals measurements.
+  // stage.match can use LogQL filter expressions on extracted data.
+  stage.match {
+    selector     = "{service_name=\"d2-sveltekit-frontend\"}"
+    pipeline_name = "web-vitals-metrics"
+
+    stage.metrics {
+      metric.histogram {
+        name        = "faro_web_vital_ttfb_milliseconds"
+        description = "Time to First Byte (ms)"
+        source      = "value_ttfb"
+        buckets     = [100, 200, 500, 800, 1000, 1500, 2000, 3000, 5000, 10000]
+      }
+      metric.histogram {
+        name        = "faro_web_vital_fcp_milliseconds"
+        description = "First Contentful Paint (ms)"
+        source      = "value_fcp"
+        buckets     = [100, 500, 1000, 1500, 1800, 2500, 3000, 5000, 10000]
+      }
+      metric.histogram {
+        name        = "faro_web_vital_lcp_milliseconds"
+        description = "Largest Contentful Paint (ms)"
+        source      = "value_lcp"
+        buckets     = [500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 10000]
+      }
+      metric.histogram {
+        name        = "faro_web_vital_inp_milliseconds"
+        description = "Interaction to Next Paint (ms)"
+        source      = "value_inp"
+        buckets     = [50, 100, 150, 200, 300, 500, 1000]
+      }
+      metric.histogram {
+        name        = "faro_web_vital_cls"
+        description = "Cumulative Layout Shift (unitless)"
+        source      = "value_cls"
+        buckets     = [0.01, 0.05, 0.1, 0.15, 0.25, 0.5, 1.0]
+      }
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+// Set service.name on Faro browser traces so they appear as d2-sveltekit-frontend in Tempo.
+otelcol.processor.transform "faro" {
+  error_mode = "ignore"
+
+  trace_statements {
+    context = "resource"
+    statements = [
+      `set(attributes["service.name"], "d2-sveltekit-frontend")`,
+    ]
+  }
+
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}

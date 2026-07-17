@@ -1,0 +1,14 @@
+{
+  "$schema": "./schema.json",
+  "messages": [
+    {
+      "constant": "AuthKeyRotated",
+      "messageType": "DcsvIo.D2.Auth.Events.KeyRotatedEvent",
+      "exchange": "d2.security.key-rotated",
+      "exchangeType": "fanout",
+      "encryption": "plaintext",
+      "encryptionReason": "Rotation events deliver the (domain, kid) tuple consumers need to refresh their keyrings — encrypting them with keys we are rotating creates an unrecoverable chicken-and-egg.",
+      "defaultRoutingKey": ""
+    }
+  ]
+}

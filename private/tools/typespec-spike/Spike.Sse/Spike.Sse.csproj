@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Spike A SSE module: the GENERATED SseEmit.cs binding + the hand-written
+       chassis (ISseEmitSink contract + capturing stub). The emit binding hands
+       the generated DTO to the sink — the sink is the ONLY non-generated seam
+       on the terminal hop. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Spike.Contracts/Spike.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

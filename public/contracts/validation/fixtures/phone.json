@@ -1,0 +1,135 @@
+{
+  "$comment": "Hand-authored cross-language parity corpus for phone validation — the SOURCE OF TRUTH for expected behavior. Both runtimes (.NET DcsvIo.D2.Validation.DefaultPhoneValidator on libphonenumber-csharp 9.0.31 and TS @dcsv-io/d2-validation DefaultPhoneValidator on libphonenumber-js 1.12.38) READ this file and ASSERT each row; neither runtime emits it. All numbers are synthetic — drawn from long-stable reserved/well-known ranges (e.g. the +1-202-555-01xx US fictitious-number block) so the two libphonenumber metadata sets agree. NOTE: vanity-letter numbers (e.g. '202-555-CALL') are deliberately AVOIDED — libphonenumber-csharp maps letters to digits (CALL -> 2255, yielding a VALID number) while libphonenumber-js does not, so such inputs disagree across runtimes; the 'invalid-non-numeric-garbage' row uses a non-letter-mappable string both reject. 'valid' rows carry the expected 'normalized' E.164 form and (for national-format inputs) a 'country' (ISO alpha-2 default region); '!valid' rows carry 'errorKey'. Inputs are either a literal 'input' string or synthesized from 'inputKind' (null | whitespace | oversized) with optional 'char' + 'inputRepeat' (oversized => char.repeat(inputRepeat)). Both runtimes synthesize identically.",
+  "version": "1.0",
+  "validator": "phone",
+  "libphonenumberCsharp": "9.0.31",
+  "libphonenumberJs": "1.12.38",
+  "rows": [
+    {
+      "name": "valid-us-national",
+      "input": "(202) 555-0143",
+      "country": "US",
+      "valid": true,
+      "normalized": "+12025550143"
+    },
+    {
+      "name": "valid-us-e164-no-country",
+      "input": "+12025550143",
+      "valid": true,
+      "normalized": "+12025550143"
+    },
+    {
+      "name": "valid-gb-national",
+      "input": "020 7946 0958",
+      "country": "GB",
+      "valid": true,
+      "normalized": "+442079460958"
+    },
+    {
+      "name": "valid-de-national",
+      "input": "030 901820",
+      "country": "DE",
+      "valid": true,
+      "normalized": "+4930901820"
+    },
+    {
+      "name": "valid-jp-national",
+      "input": "03-1234-5678",
+      "country": "JP",
+      "valid": true,
+      "normalized": "+81312345678"
+    },
+    {
+      "name": "valid-fr-national",
+      "input": "01 70 18 99 00",
+      "country": "FR",
+      "valid": true,
+      "normalized": "+33170189900"
+    },
+    {
+      "name": "valid-au-national",
+      "input": "(02) 9374 4000",
+      "country": "AU",
+      "valid": true,
+      "normalized": "+61293744000"
+    },
+    {
+      "name": "invalid-too-short",
+      "input": "123",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_PHONE_INVALID"
+    },
+    {
+      "name": "invalid-too-long",
+      "input": "20255501439999999",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_PHONE_INVALID"
+    },
+    {
+      "name": "invalid-non-numeric-garbage",
+      "input": "not-a-phone",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_PHONE_INVALID"
+    },
+    {
+      "name": "invalid-wrong-country",
+      "input": "020 7946 0958",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_PHONE_INVALID"
+    },
+    {
+      "name": "e164-explicit-wrong-region-hint",
+      "input": "+442079460958",
+      "country": "US",
+      "valid": true,
+      "normalized": "+442079460958"
+    },
+    {
+      "name": "invalid-national-format-no-country",
+      "input": "02079460958",
+      "valid": false,
+      "errorKey": "common_validation_PHONE_INVALID"
+    },
+    {
+      "name": "invalid-empty",
+      "inputKind": "null",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_PHONE_INVALID"
+    },
+    {
+      "name": "invalid-whitespace-only",
+      "inputKind": "whitespace",
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_PHONE_INVALID"
+    },
+    {
+      "name": "invalid-oversized",
+      "inputKind": "oversized",
+      "char": "9",
+      "inputRepeat": 40,
+      "country": "US",
+      "valid": false,
+      "errorKey": "common_validation_PHONE_INVALID"
+    },
+    {
+      "name": "valid-arabic-indic-digits-normalized",
+      "input": "٢٠٢٥٥٥٠١٤٣",
+      "country": "US",
+      "valid": true,
+      "normalized": "+12025550143"
+    },
+    {
+      "name": "valid-fullwidth-digits-normalized",
+      "input": "２０２５５５０１４３",
+      "country": "US",
+      "valid": true,
+      "normalized": "+12025550143"
+    }
+  ]
+}

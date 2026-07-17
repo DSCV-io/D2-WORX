@@ -1,0 +1,350 @@
+{
+  "$comment": "Parity fixture for DcsvIo.D2.Location. Hand-maintained (.NET-only; the @dcsv-io/d2-location TS package and its emit-fixture.mjs generator were removed). The .NET parity test asserts byte-identical hash output for every row. Update this file by hand when adding new cases.",
+  "version": "1.0",
+  "cases": [
+    {
+      "name": "coords-only-nyc-create",
+      "kind": "coordinates",
+      "factory": "create",
+      "inputs": {
+        "latitude": 40.7128,
+        "longitude": -74.006
+      },
+      "expectedHashId": "v1.3c5339b07059d200d45867d4478967a34592818af0445a2aea3c2bd3ff54ef95",
+      "expectedGeohash": "dr5regw3pp",
+      "expectedPlusCode": "7PVGQFCF+3QR3",
+      "expectedLatitude": 40.712797,
+      "expectedLongitude": -74.006004
+    },
+    {
+      "name": "street-only-main",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "123 Main St"
+      },
+      "expectedHashId": "v1.e7a9181fea764351c88f38fd0bfe3644a368ce058e3f75fa0e85cc27b06bab78"
+    },
+    {
+      "name": "admin-only-us-country",
+      "kind": "admin-location",
+      "inputs": {
+        "countryCode": "US"
+      },
+      "expectedHashId": "v1.3e2a439dd69d750bc122573cfa99710970cdb7d95342a4aa731a0245cd946981"
+    },
+    {
+      "name": "compose-coords-and-street",
+      "kind": "compose",
+      "inputs": {
+        "coordinates": {
+          "factory": "create",
+          "args": [40.7128, -74.006]
+        },
+        "streetAddress": {
+          "line1": "123 Main St"
+        },
+        "adminLocation": null
+      },
+      "expectedComposeHash": "v1.9d45966f35a1317cbd62e13a7791611dda20dcba3e5aa8d7e9ad8d0a3bfaa1b5"
+    },
+    {
+      "name": "compose-coords-and-admin",
+      "kind": "compose",
+      "inputs": {
+        "coordinates": {
+          "factory": "create",
+          "args": [40.7128, -74.006]
+        },
+        "streetAddress": null,
+        "adminLocation": {
+          "countryCode": "US",
+          "city": "Brooklyn"
+        }
+      },
+      "expectedComposeHash": "v1.627642d5e23cc5e2e1607aed79210b78043c6e7af4e3fa917c2d7187a31f2f82"
+    },
+    {
+      "name": "compose-street-and-admin",
+      "kind": "compose",
+      "inputs": {
+        "coordinates": null,
+        "streetAddress": {
+          "line1": "123 Main St"
+        },
+        "adminLocation": {
+          "countryCode": "US",
+          "city": "Brooklyn"
+        }
+      },
+      "expectedComposeHash": "v1.f76145ded3977aedaa9cd6f0fb5ecc505fc9c72d2d0610d47ff2e54edebdf83b"
+    },
+    {
+      "name": "compose-all-three",
+      "kind": "compose",
+      "inputs": {
+        "coordinates": {
+          "factory": "create",
+          "args": [40.7128, -74.006]
+        },
+        "streetAddress": {
+          "line1": "123 Main St"
+        },
+        "adminLocation": {
+          "countryCode": "US",
+          "city": "Brooklyn"
+        }
+      },
+      "expectedComposeHash": "v1.72db5bbe59efe7ece3aaf0f64d122cc9bdc86d49d33068479c6f3c9580c1aec1"
+    },
+    {
+      "name": "compose-all-null",
+      "kind": "compose",
+      "inputs": {
+        "coordinates": null,
+        "streetAddress": null,
+        "adminLocation": null
+      },
+      "expectedComposeHash": null
+    },
+    {
+      "name": "coords-accuracy-50m",
+      "kind": "coordinates",
+      "factory": "create",
+      "inputs": {
+        "latitude": 40.7128,
+        "longitude": -74.006,
+        "accuracyMeters": 50
+      },
+      "expectedHashId": "v1.3c5339b07059d200d45867d4478967a34592818af0445a2aea3c2bd3ff54ef95"
+    },
+    {
+      "name": "coords-accuracy-999m",
+      "kind": "coordinates",
+      "factory": "create",
+      "inputs": {
+        "latitude": 40.7128,
+        "longitude": -74.006,
+        "accuracyMeters": 999
+      },
+      "expectedHashId": "v1.3c5339b07059d200d45867d4478967a34592818af0445a2aea3c2bd3ff54ef95"
+    },
+    {
+      "name": "street-variant-123_Main_St_",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "123 Main St."
+      },
+      "expectedHashId": "v1.e7a9181fea764351c88f38fd0bfe3644a368ce058e3f75fa0e85cc27b06bab78"
+    },
+    {
+      "name": "street-variant-123_main_st",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "123 main st"
+      },
+      "expectedHashId": "v1.e7a9181fea764351c88f38fd0bfe3644a368ce058e3f75fa0e85cc27b06bab78"
+    },
+    {
+      "name": "street-variant-123__Main__St",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "123  Main  St"
+      },
+      "expectedHashId": "v1.e7a9181fea764351c88f38fd0bfe3644a368ce058e3f75fa0e85cc27b06bab78"
+    },
+    {
+      "name": "street-variant-123_MAIN_ST",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "123 MAIN ST"
+      },
+      "expectedHashId": "v1.e7a9181fea764351c88f38fd0bfe3644a368ce058e3f75fa0e85cc27b06bab78"
+    },
+    {
+      "name": "street-diacritic-Café",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "Café"
+      },
+      "expectedHashId": "v1.387b364e426a7e4a9f672a934c1a618f8b64a4098c792e0a16e186ff7ba1f353"
+    },
+    {
+      "name": "street-diacritic-Cafe",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "Cafe"
+      },
+      "expectedHashId": "v1.387b364e426a7e4a9f672a934c1a618f8b64a4098c792e0a16e186ff7ba1f353"
+    },
+    {
+      "name": "street-diacritic-Zürich",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "Zürich"
+      },
+      "expectedHashId": "v1.7097f860cebf66fc7f814613ba1a49b5f5aaba1a924a1a1d51eaddeeaabbcea6"
+    },
+    {
+      "name": "street-diacritic-Zurich",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "Zurich"
+      },
+      "expectedHashId": "v1.7097f860cebf66fc7f814613ba1a49b5f5aaba1a924a1a1d51eaddeeaabbcea6"
+    },
+    {
+      "name": "street-cyrillic-moscow",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "Москва"
+      },
+      "expectedHashId": "v1.26f17b73b1deda077afeb532d77826ee303dd216384a613f587044bde1ce6093",
+      "expectedNormalizedForHash": "МОСКВА"
+    },
+    {
+      "name": "street-cjk-tokyo",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "东京"
+      },
+      "expectedHashId": "v1.611f9f7fe4574194a6c9daa6b6c0e1832096d40019edb3cdf0d8cd33f1d96b3f",
+      "expectedNormalizedForHash": "东京"
+    },
+    {
+      "name": "street-greek-athens",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "Αθήνα"
+      },
+      "expectedHashId": "v1.fe0be071a50048f955c30cb6f82bc0abc988671fc1d8c4af2a9ba111ed372de1",
+      "expectedNormalizedForHash": "ΑΘΗΝΑ"
+    },
+    {
+      "name": "street-arabic-riyadh",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "الرياض"
+      },
+      "expectedHashId": "v1.3c62e5993898b8c9d8154d38760d68aed07fac33ecf7ad6135c4c930dc6389fb",
+      "expectedNormalizedForHash": "الرياض"
+    },
+    {
+      "name": "street-devanagari-delhi",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "नई दिल्ली"
+      },
+      "expectedHashId": "v1.1315b684d8211bccf50d73dda7baff1f2996d319bcec697301073e127d80c2a5",
+      "expectedNormalizedForHash": "नई दलल"
+    },
+    {
+      "name": "street-emoji-stripped",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "💩 Address"
+      },
+      "expectedHashId": "v1.c1cbdd9bd06ff6f9964b39193c20494658e1a958b62a27622a3de5179bb688d0",
+      "expectedNormalizedForHash": " ADDRESS"
+    },
+    {
+      "name": "street-mixed-cyrillic-hyphen",
+      "kind": "street-address",
+      "inputs": {
+        "line1": "123 Москва-Centre"
+      },
+      "expectedHashId": "v1.ff25342042f176062f591410de25799c96b4efeb219cf1b339761b61ab265c57",
+      "expectedNormalizedForHash": "123 МОСКВАCENTRE"
+    },
+    {
+      "name": "admin-country-only-us",
+      "kind": "admin-location",
+      "inputs": {
+        "countryCode": "US"
+      },
+      "expectedHashId": "v1.3e2a439dd69d750bc122573cfa99710970cdb7d95342a4aa731a0245cd946981"
+    },
+    {
+      "name": "admin-subdivision-only-autopop",
+      "kind": "admin-location",
+      "inputs": {
+        "subdivisionCode": "US-NY"
+      },
+      "expectedHashId": "v1.617d4e8b5818a05697bb39ffda6199607511a4d6459147b36755213a7c8267b7",
+      "expectedCountryCode": "US"
+    },
+    {
+      "name": "admin-mismatch-fails",
+      "kind": "admin-location",
+      "inputs": {
+        "countryCode": "CA",
+        "subdivisionCode": "US-NY"
+      },
+      "expectedOutcome": "ValidationFailed"
+    },
+    {
+      "name": "coords-tri-form-latlon",
+      "kind": "coordinates",
+      "factory": "create",
+      "inputs": {
+        "latitude": 40.7128,
+        "longitude": -74.006
+      },
+      "expectedHashId": "v1.3c5339b07059d200d45867d4478967a34592818af0445a2aea3c2bd3ff54ef95"
+    },
+    {
+      "name": "coords-tri-form-geohash",
+      "kind": "coordinates",
+      "factory": "fromGeohash",
+      "inputs": {
+        "geohash": "dr5regw3pp"
+      },
+      "expectedHashId": "v1.3c5339b07059d200d45867d4478967a34592818af0445a2aea3c2bd3ff54ef95"
+    },
+    {
+      "name": "coords-tri-form-pluscode",
+      "kind": "coordinates",
+      "factory": "fromPlusCode",
+      "inputs": {
+        "plusCode": "7PVGQFCF+3Q"
+      },
+      "expectedHashId": "v1.3699728596ec0ac91242d858a6dd579b01557eab8bb6f36b89e811a5058f1583"
+    },
+    {
+      "name": "coords-near-north-pole",
+      "kind": "coordinates",
+      "factory": "create",
+      "inputs": {
+        "latitude": 89.9999,
+        "longitude": 0
+      },
+      "expectedHashId": "v1.b8b6c060725e198658286ce8731e1b96574d202d97f101503f2dc8decb10b331"
+    },
+    {
+      "name": "coords-near-dateline-east",
+      "kind": "coordinates",
+      "factory": "create",
+      "inputs": {
+        "latitude": 0,
+        "longitude": 179.9999
+      },
+      "expectedHashId": "v1.f14f813b63ba7c2d1e56ff3d2e5d89dcd419feb99f5ea471a7241078b4f5d2b3"
+    },
+    {
+      "name": "postal-valid-us-zip5",
+      "kind": "postal-code",
+      "inputs": {
+        "postalCode": "90210"
+      },
+      "expectedOutcome": "Ok",
+      "expectedNormalized": "90210"
+    },
+    {
+      "name": "postal-invalid-too-short",
+      "kind": "postal-code",
+      "inputs": {
+        "postalCode": "AB"
+      },
+      "expectedOutcome": "ValidationFailed"
+    }
+  ]
+}

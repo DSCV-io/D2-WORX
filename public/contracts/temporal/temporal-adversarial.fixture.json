@@ -1,0 +1,176 @@
+{
+  "$comment": [
+    "Adversarial temporal fixtures for cross-language parity tests.",
+    "Each entry is a (scheduledLocal, iana) input plus the expected",
+    "ComputeNextFire UTC instant. Both languages must produce IDENTICAL",
+    "expectedUtc under NodaTime's LenientResolver (.NET) and Temporal's",
+    "disambiguation:'compatible' (TS). If the two engines ever diverge on",
+    "any fixture, the divergence must be surfaced + acknowledged — DO NOT",
+    "silently adjust expectedUtc."
+  ],
+  "schemaVersion": 1,
+  "fixtures": [
+    {
+      "id": "us-spring-forward-skipped-2-30",
+      "scheduledLocal": "2026-03-08T02:30:00",
+      "iana": "America/New_York",
+      "expectedUtc": "2026-03-08T07:30:00Z"
+    },
+    {
+      "id": "us-fall-back-ambiguous-1-30-picks-earlier",
+      "scheduledLocal": "2026-11-01T01:30:00",
+      "iana": "America/New_York",
+      "expectedUtc": "2026-11-01T05:30:00Z"
+    },
+    {
+      "id": "european-spring-forward-skipped",
+      "scheduledLocal": "2026-03-29T01:30:00",
+      "iana": "Europe/London",
+      "expectedUtc": "2026-03-29T01:30:00Z"
+    },
+    {
+      "id": "european-fall-back-ambiguous-picks-earlier",
+      "scheduledLocal": "2025-10-26T01:30:00",
+      "iana": "Europe/London",
+      "expectedUtc": "2025-10-26T00:30:00Z"
+    },
+    {
+      "id": "australian-spring-forward-skipped",
+      "scheduledLocal": "2026-10-04T02:30:00",
+      "iana": "Australia/Sydney",
+      "expectedUtc": "2026-10-03T16:30:00Z"
+    },
+    {
+      "id": "unambiguous-utc-noon",
+      "scheduledLocal": "2026-06-15T12:00:00",
+      "iana": "UTC",
+      "expectedUtc": "2026-06-15T12:00:00Z"
+    },
+    {
+      "id": "iana-normalization-us-pacific-alias",
+      "scheduledLocal": "2026-06-15T12:00:00",
+      "iana": "US/Pacific",
+      "expectedUtc": "2026-06-15T19:00:00Z",
+      "expectedCanonicalIana": "America/Los_Angeles"
+    },
+    {
+      "id": "iana-normalization-asia-saigon-renamed",
+      "scheduledLocal": "2026-06-15T12:00:00",
+      "iana": "Asia/Saigon",
+      "expectedUtc": "2026-06-15T05:00:00Z",
+      "expectedCanonicalIana": "Asia/Ho_Chi_Minh"
+    }
+  ],
+  "$scalarComment": [
+    "Per-temporal-type wire round-trip fixtures driving the TypeSpec-DTO temporal",
+    "round-trip suites in BOTH languages (C# TemporalRoundTripTests +",
+    "TS temporal-round-trip.test.ts). Each entry pins a wire string for one",
+    "temporal scalar; both engines must materialize the equivalent domain value",
+    "and re-emit the identical wire string. The 'kind' selects the NodaTime /",
+    "Temporal pattern. 'wire' is the on-the-wire form the emitter produces",
+    "(DateTimeOffset 'O' for instant/offset; offset-free ISO for plain-local;",
+    "ISO-8601 P…T… for duration). 'offsetFree' marks values that MUST carry no",
+    "offset (the no-invented-offset contract). If the two engines ever diverge on",
+    "any entry, surface + acknowledge — DO NOT silently adjust."
+  ],
+  "scalarRoundTripFixtures": [
+    {
+      "id": "utc-instant-basic",
+      "kind": "instant",
+      "wire": "2026-05-27T14:30:00Z"
+    },
+    {
+      "id": "utc-instant-year-boundary",
+      "kind": "instant",
+      "wire": "2025-12-31T23:59:59.9999999Z"
+    },
+    {
+      "id": "utc-instant-subsecond-7digit",
+      "kind": "instant",
+      "wire": "2026-03-08T07:30:00.1234567Z"
+    },
+    {
+      "id": "offset-datetime-minus-five",
+      "kind": "offset",
+      "wire": "2026-05-27T09:00:00-05:00",
+      "expectedOffsetMinutes": -300
+    },
+    {
+      "id": "offset-datetime-plus-ten-thirty",
+      "kind": "offset",
+      "wire": "2026-10-04T02:30:00+10:30",
+      "expectedOffsetMinutes": 630
+    },
+    {
+      "id": "plain-date-basic",
+      "kind": "date",
+      "wire": "2026-11-01",
+      "offsetFree": true
+    },
+    {
+      "id": "plain-date-leap-day",
+      "kind": "date",
+      "wire": "2024-02-29",
+      "offsetFree": true
+    },
+    {
+      "id": "plain-time-basic",
+      "kind": "time",
+      "wire": "09:42:00",
+      "offsetFree": true
+    },
+    {
+      "id": "plain-time-subsecond",
+      "kind": "time",
+      "wire": "23:59:59.9999999",
+      "offsetFree": true
+    },
+    {
+      "id": "plain-datetime-basic",
+      "kind": "localDateTime",
+      "wire": "2026-03-08T02:30:00",
+      "offsetFree": true
+    },
+    {
+      "id": "plain-datetime-leap-day",
+      "kind": "localDateTime",
+      "wire": "2024-02-29T12:00:00",
+      "offsetFree": true
+    },
+    {
+      "id": "duration-hours-minutes",
+      "kind": "duration",
+      "wire": "PT1H30M"
+    },
+    {
+      "id": "duration-days-and-time",
+      "kind": "duration",
+      "wire": "P1DT2H3M4S"
+    },
+    {
+      "id": "duration-seconds-only",
+      "kind": "duration",
+      "wire": "PT45S"
+    },
+    {
+      "id": "duration-subsecond-nanos",
+      "kind": "duration",
+      "wire": "PT0.123456789S"
+    },
+    {
+      "id": "duration-subsecond-half",
+      "kind": "duration",
+      "wire": "PT0.5S"
+    },
+    {
+      "id": "duration-subsecond-single-nano",
+      "kind": "duration",
+      "wire": "PT0.000000001S"
+    },
+    {
+      "id": "duration-hms-with-subsecond",
+      "kind": "duration",
+      "wire": "PT1H2M3.123456789S"
+    }
+  ]
+}

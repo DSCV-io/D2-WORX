@@ -1,0 +1,38 @@
+{
+  "name": "@dcsv-io/d2-caching-tiered",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "type-check:test": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@dcsv-io/d2-caching-abstractions": "workspace:*",
+    "@dcsv-io/d2-logging": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*"
+  },
+  "devDependencies": {
+    "@dcsv-io/d2-caching-distributed-redis": "workspace:*",
+    "@dcsv-io/d2-caching-local-default": "workspace:*",
+    "@testcontainers/redis": "11.14.0",
+    "@vitest/coverage-v8": "4.0.18",
+    "testcontainers": "11.14.0",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

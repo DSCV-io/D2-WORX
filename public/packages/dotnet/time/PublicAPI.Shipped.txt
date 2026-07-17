@@ -1,0 +1,43 @@
+#nullable enable
+DcsvIo.D2.Time.EfCore.NodaTimeValueConverterExtensions
+DcsvIo.D2.Time.EfCore.NodaTimeValueConverterExtensions.extension(Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder!)
+DcsvIo.D2.Time.EfCore.NodaTimeValueConverterExtensions.extension(Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder!).AddD2NodaTime() -> Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder!
+DcsvIo.D2.Time.IClock
+DcsvIo.D2.Time.IClock.GetCurrentInstant() -> NodaTime.Instant
+DcsvIo.D2.Time.IsoDuration
+DcsvIo.D2.Time.LocalAnchoredEvent
+DcsvIo.D2.Time.LocalAnchoredEvent.<Clone>$() -> DcsvIo.D2.Time.LocalAnchoredEvent!
+DcsvIo.D2.Time.LocalAnchoredEvent.ComputeNextFire() -> DcsvIo.D2.Result.D2Result<NodaTime.Instant>!
+DcsvIo.D2.Time.LocalAnchoredEvent.Equals(DcsvIo.D2.Time.LocalAnchoredEvent? other) -> bool
+DcsvIo.D2.Time.LocalAnchoredEvent.IANAIdentifier.get -> string!
+DcsvIo.D2.Time.LocalAnchoredEvent.NextFireUtc.get -> NodaTime.Instant?
+DcsvIo.D2.Time.LocalAnchoredEvent.ScheduledLocal.get -> NodaTime.LocalDateTime
+DcsvIo.D2.Time.SystemClock
+DcsvIo.D2.Time.SystemClock.GetCurrentInstant() -> NodaTime.Instant
+DcsvIo.D2.Time.SystemClock.SystemClock() -> void
+DcsvIo.D2.Time.TestClock
+DcsvIo.D2.Time.TestClock.Advance(NodaTime.Duration duration) -> void
+DcsvIo.D2.Time.TestClock.GetCurrentInstant() -> NodaTime.Instant
+DcsvIo.D2.Time.TestClock.Now.get -> NodaTime.Instant
+DcsvIo.D2.Time.TestClock.SetTo(NodaTime.Instant instant) -> void
+DcsvIo.D2.Time.TestClock.TestClock(NodaTime.Instant initial) -> void
+DcsvIo.D2.Time.ZonedInstant
+DcsvIo.D2.Time.ZonedInstant.<Clone>$() -> DcsvIo.D2.Time.ZonedInstant!
+DcsvIo.D2.Time.ZonedInstant.Equals(DcsvIo.D2.Time.ZonedInstant? other) -> bool
+DcsvIo.D2.Time.ZonedInstant.IANAIdentifier.get -> string!
+DcsvIo.D2.Time.ZonedInstant.Instant.get -> NodaTime.Instant
+override DcsvIo.D2.Time.LocalAnchoredEvent.Equals(object? obj) -> bool
+override DcsvIo.D2.Time.LocalAnchoredEvent.GetHashCode() -> int
+override DcsvIo.D2.Time.LocalAnchoredEvent.ToString() -> string!
+override DcsvIo.D2.Time.ZonedInstant.Equals(object? obj) -> bool
+override DcsvIo.D2.Time.ZonedInstant.GetHashCode() -> int
+override DcsvIo.D2.Time.ZonedInstant.ToString() -> string!
+static DcsvIo.D2.Time.EfCore.NodaTimeValueConverterExtensions.AddD2NodaTime(this Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder! optionsBuilder) -> Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder!
+static DcsvIo.D2.Time.IsoDuration.Format(NodaTime.Duration duration) -> string!
+static DcsvIo.D2.Time.IsoDuration.Parse(string? iso) -> DcsvIo.D2.Result.D2Result<NodaTime.Duration>!
+static DcsvIo.D2.Time.LocalAnchoredEvent.Create(NodaTime.LocalDateTime scheduledLocal, string? ianaIdentifier, NodaTime.Instant? nextFireUtc = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Time.LocalAnchoredEvent!>!
+static DcsvIo.D2.Time.LocalAnchoredEvent.operator !=(DcsvIo.D2.Time.LocalAnchoredEvent? left, DcsvIo.D2.Time.LocalAnchoredEvent? right) -> bool
+static DcsvIo.D2.Time.LocalAnchoredEvent.operator ==(DcsvIo.D2.Time.LocalAnchoredEvent? left, DcsvIo.D2.Time.LocalAnchoredEvent? right) -> bool
+static DcsvIo.D2.Time.ZonedInstant.Create(NodaTime.Instant instant, string? ianaIdentifier) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Time.ZonedInstant!>!
+static DcsvIo.D2.Time.ZonedInstant.operator !=(DcsvIo.D2.Time.ZonedInstant? left, DcsvIo.D2.Time.ZonedInstant? right) -> bool
+static DcsvIo.D2.Time.ZonedInstant.operator ==(DcsvIo.D2.Time.ZonedInstant? left, DcsvIo.D2.Time.ZonedInstant? right) -> bool

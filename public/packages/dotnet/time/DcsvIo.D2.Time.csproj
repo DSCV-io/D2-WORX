@@ -1,0 +1,70 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Time</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    DcsvIo.D2.Time — NodaTime wrapper + IClock injection seam + Category 1/3
+    temporal storage records (ZonedInstant, LocalAnchoredEvent — smart-constructor
+    pattern returning D2Result<T>) + Npgsql.NodaTime EF Core value-converter
+    wiring. Foundation lib in the D2 shared lib dep graph; depends on
+    DcsvIo.D2.Result (D2Result<T> return type from Create factories),
+    DcsvIo.D2.I18n.Abstractions (TK.Common.Time.* / TK.Common.Errors.* keys
+    for validation messages), and DcsvIo.D2.Utilities (Falsey()/Truthy()
+    guards in the IANA validation path). Zero handler / caching / messaging /
+    service-infra deps; consumers reference directly and bind
+    `IClock -> SystemClock` themselves at the DI composition root (no
+    AddD2Time() extension — this lib has no DI surface).
+  -->
+
+  <ItemGroup>
+    <!-- NodaTime — canonical date/time library replacing BCL DateTime /
+         DateTimeOffset for all D2 timestamp work. Provides Instant,
+         LocalDateTime, LocalDate, LocalTime, ZonedDateTime, DateTimeZone,
+         Period, Duration, OffsetDateTime, and IANA-backed TZDB for
+         historical-accuracy DST resolution. -->
+    <PackageReference Include="NodaTime" />
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime — EF Core value-converter
+         plugin wiring NodaTime types to PostgreSQL timestamptz / timestamp /
+         text columns via UseNodaTime(). Version matches the
+         Npgsql.EntityFrameworkCore.PostgreSQL pin in Directory.Packages.props. -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- DcsvIo.D2.Result — ZonedInstant.Create and LocalAnchoredEvent.Create
+         use the smart-constructor pattern returning D2Result<T> with
+         InputError-based validation failures. -->
+    <ProjectReference Include="..\result\core\DcsvIo.D2.Result.csproj" />
+    <!-- DcsvIo.D2.I18n.Abstractions — the TKMessage type the TK.* constants
+         are instances of. Zero-runtime-dep abstractions slice. -->
+    <ProjectReference Include="..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+    <!-- DcsvIo.D2.I18n.Keys — TK.Common.Time.* / TK.Common.Errors.*
+         translation key constants referenced by the smart-constructor
+         validation paths. -->
+    <ProjectReference Include="..\i18n\keys\DcsvIo.D2.I18n.Keys.csproj" />
+    <!-- DcsvIo.D2.Utilities — Falsey()/Truthy() extension methods on string
+         used in the IANA null/empty/whitespace guard in Create factories. -->
+    <ProjectReference Include="..\utilities\DcsvIo.D2.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Time</PackageId>
+    <Description>Deterministic timestamp handling for D2 — a dependency-injected clock seam, temporal storage types, and NodaTime to PostgreSQL EF Core wiring.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

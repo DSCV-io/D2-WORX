@@ -1,0 +1,9 @@
+# Spike B — resilience pipeline. Runs the custom @dcsv-io/d2-spike-emitter against
+# resilience.tsp (retry-inside-breaker), resilience-flip.tsp (breaker-inside-
+# retry), or resilience-unknown.tsp (unknown profile -> the compile FAILS, B3).
+# Output root is `generated/` (matching the SC1 / Spike A / Spike C layout); the
+# emitter resolves up from its per-emitter output dir to the spike root and
+# writes the .NET artifacts into the Spike.Resilience project folder.
+output-dir: "{project-root}/generated"
+emit:
+  - "@dcsv-io/d2-spike-emitter"

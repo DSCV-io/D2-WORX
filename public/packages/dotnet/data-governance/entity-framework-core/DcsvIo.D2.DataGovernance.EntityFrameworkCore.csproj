@@ -1,0 +1,97 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.DataGovernance.EntityFrameworkCore</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    EF Core metadata layer — the D2:Anonymize annotation key, the C# 14 fluent
+    decoration API (Anonymize / AnonymizeNull / AnonymizeEmpty / AnonymizeTemplate
+    on PropertyBuilder / OwnedNavigationBuilder / ComplexPropertyBuilder), the
+    [Anonymizable] model-finalizing convention, the ApplyAnonymizationConventions()
+    activation extension, the AnonymizationTierClassifier (walks annotated properties,
+    classifies Tier A / B / C, caches per entity type), and the
+    AnonymizationTemplateResolver (parses / validates / resolves tombstone templates).
+    Converges the attribute and fluent decoration front-ends onto one AnonymizationRule
+    stored as the D2:Anonymize EF annotation; fluent wins by Explicit configuration source.
+    No runtime engine here.
+    References DcsvIo.D2.DataGovernance.Abstractions (the rule / attribute shapes it maps)
+    and Microsoft.EntityFrameworkCore.Relational (IProperty.GetColumnName(),
+    IReadOnlyEntityType.IsMappedToJson(), GetTableName() — the classifier reads relational
+    column and JSON-mapping metadata that lives in the Relational assembly, not base EF Core).
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\abstractions\DcsvIo.D2.DataGovernance.Abstractions.csproj" />
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Microsoft.EntityFrameworkCore.Relational 10.0.7 — CPM-pinned in Directory.Packages.props.
+      Provides the Relational extension methods used by the tier classifier:
+        IProperty.GetColumnName()                  (RelationalPropertyExtensions)
+        IReadOnlyEntityType.IsMappedToJson()       (RelationalEntityTypeExtensions)
+        IReadOnlyEntityType.GetTableName()         (RelationalEntityTypeExtensions)
+        IReadOnlyTypeBase.IsMappedToJson()         (RelationalTypeBaseExtensions, complex-JSON variant)
+      Base Microsoft.EntityFrameworkCore is brought transitively by Relational; the explicit
+      base PackageReference is removed to avoid NU1510 on the transitive pruning.
+      Provider-agnostic: Relational is the neutral relational abstraction (not Npgsql/SqlServer).
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <!--
+      Microsoft.Extensions.Logging.Abstractions 10.0.7 — required by AnonymizationEngineLog
+      ([LoggerMessage] source generator) and AnonymizationEngine (ILogger<T> constructor
+      parameter). Not guaranteed to be transitively accessible from EF Relational as a
+      public surface; listed explicitly to avoid NU1510 surprises on future EF patch bumps.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <!--
+      Microsoft.Extensions.Options 10.0.7 — required by AnonymizationEngineOptions binding
+      (IOptions<AnonymizationEngineOptions> constructor parameter on AnonymizationEngine).
+      Not guaranteed to be transitively accessible from EF Relational; listed explicitly.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <!--
+      Microsoft.Extensions.DependencyInjection.Abstractions 10.0.7 — required by
+      DataGovernanceServiceCollectionExtensions (IServiceCollection / TryAdd* / CreateScope via
+      IServiceProvider extension) and AnonymizationModelValidator (IServiceProvider ctor param).
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <!--
+      Microsoft.Extensions.Hosting.Abstractions 10.0.7 — required by
+      AnonymizationModelValidator (IHostedService) and
+      DataGovernanceServiceCollectionExtensions (AddHostedService / TryAddEnumerable for IHostedService).
+    -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <!--
+      Microsoft.Extensions.Configuration.Abstractions 10.0.7 — required by
+      DataGovernanceServiceCollectionExtensions (IConfiguration / GetSection).
+    -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <!--
+      Microsoft.Extensions.Configuration.Binder 10.0.7 — required for .Bind(section) on
+      OptionsBuilder<T> in DataGovernanceServiceCollectionExtensions.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.DataGovernance.EntityFrameworkCore</PackageId>
+    <Description>EF Core wiring for D2 GDPR anonymization — the fluent .Anonymize* API, the engine registration, and the startup model guard.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

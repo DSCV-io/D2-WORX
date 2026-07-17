@@ -1,0 +1,95 @@
+# =============================================================================
+# Dockerfile.edge — DcsvIo.D2.Private.Edge.Api (composition root)
+# Build context: repo root
+# Targets:
+#   prod — published bits on aspnet runtime (no source mount, no watch)
+#   dev  — SDK + dotnet watch (Compose Watch sync; see compose.dev.yml)
+#
+# Monorepo dual-root layout under /src:
+#   /src/Directory.Build.props, Directory.Packages.props, D2.slnx, stylecop.json
+#   /src/public/packages/dotnet, /src/public/contracts, /src/public/tools/...
+#   /src/private/packages/dotnet, /src/private/services/..., /src/private/contracts
+# =============================================================================
+
+# --- Build (prod) ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Root MSBuild / NuGet / solution / StyleCop (ARR default for private tree).
+COPY Directory.Build.props Directory.Packages.props D2.slnx stylecop.json global.json NuGet.config ./
+COPY .editorconfig ./
+COPY public/stylecop.public.json ./public/
+
+# Service-tree global usings (D2Result / RedactData / Utilities).
+COPY private/services/Directory.Build.targets ./private/services/
+
+# Dual package roots + dual contracts + product services + logger splitter.
+COPY public/packages/dotnet ./public/packages/dotnet
+COPY private/packages/dotnet ./private/packages/dotnet
+COPY private/services/edge ./private/services/edge
+COPY private/services/audit/clients ./private/services/audit/clients
+# Audit.Client Grpc.Tools imports protos owned by Audit.Api.
+COPY private/services/audit/api/Protos ./private/services/audit/api/Protos
+COPY public/contracts ./public/contracts
+COPY private/contracts ./private/contracts
+COPY public/tools/loggermessage-splitter ./public/tools/loggermessage-splitter
+
+RUN dotnet restore private/services/edge/api/DcsvIo.D2.Private.Edge.Api.csproj
+RUN dotnet publish private/services/edge/api/DcsvIo.D2.Private.Edge.Api.csproj \
+    -c Release -o /app/publish --no-restore
+
+# --- Prod runtime ---
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS prod
+WORKDIR /app
+
+# Explicit health probe — aspnet base has no curl; install wget for compose healthcheck.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wget \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV ASPNETCORE_URLS=
+ENV DOTNET_EnableDiagnostics=0
+
+COPY --from=build /app/publish .
+
+EXPOSE 8080 8443 9443
+
+# Prefer wget (installed above) — never assume curl on aspnet.
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=30s \
+  CMD wget -qO- http://127.0.0.1:8080/health || exit 1
+
+ENTRYPOINT ["dotnet", "DcsvIo.D2.Private.Edge.Api.dll"]
+
+# --- Dev: SDK + watch (source synced via compose.dev.yml develop.watch) ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dev
+WORKDIR /src
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wget \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV ASPNETCORE_URLS=
+ENV DOTNET_USE_POLLING_FILE_WATCHER=1
+ENV DOTNET_EnableDiagnostics=0
+
+COPY Directory.Build.props Directory.Packages.props D2.slnx stylecop.json global.json NuGet.config ./
+COPY .editorconfig ./
+COPY public/stylecop.public.json ./public/
+COPY private/services/Directory.Build.targets ./private/services/
+COPY public/packages/dotnet ./public/packages/dotnet
+COPY private/packages/dotnet ./private/packages/dotnet
+COPY private/services/edge ./private/services/edge
+COPY private/services/audit/clients ./private/services/audit/clients
+COPY private/services/audit/api/Protos ./private/services/audit/api/Protos
+COPY public/contracts ./public/contracts
+COPY private/contracts ./private/contracts
+COPY public/tools/loggermessage-splitter ./public/tools/loggermessage-splitter
+
+RUN dotnet restore private/services/edge/api/DcsvIo.D2.Private.Edge.Api.csproj
+
+EXPOSE 8080 8443 9443
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=60s \
+  CMD wget -qO- http://127.0.0.1:8080/health || exit 1
+
+ENTRYPOINT ["dotnet", "watch", "run", "--project", "private/services/edge/api/DcsvIo.D2.Private.Edge.Api.csproj", "--no-launch-profile"]

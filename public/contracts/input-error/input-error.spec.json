@@ -1,0 +1,15 @@
+{
+  "$schema": "./schema.json",
+  "properties": [
+    {
+      "constName": "FIELD",
+      "value": "field",
+      "doc": "JSON property name carrying the offending input field name (e.g. 'email', 'address.city'). REQUIRED on every InputError; dot-notation paths supported for nested fields."
+    },
+    {
+      "constName": "ERRORS",
+      "value": "errors",
+      "doc": "JSON property name carrying the array of TKMessage objects describing what's wrong with the field. REQUIRED; one-or-more TKMessage entries per InputError — each TKMessage uses the spec-derived 'key'/'params' shape from contracts/tk-message."
+    }
+  ]
+}

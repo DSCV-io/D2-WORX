@@ -1,0 +1,88 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Messaging</RootNamespace>
+
+    <!-- Emit the Messaging.SourceGen output (MqMessages.g.cs, MqSubscriptions.g.cs)
+         to <project-dir>/Generated/. The directory is tracked in git so PR
+         reviewers see codegen diffs without a local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Zero external runtime deps so domain code can reference [MqPub] /
+      [MqSub] and the messaging interfaces without dragging in
+      RabbitMQ.Client or any transport. Future Kafka / NATS impls live in
+      sibling csprojs with the same surface.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <ProjectReference Include="..\..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\..\i18n\keys\DcsvIo.D2.I18n.Keys.csproj" />
+    <ProjectReference Include="..\..\handler\core\DcsvIo.D2.Handler.csproj" />
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+
+    <!--
+      Encryption ref needed for DcsvIo.D2.Encryption.EncryptionDomains constants —
+      Messaging.SourceGen reads them at codegen time to validate the encryption
+      value on each message spec entry (whitelist of registered domains + the
+      literal "plaintext").
+    -->
+    <ProjectReference Include="..\..\encryption\core\DcsvIo.D2.Encryption.csproj" />
+
+    <!-- Messaging.SourceGen — emits MqMessages / MqSubscriptions + their registries. -->
+    <ProjectReference Include="..\source-gen\DcsvIo.D2.Messaging.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <!--
+      DlqFailureMetadata SourceGen — multi-target. The Fields-half emits into
+      this csproj (DlqFailureMetadataFields.g.cs — the JSON property-name
+      catalog consumed by [JsonPropertyName] attributes on DlqFailureMetadata).
+      The Causes-half emits into rabbitmq (DlqFailureCauses.g.cs).
+    -->
+    <ProjectReference Include="..\dlq-failure-metadata-source-gen\DcsvIo.D2.Messaging.DlqMetadata.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Spec files the source-gens read. -->
+    <AdditionalFiles Include="$(D2PublicContractsRoot)mq-messages\mq-messages.spec.json" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)mq-subscriptions\mq-subscriptions.spec.json" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)dlq-failure-metadata\dlq-failure-metadata.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Messaging.RabbitMq" />
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Messaging.Abstractions</PackageId>
+    <Description>Transport-agnostic messaging abstractions for D2 — the [MqPub] / [MqSub] vocabulary, the message-bus contract, and DLQ failure-metadata wire shapes.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

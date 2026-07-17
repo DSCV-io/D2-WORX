@@ -1,0 +1,29 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+// -----------------------------------------------------------------------
+
+syntax = "proto3";
+
+package d2.common.v1;
+
+import "common/v1/d2_result.proto";
+
+option csharp_namespace = "D2.Services.Protos.Common.V1";
+
+// Shared messages for Dkron scheduled job RPCs.
+// All jobs take no parameters and return the same response shape.
+
+message TriggerJobRequest {}
+
+message TriggerJobResponse {
+  D2ResultProto result = 1;
+  JobExecutionData data = 2;
+}
+
+message JobExecutionData {
+  string job_name = 1;
+  int32 rows_affected = 2;
+  int64 duration_ms = 3;
+  bool lock_acquired = 4;
+  string executed_at = 5; // ISO 8601
+}

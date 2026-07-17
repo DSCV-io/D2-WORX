@@ -1,0 +1,54 @@
+#nullable enable
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizableAttribute
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizableAttribute.AnonymizableAttribute(DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind kind) -> void
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizableAttribute.AnonymizableAttribute(string! constantValue) -> void
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizableAttribute.AnonymizableAttribute(string! template, DcsvIo.D2.DataGovernance.Abstractions.AnonymizeTemplateMarker marker = DcsvIo.D2.DataGovernance.Abstractions.AnonymizeTemplateMarker.Template) -> void
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizableAttribute.ConstantValue.get -> string?
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizableAttribute.Kind.get -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizableAttribute.Template.get -> string?
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.<Clone>$() -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome!
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.AlreadyAnonymizedRows.get -> int
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.AlreadyAnonymizedRows.init -> void
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.AnonymizationOutcome() -> void
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.EntityTypesProcessed.get -> int
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.EntityTypesProcessed.init -> void
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.EntityTypesSkippedExempt.get -> int
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.EntityTypesSkippedExempt.init -> void
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.Equals(DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome? other) -> bool
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.RowsAnonymized.get -> int
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.RowsAnonymized.init -> void
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.<Clone>$() -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule!
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.ConstantValue.get -> string?
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.Equals(DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule? other) -> bool
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.Kind.get -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.Template.get -> string?
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind.Constant = 2 -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind.SetEmpty = 1 -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind.SetNull = 0 -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind.Template = 3 -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizeTemplateMarker
+DcsvIo.D2.DataGovernance.Abstractions.AnonymizeTemplateMarker.Template = 0 -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizeTemplateMarker
+DcsvIo.D2.DataGovernance.Abstractions.IAnonymizationEngine
+DcsvIo.D2.DataGovernance.Abstractions.IAnonymizationEngine.AnonymizeOrgAsync(System.Guid orgId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome!>!>!
+DcsvIo.D2.DataGovernance.Abstractions.IAnonymizationEngine.AnonymizeUserAsync(System.Guid userId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome!>!>!
+DcsvIo.D2.DataGovernance.Abstractions.IAnonymizationTrackable
+DcsvIo.D2.DataGovernance.Abstractions.IAnonymizationTrackable.IsAnonymized.get -> bool
+DcsvIo.D2.DataGovernance.Abstractions.IExemptFromAnonymization
+DcsvIo.D2.DataGovernance.Abstractions.IOrgOwned
+DcsvIo.D2.DataGovernance.Abstractions.IOrgOwned.OrgId.get -> System.Guid?
+DcsvIo.D2.DataGovernance.Abstractions.IUserOwned
+DcsvIo.D2.DataGovernance.Abstractions.IUserOwned.UserId.get -> System.Guid?
+override DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.Equals(object? obj) -> bool
+override DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.GetHashCode() -> int
+override DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.ToString() -> string!
+override DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.Equals(object? obj) -> bool
+override DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.GetHashCode() -> int
+override DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.ToString() -> string!
+static DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.operator !=(DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome? left, DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome? right) -> bool
+static DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome.operator ==(DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome? left, DcsvIo.D2.DataGovernance.Abstractions.AnonymizationOutcome? right) -> bool
+static DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.Create(DcsvIo.D2.DataGovernance.Abstractions.AnonymizeKind kind, string? constantValue = null, string? template = null) -> DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule!
+static DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.operator !=(DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule? left, DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule? right) -> bool
+static DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule.operator ==(DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule? left, DcsvIo.D2.DataGovernance.Abstractions.AnonymizationRule? right) -> bool

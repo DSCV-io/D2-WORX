@@ -1,0 +1,54 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Spiffe</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    DcsvIo.D2.Spiffe — the single home for the SPIFFE workload-identity
+    grammar (spiffe://d2.internal/workload/<service>). A pure, leaf-tier value
+    object: parse / validate / emit the SPIFFE subject-alternative-name a leaf
+    certificate carries and a peer validator checks. ONE grammar, two consumers —
+    KeyCustodian's issuance path delegates to it (re-mapping the failure to its own
+    KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY code), and the shared mTLS peer validator
+    in DcsvIo.D2.AspNetCore consumes it for the SAN check. Living it here keeps the
+    SPIFFE format single-source rather than duplicating the parser per consumer.
+
+    Leaf-tier — references only DcsvIo.D2.Result (for the D2Result generic
+    ValidationFailed the shared VO returns) which transitively brings the
+    ErrorCategory + TK message vocabulary. NO AspNetCore / Kestrel / X.509 /
+    service-domain dependency: the VO works on the SAN STRING; certificate
+    extraction is the validator's job in the consuming lib.
+
+    net10.0 / Nullable / ImplicitUsings / StyleCop / TreatWarningsAsErrors /
+    GenerateDocumentationFile inherited from Directory.Build.props.
+  -->
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.Result — D2Result<T> + the generic ValidationFailed semantic
+      factory the shared VO returns on a malformed identity. Transitively
+      re-exposes ErrorCategory + the TK message catalog.
+    -->
+    <ProjectReference Include="..\result\core\DcsvIo.D2.Result.csproj" />
+    <!--
+      DcsvIo.D2.Utilities — ToNullIfEmpty() / ThrowIfFalsey() guards used by the
+      VO's smart constructors, the same guards KeyCustodian's domain VO uses.
+    -->
+    <ProjectReference Include="..\utilities\DcsvIo.D2.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Spiffe</PackageId>
+    <Description>SPIFFE workload-identity value object and peer validator for D2 mTLS — the subject-alternative-name a leaf certificate carries and the trust-domain grammar.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+</Project>

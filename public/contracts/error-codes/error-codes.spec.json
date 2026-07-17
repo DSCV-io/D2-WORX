@@ -1,0 +1,140 @@
+{
+  "$schema": "./schema.json",
+  "errorCodes": [
+    {
+      "code": "NOT_FOUND",
+      "httpStatus": 404,
+      "category": "not_found",
+      "userMessageKey": "TK.Common.Errors.NOT_FOUND",
+      "factoryName": "NotFound",
+      "factoryShape": "standard",
+      "doc": "Indicates that the requested resource was not found."
+    },
+    {
+      "code": "FORBIDDEN",
+      "httpStatus": 403,
+      "category": "policy_denied",
+      "userMessageKey": "TK.Common.Errors.FORBIDDEN",
+      "factoryName": "Forbidden",
+      "factoryShape": "standard",
+      "doc": "Indicates that the action is forbidden due to insufficient permissions."
+    },
+    {
+      "code": "UNAUTHORIZED",
+      "httpStatus": 401,
+      "category": "policy_denied",
+      "userMessageKey": "TK.Common.Errors.UNAUTHORIZED",
+      "factoryName": "Unauthorized",
+      "factoryShape": "standard",
+      "doc": "Indicates that the user is unauthorized to perform the action (e.g., not authenticated)."
+    },
+    {
+      "code": "VALIDATION_FAILED",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Common.Errors.VALIDATION_FAILED",
+      "factoryName": "ValidationFailed",
+      "factoryShape": "standard",
+      "doc": "Indicates that the input validation has failed."
+    },
+    {
+      "code": "CONFLICT",
+      "httpStatus": 409,
+      "category": "conflict",
+      "userMessageKey": "TK.Common.Errors.CONFLICT",
+      "factoryName": "Conflict",
+      "factoryShape": "standard",
+      "doc": "Indicates that a conflict occurred, such as a resource already existing."
+    },
+    {
+      "code": "UNHANDLED_EXCEPTION",
+      "httpStatus": 500,
+      "category": "internal_error",
+      "userMessageKey": "TK.Common.Errors.UNKNOWN",
+      "factoryName": "UnhandledException",
+      "factoryShape": "standard",
+      "doc": "Indicates that an unhandled exception has occurred."
+    },
+    {
+      "code": "COULD_NOT_BE_SERIALIZED",
+      "httpStatus": 500,
+      "category": "internal_error",
+      "userMessageKey": "TK.Common.Errors.COULD_NOT_BE_SERIALIZED",
+      "factoryName": "CouldNotBeSerialized",
+      "factoryShape": "none",
+      "doc": "Indicates that the data could not be serialized."
+    },
+    {
+      "code": "COULD_NOT_BE_DESERIALIZED",
+      "httpStatus": 500,
+      "category": "internal_error",
+      "userMessageKey": "TK.Common.Errors.COULD_NOT_BE_DESERIALIZED",
+      "factoryName": "CouldNotBeDeserialized",
+      "factoryShape": "none",
+      "doc": "Indicates that the data could not be deserialized."
+    },
+    {
+      "code": "SERVICE_UNAVAILABLE",
+      "httpStatus": 503,
+      "category": "infrastructure_unavailable",
+      "userMessageKey": "TK.Common.Errors.SERVICE_UNAVAILABLE",
+      "factoryName": "ServiceUnavailable",
+      "factoryShape": "standard",
+      "doc": "Indicates that the service is currently unavailable."
+    },
+    {
+      "code": "SOME_FOUND",
+      "httpStatus": 206,
+      "category": "partial_success",
+      "userMessageKey": "TK.Common.Errors.SOME_FOUND",
+      "factoryName": "SomeFound",
+      "factoryShape": "none",
+      "doc": "Indicates that some items were found in a query operation but not all."
+    },
+    {
+      "code": "PARTIAL_SUCCESS",
+      "httpStatus": 207,
+      "category": "partial_success",
+      "userMessageKey": "TK.Common.Errors.PARTIAL_SUCCESS",
+      "factoryName": "PartialSuccess",
+      "factoryShape": "none",
+      "doc": "Indicates that a multi-target write operation succeeded against some targets but not all (e.g. tiered cache wrote L1 but not L2). D2Result.Success stays true - the operation did succeed in part. Callers inspect IsPartialSuccess + the result data to decide what to do about the failed target(s)."
+    },
+    {
+      "code": "RATE_LIMITED",
+      "httpStatus": 429,
+      "category": "rate_limited",
+      "userMessageKey": "TK.Common.Errors.TOO_MANY_REQUESTS",
+      "factoryName": "TooManyRequests",
+      "factoryShape": "standard",
+      "doc": "Indicates that the request has been rate limited."
+    },
+    {
+      "code": "IDEMPOTENCY_IN_FLIGHT",
+      "httpStatus": 409,
+      "category": "conflict",
+      "userMessageKey": "TK.Common.Errors.IDEMPOTENCY_IN_FLIGHT",
+      "factoryName": "IdempotencyInFlight",
+      "factoryShape": "none",
+      "doc": "Indicates that an idempotent request is already being processed (in-flight)."
+    },
+    {
+      "code": "PAYLOAD_TOO_LARGE",
+      "httpStatus": 413,
+      "category": "payload_too_large",
+      "userMessageKey": "TK.Common.Errors.PAYLOAD_TOO_LARGE",
+      "factoryName": "PayloadTooLarge",
+      "factoryShape": "standard",
+      "doc": "Indicates that the request payload exceeds the maximum allowed size."
+    },
+    {
+      "code": "CANCELED",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Common.Errors.CANCELED",
+      "factoryName": "Canceled",
+      "factoryShape": "standard",
+      "doc": "Indicates that the operation was canceled (client or server cancellation)."
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Handler.Repo.Postgres</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    PostgreSQL implementation of IDbExceptionClassifier. Plugs into
+    BaseRepoHandler via DI (services.AddD2Postgres()). Owns the SQLSTATE
+    matrix + the wrapping rules for DbUpdateException ↔ PostgresException
+    ↔ raw NpgsqlException. Sibling packages would provide the same
+    interface for SQL Server, SQLite, MySQL, etc.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\repo-abstractions\DcsvIo.D2.Handler.Repo.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Handler.Repo.Postgres</PackageId>
+    <Description>PostgreSQL IDbExceptionClassifier implementation for D2, plugging Npgsql failure classification into BaseRepoHandler.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

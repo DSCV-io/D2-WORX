@@ -1,0 +1,15 @@
+#nullable enable
+DcsvIo.D2.Headers.Http.HttpHeaders
+const DcsvIo.D2.Headers.Http.HttpHeaders.ACCEPT_LANGUAGE = "Accept-Language" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.AUTHORIZATION = "Authorization" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.CLIENT_FINGERPRINT = "X-D2-Client-Fingerprint" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.CORRELATION_ID = "X-Correlation-Id" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.D2_CURRENCY = "X-D2-Currency" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.D2_LOCALE = "X-D2-Locale" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.D2_TIMEZONE = "X-D2-Timezone" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.IDEMPOTENCY_KEY = "Idempotency-Key" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.INTERNAL_TOKEN = "X-D2-Internal-Token" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.PROPAGATED_CONTEXT = "x-d2-context" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.TRACEPARENT = "traceparent" -> string!
+const DcsvIo.D2.Headers.Http.HttpHeaders.TRACESTATE = "tracestate" -> string!
+static DcsvIo.D2.Headers.Http.HttpHeaders.AllHttpHeaders.get -> System.Collections.Generic.IReadOnlyList<string!>!

@@ -1,0 +1,120 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Geo.Abstractions</RootNamespace>
+
+    <!--
+      Emit the SourceGen-emitted geo types (record shapes + real enums +
+      wrapper structs + JsonConverters + GeoCatalog constants + closed-set
+      validation tables) to <project-dir>/Generated/. The directory is
+      tracked in git so PR reviewers see codegen diffs without a local
+      build. At the 2b-1 scaffold stage the GeoGenerator dispatcher is
+      intentionally inert (per-target emitter arms wire up in 2b-2), so
+      this directory will be empty after build — the wiring is still
+      verified by a clean build with EmitCompilerGeneratedFiles enabled.
+    -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <!--
+    Data-free + temporal-free domain-safe slice. Domain code anywhere can
+    take a ProjectRef here without dragging in catalog data (lives in
+    DcsvIo.D2.Geo.Default) or NodaTime (lives in DcsvIo.D2.Time). The
+    hand-written surface is intentionally tiny — meta-records + helpers
+    that the SourceGen-emitted Generated/ types reference back into.
+
+    NO DcsvIo.D2.Time ProjectReference. NO NodaTime PackageReference.
+    Both are pre-emptive gates — adding either would couple every geo
+    consumer to NodaTime.
+  -->
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.Result — public API surfaces (IGeoNameResolver) return
+      D2Result<T> so callers can branch on Success / Failed and surface
+      validation messages via the standard envelope.
+    -->
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <!--
+      DcsvIo.D2.Utilities — Falsey()/Truthy() guards in the NameNormalizer
+      null/empty/whitespace input path. Same OOTB-extension discipline the
+      Time lib follows.
+    -->
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+    <!--
+      DcsvIo.D2.Context.Abstractions — extension methods on IRequestContext
+      in Extensions/IRequestContextGeoExtensions.cs add typed-geo accessors
+      (Country / Subdivision) over the raw string WhoIs fields. Typed access
+      is opt-in via these extensions; the context interface itself keeps the
+      raw strings for JWT-claim wire fidelity and minimal context\source-gen
+      impact.
+    -->
+    <ProjectReference Include="..\..\context\abstractions\DcsvIo.D2.Context.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Analyzer reference to DcsvIo.D2.Geo.SourceGen. OutputItemType="Analyzer"
+      + ReferenceOutputAssembly="false" wires the generator into Roslyn at
+      compile time WITHOUT producing a runtime dll dependency — the analyzer
+      runs in the compilation host only. GeoGenerator dispatches on
+      compilation.AssemblyName: this assembly (DcsvIo.D2.Geo.Abstractions)
+      is the TYPES target; DcsvIo.D2.Geo.Default is the DATA target.
+    -->
+    <ProjectReference Include="..\source-gen\DcsvIo.D2.Geo.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Surface the 7 Tier-2 geo spec files (countries / subdivisions /
+      currencies / languages / locales / timezones / geopolitical-entities)
+      to DcsvIo.D2.Geo.SourceGen via AdditionalFiles. GeoGenerator filters
+      by both the .spec.json suffix AND the parent directory name "geo" so
+      the glob is conservative — only the 7 intended specs feed the
+      generator even if AdditionalFiles widens later.
+    -->
+    <AdditionalFiles Include="$(D2PublicContractsRoot)geo\*.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+    <!--
+      Friend-assembly visibility for DcsvIo.D2.Geo.Default. The codegen-emitted
+      single-record nav properties (Country.PrimaryLanguage,
+      Country.Subdivisions, etc.) carry `get; internal set;` so the
+      two-pass populate emitter in Geo.Default can wire recursive nav refs
+      after first-pass record construction. Outside Geo.Default the setters
+      remain compile-time-unwritable, preserving the record-immutability
+      contract for every other consumer.
+    -->
+    <InternalsVisibleTo Include="DcsvIo.D2.Geo.Default" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Geo.Abstractions</PackageId>
+    <Description>Strongly-typed ISO geo reference-data type surface for D2 (countries, subdivisions, currencies, languages, locales, timezones) without catalog data.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

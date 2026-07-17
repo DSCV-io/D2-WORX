@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="Spike.Contracts/Spike.Contracts.csproj" />
+  <Project Path="Spike.Edge/Spike.Edge.csproj" />
+  <Project Path="Spike.Idempotency/Spike.Idempotency.csproj" />
+  <Project Path="Spike.Idempotency.Test/Spike.Idempotency.Test.csproj" />
+  <Project Path="Spike.InProc/Spike.InProc.csproj" />
+  <Project Path="Spike.Resilience/Spike.Resilience.csproj" />
+  <Project Path="Spike.Resilience.Test/Spike.Resilience.Test.csproj" />
+  <Project Path="Spike.Sse/Spike.Sse.csproj" />
+  <Project Path="Spike.Test/Spike.Test.csproj" />
+</Solution>

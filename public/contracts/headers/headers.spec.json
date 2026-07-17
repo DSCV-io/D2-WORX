@@ -1,0 +1,131 @@
+{
+  "$schema": "./schema.json",
+  "headers": [
+    {
+      "name": "Authorization",
+      "constName": "AUTHORIZATION",
+      "applicability": ["http", "grpc"],
+      "convention": "oauth",
+      "description": "RFC 6750 bearer token header. Carries the JWT; identity rebuilds from this on every hop. Not used on AMQP (broker uses connection-level credentials)."
+    },
+    {
+      "name": "Idempotency-Key",
+      "constName": "IDEMPOTENCY_KEY",
+      "applicability": ["http"],
+      "convention": "stripe",
+      "description": "Idempotency key for request deduplication. Conventional Stripe-style header name."
+    },
+    {
+      "name": "X-Correlation-Id",
+      "constName": "CORRELATION_ID",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "Request correlation id. Inbound value (capped at 128 chars) flows to the response ProblemDetails extensions[correlationId] field; when absent / over-cap a fresh GUID is generated. Echoed back via the same header so callers can include it in subsequent requests / log lines for end-to-end correlation. The X- prefix is retained for compatibility with the widely-deployed convention (Microsoft, AWS, others) despite RFC 6648's deprecation guidance."
+    },
+    {
+      "name": "X-D2-Client-Fingerprint",
+      "constName": "CLIENT_FINGERPRINT",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "Client-computed device fingerprint for rate limiting + adaptive auth."
+    },
+    {
+      "name": "X-D2-Internal-Token",
+      "constName": "INTERNAL_TOKEN",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "The BFF's boundary token for its calls to Edge — an OAuth client_credentials JWT (audience d2.edge, 15-min TTL) the BFF acquires as an external client of Edge. Sent on outbound BFF->Edge calls so Edge can distinguish BFF-originated SSR traffic from browser-direct traffic in audit + telemetry tags."
+    },
+    {
+      "name": "content-type",
+      "constName": "CONTENT_TYPE",
+      "applicability": ["amqp"],
+      "convention": "rfc",
+      "description": "Always application/octet-stream for D2 messages — body is encrypted bytes (or proto-canonical JSON bytes, never a directly-readable structured type)."
+    },
+    {
+      "name": "x-proto-type",
+      "constName": "PROTO_TYPE",
+      "applicability": ["amqp"],
+      "convention": "amqp-x",
+      "description": "Fully-qualified proto type name (e.g. d2.events.files.v1.FileUploadedEvent). Lets consumers fail-fast on a type mismatch before deserialization."
+    },
+    {
+      "name": "message-id",
+      "constName": "MESSAGE_ID",
+      "applicability": ["amqp"],
+      "convention": "amqp",
+      "description": "UUIDv7 message identifier — sortable, includes timestamp, suitable as an idempotency key."
+    },
+    {
+      "name": "timestamp",
+      "constName": "TIMESTAMP",
+      "applicability": ["amqp"],
+      "convention": "amqp",
+      "description": "Producer-set ISO 8601 UTC timestamp."
+    },
+    {
+      "name": "traceparent",
+      "constName": "TRACEPARENT",
+      "applicability": ["http", "grpc", "amqp"],
+      "convention": "w3c",
+      "description": "W3C traceparent header — full {version}-{traceId}-{spanId}-{flags} string per https://www.w3.org/TR/trace-context. Consumers parse it to start a child span whose parent is the producer's span, so cross-hop trace assembly works in any OTel backend without bespoke linking."
+    },
+    {
+      "name": "tracestate",
+      "constName": "TRACESTATE",
+      "applicability": ["http", "grpc", "amqp"],
+      "convention": "w3c",
+      "description": "W3C tracestate header (vendor-specific tracing context that rides alongside traceparent). Forwarded as-is so non-D2 tracing systems chained through us don't lose state."
+    },
+    {
+      "name": "x-d2-context",
+      "constName": "PROPAGATED_CONTEXT",
+      "applicability": ["http", "grpc", "amqp"],
+      "convention": "d2",
+      "description": "Base64url-of-JSON encoded PropagatedContext — small set of cross-hop fields a downstream consumer can't recompute (request id, original request path, fingerprints, WhoIs hash). Same header name + encoding on AMQP / gRPC / HTTP. Identity fields are NEVER in here — they rebuild from the JWT at every hop."
+    },
+    {
+      "name": "x-d2-encryption-kid",
+      "constName": "ENCRYPTION_KID",
+      "applicability": ["amqp"],
+      "convention": "d2",
+      "description": "Encryption key id (kid). Duplicated from the encrypted frame so ops can decide whether archive keys are needed for a stuck DLQ message without decrypting first."
+    },
+    {
+      "name": "x-d2-failure-reason",
+      "constName": "FAILURE_REASON",
+      "applicability": ["amqp"],
+      "convention": "d2",
+      "description": "Failure reason metadata attached by the consumer when nacking a message to its DLQ. JSON-encoded DlqFailureMetadata."
+    },
+    {
+      "name": "Accept-Language",
+      "constName": "ACCEPT_LANGUAGE",
+      "applicability": ["http"],
+      "convention": "rfc",
+      "description": "Standard HTTP locale-preference header (RFC 7231 §5.3.5). Set by browser or OS. Represents the lowest-priority tier of the user locale resolution cascade: profile > org > X-D2-Locale > Accept-Language > fallback 'en-US'. Adding as a typed constant so middleware stops using magic strings."
+    },
+    {
+      "name": "X-D2-Locale",
+      "constName": "D2_LOCALE",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "D2-specific user-selected locale override (IETF BCP 47 tag, e.g. 'en-US', 'zh-Hans-SG'). Set when the user explicitly picks a locale in the UI. Takes precedence over Accept-Language in the locale cascade. Consumed by Edge auth middleware to populate IRequestContext.LocaleIetfBcp47Tag."
+    },
+    {
+      "name": "X-D2-Timezone",
+      "constName": "D2_TIMEZONE",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "Browser-derived IANA timezone name (from Intl.DateTimeFormat().resolvedOptions().timeZone, e.g. 'America/New_York'). Set by the BFF fetch interceptor on every request. Used by Edge auth middleware as the third tier of the timezone cascade: profile > org > X-D2-Timezone > WhoIs-derived > fallback 'UTC'."
+    },
+    {
+      "name": "X-D2-Currency",
+      "constName": "D2_CURRENCY",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "User-selected currency override (ISO 4217 code, e.g. 'USD', 'EUR'). No browser-native equivalent — D2-custom. Takes precedence over country-derived currency in the cascade: profile > org > X-D2-Currency > CountryIso31661Alpha2Code-derived > fallback NULL."
+    }
+  ]
+}

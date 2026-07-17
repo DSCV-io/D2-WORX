@@ -1,0 +1,37 @@
+{
+  "name": "@dcsv-io/d2-i18n",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./keys": {
+      "types": "./dist/keys.d.ts",
+      "import": "./dist/keys.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@dcsv-io/d2-i18n-abstractions": "workspace:*",
+    "@dcsv-io/d2-i18n-keys": "workspace:*",
+    "@dcsv-io/d2-utilities": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "4.0.18",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

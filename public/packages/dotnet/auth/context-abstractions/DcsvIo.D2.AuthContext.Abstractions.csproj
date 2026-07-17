@@ -1,0 +1,78 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.AuthContext.Abstractions</RootNamespace>
+
+    <!-- Emit the generator's output (IAuthContext.g.cs) to <project-dir>/Generated/.
+         The directory is tracked in git so PR reviewers see codegen diffs without
+         a local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <!--
+    Domain-safe slice of the request-context. Domain code references this for
+    typed access to caller identity, scopes, and impersonation context — without
+    pulling DI / AspNetCore / Configuration.
+
+    The IAuthContext interface itself is emitted at build time by the sibling
+    DcsvIo.D2.Context.SourceGen project (../context/source-gen/), referenced
+    below as a Roslyn analyzer (no runtime dll dependency).
+
+    The hand-written IAuthContextExtensions live alongside the generated
+    interface and provide convenience checks (HasScope / IsStaff / etc.).
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\abstractions\DcsvIo.D2.Auth.Abstractions.csproj" />
+    <!--
+      DcsvIo.D2.Utilities supplies the [RedactData] attribute + RedactReason
+      enum that the spec-driven codegen places on PII-bearing properties of
+      IAuthContext. Domain-safe (zero runtime deps).
+    -->
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+    <ProjectReference Include="..\..\context\source-gen\DcsvIo.D2.Context.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Surface BOTH context spec files so the generator can resolve the
+      `extends` chain on IRequestContext. Only IAuthContext.spec.json drives
+      emission for THIS assembly (per-assembly dispatch in ContextGenerator).
+    -->
+    <AdditionalFiles Include="$(D2PublicContractsRoot)auth-context\IAuthContext.spec.json" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)request-context\IRequestContext.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.AuthContext.Abstractions</PackageId>
+    <Description>Read-only IAuthContext interface for reasoning about caller identity, organization, scopes, and impersonation context in D2.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

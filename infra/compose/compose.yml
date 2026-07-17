@@ -1,0 +1,584 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
+# D2-WORX Docker Compose — Dev Environment
+#
+# Usage (from repo root, via Makefile):
+#   make up                            # Start all services
+#   make down                          # Stop all services
+#   make logs s=d2-postgres            # Tail logs for a service
+#   make infra                         # Start infrastructure only
+#   make otel                          # Start observability stack only
+#
+# Or directly:
+#   docker compose -f infra/compose/compose.yml --env-file .env.local --env-file .env.secrets up -d
+#
+# Application multiproc stubs live here: d2-edge + d2-audit (JWT+mTLS dual-factor
+# bridge). Remaining app services (d2-files, d2-courier, d2-notifications, d2-web, …)
+# are added as those services come online.
+
+name: d2-worx
+
+networks:
+  d2-network:
+    driver: bridge
+
+volumes:
+  d2-minio-data:
+  d2-minio-tokens:
+  d2-loki-data:
+  d2-tempo-data:
+  d2-mimir-data:
+  d2-alloy-data:
+  d2-grafana-data:
+  d2-postgres-data:
+  d2-redis-data:
+  d2-redisinsight-data:
+  d2-rabbitmq-data:
+  d2-dkron-data:
+  d2-clamav-data:
+  d2-portainer-data:
+
+services:
+  # ==========================================================================
+  # Object Storage (MinIO — backs LGTM block storage; user-file storage
+  # migrates to SeaweedFS when the files service comes online)
+  # ==========================================================================
+
+  d2-minio:
+    image: ${MINIO_IMAGE}:${MINIO_TAG}
+    container_name: ${MINIO_NAME}
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_USERNAME}
+      MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
+      MINIO_BROWSER: "on"
+    volumes:
+      - d2-minio-data:/data
+    command: server /data --console-address :9001
+    networks: [d2-network]
+    depends_on:
+      d2-rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://localhost:9000/minio/health/live || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  d2-minio-init:
+    image: ${MINIO_MC_IMAGE}:${MINIO_MC_TAG}
+    container_name: ${MINIO_INIT_NAME}
+    environment:
+      MINIO_ROOT_USER: ${S3_USERNAME}
+      MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
+      MINIO_PROMETHEUS_AUTH_TYPE: public
+    volumes:
+      - d2-minio-tokens:/minio-token
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      mc alias set myminio http://${MINIO_NAME}:9000 ${S3_USERNAME} ${S3_PASSWORD} &&
+      mc mb --ignore-existing myminio/${MINIO_BUCKET_LOKI} &&
+      mc mb --ignore-existing myminio/${MINIO_BUCKET_TEMPO} &&
+      mc mb --ignore-existing myminio/${MINIO_BUCKET_MIMIR_BLOCKS} &&
+      mc mb --ignore-existing myminio/${MINIO_BUCKET_MIMIR_RULER} &&
+      mc admin prometheus generate myminio > /minio-token/prometheus-config.yaml &&
+      echo 'MinIO buckets and Prometheus token initialized successfully'
+      "
+    networks: [d2-network]
+    depends_on:
+      d2-minio:
+        condition: service_healthy
+    restart: "no"
+
+  # ==========================================================================
+  # Observability (LGTM stack)
+  # ==========================================================================
+
+  d2-loki:
+    image: ${LOKI_IMAGE}:${LOKI_TAG}
+    container_name: ${LOKI_NAME}
+    ports:
+      - "${LOKI_HTTP_PORT}:3100"
+      - "${LOKI_GRPC_PORT}:9095"
+    environment:
+      MINIO_ROOT_USER: ${S3_USERNAME}
+      MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
+      MINIO_NAME: ${MINIO_NAME}
+      MINIO_BUCKET_LOKI: ${MINIO_BUCKET_LOKI}
+    volumes:
+      - ../observability/loki/config:/etc/loki:ro
+      - d2-loki-data:/loki
+    command: -config.file=/etc/loki/loki.yaml -config.expand-env=true
+    networks: [d2-network]
+    depends_on:
+      d2-minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+  d2-tempo:
+    image: ${TEMPO_IMAGE}:${TEMPO_TAG}
+    container_name: ${TEMPO_NAME}
+    ports:
+      - "${TEMPO_HTTP_PORT}:3200"
+      - "${TEMPO_GRPC_PORT}:9096"
+    environment:
+      MINIO_ROOT_USER: ${S3_USERNAME}
+      MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
+      MINIO_NAME: ${MINIO_NAME}
+      MINIO_BUCKET_TEMPO: ${MINIO_BUCKET_TEMPO}
+    volumes:
+      - ../observability/tempo/config:/etc/tempo:ro
+      - d2-tempo-data:/var/tempo
+    command: -config.file=/etc/tempo/tempo.yaml -config.expand-env=true
+    networks: [d2-network]
+    depends_on:
+      d2-minio-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  d2-mimir:
+    image: ${MIMIR_IMAGE}:${MIMIR_TAG}
+    container_name: ${MIMIR_NAME}
+    ports:
+      - "${MIMIR_HTTP_PORT}:9009"
+      - "${MIMIR_GRPC_PORT}:9097"
+    environment:
+      MINIO_ROOT_USER: ${S3_USERNAME}
+      MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
+      MINIO_NAME: ${MINIO_NAME}
+      MINIO_BUCKET_MIMIR_BLOCKS: ${MINIO_BUCKET_MIMIR_BLOCKS}
+      MINIO_BUCKET_MIMIR_RULER: ${MINIO_BUCKET_MIMIR_RULER}
+    volumes:
+      - ../observability/mimir/config:/etc/mimir:ro
+      - d2-mimir-data:/var/mimir
+    command: -config.file=/etc/mimir/mimir.yaml -config.expand-env=true
+    networks: [d2-network]
+    depends_on:
+      d2-minio-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  d2-cadvisor:
+    image: ${CADVISOR_IMAGE}:${CADVISOR_TAG}
+    container_name: ${CADVISOR_NAME}
+    ports:
+      - "${CADVISOR_PORT}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    command:
+      - --housekeeping_interval=10s
+      - --docker_only=true
+    networks: [d2-network]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  d2-alloy:
+    image: ${ALLOY_IMAGE}:${ALLOY_TAG}
+    container_name: ${ALLOY_NAME}
+    ports:
+      - "${ALLOY_HTTP_PORT}:12345"
+      - "${OTLP_GRPC_PORT}:4317"
+      - "${OTLP_HTTP_PORT}:4318"
+      - "${FARO_RECEIVER_PORT}:12347"
+    environment:
+      ALLOY_DEPLOY_MODE: docker
+      MINIO_ROOT_USER: ${S3_USERNAME}
+      MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
+      # Container names + endpoints for config.alloy env() references.
+      CADVISOR_NAME: ${CADVISOR_NAME}
+      # d2-edge multiproc stub scrapes on container metrics port 8080 (not host publish).
+      EDGE_METRICS_ENDPOINT: "${EDGE_SERVICE_NAME:-d2-edge}:8080"
+      PG_EXPORTER_NAME: ${PG_EXPORTER_NAME}
+      REDIS_EXPORTER_NAME: ${REDIS_EXPORTER_NAME}
+      RABBITMQ_NAME: ${RABBITMQ_NAME}
+      MIMIR_NAME: ${MIMIR_NAME}
+      LOKI_NAME: ${LOKI_NAME}
+      TEMPO_NAME: ${TEMPO_NAME}
+      MINIO_NAME: ${MINIO_NAME}
+      OTEL_CLUSTER_NAME: ${OTEL_CLUSTER_NAME}
+      OTEL_ENVIRONMENT: ${OTEL_ENVIRONMENT}
+      FARO_CORS_ORIGINS: ${FARO_CORS_ORIGINS}
+    volumes:
+      - /proc:/rootproc:ro
+      - /sys:/sys:ro
+      - /:/rootfs:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../observability/alloy/config:/etc/alloy:ro
+      - d2-alloy-data:/var/lib/alloy/data
+      - d2-minio-tokens:/minio-token:ro
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --stability.level=public-preview
+    networks: [d2-network]
+    depends_on:
+      d2-cadvisor:
+        condition: service_healthy
+      d2-mimir:
+        condition: service_started
+      d2-loki:
+        condition: service_healthy
+      d2-tempo:
+        condition: service_started
+      d2-minio-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  d2-grafana:
+    image: ${GRAFANA_IMAGE}:${GRAFANA_TAG}
+    container_name: ${GRAFANA_NAME}
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    environment:
+      # Security — require authentication.
+      GF_SECURITY_ADMIN_USER: ${OTEL_USERNAME}
+      GF_SECURITY_ADMIN_PASSWORD: ${OTEL_PASSWORD}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_AUTH_BASIC_ENABLED: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_ORG_CREATE: "false"
+      GF_SNAPSHOTS_EXTERNAL_ENABLED: "false"
+      # Security — values differ between DEV and PROD (set in .env.local).
+      GF_SECURITY_COOKIE_SECURE: ${GRAFANA_COOKIE_SECURE}
+      GF_SECURITY_COOKIE_SAMESITE: ${GRAFANA_COOKIE_SAMESITE}
+      GF_SECURITY_STRICT_TRANSPORT_SECURITY: ${GRAFANA_STRICT_TRANSPORT_SECURITY}
+      GF_FEATURE_TOGGLES_ENABLE: traceqlEditor
+      # Datasource container names for provisioning env var expansion.
+      MIMIR_NAME: ${MIMIR_NAME}
+      LOKI_NAME: ${LOKI_NAME}
+      TEMPO_NAME: ${TEMPO_NAME}
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - d2-grafana-data:/var/lib/grafana
+    networks: [d2-network]
+    depends_on:
+      d2-tempo:
+        condition: service_started
+      d2-loki:
+        condition: service_healthy
+      d2-mimir:
+        condition: service_started
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Infrastructure
+  # ==========================================================================
+
+  d2-postgres:
+    image: postgres:${POSTGRES_TAG}
+    container_name: ${POSTGRES_NAME}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # PG 18+ changed default PGDATA; set explicitly for forward compat.
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - d2-postgres-data:/var/lib/postgresql/data
+    networks: [d2-network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  d2-pgadmin:
+    image: dpage/pgadmin4:${PGADMIN_TAG}
+    container_name: ${PGADMIN_NAME}
+    ports:
+      - "${PGADMIN_PORT}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${DBA_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${DBA_PASSWORD}
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "True"
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
+    networks: [d2-network]
+    depends_on:
+      d2-postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  d2-pg-exporter:
+    image: ${PG_EXPORTER_IMAGE}:${PG_EXPORTER_TAG}
+    container_name: ${PG_EXPORTER_NAME}
+    ports:
+      - "${PG_EXPORTER_PORT}:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${DB_USERNAME}:${DB_PASSWORD}@${POSTGRES_NAME}:5432/postgres?sslmode=disable"
+    networks: [d2-network]
+    depends_on:
+      d2-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9187/metrics || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  d2-redis:
+    image: redis:${REDIS_TAG}
+    container_name: ${REDIS_NAME}
+    ports:
+      - "${REDIS_PORT}:6379"
+    command: redis-server --requirepass ${CACHE_PASSWORD}
+    volumes:
+      - d2-redis-data:/data
+    networks: [d2-network]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${CACHE_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  d2-redisinsight:
+    image: redis/redisinsight:${REDISINSIGHT_TAG}
+    container_name: ${REDISINSIGHT_NAME}
+    ports:
+      - "${REDISINSIGHT_PORT}:5540"
+    volumes:
+      - d2-redisinsight-data:/data
+    networks: [d2-network]
+    depends_on:
+      d2-redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  d2-redis-exporter:
+    image: ${REDIS_EXPORTER_IMAGE}:${REDIS_EXPORTER_TAG}
+    container_name: ${REDIS_EXPORTER_NAME}
+    ports:
+      - "${REDIS_EXPORTER_PORT}:9121"
+    environment:
+      REDIS_ADDR: "${REDIS_NAME}:6379"
+      REDIS_PASSWORD: ${CACHE_PASSWORD}
+    networks: [d2-network]
+    depends_on:
+      d2-redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Malware Scanning (fail-closed for all uploads)
+  # ==========================================================================
+
+  d2-clamav:
+    image: ${CLAMAV_IMAGE}:${CLAMAV_TAG}
+    container_name: ${CLAMAV_NAME}
+    ports:
+      - "${CLAMAV_PORT}:3310"
+    volumes:
+      - d2-clamav-data:/var/lib/clamav
+    networks: [d2-network]
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --version || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Messaging (RabbitMQ — payload encryption applied at app layer)
+  # ==========================================================================
+
+  d2-rabbitmq:
+    image: rabbitmq:${RABBITMQ_TAG}
+    container_name: ${RABBITMQ_NAME}
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MGMT_PORT}:15672"
+      - "${RABBITMQ_METRICS_PORT}:15692"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${MQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${MQ_PASSWORD}
+    volumes:
+      - d2-rabbitmq-data:/var/lib/rabbitmq
+    networks: [d2-network]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Scheduled Jobs (Dkron daemon; dkron-mgr companion not yet added)
+  # ==========================================================================
+
+  d2-dkron:
+    image: ${DKRON_IMAGE}:${DKRON_TAG}
+    container_name: ${DKRON_NAME}
+    ports:
+      - "${DKRON_DASHBOARD_PORT}:8080"
+    command: agent --server --bootstrap-expect=1 --node-name=${DKRON_NAME}
+    volumes:
+      - d2-dkron-data:/dkron.data
+    networks: [d2-network]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Dev Tools
+  # ==========================================================================
+
+  d2-portainer:
+    image: ${PORTAINER_IMAGE}:${PORTAINER_TAG}
+    container_name: d2-portainer
+    # Admin credentials: admin / <your password>
+    # PORTAINER_ADMIN_PASSWORD_HASH must be a bcrypt hash (see .env.local.example for generation).
+    command: --admin-password '${PORTAINER_ADMIN_PASSWORD_HASH}'
+    ports:
+      - "9443:9443"
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - d2-portainer-data:/data
+    networks: [d2-network]
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Application Services
+  #
+  # d2-edge / d2-audit — multiproc stub Audit + Edge bridge (JWT+mTLS dual-factor).
+  # Remaining: d2-courier, d2-notifications, d2-files, d2-seaweedfs, d2-web, …
+  # Healthchecks use wget installed in Dockerfiles — never assume curl on aspnet.
+  # ==========================================================================
+
+  d2-audit:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.audit
+      target: ${D2_DOTNET_IMAGE_TARGET:-prod}
+    container_name: ${AUDIT_NAME:-d2-audit}
+    env_file:
+      - ../../.env.local
+      - ../../.env.secrets
+    environment:
+      ASPNETCORE_URLS: ""
+      OTEL_SERVICE_NAME: d2-audit
+      # In-cluster Issuer — never host localhost, never mTLS 9443.
+      KEYCUSTODIAN_APP__ISSUERBASEURL: https://d2-edge:8443
+      # Docker DNS rewrite — do not pass host-side localhost REDIS_URL from secrets.
+      REDIS_URL: redis://:${CACHE_PASSWORD}@d2-redis:6379
+      # Prefer PascalCase after __ for IConfiguration / Options binding.
+      AUDIT_MTLS__TrustAnchorPath: /secrets/keycustodian/ca-root.crt
+      # CORS fail-closed — required by AddD2Cors / ServiceDefaults (not GATEWAY_* keys).
+      D2_CORS_ORIGINS__0: ${D2_CORS_ORIGINS__0:-http://localhost:5173}
+      D2_CORS_ORIGINS__1: ${D2_CORS_ORIGINS__1:-}
+      # Kestrel listen cert (from gen-dev-keys.sh secrets/listen/)
+      Kestrel__Certificates__Default__Path: /secrets/listen/audit-server.crt
+      Kestrel__Certificates__Default__KeyPath: /secrets/listen/audit-server.key
+    volumes:
+      - ../../secrets/keycustodian/ca-root.crt:/secrets/keycustodian/ca-root.crt:ro
+      - ../../secrets/listen/audit-server.crt:/secrets/listen/audit-server.crt:ro
+      - ../../secrets/listen/audit-server.key:/secrets/listen/audit-server.key:ro
+    networks: [d2-network]
+    depends_on:
+      d2-redis:
+        condition: service_healthy
+    # wget installed in Dockerfile.audit — no curl assumption on aspnet base.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  d2-edge:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.edge
+      target: ${D2_DOTNET_IMAGE_TARGET:-prod}
+    container_name: ${EDGE_NAME:-d2-edge}
+    ports:
+      - "${EDGE_PORT:-8080}:8080"
+      - "${EDGE_HTTPS_PORT:-8443}:8443"
+      # Host default 9444 avoids Portainer HTTPS on 9443; container still listens 9443.
+      - "${EDGE_MTLS_PORT:-9444}:9443"
+    env_file:
+      - ../../.env.local
+      - ../../.env.secrets
+    environment:
+      ASPNETCORE_URLS: ""
+      OTEL_SERVICE_NAME: d2-edge
+      # In-cluster Issuer — never host localhost, never mTLS 9443.
+      KEYCUSTODIAN_APP__ISSUERBASEURL: https://d2-edge:8443
+      # Docker DNS rewrite from credential pieces in .env.secrets (host URLs stay host-only).
+      REDIS_URL: redis://:${CACHE_PASSWORD}@d2-redis:6379
+      RABBITMQ_URL: amqp://${MQ_USERNAME}:${MQ_PASSWORD}@d2-rabbitmq:5672/
+      KEYCUSTODIAN_DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@d2-postgres:5432/${KEYCUSTODIAN_DB_NAME:-d2-keycustodian}
+      KEYCUSTODIAN_INFRA__RootKeyPath: /secrets/keycustodian
+      EDGE_MTLS__TrustAnchorPath: /secrets/keycustodian/ca-root.crt
+      AUDIT_GRPC__Address: https://d2-audit:8443
+      D2_CORS_ORIGINS__0: ${D2_CORS_ORIGINS__0:-http://localhost:5173}
+      D2_CORS_ORIGINS__1: ${D2_CORS_ORIGINS__1:-}
+      Kestrel__Certificates__Default__Path: /secrets/listen/edge-server.crt
+      Kestrel__Certificates__Default__KeyPath: /secrets/listen/edge-server.key
+    volumes:
+      # FileCaProvider needs the full PEM chain (public certs + private keys) to seed
+      # the mTLS CA into KeyCustodian. Trust-anchor consumers only need ca-root.crt.
+      - ../../secrets/keycustodian/ca-root.crt:/secrets/keycustodian/ca-root.crt:ro
+      - ../../secrets/keycustodian/ca-root.key:/secrets/keycustodian/ca-root.key:ro
+      - ../../secrets/keycustodian/ca-intermediate.crt:/secrets/keycustodian/ca-intermediate.crt:ro
+      - ../../secrets/keycustodian/ca-intermediate.key:/secrets/keycustodian/ca-intermediate.key:ro
+      - ../../secrets/keycustodian/root.key:/secrets/keycustodian/root.key:ro
+      - ../../secrets/listen/edge-server.crt:/secrets/listen/edge-server.crt:ro
+      - ../../secrets/listen/edge-server.key:/secrets/listen/edge-server.key:ro
+    networks: [d2-network]
+    depends_on:
+      d2-postgres:
+        condition: service_healthy
+      d2-redis:
+        condition: service_healthy
+      d2-rabbitmq:
+        condition: service_healthy
+      d2-audit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped

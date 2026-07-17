@@ -1,0 +1,205 @@
+{
+  "$schema": "./schema.json",
+  "name": "IAuthContext",
+  "namespace": "DcsvIo.D2.AuthContext.Abstractions",
+  "description": "Identity and authorization context derived from the bearer token (JWT) on the current request or message. Read-only contract consumed by handlers, repos, and any code that needs to reason about who is acting and what they're allowed to do. Populated by transport-specific middleware via MutableRequestContext (which implements IRequestContext, transitively IAuthContext). Cross-user access is granted via impersonation (Consent or Force flavor — see ImpersonationKind).",
+  "extends": null,
+  "sections": [
+    {
+      "name": "Token + Trust",
+      "properties": [
+        {
+          "name": "IsAuthenticated",
+          "type": "bool?",
+          "trinaryAuth": true,
+          "doc": "Whether the request is authenticated. Trinary semantics: null = pre-auth (middleware hasn't determined yet), false = explicitly unauthenticated, true = authenticated. Never treat null as false."
+        },
+        {
+          "name": "Audience",
+          "type": "IReadOnlyList<string>",
+          "claim": "aud",
+          "doc": "Standard JWT audience claim — the service identifier(s) this token was minted for. Per RFC 7519 §4.1.3, aud may be a single string OR a JSON array; both wire shapes are accepted and surfaced as an IReadOnlyList<string> here. Audience validation is a transport-layer concern (auth middleware), not a per-handler check; this property is exposed for handler-level audit / introspection only."
+        },
+        {
+          "name": "SessionId",
+          "type": "Guid?",
+          "claim": "d2_session_id",
+          "doc": "User's own session record identifier in d2-auth. NOT the impersonation session id — see ImpersonationSessionId for that. Links the runtime context back to a specific session for forced-sign-out / session-revocation flows."
+        },
+        {
+          "name": "TokenIssuedAt",
+          "type": "DateTimeOffset?",
+          "claim": "iat",
+          "doc": "When the token was minted (standard JWT iat claim, Unix seconds). Useful for short-lived service tokens to align cache TTLs with token validity."
+        },
+        {
+          "name": "TokenExpiresAt",
+          "type": "DateTimeOffset?",
+          "claim": "exp",
+          "doc": "When the token expires (standard JWT exp claim, Unix seconds). Cache decisions can min(handler-cache-ttl, token-remaining-ttl) to avoid serving stale auth-derived data."
+        },
+        {
+          "name": "ActorChain",
+          "type": "IReadOnlyList<ActorEntry>",
+          "claim": "act",
+          "default": "[]",
+          "doc": "RFC 8693 §4.1 actor chain, flattened. Wire format is recursive (act.act.act); we flatten to a list ordered outermost-first. Per RFC 8693 §4.1: the OUTERMOST entry (index 0) is the CURRENT actor (immediate caller); the MOST DEEPLY NESTED (last index) is the EARLIEST actor (originator) — 'the least recent actor is the most deeply nested.' Empty for end-user-direct tokens. Service entries indicate token-exchange delegation; Impersonation entries indicate user-on-behalf-of-user with sub-flavor on the entry's ImpersonationKind field. The auth lib's exchange endpoint MUST preserve nested act on re-exchange so OriginatingClientId remains recoverable through multi-hop chains."
+        },
+        {
+          "name": "AuthMethod",
+          "type": "string?",
+          "claim": "amr",
+          "doc": "Authentication Methods Reference (RFC 8176 standard claim). Space-separated or JSON-array string of authentication method identifiers used to authenticate the subject (e.g. 'pwd', 'otp', 'mfa', 'webauthn'). Input to risk-scoring and audit — 'password-only vs MFA vs OAuth2-with-WebAuthn' matters for sensitive-action gating. Null when the token was minted without AMR (e.g. service-identity client_credentials flows)."
+        },
+        {
+          "name": "LastStepUpAt",
+          "type": "DateTimeOffset?",
+          "claim": "d2_step_up_at",
+          "doc": "Unix-seconds timestamp of the last step-up authentication completion (Category 2 — past UTC instant). Handlers gating sensitive actions (e.g. billing.payment.charge) enforce 'step-up within last N minutes' by comparing this value against the current instant. Edge auth populates from the session record at JWT mint. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop with the cross-language source-gen pipeline."
+        }
+      ]
+    },
+    {
+      "name": "Identity",
+      "properties": [
+        {
+          "name": "Subject",
+          "type": "string?",
+          "claim": "sub",
+          "doc": "Raw JWT sub claim. The principal whose authority is being exercised. For user tokens: a Guid string (parsed into UserId). For pure service-identity tokens (RFC 6749 §4.4 client_credentials): the OAuth client_id of the calling service (UserId stays null in that case). For impersonation tokens: the impersonated user's id."
+        },
+        {
+          "name": "UserId",
+          "type": "Guid?",
+          "claim": "sub",
+          "doc": "User identifier — JWT sub claim parsed as Guid. Null when sub is non-Guid (pure service-identity tokens — see Subject + IsServiceIdentity). During impersonation this is the impersonated user's id (the impersonator's id is recorded inside the act chain — see ImpersonatedBy)."
+        },
+        {
+          "name": "Username",
+          "type": "string?",
+          "claim": "d2_username",
+          "doc": "Login handle — unique, lowercase username."
+        },
+        {
+          "name": "RequestedByClientId",
+          "type": "string?",
+          "claim": "client_id",
+          "doc": "Per RFC 8693 §4.3 / RFC 9068 §2.2 — the OAuth client_id of the client that requested THIS specific token from the authorization server. Updates on every token exchange (so for a multi-hop chain, this is the client that triggered the most recent exchange, NOT the originating client). Useful for audit ('this token was minted at the request of X')."
+        },
+        {
+          "name": "ImmediateCallerClientId",
+          "type": "string?",
+          "derived": "actorChain",
+          "doc": "The service that immediately called this handler — the OUTERMOST Service entry in the act chain (per RFC 8693 §4.1: 'the outermost act claim represents the current actor'). Null when the user is calling directly with no service intermediary, AND when the chain contains only Impersonation entries with no Service hops yet."
+        },
+        {
+          "name": "OriginatingClientId",
+          "type": "string?",
+          "derived": "actorChain",
+          "doc": "The service that started the entire call chain — the MOST DEEPLY NESTED Service entry in the act chain (per RFC 8693 §4.1: 'the least recent actor is the most deeply nested'). For pure service-identity tokens with no act chain, falls back to Subject. THIS IS THE PRIMARY AUDIT IDENTIFIER for end-to-end traceability across multi-hop sync + async chains."
+        },
+        {
+          "name": "IsServiceIdentity",
+          "type": "bool?",
+          "trinaryAuth": true,
+          "derived": "actorChain",
+          "doc": "True when the token represents a service identity acting for itself (RFC 6749 §4.4 client_credentials): UserId is null AND no impersonation in chain. False when there's a user (with or without service delegation in the chain). Null pre-auth. Use this to fork on 'is the caller a service or a human-acting party'."
+        }
+      ]
+    },
+    {
+      "name": "Organization",
+      "properties": [
+        {
+          "name": "OrgId",
+          "type": "Guid?",
+          "claim": "d2_org_id",
+          "doc": "Operating organization identifier. The JWT carries one org context — during impersonation it's the impersonated user's org (the agent's own org is recorded inside the act chain for audit and for authz rules keyed on the agent's home org)."
+        },
+        {
+          "name": "OrgName",
+          "type": "string?",
+          "claim": "d2_org_name",
+          "doc": "Operating organization display name."
+        },
+        {
+          "name": "OrgType",
+          "type": "OrgType?",
+          "claim": "d2_org_type",
+          "doc": "Operating organization type."
+        },
+        {
+          "name": "OrgRole",
+          "type": "Role?",
+          "claim": "d2_org_role",
+          "doc": "User's role in the operating organization."
+        }
+      ]
+    },
+    {
+      "name": "Impersonation",
+      "properties": [
+        {
+          "name": "IsImpersonating",
+          "type": "bool?",
+          "trinaryAuth": true,
+          "derived": "actorChain",
+          "doc": "True when ActorChain contains any Impersonation entry. Trinary: null = pre-auth (middleware hasn't determined yet)."
+        },
+        {
+          "name": "ImpersonationKind",
+          "type": "ImpersonationKind?",
+          "derived": "actorChain",
+          "doc": "When IsImpersonating: distinguishes Consent (OTP-authorized, available to staff+admin) vs Force (silent, admin-only). Sourced from the outermost impersonation actor's act.d2_kind claim."
+        },
+        {
+          "name": "ImpersonatedBy",
+          "type": "Guid?",
+          "derived": "actorChain",
+          "doc": "When IsImpersonating: user id of the agent (impersonator). Derived from outermost impersonation actor's act.sub claim."
+        },
+        {
+          "name": "ImpersonationSessionId",
+          "type": "Guid?",
+          "derived": "actorChain",
+          "doc": "When IsImpersonating: the impersonation session id (separate from the user's own SessionId). Derived from outermost impersonation actor's act.d2_session_id claim."
+        },
+        {
+          "name": "ImpersonatorOrgId",
+          "type": "Guid?",
+          "derived": "actorChain",
+          "doc": "When IsImpersonating: the agent's (impersonator's) own org id. Derived from outermost impersonation actor's act.d2_org_id claim. Distinct from the top-level OrgId, which is the impersonated user's org. Used for audit ('Alice from Customer Support impersonated Bob') and for authz rules that key on the agent's home org."
+        },
+        {
+          "name": "ImpersonatorOrgName",
+          "type": "string?",
+          "derived": "actorChain",
+          "doc": "When IsImpersonating: the agent's own org display name. Derived from outermost impersonation actor's act.d2_org_name claim."
+        },
+        {
+          "name": "ImpersonatorOrgType",
+          "type": "OrgType?",
+          "derived": "actorChain",
+          "doc": "When IsImpersonating: the agent's own org type. Derived from outermost impersonation actor's act.d2_org_type claim. Use IsImpersonatorStaff() / IsImpersonatorAdmin() extension methods for common checks."
+        },
+        {
+          "name": "ImpersonatorOrgRole",
+          "type": "Role?",
+          "derived": "actorChain",
+          "doc": "When IsImpersonating: the agent's role in their own org. Derived from outermost impersonation actor's act.d2_org_role claim."
+        }
+      ]
+    },
+    {
+      "name": "Scopes",
+      "properties": [
+        {
+          "name": "Scopes",
+          "type": "IReadOnlySet<string>",
+          "claim": "scope",
+          "doc": "OAuth scope set granted to this token. Per RFC 6749 §3.3 the wire format is space-separated string; the parser also accepts JSON arrays defensively. Use HasScope / HasAnyScope / HasAllScopes extension methods on IAuthContext for checks. During impersonation, Edge mints with impersonation-blocked scopes stripped at mint time (defense-in-depth — RequiredScopes check fails naturally for blocked actions)."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 in-process slot-key spec",
+  "description": "Single source of truth for cross-binding in-process slot keys (e.g. HttpContext.Items + ServerCallContext.UserState). Codegen emits binding-specific catalogs on the .NET side; no TS analog (ASP.NET / gRPC only).",
+  "type": "object",
+  "required": ["keys"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "keys": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/key" }
+    }
+  },
+  "definitions": {
+    "key": {
+      "type": "object",
+      "required": ["constName", "value", "purpose", "bindings"],
+      "additionalProperties": false,
+      "properties": {
+        "constName": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Public C# constant identifier — UPPER_SNAKE_CASE."
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Wire value of the slot key. Identical across every binding listed in `bindings`."
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description of the slot's purpose. Emitted as xmldoc on every catalog the key appears in."
+        },
+        "bindings": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["http", "grpc"] },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Closed enum of in-process bindings the key applies to."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,97 @@
+#nullable enable
+DcsvIo.D2.Contacts.ValueObjects.Demographics
+DcsvIo.D2.Contacts.ValueObjects.Demographics.<Clone>$() -> DcsvIo.D2.Contacts.ValueObjects.Demographics!
+DcsvIo.D2.Contacts.ValueObjects.Demographics.BiologicalSex.get -> DcsvIo.D2.Validation.Abstractions.BiologicalSex?
+DcsvIo.D2.Contacts.ValueObjects.Demographics.BiologicalSex.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Demographics.DateOfBirth.get -> NodaTime.LocalDate?
+DcsvIo.D2.Contacts.ValueObjects.Demographics.DateOfBirth.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Demographics.Demographics() -> void
+DcsvIo.D2.Contacts.ValueObjects.Demographics.Equals(DcsvIo.D2.Contacts.ValueObjects.Demographics? other) -> bool
+DcsvIo.D2.Contacts.ValueObjects.EmailAddress
+DcsvIo.D2.Contacts.ValueObjects.EmailAddress.<Clone>$() -> DcsvIo.D2.Contacts.ValueObjects.EmailAddress!
+DcsvIo.D2.Contacts.ValueObjects.EmailAddress.EmailAddress() -> void
+DcsvIo.D2.Contacts.ValueObjects.EmailAddress.Equals(DcsvIo.D2.Contacts.ValueObjects.EmailAddress? other) -> bool
+DcsvIo.D2.Contacts.ValueObjects.EmailAddress.Value.get -> string!
+DcsvIo.D2.Contacts.ValueObjects.EmailAddress.Value.init -> void
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.<Clone>$() -> DcsvIo.D2.Contacts.ValueObjects.NameAffixes!
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.Equals(DcsvIo.D2.Contacts.ValueObjects.NameAffixes? other) -> bool
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.NameAffixes() -> void
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.Prefix.get -> DcsvIo.D2.Validation.Abstractions.NamePrefix?
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.Prefix.init -> void
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.PrefixCustom.get -> string?
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.PrefixCustom.init -> void
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.Suffix.get -> DcsvIo.D2.Validation.Abstractions.NameSuffix?
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.Suffix.init -> void
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.SuffixCustom.get -> string?
+DcsvIo.D2.Contacts.ValueObjects.NameAffixes.SuffixCustom.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Personal
+DcsvIo.D2.Contacts.ValueObjects.Personal.<Clone>$() -> DcsvIo.D2.Contacts.ValueObjects.Personal!
+DcsvIo.D2.Contacts.ValueObjects.Personal.Equals(DcsvIo.D2.Contacts.ValueObjects.Personal? other) -> bool
+DcsvIo.D2.Contacts.ValueObjects.Personal.FirstName.get -> string!
+DcsvIo.D2.Contacts.ValueObjects.Personal.FirstName.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Personal.HashId.get -> string!
+DcsvIo.D2.Contacts.ValueObjects.Personal.HashId.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Personal.LastName.get -> string?
+DcsvIo.D2.Contacts.ValueObjects.Personal.LastName.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Personal.MiddleName.get -> string?
+DcsvIo.D2.Contacts.ValueObjects.Personal.MiddleName.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Personal.Personal() -> void
+DcsvIo.D2.Contacts.ValueObjects.Personal.PreferredName.get -> string?
+DcsvIo.D2.Contacts.ValueObjects.Personal.PreferredName.init -> void
+DcsvIo.D2.Contacts.ValueObjects.PhoneNumber
+DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.<Clone>$() -> DcsvIo.D2.Contacts.ValueObjects.PhoneNumber!
+DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.Equals(DcsvIo.D2.Contacts.ValueObjects.PhoneNumber? other) -> bool
+DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.PhoneNumber() -> void
+DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.Value.get -> string!
+DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.Value.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Professional
+DcsvIo.D2.Contacts.ValueObjects.Professional.<Clone>$() -> DcsvIo.D2.Contacts.ValueObjects.Professional!
+DcsvIo.D2.Contacts.ValueObjects.Professional.CompanyName.get -> string!
+DcsvIo.D2.Contacts.ValueObjects.Professional.CompanyName.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Professional.CompanyWebsite.get -> System.Uri?
+DcsvIo.D2.Contacts.ValueObjects.Professional.CompanyWebsite.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Professional.Department.get -> string?
+DcsvIo.D2.Contacts.ValueObjects.Professional.Department.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Professional.Equals(DcsvIo.D2.Contacts.ValueObjects.Professional? other) -> bool
+DcsvIo.D2.Contacts.ValueObjects.Professional.JobTitle.get -> string?
+DcsvIo.D2.Contacts.ValueObjects.Professional.JobTitle.init -> void
+DcsvIo.D2.Contacts.ValueObjects.Professional.Professional() -> void
+override DcsvIo.D2.Contacts.ValueObjects.Demographics.Equals(object? obj) -> bool
+override DcsvIo.D2.Contacts.ValueObjects.Demographics.GetHashCode() -> int
+override DcsvIo.D2.Contacts.ValueObjects.Demographics.ToString() -> string!
+override DcsvIo.D2.Contacts.ValueObjects.EmailAddress.Equals(object? obj) -> bool
+override DcsvIo.D2.Contacts.ValueObjects.EmailAddress.GetHashCode() -> int
+override DcsvIo.D2.Contacts.ValueObjects.EmailAddress.ToString() -> string!
+override DcsvIo.D2.Contacts.ValueObjects.NameAffixes.Equals(object? obj) -> bool
+override DcsvIo.D2.Contacts.ValueObjects.NameAffixes.GetHashCode() -> int
+override DcsvIo.D2.Contacts.ValueObjects.NameAffixes.ToString() -> string!
+override DcsvIo.D2.Contacts.ValueObjects.Personal.Equals(object? obj) -> bool
+override DcsvIo.D2.Contacts.ValueObjects.Personal.GetHashCode() -> int
+override DcsvIo.D2.Contacts.ValueObjects.Personal.ToString() -> string!
+override DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.Equals(object? obj) -> bool
+override DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.GetHashCode() -> int
+override DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.ToString() -> string!
+override DcsvIo.D2.Contacts.ValueObjects.Professional.Equals(object? obj) -> bool
+override DcsvIo.D2.Contacts.ValueObjects.Professional.GetHashCode() -> int
+override DcsvIo.D2.Contacts.ValueObjects.Professional.ToString() -> string!
+static DcsvIo.D2.Contacts.ValueObjects.Demographics.Create(NodaTime.LocalDate? dateOfBirth = null, DcsvIo.D2.Validation.Abstractions.BiologicalSex? biologicalSex = null, DcsvIo.D2.Time.IClock? clock = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Contacts.ValueObjects.Demographics!>!
+static DcsvIo.D2.Contacts.ValueObjects.Demographics.operator !=(DcsvIo.D2.Contacts.ValueObjects.Demographics? left, DcsvIo.D2.Contacts.ValueObjects.Demographics? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.Demographics.operator ==(DcsvIo.D2.Contacts.ValueObjects.Demographics? left, DcsvIo.D2.Contacts.ValueObjects.Demographics? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.EmailAddress.Create(string? value, DcsvIo.D2.Validation.Abstractions.IEmailValidator? validator = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Contacts.ValueObjects.EmailAddress!>!
+static DcsvIo.D2.Contacts.ValueObjects.EmailAddress.FromTrusted(string! value) -> DcsvIo.D2.Contacts.ValueObjects.EmailAddress!
+static DcsvIo.D2.Contacts.ValueObjects.EmailAddress.operator !=(DcsvIo.D2.Contacts.ValueObjects.EmailAddress? left, DcsvIo.D2.Contacts.ValueObjects.EmailAddress? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.EmailAddress.operator ==(DcsvIo.D2.Contacts.ValueObjects.EmailAddress? left, DcsvIo.D2.Contacts.ValueObjects.EmailAddress? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.NameAffixes.Create(DcsvIo.D2.Validation.Abstractions.NamePrefix? prefix = null, string? prefixCustom = null, DcsvIo.D2.Validation.Abstractions.NameSuffix? suffix = null, string? suffixCustom = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Contacts.ValueObjects.NameAffixes!>!
+static DcsvIo.D2.Contacts.ValueObjects.NameAffixes.operator !=(DcsvIo.D2.Contacts.ValueObjects.NameAffixes? left, DcsvIo.D2.Contacts.ValueObjects.NameAffixes? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.NameAffixes.operator ==(DcsvIo.D2.Contacts.ValueObjects.NameAffixes? left, DcsvIo.D2.Contacts.ValueObjects.NameAffixes? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.Personal.Create(string? firstName, string? middleName = null, string? lastName = null, string? preferredName = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Contacts.ValueObjects.Personal!>!
+static DcsvIo.D2.Contacts.ValueObjects.Personal.operator !=(DcsvIo.D2.Contacts.ValueObjects.Personal? left, DcsvIo.D2.Contacts.ValueObjects.Personal? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.Personal.operator ==(DcsvIo.D2.Contacts.ValueObjects.Personal? left, DcsvIo.D2.Contacts.ValueObjects.Personal? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.Create(string? value, DcsvIo.D2.Validation.Abstractions.IPhoneValidator? validator = null, DcsvIo.D2.Geo.Abstractions.CountryCode? region = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Contacts.ValueObjects.PhoneNumber!>!
+static DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.FromTrusted(string! value) -> DcsvIo.D2.Contacts.ValueObjects.PhoneNumber!
+static DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.operator !=(DcsvIo.D2.Contacts.ValueObjects.PhoneNumber? left, DcsvIo.D2.Contacts.ValueObjects.PhoneNumber? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.PhoneNumber.operator ==(DcsvIo.D2.Contacts.ValueObjects.PhoneNumber? left, DcsvIo.D2.Contacts.ValueObjects.PhoneNumber? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.Professional.Create(string? companyName, string? jobTitle = null, string? department = null, string? companyWebsite = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Contacts.ValueObjects.Professional!>!
+static DcsvIo.D2.Contacts.ValueObjects.Professional.operator !=(DcsvIo.D2.Contacts.ValueObjects.Professional? left, DcsvIo.D2.Contacts.ValueObjects.Professional? right) -> bool
+static DcsvIo.D2.Contacts.ValueObjects.Professional.operator ==(DcsvIo.D2.Contacts.ValueObjects.Professional? left, DcsvIo.D2.Contacts.ValueObjects.Professional? right) -> bool

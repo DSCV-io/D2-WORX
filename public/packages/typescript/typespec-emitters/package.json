@@ -1,0 +1,46 @@
+{
+  "name": "@dcsv-io/d2-typespec-emitters",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "TypeSpec emitter suite that reads the @d2* operation-contract vocabulary and emits C# transport and contract artifacts.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json",
+    "regen": "node ../../../../private/tools/scripts/regen-typespec-emitters.mjs"
+  },
+  "peerDependencies": {
+    "@typespec/compiler": "^1.13.0"
+  },
+  "dependencies": {
+    "@dcsv-io/d2-typespec-decorators": "workspace:*",
+    "@typespec/http": "1.13.0"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "1.65.0",
+    "@dcsv-io/d2-grpc-client": "workspace:*",
+    "@dcsv-io/d2-protos": "workspace:*",
+    "@dcsv-io/d2-resilience": "workspace:*",
+    "@dcsv-io/d2-result": "workspace:*",
+    "@grpc/grpc-js": "1.14.3",
+    "@typespec/compiler": "1.13.0",
+    "@typespec/openapi": "1.13.0",
+    "@typespec/openapi3": "1.13.0",
+    "@typespec/versioning": "0.83.0",
+    "@vitest/coverage-v8": "4.0.18",
+    "ts-proto": "2.11.2",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

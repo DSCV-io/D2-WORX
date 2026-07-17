@@ -1,0 +1,50 @@
+#nullable enable
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.ActorChain.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Auth.Abstractions.ActorEntry!>!
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.Audience.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.AuthMethod.get -> string?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.ImmediateCallerClientId.get -> string?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.ImpersonatedBy.get -> System.Guid?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.ImpersonationKind.get -> DcsvIo.D2.Auth.Abstractions.ImpersonationKind?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.ImpersonationSessionId.get -> System.Guid?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.ImpersonatorOrgId.get -> System.Guid?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.ImpersonatorOrgName.get -> string?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.ImpersonatorOrgRole.get -> DcsvIo.D2.Auth.Abstractions.Role?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.ImpersonatorOrgType.get -> DcsvIo.D2.Auth.Abstractions.OrgType?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.IsAuthenticated.get -> bool?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.IsImpersonating.get -> bool?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.IsServiceIdentity.get -> bool?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.LastStepUpAt.get -> System.DateTimeOffset?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.OrgId.get -> System.Guid?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.OrgName.get -> string?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.OrgRole.get -> DcsvIo.D2.Auth.Abstractions.Role?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.OrgType.get -> DcsvIo.D2.Auth.Abstractions.OrgType?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.OriginatingClientId.get -> string?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.RequestedByClientId.get -> string?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.Scopes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.SessionId.get -> System.Guid?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.Subject.get -> string?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.TokenExpiresAt.get -> System.DateTimeOffset?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.TokenIssuedAt.get -> System.DateTimeOffset?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.UserId.get -> System.Guid?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContext.Username.get -> string?
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!)
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!).HasAllScopes(params string![]! scopes) -> bool
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!).HasAnyScope(params string![]! scopes) -> bool
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!).HasScope(string! scope) -> bool
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!).IsAdmin() -> bool
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!).IsConsentImpersonation() -> bool
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!).IsForcedImpersonation() -> bool
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!).IsImpersonatorAdmin() -> bool
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!).IsImpersonatorStaff() -> bool
+DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.extension(DcsvIo.D2.AuthContext.Abstractions.IAuthContext!).IsStaff() -> bool
+static DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.HasAllScopes(this DcsvIo.D2.AuthContext.Abstractions.IAuthContext! auth, params string![]! scopes) -> bool
+static DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.HasAnyScope(this DcsvIo.D2.AuthContext.Abstractions.IAuthContext! auth, params string![]! scopes) -> bool
+static DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.HasScope(this DcsvIo.D2.AuthContext.Abstractions.IAuthContext! auth, string! scope) -> bool
+static DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.IsAdmin(this DcsvIo.D2.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.IsConsentImpersonation(this DcsvIo.D2.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.IsForcedImpersonation(this DcsvIo.D2.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.IsImpersonatorAdmin(this DcsvIo.D2.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.IsImpersonatorStaff(this DcsvIo.D2.AuthContext.Abstractions.IAuthContext! auth) -> bool
+static DcsvIo.D2.AuthContext.Abstractions.IAuthContextExtensions.IsStaff(this DcsvIo.D2.AuthContext.Abstractions.IAuthContext! auth) -> bool

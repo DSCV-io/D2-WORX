@@ -1,0 +1,110 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+#
+# Dev override — true hot-reload for Edge + Audit.
+#
+# Usage (from repo root):
+#   docker compose -f infra/compose/compose.yml -f infra/compose/compose.dev.yml \
+#     --env-file .env.local --env-file .env.secrets up d2-edge d2-audit
+#
+# Hot-reload law:
+#   - build.target: dev
+#   - develop.watch action: sync for source trees
+#   - ignore: **/bin/**, **/obj/**
+#   - action: rebuild on **/*.csproj + Directory.*.props
+#   - never share host bin/obj with the container
+#
+# Acceptance: edit a C# file → container logs show watch rebuild → new behavior
+# without image rebuild; edit csproj → service rebuild path.
+
+services:
+  d2-edge:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.edge
+      target: dev
+    develop:
+      watch:
+        - action: sync
+          path: ../../private/services/edge
+          target: /src/private/services/edge
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../public/packages/dotnet
+          target: /src/public/packages/dotnet
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../private/packages/dotnet
+          target: /src/private/packages/dotnet
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../private/services/audit/clients
+          target: /src/private/services/audit/clients
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../public/contracts
+          target: /src/public/contracts
+        - action: sync
+          path: ../../private/contracts
+          target: /src/private/contracts
+        - action: rebuild
+          path: ../../private/services/edge
+          target: /src/private/services/edge
+          ignore:
+            - "**/*"
+            - "!**/*.csproj"
+        - action: rebuild
+          path: ../../Directory.Packages.props
+        - action: rebuild
+          path: ../../Directory.Build.props
+
+  d2-audit:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.audit
+      target: dev
+    develop:
+      watch:
+        - action: sync
+          path: ../../private/services/audit
+          target: /src/private/services/audit
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../public/packages/dotnet
+          target: /src/public/packages/dotnet
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../private/packages/dotnet
+          target: /src/private/packages/dotnet
+          ignore:
+            - "**/bin/**"
+            - "**/obj/**"
+        - action: sync
+          path: ../../public/contracts
+          target: /src/public/contracts
+        - action: sync
+          path: ../../private/contracts
+          target: /src/private/contracts
+        - action: rebuild
+          path: ../../private/services/audit
+          target: /src/private/services/audit
+          ignore:
+            - "**/*"
+            - "!**/*.csproj"
+        - action: rebuild
+          path: ../../Directory.Packages.props
+        - action: rebuild
+          path: ../../Directory.Build.props

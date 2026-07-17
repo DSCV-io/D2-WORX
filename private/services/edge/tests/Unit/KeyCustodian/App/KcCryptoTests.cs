@@ -1,0 +1,356 @@
+// -----------------------------------------------------------------------
+// <copyright file="KcCryptoTests.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace DcsvIo.D2.Private.Edge.Tests.Unit.KeyCustodian.App;
+
+/// <summary>
+/// Tests for the pure key-generation, smoke-testing, and kid-minting rules — real
+/// BCL crypto, fast + deterministic.
+/// </summary>
+public sealed class KcCryptoTests
+{
+    private const int _RSA_BITS = 2048;
+    private const int _SECRET_BYTES = 64;
+
+    // -----------------------------------------------------------------------
+    // Generators
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void RsaSigningGenerator_ProducesImportablePkcs8AndMatchingSpki()
+    {
+        var material = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+        material.PublicSpki.Should().NotBeNull();
+
+        using var fromPrivate = RSA.Create();
+        fromPrivate.ImportPkcs8PrivateKey(material.Plaintext, out _);
+
+        using var fromPublic = RSA.Create();
+        fromPublic.ImportSubjectPublicKeyInfo(material.PublicSpki, out _);
+
+        // The SPKI must be the public half of the generated private key.
+        var privateSpki = fromPrivate.ExportSubjectPublicKeyInfo();
+        privateSpki.Should().Equal(material.PublicSpki);
+    }
+
+    [Fact]
+    public void AesPayloadGenerator_Produces32BytesNoPublic()
+    {
+        var material = KeyGeneration.Generate(KeyType.AesPayload, _RSA_BITS, _SECRET_BYTES).Data!;
+        material.Plaintext.Length.Should().Be(32);
+        material.PublicSpki.Should().BeNull();
+    }
+
+    [Fact]
+    public void SecretGenerator_ProducesConfiguredLengthNoPublic()
+    {
+        var material = KeyGeneration.Generate(KeyType.Secret, _RSA_BITS, _SECRET_BYTES).Data!;
+        material.Plaintext.Length.Should().Be(64);
+        material.PublicSpki.Should().BeNull();
+    }
+
+    [Fact]
+    public void SecretGenerator_RespectsConfiguredLength()
+    {
+        KeyGeneration.Generate(KeyType.Secret, _RSA_BITS, 48)
+            .Data!.Plaintext.Length.Should().Be(48);
+    }
+
+    [Fact]
+    public void GeneratedKeyMaterial_Zero_WipesPlaintext()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        var material = new GeneratedKeyMaterial(bytes, publicSpki: null);
+        material.Zero();
+        material.Plaintext.Should().OnlyContain(b => b == 0);
+    }
+
+    [Fact]
+    public void GeneratedKeyMaterial_ToString_RedactsPlaintext()
+    {
+        var material = new GeneratedKeyMaterial(
+            RandomNumberGenerator.GetBytes(8), publicSpki: null);
+        material.ToString().Should().Contain("REDACTED").And.NotContain(
+            Convert.ToHexString(material.Plaintext));
+    }
+
+    [Fact]
+    public void GeneratedKeyMaterial_EmptyPlaintext_Throws()
+    {
+        var act = () => new GeneratedKeyMaterial([], publicSpki: null);
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Generate_UnknownKeyType_FailsPreconditionViolated()
+    {
+        // The closed KeyType enum makes the default arm unreachable from valid
+        // call sites; an out-of-range value surfaces as a flagged
+        // KEYCUSTODIAN_PRECONDITION_VIOLATED result rather than a thrown exception
+        // (zero-throw domain rule — D2Result carries the telemetry instead).
+        var result = KeyGeneration.Generate((KeyType)999, _RSA_BITS, _SECRET_BYTES);
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_PRECONDITION_VIOLATED");
+    }
+
+    // -----------------------------------------------------------------------
+    // Smoke tester — per type, round-trip pass
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Smoke_Rsa_FreshKey_Passes()
+    {
+        var material = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+        SmokeTesting.Verify(KeyType.RsaSigning, material.Plaintext, material.PublicSpki)
+            .Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Smoke_Aes_FreshKey_Passes()
+    {
+        var material = KeyGeneration.Generate(KeyType.AesPayload, _RSA_BITS, _SECRET_BYTES).Data!;
+        SmokeTesting.Verify(KeyType.AesPayload, material.Plaintext, publicSpki: null)
+            .Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Smoke_Secret_FreshKey_Passes()
+    {
+        var material = KeyGeneration.Generate(KeyType.Secret, _RSA_BITS, _SECRET_BYTES).Data!;
+        SmokeTesting.Verify(KeyType.Secret, material.Plaintext, publicSpki: null)
+            .Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Smoke_Ca_FreshKey_Passes()
+    {
+        // A real CA's PKCS#8 ECDSA private key signs+verifies via the self-derived
+        // public key — no SPKI is passed (the CA's public artifact is its cert).
+        var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
+
+        var ca = CaCertificateGeneration.GenerateRootCa(
+            "D2 Test Root CA", Duration.FromDays(3650), clock).Data!;
+
+        SmokeTesting.Verify(KeyType.X509CaCertificate, ca.PrivateKeyPkcs8, publicSpki: null)
+            .Success.Should().BeTrue();
+
+        ca.Zero();
+    }
+
+    [Fact]
+    public void Smoke_Ca_GarbagePkcs8_FailsWithoutThrow()
+    {
+        // Random bytes are not a valid PKCS#8 ECDSA key — ImportPkcs8PrivateKey
+        // throws CryptographicException, caught by the never-throw envelope.
+        var garbage = RandomNumberGenerator.GetBytes(64);
+
+        var result = SmokeTesting.Verify(KeyType.X509CaCertificate, garbage, publicSpki: null);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
+    }
+
+    [Fact]
+    public void Smoke_Ca_RsaKeyBytesPassedAsCa_FailsWithoutThrow()
+    {
+        // An RSA PKCS#8 key is not an ECDSA key — ImportPkcs8PrivateKey on an ECDsa
+        // handle rejects it → SmokeTestFailed (no throw).
+        var rsa = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+
+        var result = SmokeTesting.Verify(
+            KeyType.X509CaCertificate, rsa.Plaintext, publicSpki: null);
+
+        result.Success.Should().BeFalse();
+        rsa.Zero();
+    }
+
+    [Fact]
+    public void Smoke_Ca_BitFlippedPrivate_FailsWithoutThrow()
+    {
+        var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
+
+        var ca = CaCertificateGeneration.GenerateRootCa(
+            "D2 Test Root CA", Duration.FromDays(3650), clock).Data!;
+        var corrupted = (byte[])ca.PrivateKeyPkcs8.Clone();
+        corrupted[10] ^= 0xFF;
+
+        var result = SmokeTesting.Verify(
+            KeyType.X509CaCertificate, corrupted, publicSpki: null);
+
+        result.Success.Should().BeFalse();
+        ca.Zero();
+    }
+
+    // -----------------------------------------------------------------------
+    // Smoke tester — adversarial (no throw, returns failure)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Smoke_Rsa_MissingPublic_FailsWithoutThrow()
+    {
+        var material = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+        SmokeTesting.Verify(KeyType.RsaSigning, material.Plaintext, publicSpki: null)
+            .Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Smoke_Rsa_BitFlippedPrivate_FailsWithoutThrow()
+    {
+        var material = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+        var corrupted = (byte[])material.Plaintext.Clone();
+        corrupted[10] ^= 0xFF;
+
+        var result = SmokeTesting.Verify(KeyType.RsaSigning, corrupted, material.PublicSpki);
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
+    }
+
+    [Fact]
+    public void Smoke_Rsa_MismatchedPublic_FailsWithoutThrow()
+    {
+        var a = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+        var b = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+
+        // a's private with b's public — signature won't verify.
+        SmokeTesting.Verify(KeyType.RsaSigning, a.Plaintext, b.PublicSpki)
+            .Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Smoke_Aes_WrongSizeKey_FailsWithoutThrow()
+    {
+        // 17 bytes is not a valid AES key length.
+        var result = SmokeTesting.Verify(KeyType.AesPayload, new byte[17], publicSpki: null);
+        result.Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Smoke_Secret_EmptyKey_FailsWithoutThrow()
+    {
+        SmokeTesting.Verify(KeyType.Secret, ReadOnlyMemory<byte>.Empty, publicSpki: null)
+            .Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Smoke_GarbagePkcs8_FailsWithoutThrow()
+    {
+        var garbage = RandomNumberGenerator.GetBytes(64);
+        var result = SmokeTesting.Verify(
+            KeyType.RsaSigning, garbage, RandomNumberGenerator.GetBytes(64));
+        result.Success.Should().BeFalse();
+    }
+
+    // -----------------------------------------------------------------------
+    // EcdhSealing generator + smoke — the per-service sealing keypair (P-256 ECDH)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void EcdhSealingGenerator_ProducesImportableP256Pkcs8AndMatchingSpki()
+    {
+        var material = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+        material.PublicSpki.Should().NotBeNull();
+
+        using var fromPrivate = ECDiffieHellman.Create();
+        fromPrivate.ImportPkcs8PrivateKey(material.Plaintext, out _);
+
+        using var fromPublic = ECDiffieHellman.Create();
+        fromPublic.ImportSubjectPublicKeyInfo(material.PublicSpki!, out _);
+
+        // The SPKI must be the public half of the generated P-256 private key.
+        fromPrivate.ExportSubjectPublicKeyInfo().Should().Equal(material.PublicSpki);
+    }
+
+    [Fact]
+    public void Smoke_EcdhSealing_FreshKey_Passes()
+    {
+        // A fresh keypair completes a real self-seal→self-open round-trip.
+        var material = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+
+        SmokeTesting.Verify(KeyType.EcdhSealing, material.Plaintext, material.PublicSpki)
+            .Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Smoke_EcdhSealing_MissingPublic_FailsWithoutThrow()
+    {
+        var material = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+
+        SmokeTesting.Verify(KeyType.EcdhSealing, material.Plaintext, publicSpki: null)
+            .Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Smoke_EcdhSealing_MismatchedKeypair_FailsWithoutThrow()
+    {
+        var a = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+        var b = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+
+        // a's private paired with b's public — the round-trip fails the AEAD tag (the
+        // ECDH halves do not agree), surfaced as SmokeTestFailed by the never-throw envelope.
+        var result = SmokeTesting.Verify(KeyType.EcdhSealing, a.Plaintext, b.PublicSpki);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
+    }
+
+    [Fact]
+    public void Smoke_EcdhSealing_GarbagePkcs8_FailsWithoutThrow()
+    {
+        var real = KeyGeneration.Generate(KeyType.EcdhSealing, _RSA_BITS, _SECRET_BYTES).Data!;
+        var garbage = RandomNumberGenerator.GetBytes(64);
+
+        // Garbage private bytes cannot import as a P-256 PKCS#8 key — the keyring
+        // construction throws, caught by the envelope → SmokeTestFailed (no throw).
+        var result = SmokeTesting.Verify(KeyType.EcdhSealing, garbage, real.PublicSpki);
+
+        result.Success.Should().BeFalse();
+    }
+
+    // -----------------------------------------------------------------------
+    // Wrap → unwrap round-trip through real PayloadCrypto
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void RootCrypto_WrapUnwrap_RoundTrips()
+    {
+        var crypto = KcAppTestKit.BuildTestRootCrypto();
+        var plaintext = RandomNumberGenerator.GetBytes(64);
+
+        var wrapped = crypto.Encrypt(plaintext);
+        var unwrapped = crypto.Decrypt(wrapped);
+
+        unwrapped.Should().Equal(plaintext);
+    }
+
+    // -----------------------------------------------------------------------
+    // KidMinter — output passes Kid.Create + is unique + JWKS-safe
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void MintKid_PassesKidCreate()
+    {
+        var kid = KidMinting.Mint();
+        Kid.Create(kid).Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void MintKid_ProducesUnpaddedBase64UrlCharset()
+    {
+        var kid = KidMinting.Mint();
+        kid.Should().MatchRegex("^[A-Za-z0-9_-]+$");
+        kid.Should().NotContain("=");
+    }
+
+    [Fact]
+    public void MintKid_IsUniqueAcrossManyCalls()
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < 1000; i++)
+            seen.Add(KidMinting.Mint()).Should().BeTrue();
+
+        seen.Should().HaveCount(1000);
+    }
+}

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/timezones.schema.json",
+  "title": "Timezone catalog (codegen-ready)",
+  "description": "Tier 2 codegen-ready Timezone catalog. Matches the TimezoneSpec record shape consumed by .NET SourceGen + TS emitter. Offsets sourced from Node's built-in ICU Intl.DateTimeFormat sampled at January 15 (STD) and July 15 (DST) per UTC year.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "entries"
+  ],
+  "properties": {
+    "$generated": { "const": true },
+    "$source": { "const": "pipeline-derived" },
+    "$schema": { "type": "string" },
+    "$note": { "type": "string" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Timezone" }
+    }
+  },
+  "$defs": {
+    "Timezone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ianaIdentifier",
+        "displayName",
+        "currentStdOffsetMinutes",
+        "currentDstOffsetMinutes",
+        "currentStdAbbrev",
+        "currentDstAbbrev",
+        "countryISO31661Alpha2Code",
+        "coApplicableCountryISO31661Alpha2Codes",
+        "aliases"
+      ],
+      "properties": {
+        "ianaIdentifier": {
+          "type": "string",
+          "description": "IANA tzdb zone identifier (e.g. America/New_York, Europe/Berlin, Etc/UTC).",
+          "minLength": 1
+        },
+        "displayName": { "type": "string", "minLength": 1 },
+        "currentStdOffsetMinutes": {
+          "type": "integer",
+          "description": "Standard-time offset from UTC in minutes. Range covers all real-world offsets including UTC+14 (Pacific) and UTC-12 (Baker Island).",
+          "minimum": -720,
+          "maximum": 840
+        },
+        "currentDstOffsetMinutes": {
+          "type": ["integer", "null"],
+          "minimum": -720,
+          "maximum": 840
+        },
+        "currentStdAbbrev": { "type": "string" },
+        "currentDstAbbrev": { "type": ["string", "null"] },
+        "countryISO31661Alpha2Code": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Z]{2}$"
+        },
+        "coApplicableCountryISO31661Alpha2Codes": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[A-Z]{2}$" }
+        },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

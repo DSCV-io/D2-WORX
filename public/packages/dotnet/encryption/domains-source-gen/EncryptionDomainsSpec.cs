@@ -1,0 +1,14 @@
+// -----------------------------------------------------------------------
+// <copyright file="EncryptionDomainsSpec.cs" company="DCSV">
+// Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace DcsvIo.D2.EncryptionDomains.SourceGen;
+
+using System.Collections.Immutable;
+
+/// <summary>Parsed shape of the encryption-domains spec file.</summary>
+/// <param name="Domains">Every encryption-domain entry declared in the spec.</param>
+internal sealed record EncryptionDomainsSpec(
+    ImmutableArray<EncryptionDomainEntry> Domains);

@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "lib": ["ES2022", "ESNext.Disposable"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "tests"],
+  "references": [
+    { "path": "../abstractions" },
+    { "path": "../../result" },
+    { "path": "../../logging" }
+  ]
+}

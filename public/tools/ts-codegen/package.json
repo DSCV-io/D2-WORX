@@ -1,0 +1,40 @@
+{
+  "name": "ts-codegen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "codegen": "tsx src/orchestrator.ts",
+    "codegen:auth-context": "tsx src/auth-context-emit.ts",
+    "codegen:request-context": "tsx src/request-context-emit.ts",
+    "codegen:auth-scopes": "tsx src/auth-scopes-emit.ts",
+    "codegen:error-category": "tsx src/error-category-emit.ts",
+    "codegen:error-codes": "tsx src/error-codes-emit.ts",
+    "codegen:error-codes-registry": "tsx src/error-codes-registry-emit.ts",
+    "codegen:problem-details": "tsx src/problem-details-emit.ts",
+    "codegen:grpc-trailers": "tsx src/grpc-trailers-emit.ts",
+    "codegen:otel-messaging-tags": "tsx src/otel-messaging-tags-emit.ts",
+    "codegen:encryption-domains": "tsx src/encryption-domains-emit.ts",
+    "codegen:dlq-failure-metadata": "tsx src/dlq-failure-metadata-emit.ts",
+    "codegen:encryption-frame": "tsx src/encryption-frame-emit.ts",
+    "codegen:encryption-frame-sealed": "tsx src/encryption-frame-sealed-emit.ts",
+    "codegen:geo-abstractions": "tsx src/geo-emitter/cli.ts",
+    "codegen:field-constraints": "tsx src/field-constraints-emit.ts",
+    "type-check:test": "tsc -p tsconfig.test.json",
+    "typecheck": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@dcsv-io/d2-utilities": "workspace:*"
+  },
+  "devDependencies": {
+    "@dcsv-io/d2-i18n-keys": "workspace:*",
+    "@types/node": "24.10.0",
+    "@vitest/coverage-v8": "4.0.18",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

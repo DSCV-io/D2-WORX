@@ -1,0 +1,54 @@
+#nullable enable
+DcsvIo.D2.Telemetry.D2TelemetryConstants
+DcsvIo.D2.Telemetry.D2TelemetryOptions
+DcsvIo.D2.Telemetry.D2TelemetryOptions.<Clone>$() -> DcsvIo.D2.Telemetry.D2TelemetryOptions!
+DcsvIo.D2.Telemetry.D2TelemetryOptions.AdditionalActivitySources.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.Telemetry.D2TelemetryOptions.AdditionalActivitySources.init -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.AdditionalMeters.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.Telemetry.D2TelemetryOptions.AdditionalMeters.init -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.D2TelemetryOptions() -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableAspNetCoreInstrumentation.get -> bool
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableAspNetCoreInstrumentation.init -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableGrpcNetClientInstrumentation.get -> bool
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableGrpcNetClientInstrumentation.init -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableHttpClientInstrumentation.get -> bool
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableHttpClientInstrumentation.init -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableProcessInstrumentation.get -> bool
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableProcessInstrumentation.init -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnablePrometheusExporter.get -> bool
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnablePrometheusExporter.init -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableRuntimeInstrumentation.get -> bool
+DcsvIo.D2.Telemetry.D2TelemetryOptions.EnableRuntimeInstrumentation.init -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.Equals(DcsvIo.D2.Telemetry.D2TelemetryOptions? other) -> bool
+DcsvIo.D2.Telemetry.D2TelemetryOptions.InstrumentationExcludedPaths.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.Telemetry.D2TelemetryOptions.InstrumentationExcludedPaths.init -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.OtlpLogsEndpoint.get -> string?
+DcsvIo.D2.Telemetry.D2TelemetryOptions.OtlpLogsEndpoint.set -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.OtlpMetricsEndpoint.get -> string?
+DcsvIo.D2.Telemetry.D2TelemetryOptions.OtlpMetricsEndpoint.set -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.OtlpTracesEndpoint.get -> string?
+DcsvIo.D2.Telemetry.D2TelemetryOptions.OtlpTracesEndpoint.set -> void
+DcsvIo.D2.Telemetry.D2TelemetryOptions.ServiceName.get -> string?
+DcsvIo.D2.Telemetry.D2TelemetryOptions.ServiceName.set -> void
+DcsvIo.D2.Telemetry.TelemetryServiceCollectionExtensions
+DcsvIo.D2.Telemetry.TelemetryServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Telemetry.TelemetryServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Telemetry(Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.Telemetry.D2TelemetryOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Telemetry.WebApplicationTelemetryExtensions
+DcsvIo.D2.Telemetry.WebApplicationTelemetryExtensions.extension(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!)
+DcsvIo.D2.Telemetry.WebApplicationTelemetryExtensions.extension(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!).MapD2PrometheusEndpoint() -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+const DcsvIo.D2.Telemetry.D2TelemetryConstants.ALIVE_ENDPOINT_PATH = "/alive" -> string!
+const DcsvIo.D2.Telemetry.D2TelemetryConstants.HEALTH_ENDPOINT_PATH = "/health" -> string!
+const DcsvIo.D2.Telemetry.D2TelemetryConstants.OTEL_SDK_DISABLED_ENV_VAR = "OTEL_SDK_DISABLED" -> string!
+const DcsvIo.D2.Telemetry.D2TelemetryConstants.OTEL_SERVICE_NAME_CONFIG_KEY = "OTEL_SERVICE_NAME" -> string!
+const DcsvIo.D2.Telemetry.D2TelemetryConstants.OTLP_LOGS_ENDPOINT_CONFIG_KEY = "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT" -> string!
+const DcsvIo.D2.Telemetry.D2TelemetryConstants.OTLP_METRICS_ENDPOINT_CONFIG_KEY = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT" -> string!
+const DcsvIo.D2.Telemetry.D2TelemetryConstants.OTLP_TRACES_ENDPOINT_CONFIG_KEY = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" -> string!
+const DcsvIo.D2.Telemetry.D2TelemetryConstants.PROMETHEUS_ENDPOINT_PATH = "/metrics" -> string!
+const DcsvIo.D2.Telemetry.D2TelemetryConstants.WELL_KNOWN_ENDPOINT_PATH = "/.well-known" -> string!
+override DcsvIo.D2.Telemetry.D2TelemetryOptions.Equals(object? obj) -> bool
+override DcsvIo.D2.Telemetry.D2TelemetryOptions.GetHashCode() -> int
+override DcsvIo.D2.Telemetry.D2TelemetryOptions.ToString() -> string!
+static DcsvIo.D2.Telemetry.D2TelemetryOptions.operator !=(DcsvIo.D2.Telemetry.D2TelemetryOptions? left, DcsvIo.D2.Telemetry.D2TelemetryOptions? right) -> bool
+static DcsvIo.D2.Telemetry.D2TelemetryOptions.operator ==(DcsvIo.D2.Telemetry.D2TelemetryOptions? left, DcsvIo.D2.Telemetry.D2TelemetryOptions? right) -> bool
+static DcsvIo.D2.Telemetry.TelemetryServiceCollectionExtensions.AddD2Telemetry(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, System.Action<DcsvIo.D2.Telemetry.D2TelemetryOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Telemetry.WebApplicationTelemetryExtensions.MapD2PrometheusEndpoint(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!

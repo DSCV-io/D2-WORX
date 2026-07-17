@@ -1,0 +1,15 @@
+#nullable enable
+DcsvIo.D2.Validation.DefaultEmailValidator
+DcsvIo.D2.Validation.DefaultEmailValidator.DefaultEmailValidator() -> void
+DcsvIo.D2.Validation.DefaultEmailValidator.Validate(string? email) -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Validation.DefaultPhoneValidator
+DcsvIo.D2.Validation.DefaultPhoneValidator.DefaultPhoneValidator() -> void
+DcsvIo.D2.Validation.DefaultPhoneValidator.Validate(string? phone, DcsvIo.D2.Geo.Abstractions.CountryCode? defaultRegion = null) -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Validation.DefaultPostalCodeValidator
+DcsvIo.D2.Validation.DefaultPostalCodeValidator.DefaultPostalCodeValidator() -> void
+DcsvIo.D2.Validation.DefaultPostalCodeValidator.Validate(string? postalCode, DcsvIo.D2.Geo.Abstractions.CountryCode? countryCode = null) -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Validation.DependencyInjection
+DcsvIo.D2.Validation.DependencyInjection.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Validation.DependencyInjection.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddValidation() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+const DcsvIo.D2.Validation.DefaultEmailValidator.EMAIL_PATTERN = "^(?=.{1,254}$)[A-Z0-9._%+\\-]{1,64}@[A-Z0-9](?:[A-Z0-9\\-]{0,61}[A-Z0-9])?(?:\\.[A-Z0-9](?:[A-Z0-9\\-]{0,61}[A-Z0-9])?)+$" -> string!
+static DcsvIo.D2.Validation.DependencyInjection.AddValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

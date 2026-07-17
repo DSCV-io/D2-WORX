@@ -1,0 +1,33 @@
+{
+  "name": "@dcsv-io/d2-encryption",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json",
+    "emit-crypto-fixtures": "tsx scripts/emit-sealed-frames.fixture.ts && tsx scripts/emit-symmetric-frames.fixture.ts"
+  },
+  "dependencies": {
+    "@dcsv-io/d2-encryption-abstractions": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "4.0.18",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

@@ -1,0 +1,7 @@
+#nullable enable
+DcsvIo.D2.Headers.Grpc.GrpcHeaders
+const DcsvIo.D2.Headers.Grpc.GrpcHeaders.AUTHORIZATION = "Authorization" -> string!
+const DcsvIo.D2.Headers.Grpc.GrpcHeaders.PROPAGATED_CONTEXT = "x-d2-context" -> string!
+const DcsvIo.D2.Headers.Grpc.GrpcHeaders.TRACEPARENT = "traceparent" -> string!
+const DcsvIo.D2.Headers.Grpc.GrpcHeaders.TRACESTATE = "tracestate" -> string!
+static DcsvIo.D2.Headers.Grpc.GrpcHeaders.AllGrpcHeaders.get -> System.Collections.Generic.IReadOnlyList<string!>!

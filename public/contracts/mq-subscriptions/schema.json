@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D² messaging — subscriptions spec",
+  "description": "Schema for contracts/mq-subscriptions/mq-subscriptions.spec.json — the source-of-truth catalog of every subscription D² services declare. DcsvIo.D2.Mq.SourceGen reads this to emit the MqSubscriptions static class (string constants) + the runtime registry (constant → MqSubscriptionDescriptor) into DcsvIo.D2.Messaging.Abstractions. Each entry pairs one consumer service's subscription with its target message type: queue name, pattern, binding, prefetch, idempotency, optional retry. The consuming service owns its entries.",
+  "type": "object",
+  "required": ["subscriptions"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "subscriptions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/subscription" }
+    }
+  },
+  "definitions": {
+    "subscription": {
+      "type": "object",
+      "required": ["constant", "messageType", "queueName", "pattern"],
+      "additionalProperties": false,
+      "properties": {
+        "constant": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase identifier emitted as a const string under MqSubscriptions. Must be unique across all entries (D2MQ003)."
+        },
+        "messageType": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$",
+          "description": "Fully-qualified .NET type name of the message this subscription consumes. MUST match a messageType in mq-messages.spec.json (D2MQ007). Runtime resolver verifies the handler's TIn (BaseHandler<TSelf, TIn, Unit>) matches this type."
+        },
+        "queueName": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*$",
+          "description": "Queue name (lowercase, dot- or hyphen-separated). For pattern=FanoutExclusiveAutoDelete, this is treated as a PREFIX — a per-replica suffix is auto-appended at startup so multi-replica services don't conflict on the broker's exclusive-queue lock."
+        },
+        "pattern": {
+          "type": "string",
+          "enum": [
+            "CompetingConsumer",
+            "FanoutExclusiveAutoDelete",
+            "DurableShared"
+          ],
+          "description": "Queue topology pattern. CompetingConsumer = durable shared, exactly-once across replicas (events processed once). FanoutExclusiveAutoDelete = per-replica unique queue, every replica receives every message (cluster-wide broadcast — handlers MUST be idempotent). DurableShared = long-lived event stream that survives broker restart."
+        },
+        "routingKeyBinding": {
+          "type": "string",
+          "description": "AMQP routing-key BINDING pattern. Empty for fanout (binding has no key). For topic exchanges, may include AMQP wildcards: '*' (one segment) or '#' (zero or more segments). For direct, an exact match. Default is '' (fanout-style)."
+        },
+        "prefetch": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Per-channel basic.qos prefetch count. Bounds in-flight unacked deliveries for this consumer. Defaults to 10 if omitted."
+        },
+        "idempotency": {
+          "type": "boolean",
+          "description": "When true, the consumer wraps the handler with a pre-check against the registered IMessageIdempotencyStore (default impl backed by IDistributedCache, 24h TTL). Defaults to false."
+        },
+        "tieredRetry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tiers", "maxAttempts"],
+          "properties": {
+            "tiers": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "pattern": "^[0-9]{2}:[0-9]{2}:[0-9]{2}$",
+                "description": "TimeSpan in HH:MM:SS form. e.g. '00:00:05' = 5 seconds."
+              },
+              "description": "TTL per retry tier. Length determines how many tier queues are declared."
+            },
+            "maxAttempts": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Hard cap on total delivery attempts before the message goes to DLQ with cause RETRIES_EXHAUSTED. Enforced via x-death header parsing on the consumer side."
+            }
+          },
+          "description": "Optional broker-level tiered-retry topology. When omitted, handler failures go straight to DLQ."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1214 @@
+#nullable enable
+DcsvIo.D2.Geo.Abstractions.Country
+DcsvIo.D2.Geo.Abstractions.Country.<Clone>$() -> DcsvIo.D2.Geo.Abstractions.Country!
+DcsvIo.D2.Geo.Abstractions.Country.Country() -> void
+DcsvIo.D2.Geo.Abstractions.Country.Currencies.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance!>!
+DcsvIo.D2.Geo.Abstractions.Country.Currencies.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.CurrencyIso4217AlphaCodes.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.CurrencyCode>!
+DcsvIo.D2.Geo.Abstractions.Country.CurrencyIso4217AlphaCodes.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.Deprecation.get -> DcsvIo.D2.Geo.Abstractions.DeprecationInfo?
+DcsvIo.D2.Geo.Abstractions.Country.Deprecation.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.DisplayName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Country.DisplayName.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.EndonymDisplayName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Country.EndonymDisplayName.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.EndonymOfficialName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Country.EndonymOfficialName.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.Equals(DcsvIo.D2.Geo.Abstractions.Country? other) -> bool
+DcsvIo.D2.Geo.Abstractions.Country.FirstDayOfWeek.get -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.Country.FirstDayOfWeek.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.GeopoliticalEntities.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity!>!
+DcsvIo.D2.Geo.Abstractions.Country.GeopoliticalEntityShortCodes.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode>!
+DcsvIo.D2.Geo.Abstractions.Country.GeopoliticalEntityShortCodes.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.Iso31661Alpha2Code.get -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.Country.Iso31661Alpha2Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.Iso31661Alpha3Code.get -> string!
+DcsvIo.D2.Geo.Abstractions.Country.Iso31661Alpha3Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.Iso31661NumericCode.get -> string!
+DcsvIo.D2.Geo.Abstractions.Country.Iso31661NumericCode.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.LocaleIetfBcp47Tags.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.LocaleCode>!
+DcsvIo.D2.Geo.Abstractions.Country.LocaleIetfBcp47Tags.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.Locales.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.Locale!>!
+DcsvIo.D2.Geo.Abstractions.Country.MeasurementSystem.get -> DcsvIo.D2.Geo.Abstractions.MeasurementSystem
+DcsvIo.D2.Geo.Abstractions.Country.MeasurementSystem.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.OfficialName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Country.OfficialName.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.PhoneNumberMaxDigits.get -> int
+DcsvIo.D2.Geo.Abstractions.Country.PhoneNumberMaxDigits.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.PhoneNumberMinDigits.get -> int?
+DcsvIo.D2.Geo.Abstractions.Country.PhoneNumberMinDigits.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.PhoneNumberNationalFormat.get -> string!
+DcsvIo.D2.Geo.Abstractions.Country.PhoneNumberNationalFormat.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.PhoneNumberPrefix.get -> string!
+DcsvIo.D2.Geo.Abstractions.Country.PhoneNumberPrefix.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.PrimaryCurrency.get -> DcsvIo.D2.Geo.Abstractions.Currency?
+DcsvIo.D2.Geo.Abstractions.Country.PrimaryCurrencyIso4217AlphaCode.get -> DcsvIo.D2.Geo.Abstractions.CurrencyCode?
+DcsvIo.D2.Geo.Abstractions.Country.PrimaryCurrencyIso4217AlphaCode.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.PrimaryLanguage.get -> DcsvIo.D2.Geo.Abstractions.Language?
+DcsvIo.D2.Geo.Abstractions.Country.PrimaryLanguageIso6391Code.get -> DcsvIo.D2.Geo.Abstractions.LanguageCode?
+DcsvIo.D2.Geo.Abstractions.Country.PrimaryLanguageIso6391Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.PrimaryLocale.get -> DcsvIo.D2.Geo.Abstractions.Locale?
+DcsvIo.D2.Geo.Abstractions.Country.PrimaryLocaleIetfBcp47Tag.get -> DcsvIo.D2.Geo.Abstractions.LocaleCode?
+DcsvIo.D2.Geo.Abstractions.Country.PrimaryLocaleIetfBcp47Tag.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.SovereignCountry.get -> DcsvIo.D2.Geo.Abstractions.Country?
+DcsvIo.D2.Geo.Abstractions.Country.SovereignCountryIso31661Alpha2Code.get -> DcsvIo.D2.Geo.Abstractions.CountryCode?
+DcsvIo.D2.Geo.Abstractions.Country.SovereignCountryIso31661Alpha2Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.SubdivisionIso31662Codes.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.SubdivisionCode>!
+DcsvIo.D2.Geo.Abstractions.Country.Subdivisions.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.Subdivision!>!
+DcsvIo.D2.Geo.Abstractions.Country.Territories.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.Country!>!
+DcsvIo.D2.Geo.Abstractions.Country.TerritoryIso31661Alpha2Codes.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.CountryCode>!
+DcsvIo.D2.Geo.Abstractions.Country.TerritoryIso31661Alpha2Codes.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.WeekendEnd.get -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.Country.WeekendEnd.init -> void
+DcsvIo.D2.Geo.Abstractions.Country.WeekendStart.get -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.Country.WeekendStart.init -> void
+DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AD = 20 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AE = 784 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AF = 4 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AG = 28 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AI = 660 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AL = 8 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AM = 51 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AO = 24 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AQ = 10 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AR = 32 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AS = 16 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AT = 40 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AU = 36 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AW = 533 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AX = 248 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.AZ = 31 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BA = 70 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BB = 52 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BD = 50 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BE = 56 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BF = 854 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BG = 100 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BH = 48 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BI = 108 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BJ = 204 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BL = 652 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BM = 60 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BN = 96 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BO = 68 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BQ = 535 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BR = 76 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BS = 44 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BT = 64 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BV = 74 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BW = 72 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BY = 112 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.BZ = 84 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CA = 124 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CC = 166 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CD = 180 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CF = 140 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CG = 178 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CH = 756 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CI = 384 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CK = 184 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CL = 152 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CM = 120 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CN = 156 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CO = 170 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CR = 188 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CU = 192 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CV = 132 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CW = 531 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CX = 162 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CY = 196 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.CZ = 203 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.DE = 276 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.DJ = 262 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.DK = 208 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.DM = 212 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.DO = 214 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.DZ = 12 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.EC = 218 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.EE = 233 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.EG = 818 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.EH = 732 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ER = 232 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ES = 724 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ET = 231 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.FI = 246 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.FJ = 242 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.FK = 238 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.FM = 583 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.FO = 234 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.FR = 250 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GA = 266 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GB = 826 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GD = 308 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GE = 268 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GF = 254 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GG = 831 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GH = 288 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GI = 292 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GL = 304 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GM = 270 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GN = 324 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GP = 312 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GQ = 226 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GR = 300 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GS = 239 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GT = 320 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GU = 316 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GW = 624 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.GY = 328 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.HK = 344 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.HM = 334 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.HN = 340 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.HR = 191 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.HT = 332 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.HU = 348 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ID = 360 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.IE = 372 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.IL = 376 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.IM = 833 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.IN = 356 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.IO = 86 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.IQ = 368 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.IR = 364 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.IS = 352 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.IT = 380 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.JE = 832 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.JM = 388 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.JO = 400 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.JP = 392 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KE = 404 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KG = 417 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KH = 116 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KI = 296 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KM = 174 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KN = 659 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KP = 408 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KR = 410 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KW = 414 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KY = 136 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.KZ = 398 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LA = 418 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LB = 422 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LC = 662 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LI = 438 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LK = 144 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LR = 430 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LS = 426 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LT = 440 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LU = 442 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LV = 428 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.LY = 434 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MA = 504 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MC = 492 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MD = 498 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ME = 499 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MF = 663 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MG = 450 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MH = 584 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MK = 807 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ML = 466 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MM = 104 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MN = 496 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MO = 446 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MP = 580 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MQ = 474 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MR = 478 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MS = 500 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MT = 470 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MU = 480 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MV = 462 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MW = 454 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MX = 484 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MY = 458 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.MZ = 508 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NA = 516 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NC = 540 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NE = 562 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NF = 574 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NG = 566 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NI = 558 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NL = 528 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NO = 578 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NP = 524 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NR = 520 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NU = 570 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.NZ = 554 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.OM = 512 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PA = 591 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PE = 604 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PF = 258 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PG = 598 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PH = 608 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PK = 586 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PL = 616 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PM = 666 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PN = 612 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PR = 630 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PS = 275 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PT = 620 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PW = 585 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.PY = 600 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.QA = 634 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.RE = 638 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.RO = 642 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.RS = 688 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.RU = 643 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.RW = 646 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SA = 682 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SB = 90 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SC = 690 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SD = 729 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SE = 752 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SG = 702 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SH = 654 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SI = 705 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SJ = 744 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SK = 703 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SL = 694 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SM = 674 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SN = 686 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SO = 706 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SR = 740 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SS = 728 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ST = 678 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SV = 222 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SX = 534 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SY = 760 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.SZ = 748 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TC = 796 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TD = 148 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TF = 260 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TG = 768 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TH = 764 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TJ = 762 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TK = 772 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TL = 626 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TM = 795 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TN = 788 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TO = 776 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TR = 792 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TT = 780 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TV = 798 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TW = 158 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.TZ = 834 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.UA = 804 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.UG = 800 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.UM = 581 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.US = 840 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.UY = 858 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.UZ = 860 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.VA = 336 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.VC = 670 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.VE = 862 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.VG = 92 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.VI = 850 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.VN = 704 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.VU = 548 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.WF = 876 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.WS = 882 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.XK = 983 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.YE = 887 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.YT = 175 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ZA = 710 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ZM = 894 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCode.ZW = 716 -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance
+DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.<Clone>$() -> DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance!
+DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.CountryCurrencyAcceptance() -> void
+DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.Currency.get -> DcsvIo.D2.Geo.Abstractions.Currency?
+DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.Equals(DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance? other) -> bool
+DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.Iso4217AlphaCode.get -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.Iso4217AlphaCode.init -> void
+DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.Level.get -> DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel
+DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.Level.init -> void
+DcsvIo.D2.Geo.Abstractions.Currency
+DcsvIo.D2.Geo.Abstractions.Currency.<Clone>$() -> DcsvIo.D2.Geo.Abstractions.Currency!
+DcsvIo.D2.Geo.Abstractions.Currency.AcceptedInCountries.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.Country!>!
+DcsvIo.D2.Geo.Abstractions.Currency.AcceptedInCountryIso31661Alpha2Codes.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.CountryCode>!
+DcsvIo.D2.Geo.Abstractions.Currency.Currency() -> void
+DcsvIo.D2.Geo.Abstractions.Currency.DecimalPlaces.get -> int
+DcsvIo.D2.Geo.Abstractions.Currency.DecimalPlaces.init -> void
+DcsvIo.D2.Geo.Abstractions.Currency.Deprecation.get -> DcsvIo.D2.Geo.Abstractions.DeprecationInfo?
+DcsvIo.D2.Geo.Abstractions.Currency.Deprecation.init -> void
+DcsvIo.D2.Geo.Abstractions.Currency.DisplayName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Currency.DisplayName.init -> void
+DcsvIo.D2.Geo.Abstractions.Currency.Equals(DcsvIo.D2.Geo.Abstractions.Currency? other) -> bool
+DcsvIo.D2.Geo.Abstractions.Currency.IsSupported.get -> bool
+DcsvIo.D2.Geo.Abstractions.Currency.IsSupported.init -> void
+DcsvIo.D2.Geo.Abstractions.Currency.Iso4217AlphaCode.get -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.Currency.Iso4217AlphaCode.init -> void
+DcsvIo.D2.Geo.Abstractions.Currency.Iso4217NumericCode.get -> string!
+DcsvIo.D2.Geo.Abstractions.Currency.Iso4217NumericCode.init -> void
+DcsvIo.D2.Geo.Abstractions.Currency.OfficialName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Currency.OfficialName.init -> void
+DcsvIo.D2.Geo.Abstractions.Currency.Symbol.get -> string!
+DcsvIo.D2.Geo.Abstractions.Currency.Symbol.init -> void
+DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel
+DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel.LegalTender = 0 -> DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel
+DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel.Tourist = 2 -> DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel
+DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel.WidelyAccepted = 1 -> DcsvIo.D2.Geo.Abstractions.CurrencyAcceptanceLevel
+DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ADP = 20 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AED = 784 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AFA = 4 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AFN = 971 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ALK = 8 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ALL = 9 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AMD = 51 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ANG = 532 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AOA = 973 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AOK = 24 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AON = 25 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AOR = 982 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ARA = 32 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ARL = 60013 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ARM = 60014 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ARP = 33 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ARS = 34 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ARY = 35 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ATS = 40 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AUD = 36 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AWG = 533 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AYM = 945 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AZM = 31 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.AZN = 944 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BAD = 70 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BAM = 977 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BAN = 60026 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BBD = 52 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BDT = 50 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BEC = 993 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BEF = 56 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BEL = 992 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BGJ = 100 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BGK = 101 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BGL = 102 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BGM = 60035 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BGN = 975 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BGO = 60037 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BHD = 48 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BIF = 108 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BMD = 60 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BND = 96 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BOB = 68 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BOL = 60043 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BOP = 69 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BOV = 984 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BRB = 76 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BRC = 77 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BRE = 78 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BRL = 986 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BRN = 79 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BRR = 987 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BRZ = 60052 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BSD = 44 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BTN = 64 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BUK = 104 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BWP = 72 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BYB = 112 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BYN = 933 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BYR = 974 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.BZD = 84 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CAD = 124 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CDF = 976 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CHC = 948 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CHE = 947 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CHF = 756 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CHW = 949 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CLE = 60067 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CLF = 990 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CLP = 152 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CNH = 60070 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CNX = 60071 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CNY = 156 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.COP = 170 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.COU = 970 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CRC = 188 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CSD = 891 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CSJ = 203 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CSK = 200 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CUC = 931 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CUP = 192 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CVE = 132 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CYP = 196 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.CZK = 204 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.DDM = 278 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.DEM = 276 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.DJF = 262 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.DKK = 208 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.DOP = 214 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.DZD = 12 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ECS = 218 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ECV = 983 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.EEK = 233 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.EGP = 818 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ERN = 232 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ESA = 996 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ESB = 995 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ESP = 724 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ETB = 230 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.EUR = 978 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.FIM = 246 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.FJD = 242 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.FKP = 238 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.FRF = 250 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GBP = 826 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GEK = 268 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GEL = 981 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GHC = 288 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GHP = 939 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GHS = 936 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GIP = 292 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GMD = 270 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GNE = 324 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GNF = 325 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GNS = 326 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GQE = 226 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GRD = 300 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GTQ = 320 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GWE = 624 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GWP = 625 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.GYD = 328 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.HKD = 344 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.HNL = 340 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.HRD = 191 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.HRK = 193 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.HTG = 332 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.HUF = 348 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.IDR = 360 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.IEP = 372 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ILP = 376 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ILR = 377 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ILS = 378 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.INR = 356 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.IQD = 368 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.IRR = 364 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ISJ = 352 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ISK = 353 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ITL = 380 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.JMD = 388 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.JOD = 400 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.JPY = 392 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KES = 404 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KGS = 417 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KHR = 116 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KMF = 174 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KPW = 408 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KRH = 60146 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KRO = 60147 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KRW = 410 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KWD = 414 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KYD = 136 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.KZT = 398 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LAJ = 418 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LAK = 419 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LBP = 422 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LKR = 144 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LRD = 430 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LSL = 426 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LSM = 427 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LTL = 440 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LTT = 441 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LUC = 989 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LUF = 442 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LUL = 988 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LVL = 428 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LVR = 429 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.LYD = 434 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MAD = 504 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MAF = 60168 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MCF = 60169 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MDC = 60170 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MDL = 498 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MGA = 969 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MGF = 450 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MKD = 807 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MKN = 60175 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MLF = 466 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MMK = 105 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MNT = 496 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MOP = 446 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MRO = 478 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MRU = 929 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MTL = 470 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MTP = 471 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MUR = 480 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MVP = 60185 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MVQ = 462 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MVR = 463 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MWK = 454 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MXN = 484 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MXP = 485 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MXV = 979 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MYR = 458 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MZE = 508 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MZM = 509 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.MZN = 943 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.NAD = 516 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.NGN = 566 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.NIC = 558 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.NIO = 559 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.NLG = 528 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.NOK = 578 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.NPR = 524 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.NZD = 554 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.OMR = 512 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PAB = 590 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PEH = 604 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PEI = 605 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PEN = 606 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PES = 607 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PGK = 598 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PHP = 608 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PKR = 586 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PLN = 985 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PLZ = 616 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PTE = 620 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.PYG = 600 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.QAR = 634 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.RHD = 716 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ROK = 642 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ROL = 643 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.RON = 946 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.RSD = 941 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.RUB = 644 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.RUR = 810 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.RWF = 646 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SAR = 682 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SBD = 90 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SCR = 690 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SDD = 736 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SDG = 938 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SDP = 737 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SEK = 752 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SGD = 702 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SHP = 654 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SIT = 705 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SKK = 703 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SLE = 925 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SLL = 694 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SOS = 706 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SRD = 968 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SRG = 740 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SSP = 728 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.STD = 678 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.STN = 930 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SUR = 811 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SVC = 222 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SYP = 760 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.SZL = 748 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.THB = 764 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TJR = 762 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TJS = 972 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TMM = 795 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TMT = 934 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TND = 788 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TOP = 776 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TPE = 626 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TRL = 792 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TRY = 950 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TTD = 780 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TWD = 901 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.TZS = 834 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UAH = 980 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UAK = 804 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UGS = 800 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UGW = 801 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UGX = 802 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.USD = 840 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.USN = 997 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.USS = 998 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UYI = 940 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UYN = 858 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UYP = 859 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UYU = 860 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UYW = 927 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.UZS = 861 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.VEB = 862 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.VED = 926 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.VEF = 937 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.VES = 928 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.VNC = 704 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.VND = 707 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.VNN = 60282 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.VUV = 548 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.WST = 882 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XAD = 396 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XAF = 951 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XAG = 961 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XAU = 959 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XBA = 955 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XBB = 956 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XBC = 957 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XBD = 958 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XCD = 952 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XCG = 534 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XDR = 960 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XEU = 954 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XFO = 60297 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XFU = 60298 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XOF = 953 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XPD = 964 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XPF = 962 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XPT = 963 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XRE = 60303 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XSU = 994 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XTS = 965 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XUA = 966 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.XXX = 999 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.YDD = 720 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.YER = 886 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.YUD = 890 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.YUM = 892 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.YUN = 893 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.YUR = 60313 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZAL = 991 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZAR = 710 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZMK = 894 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZMW = 967 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZRN = 180 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZRZ = 181 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZWC = 717 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZWD = 718 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZWG = 924 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZWL = 932 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZWN = 942 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.CurrencyCode.ZWR = 935 -> DcsvIo.D2.Geo.Abstractions.CurrencyCode
+DcsvIo.D2.Geo.Abstractions.DateFormatPattern
+DcsvIo.D2.Geo.Abstractions.DateFormatPattern.DMY = 1 -> DcsvIo.D2.Geo.Abstractions.DateFormatPattern
+DcsvIo.D2.Geo.Abstractions.DateFormatPattern.MDY = 2 -> DcsvIo.D2.Geo.Abstractions.DateFormatPattern
+DcsvIo.D2.Geo.Abstractions.DateFormatPattern.YMD = 0 -> DcsvIo.D2.Geo.Abstractions.DateFormatPattern
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.<Clone>$() -> DcsvIo.D2.Geo.Abstractions.DeprecationInfo!
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.DeprecatedAt.get -> System.DateOnly
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.DeprecatedAt.init -> void
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.DeprecationInfo() -> void
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.Equals(DcsvIo.D2.Geo.Abstractions.DeprecationInfo? other) -> bool
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.Reason.get -> string!
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.Reason.init -> void
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.SuccessorNote.get -> string?
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.SuccessorNote.init -> void
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.SupersededBy.get -> System.Collections.Generic.IReadOnlyList<string!>?
+DcsvIo.D2.Geo.Abstractions.DeprecationInfo.SupersededBy.init -> void
+DcsvIo.D2.Geo.Abstractions.Extensions.IRequestContextGeoExtensions
+DcsvIo.D2.Geo.Abstractions.Extensions.IRequestContextGeoExtensions.extension(DcsvIo.D2.Context.Abstractions.IRequestContext!)
+DcsvIo.D2.Geo.Abstractions.Extensions.IRequestContextGeoExtensions.extension(DcsvIo.D2.Context.Abstractions.IRequestContext!).Country() -> DcsvIo.D2.Geo.Abstractions.CountryCode?
+DcsvIo.D2.Geo.Abstractions.Extensions.IRequestContextGeoExtensions.extension(DcsvIo.D2.Context.Abstractions.IRequestContext!).Subdivision() -> DcsvIo.D2.Geo.Abstractions.SubdivisionCode?
+DcsvIo.D2.Geo.Abstractions.GeoCatalog
+DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek.Friday = 5 -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek.Monday = 1 -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek.Saturday = 6 -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek.Sunday = 0 -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek.Thursday = 4 -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek.Tuesday = 2 -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek.Wednesday = 3 -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.<Clone>$() -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity!
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.Deprecation.get -> DcsvIo.D2.Geo.Abstractions.DeprecationInfo?
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.Deprecation.init -> void
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.DisplayName.get -> string!
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.DisplayName.init -> void
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.Equals(DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity? other) -> bool
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.GeopoliticalEntity() -> void
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.MemberCountries.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.Country!>!
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.MemberCountryIso31661Alpha2Codes.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.CountryCode>!
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.MemberCountryIso31661Alpha2Codes.init -> void
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.ShortCode.get -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.ShortCode.init -> void
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.Type.get -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.Type.init -> void
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.AF = 1 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.AFTA = 2 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.AL = 3 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.AN = 4 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.ANZUS = 5 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.ARAB = 6 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.AS = 7 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.ASEAN = 8 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.AU = 9 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.AUKUS = 10 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.BALK = 11 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.BALT = 12 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.BENE = 13 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.BRICS = 14 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.CAM = 15 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.CARIB = 16 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.CARICOM = 17 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.CAS = 18 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.CEMAC = 19 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.COE = 20 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.CPTPP = 21 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.CSTO = 22 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.CW = 23 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.EAEU = 24 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.EAS = 25 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.ECCU = 26 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.EEA = 27 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.EU = 28 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.EUCU = 29 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.EUR = 30 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.EZ = 31 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.FVEY = 32 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.G20 = 33 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.G7 = 34 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.GCC = 35 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.INDS = 36 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.LATAM = 37 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.MENA = 38 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.MERCOSUR = 39 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.NA = 40 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.NATO = 41 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.NC = 42 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.NORD = 43 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.OC = 44 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.OECD = 45 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.OIF = 46 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.OPEC = 47 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.QUAD = 48 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.RCEP = 49 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.SA = 50 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.SAARC = 51 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.SACU = 52 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.SAHEL = 53 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.SCAN = 54 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.SEA = 55 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.SSA = 56 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.UN = 57 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.USMCA = 58 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode.WAEMU = 59 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.ArmsControlAgreement = 31 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.BilateralInvestmentTreaty = 15 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.CommonMarket = 12 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.Continent = 0 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.CustomsUnion = 11 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.DemocracyPromotionAgreement = 25 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.DevelopmentAgreement = 16 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.EconomicUnion = 13 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.EnvironmentalAgreement = 22 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.FreeTradeAgreement = 10 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.GeopoliticalRegion = 2 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.GovernanceAndCooperationAgreement = 23 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.HumanRightsAgreement = 21 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.MilitaryAlliance = 30 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.MonetaryUnion = 14 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.NonAggressionPact = 35 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.PeaceTreaty = 24 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.PeacekeepingAgreement = 33 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.PoliticalUnion = 20 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.ResourceSharingAgreement = 17 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.SecurityCooperationAgreement = 34 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.StatusOfForcesAgreement = 32 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType.SubContinent = 1 -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityType
+DcsvIo.D2.Geo.Abstractions.IGeoReference
+DcsvIo.D2.Geo.Abstractions.IGeoReference.GetCountry(DcsvIo.D2.Geo.Abstractions.CountryCode code) -> DcsvIo.D2.Geo.Abstractions.Country!
+DcsvIo.D2.Geo.Abstractions.IGeoReference.GetCurrency(DcsvIo.D2.Geo.Abstractions.CurrencyCode code) -> DcsvIo.D2.Geo.Abstractions.Currency!
+DcsvIo.D2.Geo.Abstractions.IGeoReference.GetGeopoliticalEntity(DcsvIo.D2.Geo.Abstractions.GeopoliticalEntityCode code) -> DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity!
+DcsvIo.D2.Geo.Abstractions.IGeoReference.GetLanguage(DcsvIo.D2.Geo.Abstractions.LanguageCode code) -> DcsvIo.D2.Geo.Abstractions.Language!
+DcsvIo.D2.Geo.Abstractions.IGeoReference.GetLocale(DcsvIo.D2.Geo.Abstractions.LocaleCode code) -> DcsvIo.D2.Geo.Abstractions.Locale!
+DcsvIo.D2.Geo.Abstractions.IGeoReference.GetSubdivision(DcsvIo.D2.Geo.Abstractions.SubdivisionCode code) -> DcsvIo.D2.Geo.Abstractions.Subdivision!
+DcsvIo.D2.Geo.Abstractions.IGeoReference.GetTimezone(DcsvIo.D2.Geo.Abstractions.TimezoneCode code) -> DcsvIo.D2.Geo.Abstractions.Timezone!
+DcsvIo.D2.Geo.Abstractions.Language
+DcsvIo.D2.Geo.Abstractions.Language.<Clone>$() -> DcsvIo.D2.Geo.Abstractions.Language!
+DcsvIo.D2.Geo.Abstractions.Language.Deprecation.get -> DcsvIo.D2.Geo.Abstractions.DeprecationInfo?
+DcsvIo.D2.Geo.Abstractions.Language.Deprecation.init -> void
+DcsvIo.D2.Geo.Abstractions.Language.DisplayName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Language.DisplayName.init -> void
+DcsvIo.D2.Geo.Abstractions.Language.Endonym.get -> string!
+DcsvIo.D2.Geo.Abstractions.Language.Endonym.init -> void
+DcsvIo.D2.Geo.Abstractions.Language.Equals(DcsvIo.D2.Geo.Abstractions.Language? other) -> bool
+DcsvIo.D2.Geo.Abstractions.Language.IsSupported.get -> bool
+DcsvIo.D2.Geo.Abstractions.Language.IsSupported.init -> void
+DcsvIo.D2.Geo.Abstractions.Language.Iso6391Code.get -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.Language.Iso6391Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Language.Language() -> void
+DcsvIo.D2.Geo.Abstractions.Language.LocaleIetfBcp47Tags.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.LocaleCode>!
+DcsvIo.D2.Geo.Abstractions.Language.Locales.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.Locale!>!
+DcsvIo.D2.Geo.Abstractions.Language.SpokenInCountries.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.Country!>!
+DcsvIo.D2.Geo.Abstractions.Language.SpokenInCountryIso31661Alpha2Codes.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.CountryCode>!
+DcsvIo.D2.Geo.Abstractions.Language.WritingDirection.get -> DcsvIo.D2.Geo.Abstractions.WritingDirection
+DcsvIo.D2.Geo.Abstractions.Language.WritingDirection.init -> void
+DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Aa = 1 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ab = 2 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ae = 3 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Af = 4 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ak = 5 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Am = 6 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.An = 7 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ar = 8 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.As = 9 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Av = 10 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ay = 11 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Az = 12 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ba = 13 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Be = 14 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Bg = 15 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Bi = 16 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Bm = 17 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Bn = 18 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Bo = 19 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Br = 20 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Bs = 21 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ca = 22 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ce = 23 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ch = 24 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Co = 25 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Cr = 26 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Cs = 27 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Cu = 28 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Cv = 29 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Cy = 30 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Da = 31 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.De = 32 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Dv = 33 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Dz = 34 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ee = 35 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.El = 36 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.En = 37 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Eo = 38 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Es = 39 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Et = 40 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Eu = 41 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Fa = 42 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ff = 43 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Fi = 44 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Fj = 45 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Fo = 46 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Fr = 47 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Fy = 48 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ga = 49 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Gd = 50 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Gl = 51 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Gn = 52 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Gu = 53 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Gv = 54 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ha = 55 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.He = 56 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Hi = 57 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ho = 58 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Hr = 59 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ht = 60 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Hu = 61 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Hy = 62 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Hz = 63 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ia = 64 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Id = 65 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ie = 66 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ig = 67 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ii = 68 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ik = 69 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Io = 70 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Is = 71 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.It = 72 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Iu = 73 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ja = 74 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Jv = 75 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ka = 76 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Kg = 77 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ki = 78 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Kj = 79 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Kk = 80 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Kl = 81 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Km = 82 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Kn = 83 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ko = 84 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Kr = 85 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ks = 86 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ku = 87 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Kv = 88 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Kw = 89 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ky = 90 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.La = 91 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Lb = 92 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Lg = 93 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Li = 94 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ln = 95 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Lo = 96 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Lt = 97 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Lu = 98 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Lv = 99 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Mg = 100 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Mh = 101 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Mi = 102 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Mk = 103 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ml = 104 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Mn = 105 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Mr = 106 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ms = 107 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Mt = 108 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.My = 109 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Na = 110 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Nb = 111 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Nd = 112 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ne = 113 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ng = 114 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Nl = 115 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Nn = 116 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.No = 117 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Nr = 118 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Nv = 119 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ny = 120 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Oc = 121 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Oj = 122 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Om = 123 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Or = 124 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Os = 125 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Pa = 126 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Pi = 127 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Pl = 128 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ps = 129 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Pt = 130 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Qu = 131 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Rm = 132 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Rn = 133 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ro = 134 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ru = 135 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Rw = 136 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sa = 137 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sc = 138 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sd = 139 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Se = 140 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sg = 141 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Si = 142 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sk = 143 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sl = 144 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sm = 145 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sn = 146 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.So = 147 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sq = 148 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sr = 149 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ss = 150 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.St = 151 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Su = 152 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sv = 153 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Sw = 154 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ta = 155 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Te = 156 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Tg = 157 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Th = 158 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ti = 159 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Tk = 160 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Tl = 161 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Tn = 162 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.To = 163 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Tr = 164 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ts = 165 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Tt = 166 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Tw = 167 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ty = 168 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ug = 169 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Uk = 170 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ur = 171 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Uz = 172 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Ve = 173 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Vi = 174 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Vo = 175 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Wa = 176 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Wo = 177 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Xh = 178 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Yi = 179 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Yo = 180 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Za = 181 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Zh = 182 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.LanguageCode.Zu = 183 -> DcsvIo.D2.Geo.Abstractions.LanguageCode
+DcsvIo.D2.Geo.Abstractions.Locale
+DcsvIo.D2.Geo.Abstractions.Locale.<Clone>$() -> DcsvIo.D2.Geo.Abstractions.Locale!
+DcsvIo.D2.Geo.Abstractions.Locale.Country.get -> DcsvIo.D2.Geo.Abstractions.Country?
+DcsvIo.D2.Geo.Abstractions.Locale.CountryIso31661Alpha2Code.get -> DcsvIo.D2.Geo.Abstractions.CountryCode?
+DcsvIo.D2.Geo.Abstractions.Locale.CountryIso31661Alpha2Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.DateFormatPattern.get -> DcsvIo.D2.Geo.Abstractions.DateFormatPattern
+DcsvIo.D2.Geo.Abstractions.Locale.DateFormatPattern.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.DecimalSeparator.get -> string!
+DcsvIo.D2.Geo.Abstractions.Locale.DecimalSeparator.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.Deprecation.get -> DcsvIo.D2.Geo.Abstractions.DeprecationInfo?
+DcsvIo.D2.Geo.Abstractions.Locale.Deprecation.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.DisplayName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Locale.DisplayName.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.Endonym.get -> string!
+DcsvIo.D2.Geo.Abstractions.Locale.Endonym.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.Equals(DcsvIo.D2.Geo.Abstractions.Locale? other) -> bool
+DcsvIo.D2.Geo.Abstractions.Locale.FirstDayOfWeek.get -> DcsvIo.D2.Geo.Abstractions.GeoDayOfWeek
+DcsvIo.D2.Geo.Abstractions.Locale.FirstDayOfWeek.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.IetfBcp47Tag.get -> DcsvIo.D2.Geo.Abstractions.LocaleCode
+DcsvIo.D2.Geo.Abstractions.Locale.IetfBcp47Tag.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.IsSelectable.get -> bool
+DcsvIo.D2.Geo.Abstractions.Locale.IsSelectable.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.Language.get -> DcsvIo.D2.Geo.Abstractions.Language?
+DcsvIo.D2.Geo.Abstractions.Locale.LanguageIso6391Code.get -> DcsvIo.D2.Geo.Abstractions.LanguageCode?
+DcsvIo.D2.Geo.Abstractions.Locale.LanguageIso6391Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Locale.Locale() -> void
+DcsvIo.D2.Geo.Abstractions.Locale.ThousandsSeparator.get -> string!
+DcsvIo.D2.Geo.Abstractions.Locale.ThousandsSeparator.init -> void
+DcsvIo.D2.Geo.Abstractions.LocaleCode
+DcsvIo.D2.Geo.Abstractions.LocaleCode.Equals(DcsvIo.D2.Geo.Abstractions.LocaleCode other) -> bool
+DcsvIo.D2.Geo.Abstractions.LocaleCode.LocaleCode() -> void
+DcsvIo.D2.Geo.Abstractions.LocaleCode.Value.get -> string!
+DcsvIo.D2.Geo.Abstractions.LocaleCodeJsonConverter
+DcsvIo.D2.Geo.Abstractions.LocaleCodeJsonConverter.LocaleCodeJsonConverter() -> void
+DcsvIo.D2.Geo.Abstractions.MeasurementSystem
+DcsvIo.D2.Geo.Abstractions.MeasurementSystem.Imperial = 1 -> DcsvIo.D2.Geo.Abstractions.MeasurementSystem
+DcsvIo.D2.Geo.Abstractions.MeasurementSystem.Metric = 0 -> DcsvIo.D2.Geo.Abstractions.MeasurementSystem
+DcsvIo.D2.Geo.Abstractions.MeasurementSystem.Mixed = 2 -> DcsvIo.D2.Geo.Abstractions.MeasurementSystem
+DcsvIo.D2.Geo.Abstractions.NameResolution.IGeoNameResolver
+DcsvIo.D2.Geo.Abstractions.NameResolution.IGeoNameResolver.TryResolveCountryByName(string! name) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Geo.Abstractions.Country!>!
+DcsvIo.D2.Geo.Abstractions.NameResolution.IGeoNameResolver.TryResolveSubdivisionByName(string! name, DcsvIo.D2.Geo.Abstractions.Country! parentCountry) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Geo.Abstractions.Subdivision!>!
+DcsvIo.D2.Geo.Abstractions.NameResolution.LevenshteinComparer
+DcsvIo.D2.Geo.Abstractions.NameResolution.NameNormalizer
+DcsvIo.D2.Geo.Abstractions.Subdivision
+DcsvIo.D2.Geo.Abstractions.Subdivision.<Clone>$() -> DcsvIo.D2.Geo.Abstractions.Subdivision!
+DcsvIo.D2.Geo.Abstractions.Subdivision.Country.get -> DcsvIo.D2.Geo.Abstractions.Country?
+DcsvIo.D2.Geo.Abstractions.Subdivision.CountryIso31661Alpha2Code.get -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.Subdivision.CountryIso31661Alpha2Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.Deprecation.get -> DcsvIo.D2.Geo.Abstractions.DeprecationInfo?
+DcsvIo.D2.Geo.Abstractions.Subdivision.Deprecation.init -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.DisplayName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Subdivision.DisplayName.init -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.EndonymDisplayName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Subdivision.EndonymDisplayName.init -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.EndonymOfficialName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Subdivision.EndonymOfficialName.init -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.Equals(DcsvIo.D2.Geo.Abstractions.Subdivision? other) -> bool
+DcsvIo.D2.Geo.Abstractions.Subdivision.Iso31662Code.get -> DcsvIo.D2.Geo.Abstractions.SubdivisionCode
+DcsvIo.D2.Geo.Abstractions.Subdivision.Iso31662Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.OfficialName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Subdivision.OfficialName.init -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.ParentSubdivision.get -> DcsvIo.D2.Geo.Abstractions.Subdivision?
+DcsvIo.D2.Geo.Abstractions.Subdivision.ParentSubdivisionIso31662Code.get -> DcsvIo.D2.Geo.Abstractions.SubdivisionCode?
+DcsvIo.D2.Geo.Abstractions.Subdivision.ParentSubdivisionIso31662Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.ShortCode.get -> string!
+DcsvIo.D2.Geo.Abstractions.Subdivision.ShortCode.init -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.Subdivision() -> void
+DcsvIo.D2.Geo.Abstractions.Subdivision.Type.get -> string!
+DcsvIo.D2.Geo.Abstractions.Subdivision.Type.init -> void
+DcsvIo.D2.Geo.Abstractions.SubdivisionCode
+DcsvIo.D2.Geo.Abstractions.SubdivisionCode.Equals(DcsvIo.D2.Geo.Abstractions.SubdivisionCode other) -> bool
+DcsvIo.D2.Geo.Abstractions.SubdivisionCode.ParentCountry.get -> DcsvIo.D2.Geo.Abstractions.CountryCode
+DcsvIo.D2.Geo.Abstractions.SubdivisionCode.SubdivisionCode() -> void
+DcsvIo.D2.Geo.Abstractions.SubdivisionCode.Value.get -> string!
+DcsvIo.D2.Geo.Abstractions.SubdivisionCodeJsonConverter
+DcsvIo.D2.Geo.Abstractions.SubdivisionCodeJsonConverter.SubdivisionCodeJsonConverter() -> void
+DcsvIo.D2.Geo.Abstractions.Timezone
+DcsvIo.D2.Geo.Abstractions.Timezone.<Clone>$() -> DcsvIo.D2.Geo.Abstractions.Timezone!
+DcsvIo.D2.Geo.Abstractions.Timezone.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.Geo.Abstractions.Timezone.Aliases.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.CoApplicableCountries.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Geo.Abstractions.Country!>!
+DcsvIo.D2.Geo.Abstractions.Timezone.CoApplicableCountryIso31661Alpha2Codes.get -> System.Collections.Generic.IReadOnlySet<DcsvIo.D2.Geo.Abstractions.CountryCode>!
+DcsvIo.D2.Geo.Abstractions.Timezone.CoApplicableCountryIso31661Alpha2Codes.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.CurrentDstAbbrev.get -> string?
+DcsvIo.D2.Geo.Abstractions.Timezone.CurrentDstAbbrev.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.CurrentDstOffsetMinutes.get -> int?
+DcsvIo.D2.Geo.Abstractions.Timezone.CurrentDstOffsetMinutes.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.CurrentStdAbbrev.get -> string!
+DcsvIo.D2.Geo.Abstractions.Timezone.CurrentStdAbbrev.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.CurrentStdOffsetMinutes.get -> int
+DcsvIo.D2.Geo.Abstractions.Timezone.CurrentStdOffsetMinutes.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.Deprecation.get -> DcsvIo.D2.Geo.Abstractions.DeprecationInfo?
+DcsvIo.D2.Geo.Abstractions.Timezone.Deprecation.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.DisplayName.get -> string!
+DcsvIo.D2.Geo.Abstractions.Timezone.DisplayName.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.Equals(DcsvIo.D2.Geo.Abstractions.Timezone? other) -> bool
+DcsvIo.D2.Geo.Abstractions.Timezone.IanaName.get -> DcsvIo.D2.Geo.Abstractions.TimezoneCode
+DcsvIo.D2.Geo.Abstractions.Timezone.IanaName.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.LocalizedDisplayNames.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+DcsvIo.D2.Geo.Abstractions.Timezone.LocalizedDisplayNames.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.PrimaryCountry.get -> DcsvIo.D2.Geo.Abstractions.Country?
+DcsvIo.D2.Geo.Abstractions.Timezone.PrimaryCountryIso31661Alpha2Code.get -> DcsvIo.D2.Geo.Abstractions.CountryCode?
+DcsvIo.D2.Geo.Abstractions.Timezone.PrimaryCountryIso31661Alpha2Code.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.Selectable.get -> bool
+DcsvIo.D2.Geo.Abstractions.Timezone.Selectable.init -> void
+DcsvIo.D2.Geo.Abstractions.Timezone.Timezone() -> void
+DcsvIo.D2.Geo.Abstractions.TimezoneCode
+DcsvIo.D2.Geo.Abstractions.TimezoneCode.Equals(DcsvIo.D2.Geo.Abstractions.TimezoneCode other) -> bool
+DcsvIo.D2.Geo.Abstractions.TimezoneCode.TimezoneCode() -> void
+DcsvIo.D2.Geo.Abstractions.TimezoneCode.Value.get -> string!
+DcsvIo.D2.Geo.Abstractions.TimezoneCodeJsonConverter
+DcsvIo.D2.Geo.Abstractions.TimezoneCodeJsonConverter.TimezoneCodeJsonConverter() -> void
+DcsvIo.D2.Geo.Abstractions.WritingDirection
+DcsvIo.D2.Geo.Abstractions.WritingDirection.LTR = 0 -> DcsvIo.D2.Geo.Abstractions.WritingDirection
+DcsvIo.D2.Geo.Abstractions.WritingDirection.RTL = 1 -> DcsvIo.D2.Geo.Abstractions.WritingDirection
+const DcsvIo.D2.Geo.Abstractions.GeoCatalog.CatalogVersion = "0.1.0" -> string!
+override DcsvIo.D2.Geo.Abstractions.Country.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.Country.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.Country.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.Currency.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.Currency.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.Currency.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.DeprecationInfo.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.DeprecationInfo.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.DeprecationInfo.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.Language.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.Language.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.Language.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.Locale.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.Locale.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.Locale.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.LocaleCode.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.LocaleCode.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.LocaleCode.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.LocaleCodeJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> DcsvIo.D2.Geo.Abstractions.LocaleCode
+override DcsvIo.D2.Geo.Abstractions.LocaleCodeJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, DcsvIo.D2.Geo.Abstractions.LocaleCode value, System.Text.Json.JsonSerializerOptions! options) -> void
+override DcsvIo.D2.Geo.Abstractions.Subdivision.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.Subdivision.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.Subdivision.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.SubdivisionCode.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.SubdivisionCode.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.SubdivisionCode.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.SubdivisionCodeJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> DcsvIo.D2.Geo.Abstractions.SubdivisionCode
+override DcsvIo.D2.Geo.Abstractions.SubdivisionCodeJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, DcsvIo.D2.Geo.Abstractions.SubdivisionCode value, System.Text.Json.JsonSerializerOptions! options) -> void
+override DcsvIo.D2.Geo.Abstractions.Timezone.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.Timezone.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.Timezone.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.TimezoneCode.Equals(object? obj) -> bool
+override DcsvIo.D2.Geo.Abstractions.TimezoneCode.GetHashCode() -> int
+override DcsvIo.D2.Geo.Abstractions.TimezoneCode.ToString() -> string!
+override DcsvIo.D2.Geo.Abstractions.TimezoneCodeJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> DcsvIo.D2.Geo.Abstractions.TimezoneCode
+override DcsvIo.D2.Geo.Abstractions.TimezoneCodeJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, DcsvIo.D2.Geo.Abstractions.TimezoneCode value, System.Text.Json.JsonSerializerOptions! options) -> void
+static DcsvIo.D2.Geo.Abstractions.Country.operator !=(DcsvIo.D2.Geo.Abstractions.Country? left, DcsvIo.D2.Geo.Abstractions.Country? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Country.operator ==(DcsvIo.D2.Geo.Abstractions.Country? left, DcsvIo.D2.Geo.Abstractions.Country? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.operator !=(DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance? left, DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance.operator ==(DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance? left, DcsvIo.D2.Geo.Abstractions.CountryCurrencyAcceptance? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Currency.operator !=(DcsvIo.D2.Geo.Abstractions.Currency? left, DcsvIo.D2.Geo.Abstractions.Currency? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Currency.operator ==(DcsvIo.D2.Geo.Abstractions.Currency? left, DcsvIo.D2.Geo.Abstractions.Currency? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.DeprecationInfo.operator !=(DcsvIo.D2.Geo.Abstractions.DeprecationInfo? left, DcsvIo.D2.Geo.Abstractions.DeprecationInfo? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.DeprecationInfo.operator ==(DcsvIo.D2.Geo.Abstractions.DeprecationInfo? left, DcsvIo.D2.Geo.Abstractions.DeprecationInfo? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Extensions.IRequestContextGeoExtensions.Country(this DcsvIo.D2.Context.Abstractions.IRequestContext! context) -> DcsvIo.D2.Geo.Abstractions.CountryCode?
+static DcsvIo.D2.Geo.Abstractions.Extensions.IRequestContextGeoExtensions.Subdivision(this DcsvIo.D2.Context.Abstractions.IRequestContext! context) -> DcsvIo.D2.Geo.Abstractions.SubdivisionCode?
+static DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.operator !=(DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity? left, DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity.operator ==(DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity? left, DcsvIo.D2.Geo.Abstractions.GeopoliticalEntity? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Language.operator !=(DcsvIo.D2.Geo.Abstractions.Language? left, DcsvIo.D2.Geo.Abstractions.Language? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Language.operator ==(DcsvIo.D2.Geo.Abstractions.Language? left, DcsvIo.D2.Geo.Abstractions.Language? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Locale.operator !=(DcsvIo.D2.Geo.Abstractions.Locale? left, DcsvIo.D2.Geo.Abstractions.Locale? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Locale.operator ==(DcsvIo.D2.Geo.Abstractions.Locale? left, DcsvIo.D2.Geo.Abstractions.Locale? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.LocaleCode.FromString(string! value) -> DcsvIo.D2.Geo.Abstractions.LocaleCode
+static DcsvIo.D2.Geo.Abstractions.LocaleCode.TryParse(string? value, out DcsvIo.D2.Geo.Abstractions.LocaleCode result) -> bool
+static DcsvIo.D2.Geo.Abstractions.LocaleCode.operator !=(DcsvIo.D2.Geo.Abstractions.LocaleCode left, DcsvIo.D2.Geo.Abstractions.LocaleCode right) -> bool
+static DcsvIo.D2.Geo.Abstractions.LocaleCode.operator ==(DcsvIo.D2.Geo.Abstractions.LocaleCode left, DcsvIo.D2.Geo.Abstractions.LocaleCode right) -> bool
+static DcsvIo.D2.Geo.Abstractions.LocaleCodeJsonConverter.IsKnown(string! value) -> bool
+static DcsvIo.D2.Geo.Abstractions.NameResolution.LevenshteinComparer.Compare(string? a, string? b, int maxDistance) -> int
+static DcsvIo.D2.Geo.Abstractions.NameResolution.LevenshteinComparer.IsWithin(string? a, string? b, int maxDistance) -> bool
+static DcsvIo.D2.Geo.Abstractions.NameResolution.NameNormalizer.Normalize(string? input) -> string!
+static DcsvIo.D2.Geo.Abstractions.Subdivision.operator !=(DcsvIo.D2.Geo.Abstractions.Subdivision? left, DcsvIo.D2.Geo.Abstractions.Subdivision? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Subdivision.operator ==(DcsvIo.D2.Geo.Abstractions.Subdivision? left, DcsvIo.D2.Geo.Abstractions.Subdivision? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.SubdivisionCode.FromString(string! value) -> DcsvIo.D2.Geo.Abstractions.SubdivisionCode
+static DcsvIo.D2.Geo.Abstractions.SubdivisionCode.TryParse(string? value, out DcsvIo.D2.Geo.Abstractions.SubdivisionCode result) -> bool
+static DcsvIo.D2.Geo.Abstractions.SubdivisionCode.operator !=(DcsvIo.D2.Geo.Abstractions.SubdivisionCode left, DcsvIo.D2.Geo.Abstractions.SubdivisionCode right) -> bool
+static DcsvIo.D2.Geo.Abstractions.SubdivisionCode.operator ==(DcsvIo.D2.Geo.Abstractions.SubdivisionCode left, DcsvIo.D2.Geo.Abstractions.SubdivisionCode right) -> bool
+static DcsvIo.D2.Geo.Abstractions.SubdivisionCodeJsonConverter.IsKnown(string! value) -> bool
+static DcsvIo.D2.Geo.Abstractions.Timezone.operator !=(DcsvIo.D2.Geo.Abstractions.Timezone? left, DcsvIo.D2.Geo.Abstractions.Timezone? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.Timezone.operator ==(DcsvIo.D2.Geo.Abstractions.Timezone? left, DcsvIo.D2.Geo.Abstractions.Timezone? right) -> bool
+static DcsvIo.D2.Geo.Abstractions.TimezoneCode.FromString(string! value) -> DcsvIo.D2.Geo.Abstractions.TimezoneCode
+static DcsvIo.D2.Geo.Abstractions.TimezoneCode.TryParse(string? value, out DcsvIo.D2.Geo.Abstractions.TimezoneCode result) -> bool
+static DcsvIo.D2.Geo.Abstractions.TimezoneCode.operator !=(DcsvIo.D2.Geo.Abstractions.TimezoneCode left, DcsvIo.D2.Geo.Abstractions.TimezoneCode right) -> bool
+static DcsvIo.D2.Geo.Abstractions.TimezoneCode.operator ==(DcsvIo.D2.Geo.Abstractions.TimezoneCode left, DcsvIo.D2.Geo.Abstractions.TimezoneCode right) -> bool
+static DcsvIo.D2.Geo.Abstractions.TimezoneCodeJsonConverter.IsKnown(string! value) -> bool
+static readonly DcsvIo.D2.Geo.Abstractions.GeoCatalog.CatalogPublishedAt -> System.DateTimeOffset

@@ -1,0 +1,60 @@
+#nullable enable
+DcsvIo.D2.Caching.Distributed.Redis.JsonCacheSerializer
+DcsvIo.D2.Caching.Distributed.Redis.JsonCacheSerializer.ContentType.get -> string!
+DcsvIo.D2.Caching.Distributed.Redis.JsonCacheSerializer.Deserialize<T>(byte[]! bytes) -> DcsvIo.D2.Result.D2Result<T>!
+DcsvIo.D2.Caching.Distributed.Redis.JsonCacheSerializer.JsonCacheSerializer() -> void
+DcsvIo.D2.Caching.Distributed.Redis.JsonCacheSerializer.Serialize<T>(T value) -> DcsvIo.D2.Result.D2Result<byte[]!>!
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheInvalidationBackplane
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheInvalidationBackplane.DisposeAsync() -> System.Threading.Tasks.ValueTask
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheInvalidationBackplane.PublishInvalidationAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheInvalidationBackplane.PublishInvalidationManyAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheInvalidationBackplane.RedisCacheInvalidationBackplane(StackExchange.Redis.IConnectionMultiplexer! redis, Microsoft.Extensions.Options.IOptions<DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions!>! options, Microsoft.Extensions.Logging.ILogger<DcsvIo.D2.Caching.Distributed.Redis.RedisCacheInvalidationBackplane!>! logger) -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheInvalidationBackplane.Subscribe(System.Func<string!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! handler) -> System.IAsyncDisposable!
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.AbortOnConnectFail.get -> bool
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.AbortOnConnectFail.set -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.CommandTimeout.get -> System.TimeSpan
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.CommandTimeout.set -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.ConnectRetries.get -> int
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.ConnectRetries.set -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.ConnectTimeout.get -> System.TimeSpan
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.ConnectTimeout.set -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.ConnectionString.get -> string!
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.ConnectionString.set -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.DefaultExpiration.get -> System.TimeSpan
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.DefaultExpiration.set -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.InvalidationChannel.get -> string!
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.InvalidationChannel.set -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.KeyPrefix.get -> string!
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.KeyPrefix.set -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions.RedisCacheOptions() -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheServiceCollectionExtensions
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2DistributedCacheRedis(System.Action<DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2RedisCacheInvalidationBackplane() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Caching.Distributed.Redis.RedisCacheTelemetry
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.AcquireLockAsync(string! key, string! lockId, System.TimeSpan expiration, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.ExistsAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.GetAsync<T>(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<T?>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.GetManyAsync<T>(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<System.Collections.Generic.IReadOnlyDictionary<string!, T?>!>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.GetTtlAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<System.TimeSpan?>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.IncrementAsync(string! key, long amount = 1, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<long>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.RedisDistributedCache(StackExchange.Redis.IConnectionMultiplexer! redis, Microsoft.Extensions.Options.IOptions<DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions!>! options, DcsvIo.D2.Caching.ICacheSerializer! serializer, Microsoft.Extensions.Logging.ILogger<DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache!>! logger, DcsvIo.D2.Caching.ICacheInvalidationBackplane? backplane = null) -> void
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.ReleaseLockAsync(string! key, string! lockId, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.RemoveAndBroadcastAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.RemoveAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.RemoveManyAndBroadcastAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.RemoveManyAsync(System.Collections.Generic.IReadOnlyCollection<string!>! keys, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.SetAddAsync(string! key, string! member, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.SetAndBroadcastAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.SetAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.SetCardinalityAsync(string! key, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<long>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.SetContainsAsync(string! key, string! member, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.SetManyAndBroadcastAsync<T>(System.Collections.Generic.IReadOnlyDictionary<string!, T>! entries, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.SetManyAsync<T>(System.Collections.Generic.IReadOnlyDictionary<string!, T>! entries, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.SetNxAsync<T>(string! key, T value, System.TimeSpan? expiration = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+DcsvIo.D2.Caching.Distributed.Redis.RedisDistributedCache.SetRemoveAsync(string! key, string! member, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<bool>!>
+const DcsvIo.D2.Caching.Distributed.Redis.RedisCacheTelemetry.METER_NAME = "DcsvIo.D2.Caching.Distributed.Redis" -> string!
+static DcsvIo.D2.Caching.Distributed.Redis.RedisCacheServiceCollectionExtensions.AddD2DistributedCacheRedis(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<DcsvIo.D2.Caching.Distributed.Redis.RedisCacheOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Caching.Distributed.Redis.RedisCacheServiceCollectionExtensions.AddD2RedisCacheInvalidationBackplane(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

@@ -1,0 +1,119 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Result</RootNamespace>
+    <!--
+      Emit SrcGen-emitted ErrorCodes.g.cs (driven by error-codes-source-gen
+      analyzer wired below) to <project-dir>/Generated/. The directory is
+      tracked in git so PR reviewers see codegen diffs without a local build.
+    -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.I18n.Abstractions provides the TKMessage type. D2Result.Messages
+      and InputError.Errors are typed as IReadOnlyList<TKMessage> so the type
+      system enforces "all user-facing messages are translation keys."
+      Abstractions is zero-runtime-dep so DcsvIo.D2.Result stays domain-safe.
+    -->
+    <ProjectReference Include="..\..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+    <!--
+      DcsvIo.D2.I18n.Keys provides the SrcGen-emitted TK.* constants the
+      factory messages reference (e.g. TK.Common.Errors.NOT_FOUND). Keys
+      references Abstractions for the TKMessage type, so it transitively
+      re-exposes Abstractions to DcsvIo.D2.Result consumers.
+    -->
+    <ProjectReference Include="..\..\i18n\keys\DcsvIo.D2.I18n.Keys.csproj" />
+    <!--
+      DcsvIo.D2.ErrorCodes.Category is the foundational zero-dep (BCL-only) leaf
+      carrying the ErrorCategory enum + ErrorCategoryJsonConverter. D2Result.Category
+      is typed as ErrorCategory? and the generated factories stamp each code's
+      category at generation time, so result-core references this sink downward.
+      The leaf depends on nothing back, so the reference stays acyclic.
+    -->
+    <ProjectReference Include="..\..\error-codes\category\DcsvIo.D2.ErrorCodes.Category.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Source generator driving the codegen-emitted ErrorCodes class. The spec
+      file is surfaced via AdditionalFiles so the SrcGen can read it at
+      codegen time. Single-target dispatch on DcsvIo.D2.Result.
+    -->
+    <ProjectReference Include="..\..\source-gen-shared\error-codes-source-gen\DcsvIo.D2.Result.ErrorCodes.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)error-codes\error-codes.spec.json" />
+    <!--
+      en-US.json surfaces the message-key set the generic catalog now backfills
+      userMessageKey references against. The engine inverse-transforms each
+      userMessageKey (TK.Common.Errors.NOT_FOUND -> common_errors_NOT_FOUND) and
+      asserts membership in en-US.json (D2ERC002) — the same TK-existence
+      cross-check the auth catalog runs.
+    -->
+    <AdditionalFiles Include="$(D2PublicContractsRoot)messages\en-US.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.WireShapes.SourceGen reads input-error.spec.json via
+      AdditionalFiles below and emits InputErrorWireShape.g.cs into this
+      assembly (per-assembly dispatch table in WireShapesGenerator.cs).
+      The emitted FIELD / ERRORS constants govern the wire-format JSON
+      property names that the .NET InputError serializer and the TS-side
+      parser BOTH read from the SAME single source of truth.
+    -->
+    <ProjectReference Include="..\..\source-gen-shared\wire-shapes-source-gen\DcsvIo.D2.WireShapes.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)input-error\input-error.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      DcsvIo.D2.Result.Envelope.SourceGen reads d2result-envelope.spec.json
+      via AdditionalFiles below and emits D2ResultEnvelopeFieldNames.g.cs
+      into this assembly. The emitted SUCCESS / DATA / MESSAGES /
+      INPUT_ERRORS / ERROR_CODE / TRACE_ID / STATUS_CODE constants govern
+      the JSON property names on the D2Result Shape B wire envelope; the
+      hand-written D2Result properties carry
+      [JsonPropertyName(D2ResultEnvelopeFieldNames.*)] attributes
+      referencing these constants — single source of truth across .NET +
+      TS. The TS-side @dcsv-io/d2-result package consumes the same spec via
+      tools/ts-codegen/src/d2result-envelope-emit.ts; cross-language wire
+      drift on these field names is structurally impossible.
+    -->
+    <ProjectReference Include="..\envelope-source-gen\DcsvIo.D2.Result.Envelope.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)d2result-envelope\d2result-envelope.spec.json" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Result</PackageId>
+    <Description>D2Result — the errors-as-values pattern for D2, replacing exception-based control flow with TKMessage-typed user-facing messages.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

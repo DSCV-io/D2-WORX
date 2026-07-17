@@ -1,0 +1,157 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Auth.Grpc</RootNamespace>
+    <!--
+      Sdk.Web defaults OutputType to Exe (since it's intended for runnable web
+      apps); explicit Library override since this is a shared library, NOT an
+      app entry point. Sdk.Web is preferred over plain Sdk because it brings
+      the AspNetCore framework reference automatically — Grpc.AspNetCore.Server
+      depends on it (gRPC services are hosted inside an AspNetCore Kestrel host).
+    -->
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <!--
+    gRPC-transport binding for DcsvIo.D2.Auth — server-side Interceptor
+    subclass that runs the JWT validation pipeline + session liveness check
+    on inbound gRPC calls, emits RpcException(Status, Trailers) on failure
+    with the d2_error_code / d2_messages / traceid trailer triple, and
+    supports per-method scope requirements via attribute + endpoint
+    metadata.
+
+    Lives in its own csproj (separate from DcsvIo.D2.Auth) so the
+    Grpc.AspNetCore.Server framework reference is opt-in: HTTP-only
+    services / worker processes / console hosts that consume DcsvIo.D2.Auth
+    for JWT validation in non-gRPC paths don't need to drag in the gRPC
+    server framework. Sibling DcsvIo.D2.Auth.Http holds the HTTP-transport
+    binding under the same logic. The two transport-binding csprojs are
+    siblings (no inter-csproj dep): each registers an identical scoped
+    IRequestContext resolver lambda that reads from the shared
+    HttpContext.Items slot key defined in DcsvIo.D2.Auth.Abstractions.Http.
+
+    Microsoft.NET.Sdk.Web implicitly pulls the AspNetCore framework reference
+    (alternative to a manual <FrameworkReference Include="Microsoft.AspNetCore.App" />).
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+    <!--
+      Grpc.AspNetCore.Server — server-only gRPC binding (Interceptor base
+      class, ServerCallContext, Metadata, Status, RpcException,
+      IServerCallContextFeature). The client-only sibling Grpc.Net.ClientFactory
+      lives in DcsvIo.D2.Auth.Outbound. Both packages share the 2.71.0 release
+      train (matching pin in Directory.Packages.props).
+    -->
+    <PackageReference Include="Grpc.AspNetCore.Server" />
+    <!--
+      Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions
+      packages are NOT listed here — Microsoft.NET.Sdk.Web's framework reference
+      (Microsoft.AspNetCore.App) ships them, and adding explicit PackageReferences
+      triggers NU1510 ("will not be pruned"). The codebase IS pinned to specific
+      versions via Directory.Packages.props, but the framework reference takes
+      precedence for libraries that ALSO reference the AspNetCore framework.
+    -->
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Emit the InProcessKeys SourceGen output (D2GrpcUserStateKeys.g.cs) to
+         <project-dir>/Generated/. The directory is tracked in git so PR
+         reviewers see codegen diffs without a local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      auth — JwtValidator (internal sealed; consumed via InternalsVisibleTo from auth's csproj),
+      AuthFailures (semantic D2Result factories), AuthErrorCodes, AuthLog, AuthTelemetry.
+    -->
+    <ProjectReference Include="..\core\DcsvIo.D2.Auth.csproj" />
+    <!--
+      auth-abstractions — ISessionLivenessTracker contract + JwtClaimTypes (d2_session_id).
+    -->
+    <ProjectReference Include="..\abstractions\DcsvIo.D2.Auth.Abstractions.csproj" />
+    <!--
+      context\abstractions — IRequestContext shape; ServerCallContext.UserState slot type.
+    -->
+    <ProjectReference Include="..\..\context\abstractions\DcsvIo.D2.Context.Abstractions.csproj" />
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <ProjectReference Include="..\..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+    <!--
+      time — IClock / SystemClock, used to timestamp the call-path entry the
+      cross-process establishment interceptor appends on each inbound hop.
+    -->
+    <ProjectReference Include="..\..\time\DcsvIo.D2.Time.csproj" />
+    <!--
+      headers\grpc — GrpcHeaders.PROPAGATED_CONTEXT ("x-d2-context"), the wire
+      constant the establishment interceptor reads on inbound calls. Same
+      generated constant the outbound PropagatedContextClientInterceptor writes.
+    -->
+    <ProjectReference Include="..\..\headers\grpc\DcsvIo.D2.Headers.Grpc.csproj" />
+    <!--
+      aspnetcore — the capability-general mTLS peer-identity accessor
+      (PeerWorkloadIdentityAccessor.GetD2PeerWorkloadIdentity() on HttpContext, which
+      derives the validated peer workload id from Connection.ClientCertificate). The
+      gRPC-transport overload here resolves ServerCallContext.GetHttpContext() and
+      delegates to that HttpContext accessor, so the peer identity is derived in ONE
+      place across both transports (a gRPC lib referencing the foundation aspnetcore
+      lib is the correct dependency direction).
+    -->
+    <ProjectReference Include="..\..\aspnetcore\DcsvIo.D2.AspNetCore.csproj" />
+    <!--
+      InProcessKeys SourceGen — emits D2GrpcUserStateKeys.g.cs from the shared
+      keys.spec.json. The single spec also drives D2HttpContextItems in
+      auth-abstractions; cross-binding parity is structurally guaranteed.
+    -->
+    <ProjectReference Include="..\..\encryption\in-process-keys-source-gen\DcsvIo.D2.InProcessKeys.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <!--
+      GrpcTrailers SourceGen — emits D2GrpcTrailers.g.cs into this csproj from
+      contracts/grpc-trailers/grpc-trailers.spec.json. Spec-drives the
+      ERROR_CODE / MESSAGES / TRACE_ID trailer-key constants consumed by
+      D2RpcStatusExtensions; cross-language parity with @dcsv-io/d2-grpc-client via
+      tools/ts-codegen.
+    -->
+    <ProjectReference Include="..\..\result\grpc-trailers-source-gen\DcsvIo.D2.Grpc.Trailers.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="$(D2PublicContractsRoot)in-process-keys\keys.spec.json" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)grpc-trailers\grpc-trailers.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Auth.Grpc</PackageId>
+    <Description>gRPC-transport binding for D2 inbound auth — a server-side interceptor running JWT validation, session liveness, and per-method scope enforcement.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,20 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Private.Edge.Infra</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Thin host Infra shell for Edge host-level adapters (not KeyCustodian).
+    Future host modules place vendor adapters here. Api is the only project
+    allowed to reference this layer at the host composition root.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\app\DcsvIo.D2.Private.Edge.App.csproj" />
+  </ItemGroup>
+
+
+</Project>

@@ -1,0 +1,53 @@
+# =============================================================================
+# Dockerfile.mtls-proof — Linux real-socket mutual-TLS harness proof
+# Build context: repo root (../..)
+#
+# Runs the MutualTlsSignerHarnessTests on Linux/OpenSSL — the deployment
+# target. The six client-cert-PRESENTING cases skip on Windows (Schannel
+# cannot build a context for a private-CA-chained leaf without installing the
+# root into the OS store, which the harness refuses to do); on Linux/OpenSSL
+# they EXECUTE, presenting the full leaf -> intermediate chain on the wire and
+# exercising the shipped mutual-TLS validator over a genuine TCP socket.
+#
+# obj/bin isolation: the build COPYs dual public/private trees + root props;
+# the repo `.dockerignore` excludes **/obj + **/bin, so the Windows host's build
+# artifacts never seed this Linux build — every project restores + compiles
+# fresh inside the image. The image is the only writable surface; the host
+# tree is never touched.
+#
+# This proof is self-contained loopback (a real Kestrel HTTPS endpoint on
+# 127.0.0.1:0 + the KeyCustodian cert-generation Rules + the SPIFFE peer
+# validator). It needs NO Postgres / Redis / RabbitMQ — it runs standalone.
+# =============================================================================
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS proof
+WORKDIR /src
+
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV DOTNET_NOLOGO=1
+
+# Root editorconfig (root = true) carries StyleCop rule overrides.
+COPY .editorconfig .editorconfig
+
+# Root MSBuild dual-root props + NuGet + StyleCop.
+COPY Directory.Build.props Directory.Packages.props D2.slnx stylecop.json global.json NuGet.config ./
+COPY public/stylecop.public.json ./public/
+
+# LoggerMessage-splitter tool (Directory.Build.targets AfterTargets Compile).
+COPY public/tools/loggermessage-splitter/ public/tools/loggermessage-splitter/
+
+# Dual package roots + dual contracts + Edge tests graph + private product hosts.
+COPY public/packages/dotnet/ public/packages/dotnet/
+COPY private/packages/dotnet/ private/packages/dotnet/
+COPY private/services/ private/services/
+COPY public/contracts/ public/contracts/
+COPY private/contracts/ private/contracts/
+COPY private/services/Directory.Build.targets private/services/
+
+# Restore the splitter tool's own NuGet assets before test-project build.
+RUN dotnet restore public/tools/loggermessage-splitter/D2.Tools.LoggerMessageSplitter.csproj
+
+# Build + run the mutual-TLS harness on Linux (xunit.v3 MTP filter-class).
+ENTRYPOINT ["dotnet", "run", "--no-launch-profile", \
+    "--project", "private/services/edge/tests/DcsvIo.D2.Private.Edge.Tests.csproj", \
+    "--", "--filter-class", "*MutualTlsSignerHarnessTests*"]

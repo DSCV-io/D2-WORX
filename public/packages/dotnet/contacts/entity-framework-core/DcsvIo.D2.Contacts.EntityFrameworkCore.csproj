@@ -1,0 +1,52 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Contacts.EntityFrameworkCore</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Per-VO complex-type and value-converter mapping helpers for the DcsvIo.D2.Contacts VOs.
+    Called from the host's IEntityTypeConfiguration<T> class — the domain aggregate holds
+    plain VO-typed properties and carries zero EF references. Helpers wire HasMaxLength from
+    FieldConstraints, the Uri value converter, and the per-VO anonymize defaults via the
+    fluent .Anonymize* API from DcsvIo.D2.DataGovernance.EntityFrameworkCore.
+    NO DbContext, NO migrations, NO DI engine — the host owns those.
+    The generic CreateD2Index migration helper lives in DcsvIo.D2.EntityFrameworkCore;
+    the Location-VO mapping helpers live in DcsvIo.D2.Location.EntityFrameworkCore.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\core\DcsvIo.D2.Contacts.csproj" />
+    <ProjectReference Include="..\..\data-governance\entity-framework-core\DcsvIo.D2.DataGovernance.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Microsoft.EntityFrameworkCore.Relational — CPM-pinned in Directory.Packages.props.
+      Provides EntityTypeBuilder<T>, ComplexPropertyBuilder<T>, ComplexTypePropertyBuilder<T>,
+      PropertyBuilder<T>, HasMaxLength, HasConversion, ValueConverter<,>, and the relational
+      metadata APIs. Base EF Core flows transitively via Relational; do NOT add a separate
+      base Microsoft.EntityFrameworkCore ref to avoid NU1510.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Contacts.EntityFrameworkCore</PackageId>
+    <Description>Reusable Entity Framework Core mapping for the DcsvIo.D2.Contacts value objects, applied via infra IEntityTypeConfiguration.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

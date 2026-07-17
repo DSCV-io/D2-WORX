@@ -1,0 +1,12 @@
+// Test fixture — stable proto after (field 'b' deleted, no reserved).
+// This IS a FILE-level break: field 2 was removed without being reserved.
+// buf breaking should exit non-zero over stable-before → stable-after.
+syntax = "proto3";
+
+package d2.fixture.v1;
+
+option csharp_namespace = "D2.Services.Protos.Fixture.V1";
+
+message M {
+  string a = 1;
+}

@@ -1,0 +1,267 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
+# PHASE_3_EDGE.md — Edge service design
+
+> Design annex — holds the Edge service design for the unbuilt Edge deliverables (E1–E5).
+> Folds into the deliverable ship doc(s) + ADRs when built, then pruned.
+> Not a tracker (see [PHASE_3.md](PHASE_3.md)) and not current-truth for what is already shipped
+> (see the relevant ADRs and per-service READMEs).
+
+Module authors, operators, and reviewers preparing for Edge implementation will find here
+the canonical references for HTTP idempotency, request enrichment, scheduled-jobs receiver,
+session 3-tier storage, multi-instance scaling, and the cross-service SAGA pattern that
+Edge coordinates.
+
+---
+
+## Table of contents
+
+- [§1. HTTP idempotency contract](#1-http-idempotency-contract)
+- [§2. Request enrichment](#2-request-enrichment)
+- [§3. Scheduled jobs — Edge as cron-trigger receiver](#3-scheduled-jobs--edge-as-cron-trigger-receiver)
+- [§4. Session storage layers (3-tier)](#4-session-storage-layers-3-tier)
+- [§5. Multi-instance scaling — service onboarding checklist](#5-multi-instance-scaling--service-onboarding-checklist)
+- [§6. Cross-service SAGA pattern](#6-cross-service-saga-pattern)
+
+---
+
+## §1. HTTP idempotency contract
+
+Edge implements `Idempotency-Key` header middleware on every external-facing mutation.
+
+- **Mechanism**: `Idempotency-Key` HTTP header middleware on Edge.
+- **Storage**: Redis `SET NX` with 24-hour TTL — shared across all Edge instances.
+- **Behavior**: the first request with a given key is processed normally and the
+  response is cached. Subsequent requests with the same key return the cached
+  response without re-executing the handler.
+- **Scope**: external-facing mutations only. Internal service-to-service calls
+  (gRPC, RabbitMQ) use different guarantees — messaging-side idempotency lives in
+  [`public/packages/dotnet/messaging-rabbitmq/README.md`](../../public/packages/dotnet/messaging-rabbitmq/README.md).
+- **Library home**: the Edge-side `Idempotency.*` middleware csproj lands when Edge
+  ships; key shape, TTL, and the cached-response envelope are pinned in spec for
+  cross-language parity once the spec is authored.
+
+---
+
+## §2. Request enrichment
+
+Stateless middleware that runs early in the Edge pipeline and produces the canonical
+enrichment claims every downstream service consumes.
+
+- **Stateless** — resolves client IP, computes the 10-slot composite fingerprint,
+  calls the in-process WhoIs cache (Edge is the single source — there is no
+  per-service WhoIs cache).
+- **Deterministic** — identical input always produces identical output regardless
+  of which Edge instance processes the request.
+- **No instance affinity required** — replicas don't need to pin a session to a
+  specific Edge box; the resolved enrichment flows through the JWT claim set Edge
+  mints (per the anon-visitor authentication pattern in
+  [PHASE_3_AUTH.md §3.8](PHASE_3_AUTH.md#38-anon-visitor-authentication-pattern--pattern-a-locked-mint-anon-jwt-at-edge)).
+- **Downstream propagation** — services receive the resolved WhoIs via the
+  `X-D2-WhoIs` header AND via the JWT's `d2_whois_id` tamper-evident claim
+  binding (anon JWTs only; authed JWTs carry the WhoIs ID the same way).
+
+---
+
+## §3. Scheduled jobs — Edge as cron-trigger receiver
+
+Edge is the HTTP entry-point for scheduler-triggered work; the scheduler itself
+(dkron-mgr) is a separate Phase 8 deliverable tracked in
+[PHASE_8_REFERENCE.md](PHASE_8_REFERENCE.md). This section covers the Edge half only.
+
+### Execution flow
+
+```
+Cron trigger
+  → HTTP POST to Edge (mTLS workload-identity auth — ADR-0023)
+  → Edge forwards via gRPC to the owning service
+  → Service handler acquires Redis lock
+  → Batch delete / cleanup loop
+  → Release lock
+  → Return result to Edge → return result to scheduler
+```
+
+### No duplicate execution
+
+Each maintenance job uses a **Redis distributed lock** (`SET NX PX`) to ensure only
+one instance processes a job at any given time.
+
+**If the lock is held**: the handler returns early with a success result (no error,
+no retry). The job is simply skipped on that instance. This is safe because all jobs
+are periodic cleanup — the next scheduled run will process any remaining records.
+
+### Batch processing
+
+All purge / cleanup jobs use chunked processing (default 500 records per batch),
+avoiding long-running transactions and large `IN` clauses. Batch size is configurable
+via the Options pattern in the owning service.
+
+### Staggered scheduling
+
+Jobs are staggered (typically 15 minutes apart) to avoid resource contention on the
+shared Redis lock surface.
+
+> Cross-reference: the scheduler side (Dkron + cron config + retry policy) lives in
+> [PHASE_8_REFERENCE.md](PHASE_8_REFERENCE.md). The split is deliberate — Edge owns
+> the HTTP entry-point + mTLS workload-identity auth ([ADR-0023](../adrs/0023-mtls-workload-identity.md)) +
+> gRPC forwarding; the scheduler owns what fires when.
+
+> **Deferred mTLS machinery to build here.** The mTLS workload-identity layer shipped
+> dev-first as a standalone deliverable: KeyCustodian is the internal CA (generate /
+> seed / issue / rotate / compromise) and the shared transport plumbing exists
+> (server require+validate in `DcsvIo.D2.AspNetCore`, client leaf-present + refresh-ahead
+> in `DcsvIo.D2.Auth.Outbound`, the `DcsvIo.D2.Spiffe` SPIFFE grammar), proven
+> end-to-end on a local harness. **Four cross-process pieces remain for the Edge build:**
+> (1) ~~expose `IssueWorkloadCertificate` over the gRPC contract~~ — **BUILT + proven in
+> isolation (0026)**: the `IssueWorkloadCertificate` gRPC method (on its own
+> `KeyCustodianCertificateAuthority` service) and the `GetCaCertificate` trust-anchor
+> fetch (its own `KeyCustodianCaCertificate` service) are generated, committed, and
+> TestServer-proven, and the REAL fail-closed issuance rule landed in the handler WITH the
+> transport: CSR-based structural self-issue (no subject on the D2 wire — the leaf SAN is
+> always the authenticated mTLS peer; proof-of-possession + P-256 curve enforced; the
+> per-handler `internal.kc.issue` scope; leaf signing isolated behind
+> `ICaLeafSigningCapability`). The remaining Edge-build work on this piece is the LIVE
+> host wiring — `MapGrpcService` + the host-supplied issuer adapter dialing the built
+> endpoint (items 3–4); (2) the workload
+> **first-leaf bootstrap identity** — chicken-and-egg (a workload needs a leaf to mTLS-call
+> KeyCustodian for a leaf), provisioned by the deployment orchestrator; (3) wire the mTLS
+> server + the leaf-refresh client into the running Edge host (the shipped client uses an
+> in-process issuer delegate as the dev/harness seam); (4) **channel rebuild-on-rotation
+> for long-lived gRPC channels** — `AddD2WorkloadCertificate` captures the leaf at channel
+> construction; callers holding long-lived channels must rebuild on rotation to adopt a
+> freshly-rotated leaf (currently the consumer's responsibility, undocumented in host wiring).
+> See [ADR-0023](../adrs/0023-mtls-workload-identity.md) "Negative / new work".
+>
+> **Host-boot gates surfaced by the KeyCustodian foundation hardening** (tracked in
+> [PHASE_3.md](PHASE_3.md) §G, not duplicated): when the Edge host wires mTLS it must
+> **hard-require it at boot** — fail loud when cross-process services are mapped but mTLS is
+> disabled (a fail-closed deny that would otherwise be silently dead) — and wire the KC signer's
+> transport scope + the `d2.internal` audience validators with resolvability + negative tests;
+> and it must add a host-level **assembly-scan DI-isolation test** proving no type outside the
+> auth-mint composition can resolve the JWT-signing minter capability (proven at module scope
+> today, not yet at host scope).
+
+> **Deferred sign-scope grant to wire here.** Nothing currently mints `internal.kc.sign`
+> into a caller's token — the production grant is host-blocked (no Edge boundary minter
+> exists yet). The KeyCustodian general `sign` handler already enforces the scope in-process
+> via a `BaseHandler` `ScopeRequirement` gate (`Scopes.Internal.Kc.Sign`, read from
+> `IRequestContext.Scopes`), which is **fail-closed** — every general-surface `sign` call is
+> denied `Forbidden` at the scope pre-check until the Edge boundary minter grants
+> `internal.kc.sign` to authorized sign callers. That mint-and-grant is the genuine build
+> dependency (no Edge minter host exists yet); the in-process gate ships fail-closed now.
+>
+> **Multiproc residual ledger (private-PKI OIDC trust, mint OUT, proof honesty):**
+> [PHASE_3_AUTH §15b](PHASE_3_AUTH.md#15b-multiproc--private-pki-residuals-keep-ledger--do-not-forget).
+
+---
+
+## §4. Session storage layers (3-tier)
+
+| Tier                   | Storage   | Behavior                                                 |
+| ---------------------- | --------- | -------------------------------------------------------- |
+| Cookie cache (5 min)   | In cookie | Travels with the request — any instance can decode       |
+| Redis                  | Shared    | Any instance queries the same Redis — instant revocation |
+| PostgreSQL (`d2-auth`) | Shared    | Dual-write ensures durability + audit trail              |
+
+**No sticky sessions required.** Any instance can handle any request. Session
+revocation propagates instantly via Redis. The only lag is the cookie cache TTL
+(~5 minutes max on the device that has the session cached).
+
+**Cookie-cache revocation lag** is the documented tradeoff: a revoked session may
+remain valid on the device that has it cached for up to 5 minutes (the cookie
+`maxAge`). This is the accepted tradeoff for eliminating ~95% of Redis lookups.
+
+JWT validation across all three tiers reads from the shared JWKS — any Edge or
+backend instance validates with the cached JWKS public key. JWKS rotation propagates
+via the canonical `/.well-known/jwks.json` endpoint; key rotation cadence + dual-key
+window during grace live in [V2.md §5.4](V2.md) and [PHASE_3_AUTH.md](PHASE_3_AUTH.md).
+
+---
+
+## §5. Multi-instance scaling — service onboarding checklist
+
+Every new Edge service (Phase 3+) verifies the following at registration time:
+
+- **Rate limiting** — uses the Edge rate-limit middleware (Redis-backed buckets),
+  never per-process counters. Design lives in [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md).
+- **HTTP idempotency** — uses the Edge idempotency middleware (§1) for
+  external-facing mutations. Messaging-side idempotency uses
+  `IMessageIdempotencyStore` per
+  [messaging-rabbitmq/README.md](../../public/packages/dotnet/messaging-rabbitmq/README.md).
+- **Session / auth** — validates JWTs via JWKS (no instance affinity), sessions
+  via Redis (§4).
+- **Local caches** — in-memory caches are per-instance (fine for read-heavy,
+  TTL-bounded data). Correctness must not depend on cache consistency across
+  instances. Cluster-wide L1 coherence uses `ICacheInvalidationBackplane` (Redis
+  pub/sub).
+- **Background jobs** — Redis distributed locks (`SET NX`) per §3. Return early if
+  lock is held.
+- **Cache invalidation** — fanout exchanges with exclusive auto-delete queues (not
+  competing consumers) for cluster-wide invalidation events.
+- **Connection strings** — externalized via `.env.local` / `.env.secrets`, never
+  hardcoded.
+- **DB constraints** — unique violations (PG `23505`) caught and mapped via
+  `BaseRepoHandler` + `IDbExceptionClassifier` → returns 409, not 500. Exclusion violations
+  (PG `23P01`, raised by deferrable EXCLUDE constraints — e.g. KeyCustodian's
+  one-active-key-per-domain invariant) classify the same way → 409.
+- **Migrations** — never hand-written. Always `dotnet ef migrations add <Name>`.
+  Multi-replica safety via PG advisory lock at the startup migrator.
+- **Cross-service mutations** — uses the SAGA pattern (§6) for foreground
+  multi-service writes.
+- **Encryption** — sensitive payloads on RabbitMQ marked via the spec's
+  `encryption` field per
+  [messaging-source-gen/README.md](../../public/packages/dotnet/messaging-source-gen/README.md);
+  auto-resolves the keyring via `DcsvIo.D2.Encryption`.
+
+---
+
+## §6. Cross-service SAGA pattern
+
+For mutations that must touch state in multiple services, Edge coordinates a
+**synchronous SAGA** rather than choreographed events when the user expects an
+immediate, visible result.
+
+### Ordering + compensation
+
+1. **Compensable step first** — write the data that's safest to roll back if a
+   later step fails. If this step fails, abort and surface the error; nothing
+   else has changed.
+2. **Subsequent step(s)** — write the data that anchors the cross-service state.
+   If this fails, attempt to **compensate** the earlier step (delete or revert
+   the just-written record) so cross-service state stays consistent.
+3. **Compensation failure** is escalated via `logger.fatal` so an operator can
+   manually reconcile. The handler still returns the original failure to the
+   caller — the user's request is never silently "succeeded" when state is
+   inconsistent.
+
+### Why synchronous, not eventual
+
+These flows return a result the user expects to see immediately (the new phone
+number, the new contact). Choreographed events would require optimistic UI +
+eventual consistency, which is the wrong tradeoff for foreground edits. SAGA
+bounded by a single request gives "all or rolled-back" semantics with bounded
+latency.
+
+### When NOT a SAGA
+
+Irreversible flows (e.g., user-deletion anonymize) are **not** SAGAs — they are
+fire-and-forget fanouts. Anonymization has no meaningful compensation (the
+deletion grace window has closed; downstream services own their idempotent
+consumers rather than coordinating rollback).
+
+---
+
+## References
+
+- [V2.md §5.2 Edge — Unified Gateway](V2.md#52-edge--unified-gateway) — top-level
+  roadmap entry for the Edge service.
+- [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) — sister doc, rate-limit
+  middleware design.
+- [PHASE_3_AUTH.md](PHASE_3_AUTH.md) — Auth runtime + anon-visitor
+  authentication pattern (every request reaches Edge with a JWT).
+- [PHASE_8_REFERENCE.md](PHASE_8_REFERENCE.md) — scheduler half of the
+  scheduled-jobs flow.
+- [public/packages/dotnet/messaging-rabbitmq/README.md](../../public/packages/dotnet/messaging-rabbitmq/README.md)
+  — messaging-side idempotency contract + DLQ + tiered retries.

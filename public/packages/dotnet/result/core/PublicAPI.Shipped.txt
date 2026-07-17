@@ -1,0 +1,139 @@
+#nullable enable
+DcsvIo.D2.Result.D2Result
+DcsvIo.D2.Result.D2Result.Category.get -> DcsvIo.D2.ErrorCodes.Category.ErrorCategory?
+DcsvIo.D2.Result.D2Result.D2Result(bool success, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, System.Net.HttpStatusCode? statusCode = null, string? errorCode = null, string? traceId = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null) -> void
+DcsvIo.D2.Result.D2Result.ErrorCode.get -> string?
+DcsvIo.D2.Result.D2Result.Failed.get -> bool
+DcsvIo.D2.Result.D2Result.InputErrors.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>!
+DcsvIo.D2.Result.D2Result.IsCanceled.get -> bool
+DcsvIo.D2.Result.D2Result.IsConflict.get -> bool
+DcsvIo.D2.Result.D2Result.IsCreated.get -> bool
+DcsvIo.D2.Result.D2Result.IsForbidden.get -> bool
+DcsvIo.D2.Result.D2Result.IsIdempotencyInFlight.get -> bool
+DcsvIo.D2.Result.D2Result.IsNotFound.get -> bool
+DcsvIo.D2.Result.D2Result.IsOk.get -> bool
+DcsvIo.D2.Result.D2Result.IsPartialOrMissing.get -> bool
+DcsvIo.D2.Result.D2Result.IsPartialSuccess.get -> bool
+DcsvIo.D2.Result.D2Result.IsPayloadTooLarge.get -> bool
+DcsvIo.D2.Result.D2Result.IsRateLimited.get -> bool
+DcsvIo.D2.Result.D2Result.IsServiceUnavailable.get -> bool
+DcsvIo.D2.Result.D2Result.IsSomeFound.get -> bool
+DcsvIo.D2.Result.D2Result.IsTransientRetryable.get -> bool
+DcsvIo.D2.Result.D2Result.IsUnauthorized.get -> bool
+DcsvIo.D2.Result.D2Result.IsUnhandledException.get -> bool
+DcsvIo.D2.Result.D2Result.IsValidationFailed.get -> bool
+DcsvIo.D2.Result.D2Result.Messages.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>!
+DcsvIo.D2.Result.D2Result.StatusCode.get -> System.Net.HttpStatusCode
+DcsvIo.D2.Result.D2Result.Success.get -> bool
+DcsvIo.D2.Result.D2Result.TraceId.get -> string?
+DcsvIo.D2.Result.D2Result.WithTraceId(string? traceId) -> DcsvIo.D2.Result.D2Result!
+DcsvIo.D2.Result.D2Result<TData>
+DcsvIo.D2.Result.D2Result<TData>.Bind<TNext>(System.Func<TData, DcsvIo.D2.Result.D2Result<TNext>!>! next) -> DcsvIo.D2.Result.D2Result<TNext>!
+DcsvIo.D2.Result.D2Result<TData>.CheckFailure(out TData? data) -> bool
+DcsvIo.D2.Result.D2Result<TData>.CheckSuccess(out TData? data) -> bool
+DcsvIo.D2.Result.D2Result<TData>.D2Result(bool success, TData? data = default(TData?), System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, System.Net.HttpStatusCode? statusCode = null, string? errorCode = null, string? traceId = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null) -> void
+DcsvIo.D2.Result.D2Result<TData>.Data.get -> TData?
+DcsvIo.D2.Result.D2Result<TData>.Map<TNext>(System.Func<TData, TNext>! projection) -> DcsvIo.D2.Result.D2Result<TNext>!
+DcsvIo.D2.Result.D2Result<TData>.Match<TResult>(System.Func<TData, TResult>! onSuccess, System.Func<DcsvIo.D2.Result.D2Result<TData>!, TResult>! onFailure) -> TResult
+DcsvIo.D2.Result.D2Result<TData>.WithTraceId(string? traceId) -> DcsvIo.D2.Result.D2Result<TData>!
+DcsvIo.D2.Result.D2ResultAsyncExtensions
+DcsvIo.D2.Result.D2ResultEnvelopeFieldNames
+DcsvIo.D2.Result.D2ResultGuardExtensions
+DcsvIo.D2.Result.D2ResultGuardExtensions.extension<TInner>(DcsvIo.D2.Result.D2Result<TInner>!)
+DcsvIo.D2.Result.D2ResultGuardExtensions.extension<TInner>(DcsvIo.D2.Result.D2Result<TInner>!).BubbleOnFailure<TOuter>(out DcsvIo.D2.Result.D2Result<TOuter?>! bubbled, out TInner? data) -> bool
+DcsvIo.D2.Result.ErrorCodes
+DcsvIo.D2.Result.InputError
+DcsvIo.D2.Result.InputError.<Clone>$() -> DcsvIo.D2.Result.InputError!
+DcsvIo.D2.Result.InputError.Deconstruct(out string! Field, out System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>! Errors) -> void
+DcsvIo.D2.Result.InputError.Equals(DcsvIo.D2.Result.InputError? other) -> bool
+DcsvIo.D2.Result.InputError.Errors.get -> System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>!
+DcsvIo.D2.Result.InputError.Errors.init -> void
+DcsvIo.D2.Result.InputError.Field.get -> string!
+DcsvIo.D2.Result.InputError.Field.init -> void
+DcsvIo.D2.Result.InputError.InputError(string! Field, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>! Errors) -> void
+DcsvIo.D2.Result.InputErrorWireShape
+DcsvIo.D2.Result.Unit
+DcsvIo.D2.Result.Unit.Equals(DcsvIo.D2.Result.Unit other) -> bool
+DcsvIo.D2.Result.Unit.Unit() -> void
+const DcsvIo.D2.Result.D2ResultEnvelopeFieldNames.CATEGORY = "category" -> string!
+const DcsvIo.D2.Result.D2ResultEnvelopeFieldNames.DATA = "data" -> string!
+const DcsvIo.D2.Result.D2ResultEnvelopeFieldNames.ERROR_CODE = "errorCode" -> string!
+const DcsvIo.D2.Result.D2ResultEnvelopeFieldNames.INPUT_ERRORS = "inputErrors" -> string!
+const DcsvIo.D2.Result.D2ResultEnvelopeFieldNames.MESSAGES = "messages" -> string!
+const DcsvIo.D2.Result.D2ResultEnvelopeFieldNames.STATUS_CODE = "statusCode" -> string!
+const DcsvIo.D2.Result.D2ResultEnvelopeFieldNames.SUCCESS = "success" -> string!
+const DcsvIo.D2.Result.D2ResultEnvelopeFieldNames.TRACE_ID = "traceId" -> string!
+const DcsvIo.D2.Result.ErrorCodes.CANCELED = "CANCELED" -> string!
+const DcsvIo.D2.Result.ErrorCodes.CONFLICT = "CONFLICT" -> string!
+const DcsvIo.D2.Result.ErrorCodes.COULD_NOT_BE_DESERIALIZED = "COULD_NOT_BE_DESERIALIZED" -> string!
+const DcsvIo.D2.Result.ErrorCodes.COULD_NOT_BE_SERIALIZED = "COULD_NOT_BE_SERIALIZED" -> string!
+const DcsvIo.D2.Result.ErrorCodes.FORBIDDEN = "FORBIDDEN" -> string!
+const DcsvIo.D2.Result.ErrorCodes.IDEMPOTENCY_IN_FLIGHT = "IDEMPOTENCY_IN_FLIGHT" -> string!
+const DcsvIo.D2.Result.ErrorCodes.NOT_FOUND = "NOT_FOUND" -> string!
+const DcsvIo.D2.Result.ErrorCodes.PARTIAL_SUCCESS = "PARTIAL_SUCCESS" -> string!
+const DcsvIo.D2.Result.ErrorCodes.PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE" -> string!
+const DcsvIo.D2.Result.ErrorCodes.RATE_LIMITED = "RATE_LIMITED" -> string!
+const DcsvIo.D2.Result.ErrorCodes.SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE" -> string!
+const DcsvIo.D2.Result.ErrorCodes.SOME_FOUND = "SOME_FOUND" -> string!
+const DcsvIo.D2.Result.ErrorCodes.UNAUTHORIZED = "UNAUTHORIZED" -> string!
+const DcsvIo.D2.Result.ErrorCodes.UNHANDLED_EXCEPTION = "UNHANDLED_EXCEPTION" -> string!
+const DcsvIo.D2.Result.ErrorCodes.VALIDATION_FAILED = "VALIDATION_FAILED" -> string!
+const DcsvIo.D2.Result.InputErrorWireShape.ERRORS = "errors" -> string!
+const DcsvIo.D2.Result.InputErrorWireShape.FIELD = "field" -> string!
+override DcsvIo.D2.Result.InputError.Equals(object? obj) -> bool
+override DcsvIo.D2.Result.InputError.GetHashCode() -> int
+override DcsvIo.D2.Result.InputError.ToString() -> string!
+override DcsvIo.D2.Result.Unit.GetHashCode() -> int
+static DcsvIo.D2.Result.D2Result.Canceled(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.Combine<T1, T2, T3, T4, T5>(DcsvIo.D2.Result.D2Result<T1>! r1, DcsvIo.D2.Result.D2Result<T2>! r2, DcsvIo.D2.Result.D2Result<T3>! r3, DcsvIo.D2.Result.D2Result<T4>! r4, DcsvIo.D2.Result.D2Result<T5>! r5) -> DcsvIo.D2.Result.D2Result<(T1 Item1, T2 Item2, T3 Item3, T4 Item4, T5 Item5)>!
+static DcsvIo.D2.Result.D2Result.Combine<T1, T2, T3, T4>(DcsvIo.D2.Result.D2Result<T1>! r1, DcsvIo.D2.Result.D2Result<T2>! r2, DcsvIo.D2.Result.D2Result<T3>! r3, DcsvIo.D2.Result.D2Result<T4>! r4) -> DcsvIo.D2.Result.D2Result<(T1 Item1, T2 Item2, T3 Item3, T4 Item4)>!
+static DcsvIo.D2.Result.D2Result.Combine<T1, T2, T3>(DcsvIo.D2.Result.D2Result<T1>! r1, DcsvIo.D2.Result.D2Result<T2>! r2, DcsvIo.D2.Result.D2Result<T3>! r3) -> DcsvIo.D2.Result.D2Result<(T1 Item1, T2 Item2, T3 Item3)>!
+static DcsvIo.D2.Result.D2Result.Combine<T1, T2>(DcsvIo.D2.Result.D2Result<T1>! r1, DcsvIo.D2.Result.D2Result<T2>! r2) -> DcsvIo.D2.Result.D2Result<(T1 Item1, T2 Item2)>!
+static DcsvIo.D2.Result.D2Result.Combine<T>(System.Collections.Generic.IEnumerable<DcsvIo.D2.Result.D2Result<T>!>! results) -> DcsvIo.D2.Result.D2Result<System.Collections.Generic.IReadOnlyList<T>!>!
+static DcsvIo.D2.Result.D2Result.Conflict(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.Created(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.Fail(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Net.HttpStatusCode? statusCode = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.Forbidden(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.NotFound(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.Ok(string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.PayloadTooLarge(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.ServiceUnavailable(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.SomeFound(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.TooManyRequests(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.Unauthorized(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.UnhandledException(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result.ValidationFailed(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result!
+static DcsvIo.D2.Result.D2Result<TData>.Bubble(DcsvIo.D2.Result.D2Result! d2Result, TData? data = default(TData?)) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.BubbleFail(DcsvIo.D2.Result.D2Result! d2Result) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.Canceled(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.Conflict(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.Created(TData? data = default(TData?), string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.Fail(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Net.HttpStatusCode? statusCode = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.Forbidden(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.NotFound(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.Ok(TData? data = default(TData?), System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.PartialSuccess(TData? data = default(TData?), System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.PayloadTooLarge(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.ServiceUnavailable(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.SomeFound(TData? data = default(TData?), System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.TooManyRequests(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.Unauthorized(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.UnhandledException(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2Result<TData>.ValidationFailed(System.Collections.Generic.IReadOnlyList<DcsvIo.D2.I18n.TKMessage!>? messages = null, System.Collections.Generic.IReadOnlyList<DcsvIo.D2.Result.InputError!>? inputErrors = null, string? errorCode = null, DcsvIo.D2.ErrorCodes.Category.ErrorCategory? category = null, string? traceId = null) -> DcsvIo.D2.Result.D2Result<TData>!
+static DcsvIo.D2.Result.D2ResultAsyncExtensions.BindAsync<TData, TNext>(this System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TData>!>! task, System.Func<TData, System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TNext>!>!>! next) -> System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TNext>!>!
+static DcsvIo.D2.Result.D2ResultAsyncExtensions.BindAsync<TData, TNext>(this System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TData>!> task, System.Func<TData, System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TNext>!>>! next) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TNext>!>
+static DcsvIo.D2.Result.D2ResultAsyncExtensions.MapAsync<TData, TNext>(this System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TData>!>! task, System.Func<TData, TNext>! projection) -> System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TNext>!>!
+static DcsvIo.D2.Result.D2ResultAsyncExtensions.MapAsync<TData, TNext>(this System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TData>!> task, System.Func<TData, TNext>! projection) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TNext>!>
+static DcsvIo.D2.Result.D2ResultAsyncExtensions.ThenAsync<TData>(this System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TData>!>! task, System.Func<TData, System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TData>!>!>! next) -> System.Threading.Tasks.Task<DcsvIo.D2.Result.D2Result<TData>!>!
+static DcsvIo.D2.Result.D2ResultAsyncExtensions.ThenAsync<TData>(this System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TData>!> task, System.Func<TData, System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TData>!>>! next) -> System.Threading.Tasks.ValueTask<DcsvIo.D2.Result.D2Result<TData>!>
+static DcsvIo.D2.Result.D2ResultEnvelopeFieldNames.AllFields.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static DcsvIo.D2.Result.D2ResultGuardExtensions.BubbleOnFailure<TInner, TOuter>(this DcsvIo.D2.Result.D2Result<TInner>! result, out DcsvIo.D2.Result.D2Result<TOuter?>! bubbled, out TInner? data) -> bool
+static DcsvIo.D2.Result.ErrorCodes.AllCodes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static DcsvIo.D2.Result.ErrorCodes.GetHttpStatus(string! errorCode) -> int
+static DcsvIo.D2.Result.InputError.operator !=(DcsvIo.D2.Result.InputError? left, DcsvIo.D2.Result.InputError? right) -> bool
+static DcsvIo.D2.Result.InputError.operator ==(DcsvIo.D2.Result.InputError? left, DcsvIo.D2.Result.InputError? right) -> bool
+static DcsvIo.D2.Result.Unit.Value.get -> DcsvIo.D2.Result.Unit
+static DcsvIo.D2.Result.Unit.operator !=(DcsvIo.D2.Result.Unit left, DcsvIo.D2.Result.Unit right) -> bool
+static DcsvIo.D2.Result.Unit.operator ==(DcsvIo.D2.Result.Unit left, DcsvIo.D2.Result.Unit right) -> bool
+~override DcsvIo.D2.Result.Unit.Equals(object obj) -> bool
+~override DcsvIo.D2.Result.Unit.ToString() -> string

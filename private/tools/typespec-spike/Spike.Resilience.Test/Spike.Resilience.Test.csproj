@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Spike B test: the 3-file HAND-WRITTEN CHASSIS (stand-in retry + circuit-
+       breaker primitives + a policy factory that impl the GENERATED resilience
+       abstraction; a controllable fake outbound dependency; the B1-B4 test).
+       Drives the GENERATED pipeline (Spike.Resilience) end to end, asserting
+       ordered composition, transient-retry-success, sustained-breaker-open,
+       registry resolution, and abstraction-targeting. Isolated under tools/ —
+       no StyleCop / no TreatWarningsAsErrors. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Spike.Resilience/Spike.Resilience.csproj" />
+  </ItemGroup>
+
+</Project>

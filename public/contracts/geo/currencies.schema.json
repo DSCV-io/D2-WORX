@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.d2.dcsv.io/contracts/geo/currencies.schema.json",
+  "title": "Currency catalog (codegen-ready)",
+  "description": "Tier 2 codegen-ready Currency catalog. Matches the CurrencySpec record shape consumed by .NET SourceGen + TS emitter. Includes both active and retired currencies per the deliberate design (consumers filter via isActive).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "entries"
+  ],
+  "properties": {
+    "$generated": { "const": true },
+    "$source": { "const": "pipeline-derived" },
+    "$schema": { "type": "string" },
+    "$note": { "type": "string" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Currency" }
+    }
+  },
+  "$defs": {
+    "Currency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "iso4217AlphaCode",
+        "iso4217NumericCode",
+        "displayName",
+        "decimalPlaces",
+        "symbol",
+        "isActive",
+        "isSupported"
+      ],
+      "properties": {
+        "iso4217AlphaCode": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "iso4217NumericCode": {
+          "type": ["string", "null"],
+          "pattern": "^\\d{3}$"
+        },
+        "displayName": { "type": "string", "minLength": 1 },
+        "decimalPlaces": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "symbol": { "type": ["string", "null"] },
+        "isActive": { "type": "boolean" },
+        "isSupported": { "type": "boolean" }
+      }
+    }
+  }
+}

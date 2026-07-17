@@ -1,0 +1,123 @@
+<!--
+Copyright (c) DCSV. Licensed under the Apache License, Version 2.0.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcsvIo.D2.Auth.Abstractions</RootNamespace>
+
+    <!-- Emit the generator's output (Scopes.g.cs, Audiences.g.cs, JwtClaimTypes.g.cs,
+         D2HttpContextItems.g.cs) to <project-dir>/Generated/. The directory is
+         tracked in git so PR reviewers see codegen diffs without a local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <!--
+    Identity / authorization vocabulary AND consumer-side runtime contracts
+    (interfaces + result-shaped types) that domain code, request-context,
+    handler/abstractions, the runtime DcsvIo.D2.Auth, and Edge's issuer-side
+    code all reference.
+
+    Sibling Roslyn analyzers contribute generated code to this assembly:
+
+      - DcsvIo.D2.Auth.Scopes.SourceGen (../scopes-source-gen/) →
+        Scopes.g.cs, driven by contracts/auth-scopes/scopes.spec.json
+      - DcsvIo.D2.Auth.Audiences.SourceGen (../audiences-source-gen/) →
+        Audiences.g.cs, driven by contracts/auth-audiences/audiences.spec.json
+      - DcsvIo.D2.Auth.ProtocolAudiences.SourceGen (../protocol-audiences-source-gen/) →
+        WellKnownAudiences.g.cs (the bare-token protocol audiences d2.internal /
+        d2-edge), driven by contracts/auth-protocol-audiences/protocol-audiences.spec.json
+
+    All reference below with OutputItemType="Analyzer" (no runtime dll dep).
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\scopes-source-gen\DcsvIo.D2.Auth.Scopes.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\audiences-source-gen\DcsvIo.D2.Auth.Audiences.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\protocol-audiences-source-gen\DcsvIo.D2.Auth.ProtocolAudiences.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\jwt-claims-source-gen\DcsvIo.D2.Auth.JwtClaims.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\encryption\in-process-keys-source-gen\DcsvIo.D2.InProcessKeys.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Result + I18n.Abstractions — required because consumer-side contracts
+      (IJwksProvider / ISessionLivenessTracker) return D2Result<T>, consistent
+      with caching-abstractions and handler/abstractions. Both upstream libs
+      are zero-runtime-dep and domain-safe.
+    -->
+    <ProjectReference Include="..\..\result\core\DcsvIo.D2.Result.csproj" />
+    <ProjectReference Include="..\..\i18n\abstractions\DcsvIo.D2.I18n.Abstractions.csproj" />
+    <!--
+      DcsvIo.D2.Utilities — supplies [RedactData] + RedactReason for the
+      ForwardedJwt redacting wrapper (the held internal transaction-token is a
+      live bearer credential that must be unloggable by construction) and the
+      ToNullIfEmpty() guard its smart constructor uses. A leaf — references only
+      result/i18n, never auth — so no cycle: the no-Utilities carve-out is for
+      genuine cycles only and does not apply here.
+    -->
+    <ProjectReference Include="..\..\utilities\DcsvIo.D2.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Microsoft.IdentityModel.Tokens — provides the SecurityKey type used on
+      JwksKeySetSnapshot.Keys. SecurityKey is the de-facto BCL-adjacent
+      abstraction (ASP.NET Core's TokenValidationParameters.IssuerSigningKeys
+      takes it; ConfigurationManager<OpenIdConnectConfiguration> emits it).
+      Adding a deeper abstraction layer would just translate SecurityKey →
+      OurAbstractKey → SecurityKey at every consumer with no value.
+    -->
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Surface the spec files to the source generators. Single source of truth
+      for both the platform's scope catalog and audience catalog.
+    -->
+    <AdditionalFiles Include="$(D2PublicContractsRoot)auth-scopes\scopes.spec.json" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)auth-audiences\audiences.spec.json" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)auth-protocol-audiences\protocol-audiences.spec.json" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)jwt-claims\jwt-claims.spec.json" />
+    <AdditionalFiles Include="$(D2PublicContractsRoot)in-process-keys\keys.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DcsvIo.D2.Tests" />
+  </ItemGroup>
+
+  <!-- Publish metadata (per-package semver + NuGet identity). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <PackageId>DcsvIo.D2.Auth.Abstractions</PackageId>
+    <Description>Identity and authorization vocabulary plus consumer-side runtime contracts for D2 inbound auth — value types, constants, and read-only interfaces.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,17 @@
+#nullable enable
+DcsvIo.D2.I18n.I18nServiceCollectionExtensions
+DcsvIo.D2.I18n.I18nServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.I18n.I18nServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2I18n(Microsoft.Extensions.Configuration.IConfiguration! configuration, string? messagesDirectory = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.I18n.SupportedLocales
+DcsvIo.D2.I18n.SupportedLocales.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
+DcsvIo.D2.I18n.SupportedLocales.Base.get -> string!
+DcsvIo.D2.I18n.SupportedLocales.IsValid(string! locale) -> bool
+DcsvIo.D2.I18n.SupportedLocales.LanguageDefaults.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+DcsvIo.D2.I18n.SupportedLocales.Resolve(string? locale) -> string!
+DcsvIo.D2.I18n.SupportedLocales.SupportedLocales(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> void
+DcsvIo.D2.I18n.Translator
+DcsvIo.D2.I18n.Translator.HasKey(string! key) -> bool
+DcsvIo.D2.I18n.Translator.T(string! locale, DcsvIo.D2.I18n.TKMessage! message) -> string!
+DcsvIo.D2.I18n.Translator.Translator(DcsvIo.D2.I18n.SupportedLocales! supportedLocales, string! messagesDirectory) -> void
+static DcsvIo.D2.I18n.I18nServiceCollectionExtensions.AddD2I18n(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, string? messagesDirectory = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.I18n.SupportedLocales.ToBcp47(string! tag) -> string!

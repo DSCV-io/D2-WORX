@@ -1,1 +1,0 @@
-ALTER TABLE "delivery_request" ALTER COLUMN "recipient_contact_id" DROP NOT NULL;

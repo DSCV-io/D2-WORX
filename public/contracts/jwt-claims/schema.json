@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 JWT claim names spec",
+  "description": "Single source of truth for every JWT claim name D2 reads or writes across the runtime. Includes standard OAuth/OIDC claims (sub, aud, iat, ...) AND D2-specific claims (d2_session_id, d2_org_id, ...) AND inside-act claims (d2_kind nested under the act object). Codegen emits matching JwtClaimTypes catalogs on .NET (DcsvIo.D2.Auth.Abstractions.JwtClaimTypes) and TS (@dcsv-io/d2-auth-abstractions JwtClaimTypes). A separate parity test asserts every IAuthContext claim: annotation references an entry here.",
+  "type": "object",
+  "required": ["claims"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/claim" }
+    }
+  },
+  "definitions": {
+    "claim": {
+      "type": "object",
+      "required": ["constName", "value", "kind", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "constName": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Public C# / TS constant identifier — UPPER_SNAKE_CASE."
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Wire-format claim name (the on-the-token string). For inside-act claims this is the nested key under act, e.g. d2_kind."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["standard", "d2-custom", "inside-act"],
+          "description": "Closed enum classifying the claim. standard = OAuth/OIDC vocabulary; d2-custom = D2-specific top-level claim (d2_ prefix); inside-act = nested key inside the act object per RFC 8693 §2.1."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description of the claim. Emitted as xmldoc / JSDoc on every catalog the claim appears in."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "When true, the entry is deprecated: the generated C# constant + factory carry [Obsolete] and the TS constant + factory carry @deprecated. Additive — the entry is NEVER deleted. Deleting a deprecated (or non-deprecated) entry is a breaking change the JSON-diff gate fails."
+        },
+        "deprecatedReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain dev-facing English explaining why the code is deprecated; rendered into the [Obsolete(\"...\")] message, the @deprecated JSDoc, and the changelog entry. NOT a TK key (developer-facing, not user-facing)."
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Wire code of the successor entry (e.g. RESOURCE_NOT_FOUND). Must reference a real, non-deprecated entry in the merged registry. Omit for pure retirement with no replacement."
+        },
+        "sunset": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date for the future RFC 8594 Sunset response header. Edge-runtime-deferred: carried on the contract now, consumed by the Edge response middleware when it exists. Inert until then."
+        }
+      }
+    }
+  }
+}

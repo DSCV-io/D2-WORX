@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "tests"],
+  "references": [
+    { "path": "../abstractions" },
+    { "path": "../../geo/abstractions" },
+    { "path": "../../i18n-keys" },
+    { "path": "../../result" },
+    { "path": "../../utilities" }
+  ]
+}

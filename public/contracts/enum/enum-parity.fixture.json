@@ -1,0 +1,64 @@
+{
+  "$comment": [
+    "Cross-language enum-wire parity fixtures. Each enum lists its members as",
+    "{ memberName, wire } pairs — the SAME wire string materializes to the SAME",
+    "member in C# (JsonStringEnumConverter / [EnumMember]) and TS (const-object).",
+    "The unknownValues are wire strings that are NOT members; both languages MUST",
+    "reject them (C# throws JsonException / the proto mapper returns ValidationFailed;",
+    "TS const-object membership lookup misses) — NO silent fallback sentinel.",
+    "Both the .NET EnumWireRoundTripTests and the TS enum-wire-round-trip.test.ts",
+    "drive this file, so an identical wire string crosses all three transports."
+  ],
+  "schemaVersion": 1,
+  "enums": [
+    {
+      "name": "FixtureKeyKind",
+      "comment": "S-1 bare-member named enum — member name IS the wire string.",
+      "members": [
+        { "memberName": "Rsa", "wire": "Rsa" },
+        { "memberName": "Aes", "wire": "Aes" },
+        { "memberName": "Secret", "wire": "Secret" }
+      ],
+      "unknownValues": ["Quantum", "rsa", "", " ", "RSA"]
+    },
+    {
+      "name": "FixtureLevel",
+      "comment": "S-2 explicit-int named enum — wire is STILL the member NAME, NOT the int.",
+      "members": [
+        { "memberName": "Low", "wire": "Low" },
+        { "memberName": "Medium", "wire": "Medium" },
+        { "memberName": "High", "wire": "High" }
+      ],
+      "unknownValues": ["0", "5", "10", "Critical"]
+    },
+    {
+      "name": "FixtureStatus",
+      "comment": "S-3 named string-literal union — lowercase literal differs from PascalCase member (needs [EnumMember]).",
+      "members": [
+        { "memberName": "Active", "wire": "active" },
+        { "memberName": "Inactive", "wire": "inactive" },
+        { "memberName": "Pending", "wire": "pending" }
+      ],
+      "unknownValues": ["Active", "deleted", ""]
+    },
+    {
+      "name": "FixtureAccountKind",
+      "comment": "S-3 with a non-identifier literal — ThirdParty carries [EnumMember(Value=\"third-party\")].",
+      "members": [
+        { "memberName": "Internal", "wire": "internal" },
+        { "memberName": "ThirdParty", "wire": "third-party" }
+      ],
+      "unknownValues": ["ThirdParty", "thirdParty", "external"]
+    },
+    {
+      "name": "EnumFixtureWalkOutputInlineState",
+      "comment": "S-4 inline anonymous string-literal union → synthetic enum.",
+      "members": [
+        { "memberName": "Draft", "wire": "draft" },
+        { "memberName": "Published", "wire": "published" },
+        { "memberName": "Archived", "wire": "archived" }
+      ],
+      "unknownValues": ["Draft", "deleted", "PUBLISHED"]
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+#nullable enable
+DcsvIo.D2.Location.ComposeLocationHash
+DcsvIo.D2.Location.DefaultPostalCodeValidator
+DcsvIo.D2.Location.DefaultPostalCodeValidator.DefaultPostalCodeValidator() -> void
+DcsvIo.D2.Location.DefaultPostalCodeValidator.Validate(string? postalCode, DcsvIo.D2.Geo.Abstractions.CountryCode? countryCode = null) -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Location.DependencyInjection
+DcsvIo.D2.Location.DependencyInjection.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+DcsvIo.D2.Location.DependencyInjection.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddD2Location() -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+DcsvIo.D2.Location.IPostalCodeValidator
+DcsvIo.D2.Location.IPostalCodeValidator.Validate(string? postalCode, DcsvIo.D2.Geo.Abstractions.CountryCode? countryCode = null) -> DcsvIo.D2.Result.D2Result<string!>!
+DcsvIo.D2.Location.ValueObjects.AdminLocation
+DcsvIo.D2.Location.ValueObjects.AdminLocation.<Clone>$() -> DcsvIo.D2.Location.ValueObjects.AdminLocation!
+DcsvIo.D2.Location.ValueObjects.AdminLocation.AdminLocation() -> void
+DcsvIo.D2.Location.ValueObjects.AdminLocation.City.get -> string?
+DcsvIo.D2.Location.ValueObjects.AdminLocation.City.init -> void
+DcsvIo.D2.Location.ValueObjects.AdminLocation.CountryIso31661Alpha2Code.get -> DcsvIo.D2.Geo.Abstractions.CountryCode?
+DcsvIo.D2.Location.ValueObjects.AdminLocation.CountryIso31661Alpha2Code.init -> void
+DcsvIo.D2.Location.ValueObjects.AdminLocation.Equals(DcsvIo.D2.Location.ValueObjects.AdminLocation? other) -> bool
+DcsvIo.D2.Location.ValueObjects.AdminLocation.HashId.get -> string!
+DcsvIo.D2.Location.ValueObjects.AdminLocation.HashId.init -> void
+DcsvIo.D2.Location.ValueObjects.AdminLocation.PostalCode.get -> string?
+DcsvIo.D2.Location.ValueObjects.AdminLocation.PostalCode.init -> void
+DcsvIo.D2.Location.ValueObjects.AdminLocation.SubdivisionIso31662Code.get -> DcsvIo.D2.Geo.Abstractions.SubdivisionCode?
+DcsvIo.D2.Location.ValueObjects.AdminLocation.SubdivisionIso31662Code.init -> void
+DcsvIo.D2.Location.ValueObjects.Coordinates
+DcsvIo.D2.Location.ValueObjects.Coordinates.<Clone>$() -> DcsvIo.D2.Location.ValueObjects.Coordinates!
+DcsvIo.D2.Location.ValueObjects.Coordinates.AccuracyMeters.get -> double?
+DcsvIo.D2.Location.ValueObjects.Coordinates.AccuracyMeters.init -> void
+DcsvIo.D2.Location.ValueObjects.Coordinates.Coordinates() -> void
+DcsvIo.D2.Location.ValueObjects.Coordinates.Equals(DcsvIo.D2.Location.ValueObjects.Coordinates? other) -> bool
+DcsvIo.D2.Location.ValueObjects.Coordinates.Geohash.get -> string!
+DcsvIo.D2.Location.ValueObjects.Coordinates.Geohash.init -> void
+DcsvIo.D2.Location.ValueObjects.Coordinates.HashId.get -> string!
+DcsvIo.D2.Location.ValueObjects.Coordinates.HashId.init -> void
+DcsvIo.D2.Location.ValueObjects.Coordinates.Latitude.get -> double
+DcsvIo.D2.Location.ValueObjects.Coordinates.Latitude.init -> void
+DcsvIo.D2.Location.ValueObjects.Coordinates.Longitude.get -> double
+DcsvIo.D2.Location.ValueObjects.Coordinates.Longitude.init -> void
+DcsvIo.D2.Location.ValueObjects.Coordinates.PlusCode.get -> string!
+DcsvIo.D2.Location.ValueObjects.Coordinates.PlusCode.init -> void
+DcsvIo.D2.Location.ValueObjects.StreetAddress
+DcsvIo.D2.Location.ValueObjects.StreetAddress.<Clone>$() -> DcsvIo.D2.Location.ValueObjects.StreetAddress!
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Equals(DcsvIo.D2.Location.ValueObjects.StreetAddress? other) -> bool
+DcsvIo.D2.Location.ValueObjects.StreetAddress.HashId.get -> string!
+DcsvIo.D2.Location.ValueObjects.StreetAddress.HashId.init -> void
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line1.get -> string!
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line1.init -> void
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line2.get -> string?
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line2.init -> void
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line3.get -> string?
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line3.init -> void
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line4.get -> string?
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line4.init -> void
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line5.get -> string?
+DcsvIo.D2.Location.ValueObjects.StreetAddress.Line5.init -> void
+DcsvIo.D2.Location.ValueObjects.StreetAddress.StreetAddress() -> void
+override DcsvIo.D2.Location.ValueObjects.AdminLocation.Equals(object? obj) -> bool
+override DcsvIo.D2.Location.ValueObjects.AdminLocation.GetHashCode() -> int
+override DcsvIo.D2.Location.ValueObjects.AdminLocation.ToString() -> string!
+override DcsvIo.D2.Location.ValueObjects.Coordinates.Equals(object? obj) -> bool
+override DcsvIo.D2.Location.ValueObjects.Coordinates.GetHashCode() -> int
+override DcsvIo.D2.Location.ValueObjects.Coordinates.ToString() -> string!
+override DcsvIo.D2.Location.ValueObjects.StreetAddress.Equals(object? obj) -> bool
+override DcsvIo.D2.Location.ValueObjects.StreetAddress.GetHashCode() -> int
+override DcsvIo.D2.Location.ValueObjects.StreetAddress.ToString() -> string!
+static DcsvIo.D2.Location.ComposeLocationHash.Compose(DcsvIo.D2.Location.ValueObjects.Coordinates? coordinates, DcsvIo.D2.Location.ValueObjects.StreetAddress? streetAddress, DcsvIo.D2.Location.ValueObjects.AdminLocation? adminLocation) -> string?
+static DcsvIo.D2.Location.DependencyInjection.AddD2Location(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static DcsvIo.D2.Location.ValueObjects.AdminLocation.Create(DcsvIo.D2.Geo.Abstractions.CountryCode? countryIso31661Alpha2Code = null, DcsvIo.D2.Geo.Abstractions.SubdivisionCode? subdivisionIso31662Code = null, string? city = null, string? postalCode = null, DcsvIo.D2.Location.IPostalCodeValidator? postalCodeValidator = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Location.ValueObjects.AdminLocation!>!
+static DcsvIo.D2.Location.ValueObjects.AdminLocation.operator !=(DcsvIo.D2.Location.ValueObjects.AdminLocation? left, DcsvIo.D2.Location.ValueObjects.AdminLocation? right) -> bool
+static DcsvIo.D2.Location.ValueObjects.AdminLocation.operator ==(DcsvIo.D2.Location.ValueObjects.AdminLocation? left, DcsvIo.D2.Location.ValueObjects.AdminLocation? right) -> bool
+static DcsvIo.D2.Location.ValueObjects.Coordinates.Create(double latitude, double longitude, double? accuracyMeters = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Location.ValueObjects.Coordinates!>!
+static DcsvIo.D2.Location.ValueObjects.Coordinates.FromGeohash(string! geohash, double? accuracyMeters = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Location.ValueObjects.Coordinates!>!
+static DcsvIo.D2.Location.ValueObjects.Coordinates.FromPlusCode(string! plusCode, double? accuracyMeters = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Location.ValueObjects.Coordinates!>!
+static DcsvIo.D2.Location.ValueObjects.Coordinates.operator !=(DcsvIo.D2.Location.ValueObjects.Coordinates? left, DcsvIo.D2.Location.ValueObjects.Coordinates? right) -> bool
+static DcsvIo.D2.Location.ValueObjects.Coordinates.operator ==(DcsvIo.D2.Location.ValueObjects.Coordinates? left, DcsvIo.D2.Location.ValueObjects.Coordinates? right) -> bool
+static DcsvIo.D2.Location.ValueObjects.StreetAddress.Create(string? line1, string? line2 = null, string? line3 = null, string? line4 = null, string? line5 = null) -> DcsvIo.D2.Result.D2Result<DcsvIo.D2.Location.ValueObjects.StreetAddress!>!
+static DcsvIo.D2.Location.ValueObjects.StreetAddress.operator !=(DcsvIo.D2.Location.ValueObjects.StreetAddress? left, DcsvIo.D2.Location.ValueObjects.StreetAddress? right) -> bool
+static DcsvIo.D2.Location.ValueObjects.StreetAddress.operator ==(DcsvIo.D2.Location.ValueObjects.StreetAddress? left, DcsvIo.D2.Location.ValueObjects.StreetAddress? right) -> bool

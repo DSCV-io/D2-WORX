@@ -1,24 +1,45 @@
+﻿<!--
+Copyright (c) DCSV. All rights reserved.
+-->
 <Project>
+  <!--
+    Universal properties applied to every .csproj under the monorepo.
+    Dual public/private roots — see docs/dev and package READMEs.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Dual-root property table (monorepo SoT). -->
+  <PropertyGroup>
+    <D2RepoRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)'))</D2RepoRoot>
+    <D2PublicRoot>$(D2RepoRoot)public\</D2PublicRoot>
+    <D2PrivateRoot>$(D2RepoRoot)private\</D2PrivateRoot>
+    <D2PublicContractsRoot>$(D2PublicRoot)contracts\</D2PublicContractsRoot>
+    <D2PrivateContractsRoot>$(D2PrivateRoot)contracts\</D2PrivateContractsRoot>
+    <D2PublicPackagesDotnetRoot>$(D2PublicRoot)packages\dotnet\</D2PublicPackagesDotnetRoot>
+    <D2PrivatePackagesDotnetRoot>$(D2PrivateRoot)packages\dotnet\</D2PrivatePackagesDotnetRoot>
+    <D2PrivateServicesRoot>$(D2PrivateRoot)services\</D2PrivateServicesRoot>
+    <D2PublicToolsRoot>$(D2PublicRoot)tools\</D2PublicToolsRoot>
+    <D2PrivateToolsRoot>$(D2PrivateRoot)tools\</D2PrivateToolsRoot>
+    <D2SourceGenSharedRoot>$(D2PublicPackagesDotnetRoot)source-gen-shared\core\</D2SourceGenSharedRoot>
+    <D2ErrorCodesEmitRoot>$(D2PublicPackagesDotnetRoot)source-gen-shared\error-codes-emit\</D2ErrorCodesEmitRoot>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+    <PackageReference Include="StyleCop.Analyzers">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
+  <!-- Default StyleCop = ARR (private/root tree). Public packages Remove + Link override. -->
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" Link="stylecop.json" />
-  </ItemGroup>
-
-  <PropertyGroup>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
-
-  <!-- Global usings for all projects -->
-  <ItemGroup>
-    <Using Include="System" />
-    <Using Include="System.Collections.Generic" />
-    <Using Include="System.Threading" />
-    <Using Include="System.Threading.Tasks" />
   </ItemGroup>
 </Project>
