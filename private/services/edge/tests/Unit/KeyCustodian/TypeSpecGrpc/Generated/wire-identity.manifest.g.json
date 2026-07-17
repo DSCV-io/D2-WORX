@@ -1,8 +1,0 @@
-{
-  "protoPackage": "d2.signfixtures.v2alpha",
-  "protoCsharpNamespace": "D2.Services.Protos.SignFixtures.V2Alpha",
-  "generation": 2,
-  "stability": "alpha",
-  "channel": "v2alpha",
-  "x-d2-generated-by": "@dcsv-io/d2-typespec-emitters"
-}

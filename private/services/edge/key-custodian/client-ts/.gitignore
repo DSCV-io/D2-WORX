@@ -1,5 +1,0 @@
-# api-extractor transient working copy: the versioning engine commits this
-# package's API report under etc/key-custodian-client.api.md (the baseline) and
-# lets api-extractor write its freshly-generated report to temp/ for the diff.
-# The temp/ copy is regenerated every run — keep it untracked.
-temp/

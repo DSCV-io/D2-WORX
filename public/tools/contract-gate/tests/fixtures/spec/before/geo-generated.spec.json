@@ -1,8 +1,0 @@
-{
-  "$generated": true,
-  "$source": "pipeline-derived",
-  "entries": [
-    { "code": "en", "name": "English" },
-    { "code": "fr", "name": "French" }
-  ]
-}
